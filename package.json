@@ -1,0 +1,40 @@
+{
+  "name": "wotan",
+  "version": "0.0.0",
+  "description": "Pluggable TypeScript and JavaScript linter",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajafff/wotan.git"
+  },
+  "keywords": [
+    "lint",
+    "ts",
+    "js",
+    "linter",
+    "code",
+    "style",
+    "quality",
+    "typescript",
+    "javascript"
+  ],
+  "author": "Klaus Meinhardt",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ajafff/wotan/issues"
+  },
+  "homepage": "https://github.com/ajafff/wotan#readme",
+  "devDependencies": {
+    "@types/node": "^8.0.53",
+    "@types/resolve": "0.0.4",
+    "tslint": "^5.8.0",
+    "tslint-consistent-codestyle": "^1.10.1",
+    "typescript": "^2.6.1"
+  },
+  "dependencies": {
+    "resolve": "^1.5.0"
+  }
+}
