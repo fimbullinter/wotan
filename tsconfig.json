@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "lib": ["es2016"],
     "module": "commonjs",
     "declaration": true,
+    "stripInternal": true,
     "sourceMap": true,
     "outDir": "./lib",
     "rootDir": "./",
