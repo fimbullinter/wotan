@@ -9,6 +9,8 @@ const RULE_CACHE = new Map<string, RuleConstructor | null>();
 export function lint(file: ts.SourceFile, config: EffectiveConfig) {
     const result: Failure[] = [];
     config.rules.forEach(({severity}, ruleName) => {
+        if (severity === 'off')
+            return;
         const rule = getRule(ruleName, config);
         for (const failure of rule.apply(file))
             result.push({
@@ -82,7 +84,7 @@ function loadCoreRule(filename: string): RuleConstructor | undefined {
     filename = filename + '.js';
     if (!fs.existsSync(filename))
         return;
-    return require(filename);
+    return require(filename).Rule;
 }
 
 function loadCustomRule(filename: string): RuleConstructor | undefined {
@@ -91,5 +93,5 @@ function loadCustomRule(filename: string): RuleConstructor | undefined {
     } catch {
         return;
     }
-    return require(filename);
+    return require(filename).Rule;
 }

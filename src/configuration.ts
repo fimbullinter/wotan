@@ -151,14 +151,14 @@ function mapOverride(raw: RawOverride): Override {
 
 function mapRulesDirectory(raw: {[prefix: string]: string}, dirname: string) {
     const result = new Map<string, string>();
-    for (const key in Object.keys(raw))
+    for (const key of Object.keys(raw))
         result.set(key, path.resolve(dirname, raw[key]));
     return result;
 }
 
 function mapRules(raw: {[name: string]: RuleConfigValue}) {
     const result: {[name: string]: RuleConfig} = {};
-    for (const key in Object.keys(raw))
+    for (const key of Object.keys(raw))
         result[key] = mapRuleConfig(raw[key]);
     return result;
 }
@@ -253,7 +253,7 @@ function extendConfig(receiver: EffectiveConfig, {rules, settings}: Partial<Base
     if (rules !== undefined) {
         for (const key of Object.keys(rules)) {
             const prev = receiver.rules.get(key);
-            receiver.rules.set(key, {severity: 'error', options: undefined , ...prev, ...rules[key]});
+            receiver.rules.set(key, {severity: 'error', options: undefined, ...prev, ...rules[key]});
         }
     }
     if (settings !== undefined)

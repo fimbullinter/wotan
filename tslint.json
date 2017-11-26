@@ -89,7 +89,6 @@
     ],
     "prefer-const": true,
     "prefer-for-of": true,
-    "prefer-function-over-method": true,
     "prefer-object-spread": true,
     "prefer-switch": [true, {"min-cases": 3}],
     "quotemark": [
