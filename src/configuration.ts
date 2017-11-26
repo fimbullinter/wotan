@@ -18,7 +18,7 @@ export type RuleSeverity = 'off' | 'warn' | 'error';
 
 export interface RuleConfig {
     severity?: RuleSeverity;
-    config?: any;
+    options?: any;
 }
 
 export type RuleConfigValue = RuleSeverity | RuleConfig;
@@ -192,8 +192,13 @@ function findConfigFileInDirectory(dir: string): string | undefined {
     return;
 }
 
+export interface EffectiveRuleConfig {
+    severity: RuleSeverity;
+    options: any;
+}
+
 export interface EffectiveConfig {
-    rules: Map<string, RuleConfig>;
+    rules: Map<string, EffectiveRuleConfig>;
     settings: Map<string, any>;
     rulesDirectories: Map<string, string[]>;
     processors: string[];
@@ -248,7 +253,7 @@ function extendConfig(receiver: EffectiveConfig, {rules, settings}: Partial<Base
     if (rules !== undefined) {
         for (const key of Object.keys(rules)) {
             const prev = receiver.rules.get(key);
-            receiver.rules.set(key, {severity: 'error', ...prev, ...rules[key]});
+            receiver.rules.set(key, {severity: 'error', options: undefined , ...prev, ...rules[key]});
         }
     }
     if (settings !== undefined)
