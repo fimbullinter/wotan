@@ -1,3 +1,3 @@
 ---
-rules:
-  trailing-newline: error
+extends:
+  - wotan:recommended

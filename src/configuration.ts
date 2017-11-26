@@ -96,7 +96,7 @@ export function readConfigFile(filename: string): RawConfig {
 
 export function resolveConfigFile(name: string, basedir: string): string {
     if (name.startsWith('wotan:'))
-        return require.resolve(`../configs/${name.substr('wotan:'.length)}`);
+        return require.resolve(`./configs/${name.substr('wotan:'.length)}`);
     return resolve.sync(name, {
         basedir,
         extensions: CONFIG_EXTENSIONS,
