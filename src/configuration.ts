@@ -13,6 +13,7 @@ declare global {
 }
 
 export const CONFIG_EXTENSIONS = ['yaml', 'yml', 'json5', 'json', 'js'];
+export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext);
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
 
@@ -183,12 +184,9 @@ function findupConfig(current: string): string | undefined {
 
 function findConfigFileInDirectory(dir: string): string | undefined {
     const entries = fs.readdirSync(dir);
-    for (const ext of CONFIG_EXTENSIONS) {
-        if (entries.includes(`.wotanrc.${ext}`))
-            return `.wotanrc.${ext}`;
-        if (entries.includes(`wotanrc.${ext}`))
-            return `wotanrc.${ext}`;
-    }
+    for (const name of CONFIG_FILENAMES)
+        if (entries.includes(name))
+            return name;
     return;
 }
 
