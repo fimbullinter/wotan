@@ -6,6 +6,7 @@ import { Configuration, findConfiguration, reduceConfigurationForFile, RawConfig
 import { lint } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
+import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -78,6 +79,7 @@ function runLint(options: LintCommand): boolean {
             ignore: options.exclude,
             absolute: true,
         }));
+    checkFilesExist(options.files, options.exclude, files);
     let failures = false;
     let dir: string | undefined;
     let config: Configuration | undefined;
@@ -99,6 +101,17 @@ function runLint(options: LintCommand): boolean {
         }
     }
     return !failures;
+}
+
+/** Ensure that all non-pattern arguments, that are not excluded, matched  */
+function checkFilesExist(patterns: string[], ignore: string[], matches: string[]) {
+    patterns = patterns.filter((p) => !glob.hasMagic(p));
+    if (patterns.length === 0)
+        return;
+    const exclude = ignore.map((p) => new Minimatch(p, {dot: true}));
+    for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
+        if (!matches.some(createMinimatchFilter(path.resolve(filename))))
+            throw new Error(`'${filename}' does not exist.`);
 }
 
 function runInit(options: InitCommand): boolean {
