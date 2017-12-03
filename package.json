@@ -5,6 +5,9 @@
   "main": "bin/main.js",
   "scripts": {
     "compile": "tsc -p .",
+    "lint": "run-p lint:tslint lint:wotan",
+    "lint:tslint": "tslint -p .",
+    "lint:wotan": "node lib/cli lint 'src/**/*.ts'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -35,6 +38,7 @@
     "@types/multimatch": "^2.1.2",
     "@types/node": "^8.0.53",
     "@types/resolve": "0.0.4",
+    "npm-run-all": "^4.1.2",
     "tslint": "^5.8.0",
     "tslint-consistent-codestyle": "^1.10.1",
     "typescript": "^2.6.1"

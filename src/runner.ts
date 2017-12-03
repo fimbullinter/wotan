@@ -56,7 +56,7 @@ export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | 
 export function run(command: Command): boolean {
     switch (command.command) {
         case CommandKind.Lint:
-            return runLinter(command);
+            return runLint(command);
         case CommandKind.Init:
             return runInit(command);
         case CommandKind.Verify:
@@ -70,7 +70,7 @@ export function run(command: Command): boolean {
     }
 }
 
-function runLinter(options: LintCommand): boolean {
+function runLint(options: LintCommand): boolean {
     // TODO findup tsconfig.json
     const files = [];
     for (const pattern of options.files)
@@ -98,7 +98,7 @@ function runLinter(options: LintCommand): boolean {
             console.log(result);
         }
     }
-    return failures;
+    return !failures;
 }
 
 function runInit(options: InitCommand): boolean {
