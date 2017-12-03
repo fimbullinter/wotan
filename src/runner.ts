@@ -4,14 +4,72 @@ import * as fs from 'fs';
 import * as ts from 'typescript';
 import { Configuration, findConfiguration, reduceConfigurationForFile } from './configuration';
 import { lint } from './linter';
+import * as json5 from 'json5';
+import * as yaml from 'js-yaml';
 
-export interface RunnerOptions {
+export const enum CommandKind {
+    Lint = 'lint',
+    Verify = 'verify',
+    Show = 'show',
+    Test = 'test',
+    Init = 'init',
+}
+
+export const enum Format {
+    Yaml = 'yaml',
+    Json = 'json',
+    Json5 = 'json5',
+}
+
+export interface LintCommand {
+    command: CommandKind.Lint;
     files: string[];
     exclude: string[];
     project: string | undefined;
 }
 
-export function run(options: RunnerOptions): boolean {
+export interface TestCommand {
+    command: CommandKind.Test;
+    files: string[];
+}
+
+export interface VerifyCommand {
+    command: CommandKind.Verify;
+    files: string[];
+}
+
+export interface ShowCommand {
+    command: CommandKind.Show;
+    file: string;
+    format: Format | undefined;
+}
+
+export interface InitCommand {
+    command: CommandKind.Init;
+    directories: string[];
+    format: Format | undefined;
+}
+
+export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | TestCommand;
+
+export function run(command: Command): boolean {
+    switch (command.command) {
+        case CommandKind.Lint:
+            return runLinter(command);
+        case CommandKind.Init:
+            return runInit(command);
+        case CommandKind.Verify:
+            return runVerify(command);
+        case CommandKind.Show:
+            return runShow(command);
+        case CommandKind.Test:
+            return runTest(command);
+        default:
+            return assertNever(command);
+    }
+}
+
+function runLinter(options: LintCommand): boolean {
     // TODO findup tsconfig.json
     const files = [];
     for (const pattern of options.files)
@@ -40,4 +98,82 @@ export function run(options: RunnerOptions): boolean {
         }
     }
     return failures;
+}
+
+function runInit(_options: InitCommand): boolean {
+    return true;
+}
+
+function runVerify(_options: VerifyCommand): boolean {
+    return true;
+}
+
+function runShow(options: ShowCommand): boolean {
+    const config = findConfiguration(options.file);
+    if (config === undefined) {
+        console.log(`Could not find configuration for '${options.file}'.`);
+        return false;
+    }
+    console.log(format(reduceConfigurationForFile(config, options.file), options.format));
+    return true;
+}
+
+function runTest(_options: TestCommand): boolean {
+    return true;
+}
+
+function format(value: any, fmt = Format.Yaml): string {
+    value = convertToPrintable(value);
+    switch (fmt) {
+        case Format.Json:
+            return JSON.stringify(value, undefined, 2);
+        case Format.Json5:
+            return json5.stringify(value, undefined, 2);
+        case Format.Yaml:
+            return yaml.safeDump(value, {
+                indent: 2,
+                schema: yaml.JSON_SCHEMA,
+                sortKeys: true,
+            });
+        default:
+            return assertNever(fmt);
+    }
+}
+
+function convertToPrintable(value: any): any {
+    if (value == undefined || typeof value !== 'object')
+        return value;
+    if (value instanceof Map) {
+        const obj: {[key: string]: any} = {};
+        for (const [k, v] of value)
+            if (v !== undefined)
+                obj[k] = v;
+        value = obj;
+    }
+    if (Array.isArray(value)) {
+        const result = [];
+        for (const element of value) {
+            const converted = convertToPrintable(element);
+            if (converted !== undefined)
+                result.push(converted);
+        }
+        return result.length === 0 ? undefined : result;
+    }
+    const keys = Object.keys(value);
+    if (keys.length === 0)
+        return;
+    let added = false;
+    const newValue: {[key: string]: any} = {};
+    for (const key of keys) {
+        const converted = convertToPrintable(value[key]);
+        if (converted !== undefined) {
+            newValue[key] = converted;
+            added = true;
+        }
+    }
+    return added ? newValue : undefined;
+}
+
+function assertNever(v: never): never {
+    throw new Error(`unexpected value '${v}'`);
 }

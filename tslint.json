@@ -114,7 +114,7 @@
       "singleline": "never",
       "multiline": "always"
     }],
-    "triple-equals": [true, "allow-null-check"],
+    "triple-equals": [true, "allow-undefined-check"],
     "typedef-whitespace": [true, {
       "call-signature": "nospace",
       "index-signature": "nospace",
