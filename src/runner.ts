@@ -7,7 +7,7 @@ import { lint } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 
-export const enum CommandKind {
+export const enum CommandName {
     Lint = 'lint',
     Verify = 'verify',
     Show = 'show',
@@ -22,30 +22,30 @@ export const enum Format {
 }
 
 export interface LintCommand {
-    command: CommandKind.Lint;
+    command: CommandName.Lint;
     files: string[];
     exclude: string[];
     project: string | undefined;
 }
 
 export interface TestCommand {
-    command: CommandKind.Test;
+    command: CommandName.Test;
     files: string[];
 }
 
 export interface VerifyCommand {
-    command: CommandKind.Verify;
+    command: CommandName.Verify;
     files: string[];
 }
 
 export interface ShowCommand {
-    command: CommandKind.Show;
+    command: CommandName.Show;
     file: string;
     format: Format | undefined;
 }
 
 export interface InitCommand {
-    command: CommandKind.Init;
+    command: CommandName.Init;
     directories: string[];
     format: Format | undefined;
     root: boolean | undefined;
@@ -55,15 +55,15 @@ export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | 
 
 export function run(command: Command): boolean {
     switch (command.command) {
-        case CommandKind.Lint:
+        case CommandName.Lint:
             return runLint(command);
-        case CommandKind.Init:
+        case CommandName.Init:
             return runInit(command);
-        case CommandKind.Verify:
+        case CommandName.Verify:
             return runVerify(command);
-        case CommandKind.Show:
+        case CommandName.Show:
             return runShow(command);
-        case CommandKind.Test:
+        case CommandName.Test:
             return runTest(command);
         default:
             return assertNever(command);

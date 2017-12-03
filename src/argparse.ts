@@ -1,4 +1,4 @@
-import { Command, CommandKind, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand, Format } from './runner';
+import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand, Format } from './runner';
 
 export function parseArguments(args: string[]): Command {
     args = args.map(trimSingleQuotes);
@@ -6,18 +6,18 @@ export function parseArguments(args: string[]): Command {
     if (args.length === 0)
         throw new Error('expected subcommand');
 
-    const command = <CommandKind>args[0];
+    const command = <CommandName>args[0];
     args = args.slice(1);
     switch (command) {
-        case CommandKind.Lint:
+        case CommandName.Lint:
             return parseLintCommand(args);
-        case CommandKind.Init:
+        case CommandName.Init:
             return parseInitCommand(args);
-        case CommandKind.Test:
+        case CommandName.Test:
             return parseTestCommand(args);
-        case CommandKind.Show:
+        case CommandName.Show:
             return parseShowCommand(args);
-        case CommandKind.Verify:
+        case CommandName.Verify:
             return parseVerifyCommand(args);
         default:
             return assertNever(command, `Invalid subcommand '${command}'`);
@@ -26,7 +26,7 @@ export function parseArguments(args: string[]): Command {
 
 function parseLintCommand(args: string[]): LintCommand {
     const result: LintCommand = {
-        command: CommandKind.Lint,
+        command: CommandName.Lint,
         files: [],
         exclude: [],
         project: undefined,
@@ -58,7 +58,7 @@ function parseLintCommand(args: string[]): LintCommand {
 
 function parseTestCommand(args: string[]): TestCommand {
     const result: TestCommand = {
-        command: CommandKind.Test,
+        command: CommandName.Test,
         files: [],
     };
 
@@ -104,7 +104,7 @@ function parseShowCommand(args: string[]): ShowCommand {
         case 1:
             return {
                 format,
-                command: CommandKind.Show,
+                command: CommandName.Show,
                 file: files[0],
             };
         default:
@@ -114,7 +114,7 @@ function parseShowCommand(args: string[]): ShowCommand {
 
 function parseInitCommand(args: string[]): InitCommand {
     const result: InitCommand = {
-        command: CommandKind.Init,
+        command: CommandName.Init,
         directories: [],
         format: undefined,
         root: undefined,
@@ -146,7 +146,7 @@ function parseInitCommand(args: string[]): InitCommand {
 
 function parseVerifyCommand(args: string[]): VerifyCommand {
     const result: VerifyCommand = {
-        command: CommandKind.Verify,
+        command: CommandName.Verify,
         files: [],
     };
 
