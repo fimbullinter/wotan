@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install dependencies
+          command: yarn
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: Compile
+          command: npm run compile
+      - run:
+          name: Lint
+          command: npm run lint
+#      - run:
+#          name: Test with Coverage
+#          command: npm run coverage
+#      - run:
+#          name: Report code coverage
+#          command: 'npm run report-coverage'
