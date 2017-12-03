@@ -30,6 +30,7 @@ function parseLintCommand(args: string[]): LintCommand {
         files: [],
         exclude: [],
         project: undefined,
+        format: undefined,
     };
 
     outer: for (let i = 0; i < args.length; ++i) {
@@ -42,6 +43,10 @@ function parseLintCommand(args: string[]): LintCommand {
             case '-e':
             case '--exclude':
                 result.exclude.push(expectStringArgument(args, ++i, arg));
+                break;
+            case '-f':
+            case '--formatter':
+                result.format = expectStringArgument(args, ++i, arg);
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1));

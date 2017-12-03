@@ -7,6 +7,7 @@ import { lint } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
+import { loadFormatter } from './format';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -27,6 +28,7 @@ export interface LintCommand {
     files: string[];
     exclude: string[];
     project: string | undefined;
+    format: string | undefined;
 }
 
 export interface TestCommand {
@@ -80,7 +82,7 @@ function runLint(options: LintCommand): boolean {
             absolute: true,
         }));
     checkFilesExist(options.files, options.exclude, files);
-    let failures = false;
+    const failures = [];
     let dir: string | undefined;
     let config: Configuration | undefined;
     for (const file of files) {
@@ -94,13 +96,11 @@ function runLint(options: LintCommand): boolean {
             continue;
         const content = fs.readFileSync(file, 'utf8');
         const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.ESNext, true);
-        const result = lint(sourceFile, effectiveConfig);
-        if (result.length !== 0) {
-            failures = true;
-            console.log(result);
-        }
+        failures.push(...lint(sourceFile, effectiveConfig));
     }
-    return !failures;
+    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
+    console.log(formatter.format(failures));
+    return failures.length === 0;
 }
 
 /** Ensure that all non-pattern arguments, that are not excluded, matched  */

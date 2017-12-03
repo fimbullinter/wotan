@@ -38,6 +38,16 @@ export interface RuleFailure {
     // TODO fix?: ???
 }
 
+export namespace Failure {
+    export function compare(a: Failure, b: Failure): number {
+        return a.fileName === b.fileName
+            ? a.start - b.start
+            : a.fileName < b.fileName
+                ? -1
+                : 1;
+    }
+}
+
 export interface Failure extends RuleFailure {
     fileName: string;
     ruleName: string;
