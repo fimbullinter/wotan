@@ -2,7 +2,7 @@ import * as glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as ts from 'typescript';
-import { Configuration, findConfiguration, reduceConfigurationForFile } from './configuration';
+import { Configuration, findConfiguration, reduceConfigurationForFile, RawConfig } from './configuration';
 import { lint } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
@@ -48,6 +48,7 @@ export interface InitCommand {
     command: CommandKind.Init;
     directories: string[];
     format: Format | undefined;
+    root: boolean | undefined;
 }
 
 export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | TestCommand;
@@ -100,8 +101,20 @@ function runLinter(options: LintCommand): boolean {
     return failures;
 }
 
-function runInit(_options: InitCommand): boolean {
-    return true;
+function runInit(options: InitCommand): boolean {
+    const filename = `.wotanrc.${options.format === undefined ? 'yaml' : options.format}`;
+    const dirs = options.directories.length === 0 ? [process.cwd()] : options.directories;
+    let success = true;
+    for (const dir of dirs) {
+        const fullPath = path.join(dir, filename);
+        if (fs.existsSync(fullPath)) {
+            console.error(`'${fullPath}' already exists.`);
+            success = false;
+        } else {
+            fs.writeFileSync(fullPath, format<RawConfig>({extends: 'wotan:recommended', root: options.root}, options.format));
+        }
+    }
+    return success;
 }
 
 function runVerify(_options: VerifyCommand): boolean {
@@ -111,7 +124,7 @@ function runVerify(_options: VerifyCommand): boolean {
 function runShow(options: ShowCommand): boolean {
     const config = findConfiguration(options.file);
     if (config === undefined) {
-        console.log(`Could not find configuration for '${options.file}'.`);
+        console.error(`Could not find configuration for '${options.file}'.`);
         return false;
     }
     console.log(format(reduceConfigurationForFile(config, options.file), options.format));
@@ -122,7 +135,7 @@ function runTest(_options: TestCommand): boolean {
     return true;
 }
 
-function format(value: any, fmt = Format.Yaml): string {
+function format<T = any>(value: T, fmt = Format.Yaml): string {
     value = convertToPrintable(value);
     switch (fmt) {
         case Format.Json:
