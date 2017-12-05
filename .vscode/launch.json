@@ -10,7 +10,7 @@
             "name": "Launch Program",
             "program": "${workspaceFolder}/lib/cli.js",
             "args": [
-              "src/cli.ts"
+              "lint", "src/**/*.ts", "--fix"
             ],
             "outputCapture": "std",
             "outFiles": [

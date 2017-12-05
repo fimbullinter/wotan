@@ -2,7 +2,7 @@ import { Failure } from './linter';
 import * as resolve from 'resolve';
 
 export interface Formatter {
-    format(failures: Failure[]): string;
+    format(failures: Failure[], fixed: number): string;
 }
 
 interface FormatterConstructor {

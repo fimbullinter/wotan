@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import { Configuration, findConfiguration, reduceConfigurationForFile, RawConfig } from './configuration';
-import { lint } from './linter';
+import { lint, lintAndFix } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
@@ -29,6 +29,7 @@ export interface LintCommand {
     exclude: string[];
     project: string | undefined;
     format: string | undefined;
+    fix: boolean;
 }
 
 export interface TestCommand {
@@ -85,6 +86,7 @@ function runLint(options: LintCommand): boolean {
     const failures = [];
     let dir: string | undefined;
     let config: Configuration | undefined;
+    let totalFixes = 0;
     for (const file of files) {
         const dirname = path.dirname(file);
         if (dir !== dirname) {
@@ -95,11 +97,23 @@ function runLint(options: LintCommand): boolean {
         if (effectiveConfig === undefined)
             continue;
         const content = fs.readFileSync(file, 'utf8');
-        const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.ESNext, true);
-        failures.push(...lint(sourceFile, effectiveConfig));
+        let sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.ESNext, true);
+        if (options.fix) {
+            let updatedContent: string | undefined;
+            const fixed = lintAndFix(sourceFile, effectiveConfig, (newContent, range) => {
+                updatedContent = newContent;
+                return sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
+            });
+            failures.push(...fixed.failures);
+            totalFixes += fixed.fixes;
+            if (updatedContent !== undefined)
+                fs.writeFileSync(file, updatedContent, 'utf8');
+        } else {
+            failures.push(...lint(sourceFile, effectiveConfig));
+        }
     }
     const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
-    console.log(formatter.format(failures));
+    console.log(formatter.format(failures, totalFixes));
     return failures.length === 0;
 }
 
