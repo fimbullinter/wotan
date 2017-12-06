@@ -82,6 +82,12 @@ interface FixResult {
     range: ts.TextChangeRange;
 }
 
+/**
+ * Tries to apply all fixes. The replacements of all fixes are sorted by index ascending.
+ * They are then applied in order. If a a replacement overlaps (or touches) the range of the previous replacement,
+ * the process rolls back to the state before the first replacement of the offending fix was applied. The replacements
+ * of this fix are not applied again.
+ */
 function applyFixes(source: string, fixes: Fix[]): FixResult {
     interface FixWithState extends Fix {
         state: Record<'position' | 'index' | 'length', number> | undefined;
@@ -107,10 +113,11 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
     for (let i = 0; i < replacements.length; ++i) {
         const replacement = replacements[i];
         if (replacement.fix.skip)
-            continue;
+            continue; // there was a conflict, don't use replacements of this fix
         if (replacement.start <= position) {
-            // rollback
+            // ranges overlap (or have touching boundaries) -> don't fix to prevent unspecified behavior
             if (replacement.fix.state !== undefined) {
+                // rollback to state before the first replacement of the fix was applied
                 output = output.substring(0, replacement.fix.state.length);
                 ({position, index: i} = replacement.fix.state);
             }
@@ -118,9 +125,11 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
             --fixed;
             continue;
         }
+        // only save the current state if the fix contains more replacements and there isn't already a state
         if (replacement.fix.replacements.length !== 1 && replacement.fix.state === undefined)
             replacement.fix.state = {position, index: i, length: output.length};
         if (position === -1) {
+            // we are about to apply the first fix
             range.span.start = replacement.start;
             output = source.substring(0, replacement.start);
         } else {
@@ -129,6 +138,8 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
         output += replacement.text;
         position = replacement.end;
     }
+    output += source.substring(position);
+
     range.span.length = position - range.span.start;
     range.newLength = range.span.length + output.length - source.length;
     return {
