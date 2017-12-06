@@ -18,29 +18,27 @@ export interface LintAndFixResult {
 export function lintAndFix(
     file: ts.SourceFile,
     config: EffectiveConfig,
+    iterations: number = 10,
     updateFile: (content: string, range: ts.TextChangeRange) => ts.SourceFile,
 ): LintAndFixResult {
-    let wasFixed = true;
     let totalFixes = 0;
-    let failures: Failure[];
-    for (let i = 0; i < 10 && wasFixed; ++i) {
-        failures = getFailures(file, config);
-        const fixes = failures.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
-        if (fixes.length === 0) {
-            wasFixed = false;
+    let failures = getFailures(file, config);
+    for (let i = 0; i < iterations; ++i) {
+        if (failures.length === 0)
             break;
-        }
+        const fixes = failures.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
+        if (fixes.length === 0)
+            break;
         const fixed = applyFixes(file.text, fixes);
-        if (fixed.fixed === 0) {
-            wasFixed = false;
-        } else {
-            totalFixes += fixed.fixed;
-            file = updateFile(fixed.result, fixed.range);
-        }
+        if (fixed.fixed === 0)
+            break;
+        totalFixes += fixed.fixed;
+        file = updateFile(fixed.result, fixed.range);
+        failures = getFailures(file, config);
     }
     return {
+        failures,
         fixes: totalFixes,
-        failures: wasFixed ? getFailures(file, config) : failures!,
     };
 }
 

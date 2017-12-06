@@ -29,7 +29,7 @@ export interface LintCommand {
     exclude: string[];
     project: string | undefined;
     format: string | undefined;
-    fix: boolean;
+    fix: boolean | number;
 }
 
 export interface TestCommand {
@@ -100,7 +100,7 @@ function runLint(options: LintCommand): boolean {
         let sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.ESNext, true);
         if (options.fix) {
             let updatedContent: string | undefined;
-            const fixed = lintAndFix(sourceFile, effectiveConfig, (newContent, range) => {
+            const fixed = lintAndFix(sourceFile, effectiveConfig, options.fix === true ? undefined : options.fix, (newContent, range) => {
                 updatedContent = newContent;
                 return sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
             });

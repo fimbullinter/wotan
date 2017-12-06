@@ -50,7 +50,7 @@ function parseLintCommand(args: string[]): LintCommand {
                 result.format = expectStringArgument(args, ++i, arg);
                 break;
             case '--fix':
-                ({index: i, argument: result.fix} = parseOptionalBoolean(args, i));
+                ({index: i, argument: result.fix} = parseOptionalBooleanOrNumber(args, i));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1));
@@ -175,13 +175,30 @@ function parseVerifyCommand(args: string[]): VerifyCommand {
     return result;
 }
 
+function parseOptionalBooleanOrNumber(args: string[], index: number): {index: number, argument: boolean | number} {
+    if (index + 1 !== args.length) {
+        switch (args[index + 1]) {
+            case 'true':
+                return {index: index + 1, argument: true};
+            case 'false':
+                return {index: index + 1, argument: false};
+            default: {
+                const num = parseInt(args[index + 1], 10);
+                if (!isNaN(num))
+                    return {index: index + 1, argument: num};
+            }
+        }
+    }
+    return {index, argument: true};
+}
+
 function parseOptionalBoolean(args: string[], index: number): {index: number, argument: boolean} {
     if (index + 1 !== args.length) {
         switch (args[index + 1]) {
             case 'true':
-            return {index: index + 1, argument: true};
+                return {index: index + 1, argument: true};
             case 'false':
-            return {index: index + 1, argument: false};
+                return {index: index + 1, argument: false};
         }
     }
     return {index, argument: true};
