@@ -4,7 +4,7 @@ import * as ts from 'typescript';
 import { EffectiveConfig } from './configuration';
 
 const CORE_RULES_DIRECTORY = path.join(__dirname, 'rules');
-const RULE_CACHE = new Map<string, RuleConstructor | null>();
+const RULE_CACHE = new Map<string, typeof AbstractRule | null>();
 
 export function lint(file: ts.SourceFile, config: EffectiveConfig): Failure[] {
     return getFailures(file, config);
@@ -44,10 +44,13 @@ export function lintAndFix(
 
 function getFailures(file: ts.SourceFile, config: EffectiveConfig) {
     const result: Failure[] = [];
-    for (const [ruleName, {severity}] of config.rules) {
+    for (const [ruleName, {severity, options}] of config.rules) {
         if (severity === 'off')
             continue;
-        const rule = getRule(ruleName, config);
+        const ctor = findRule(ruleName, config.rulesDirectories);
+        if (ctor.supports !== undefined && !ctor.supports(file))
+            continue;
+        const rule = new (<RuleConstructor><{}>ctor)(options, config.settings);
         for (const failure of rule.apply(file))
             result.push({
                 ruleName,
@@ -148,11 +151,16 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
 }
 
 interface RuleConstructor {
-    new(options: any, settings: Map<string, any>): Rule;
+    new(options: any, settings: Map<string, any>): AbstractRule;
 }
 
-interface Rule {
-    apply(sourceFile: ts.SourceFile): RuleFailure[];
+export abstract class AbstractRule {
+    public static supports?(sourceFile: ts.SourceFile): boolean;
+    public static validateConfig?(config: any): string[] | undefined;
+
+    constructor(protected options: any, protected settings: Map<string, any>) {}
+
+    public abstract apply(sourceFile: ts.SourceFile): RuleFailure[];
 }
 
 export interface RuleFailure {
@@ -200,13 +208,7 @@ export interface Failure {
     fix: Fix | undefined;
 }
 
-function getRule(name: string, config: EffectiveConfig) {
-    const ctor = findRule(name, config.rulesDirectories);
-    const options = config.rules.get(name)!.options;
-    return new ctor(options, config.settings);
-}
-
-function findRule(name: string, rulesDirectories: EffectiveConfig['rulesDirectories']): RuleConstructor {
+function findRule(name: string, rulesDirectories: EffectiveConfig['rulesDirectories']): typeof AbstractRule {
     const slashIndex = name.lastIndexOf('/');
     if (slashIndex === -1) {
         const ctor = loadCachedRule(path.join(CORE_RULES_DIRECTORY, name), loadCoreRule);
@@ -236,14 +238,14 @@ function loadCachedRule(filename: string, load: typeof loadCoreRule | typeof loa
     return loaded;
 }
 
-function loadCoreRule(filename: string): RuleConstructor | undefined {
+function loadCoreRule(filename: string): typeof AbstractRule | undefined {
     filename = filename + '.js';
     if (!fs.existsSync(filename))
         return;
     return require(filename).Rule;
 }
 
-function loadCustomRule(filename: string): RuleConstructor | undefined {
+function loadCustomRule(filename: string): typeof AbstractRule | undefined {
     try {
         filename = require.resolve(filename);
     } catch {

@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
-import { RuleFailure } from '../linter';
+import { RuleFailure, AbstractRule } from '../linter';
 
-export class Rule {
+export class Rule extends AbstractRule {
     public apply(sourceFile: ts.SourceFile): RuleFailure[] {
         if (sourceFile.end === 0 || sourceFile.end === 1 && sourceFile.text[0] === '\UFEFF' || sourceFile.text[sourceFile.end - 1] === '\n')
             return [];
