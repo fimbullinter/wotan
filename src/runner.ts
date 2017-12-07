@@ -173,8 +173,11 @@ function getFilesAndProgram(options: LintCommand): {files: string[], program?: t
     }
     const program = createProgram(tsconfig);
     if (options.files.length === 0) {
+        const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
         files = program.getSourceFiles()
-            .filter((f) => program.isSourceFileFromExternalLibrary(f))
+            .filter(
+                (f) => path.relative(libDirectory, f.fileName) !== path.basename(f.fileName) && !program.isSourceFileFromExternalLibrary(f),
+            )
             .map((f) => f.fileName);
         if (options.exclude.length !== 0) {
             const exclude = options.exclude.map((p) => new Minimatch(path.resolve(p), {dot: true}));
