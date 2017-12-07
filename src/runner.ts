@@ -75,18 +75,12 @@ export function run(command: Command): boolean {
 }
 
 function runLint(options: LintCommand): boolean {
-    // TODO findup tsconfig.json
-    const files = [];
-    for (const pattern of options.files)
-        files.push(...glob.sync(pattern, {
-            ignore: options.exclude,
-            absolute: true,
-        }));
-    checkFilesExist(options.files, options.exclude, files);
+    let {files, program} = getFilesAndProgram(options);
     const failures = [];
     let dir: string | undefined;
     let config: Configuration | undefined;
     let totalFixes = 0;
+    const fixedFiles = new Map<string, string>();
     for (const file of files) {
         const dirname = path.dirname(file);
         if (dir !== dirname) {
@@ -96,37 +90,165 @@ function runLint(options: LintCommand): boolean {
         const effectiveConfig = config && reduceConfigurationForFile(config, file);
         if (effectiveConfig === undefined)
             continue;
-        const content = fs.readFileSync(file, 'utf8');
-        let sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.ESNext, true);
+        let sourceFile = program === undefined
+            ? ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.ESNext, true)
+            : program.getSourceFile(file)!;
         if (options.fix) {
-            let updatedContent: string | undefined;
-            const fixed = lintAndFix(sourceFile, effectiveConfig, (newContent, range) => {
-                updatedContent = newContent;
-                sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
-                return {file: sourceFile};
-            });
+            const fixed = lintAndFix(
+                sourceFile,
+                effectiveConfig,
+                (content, range) => {
+                    fixedFiles.set(file, content);
+                    if (program === undefined) {
+                        sourceFile = ts.updateSourceFile(sourceFile, content, range);
+                        return {file: sourceFile};
+                    }
+                    program = updateProgram(program, fixedFiles);
+                    sourceFile = program.getSourceFile(file);
+                    return {program, file: sourceFile};
+                },
+                options.fix === true ? undefined : options.fix,
+                program,
+            );
             failures.push(...fixed.failures);
             totalFixes += fixed.fixes;
-            if (updatedContent !== undefined)
-                fs.writeFileSync(file, updatedContent, 'utf8');
         } else {
-            failures.push(...lint(sourceFile, effectiveConfig));
+            failures.push(...lint(sourceFile, effectiveConfig, program));
         }
     }
+    if (options.fix && fixedFiles.size !== 0)
+        for (const [file, content] of fixedFiles)
+            fs.writeFileSync(file, content, 'utf8');
+
     const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
     console.log(formatter.format(failures, totalFixes));
     return failures.length === 0;
 }
 
+function updateProgram(oldProgram: ts.Program, fixed: Map<string, string>): ts.Program {
+    const hostBackend = ts.createCompilerHost(oldProgram.getCompilerOptions(), true);
+    const host: ts.CompilerHost = {
+        getSourceFile(fileName, languageVersion) {
+            let content = fixed.get(fileName);
+            if (content === undefined) {
+                const file = oldProgram.getSourceFile(fileName);
+                if (file !== undefined)
+                    content = file.text;
+            }
+            return content !== undefined
+                ? ts.createSourceFile(fileName, content, languageVersion, true)
+                : hostBackend.getSourceFile(fileName, languageVersion);
+        },
+        getDefaultLibFileName: hostBackend.getDefaultLibFileName,
+        getDefaultLibLocation: hostBackend.getDefaultLibLocation,
+        writeFile() {},
+        getCurrentDirectory: process.cwd,
+        getDirectories: hostBackend.getDirectories,
+        getCanonicalFileName: hostBackend.getCanonicalFileName,
+        useCaseSensitiveFileNames: hostBackend.useCaseSensitiveFileNames,
+        getNewLine: hostBackend.getNewLine,
+        fileExists: hostBackend.fileExists,
+        readFile: hostBackend.readFile,
+        resolveModuleNames: hostBackend.resolveModuleNames,
+        resolveTypeReferenceDirectives: hostBackend.resolveTypeReferenceDirectives,
+    };
+
+    return ts.createProgram(oldProgram.getRootFileNames(), oldProgram.getCompilerOptions(), host, oldProgram);
+}
+
+function getFilesAndProgram(options: LintCommand): {files: string[], program?: ts.Program} {
+    let tsconfig: string | undefined;
+    if (options.project !== undefined) {
+        tsconfig = path.resolve(checkConfigDirectory(options.project));
+    } else if (options.files.length === 0) {
+        tsconfig = findupTsconfig();
+    }
+    let files: string[];
+    if (tsconfig === undefined) {
+        files = [];
+        for (const pattern of options.files)
+            files.push(...glob.sync(pattern, {ignore: options.exclude, absolute: true}));
+        checkFilesExist(options.files, options.exclude, files, 'does not exist');
+        return { files };
+    }
+    const program = createProgram(tsconfig);
+    if (options.files.length === 0) {
+        files = program.getSourceFiles()
+            .filter((f) => program.isSourceFileFromExternalLibrary(f))
+            .map((f) => f.fileName);
+        if (options.exclude.length !== 0) {
+            const exclude = options.exclude.map((p) => new Minimatch(path.resolve(p), {dot: true}));
+            files = files.filter((f) => exclude.some((e) => e.match(f)));
+        }
+    } else {
+        files = program.getSourceFiles().map((f) => f.fileName);
+        const patterns = options.files.map((p) => new Minimatch(path.resolve(p)));
+        const exclude = options.exclude.map((p) => new Minimatch(path.resolve(p)));
+        files = files.filter((f) => patterns.some((p) => p.match(f)) && !exclude.some((e) => e.match(f)));
+        checkFilesExist(options.files, options.exclude, files, 'is not included in the project');
+    }
+    return {files, program};
+}
+
+function findupTsconfig(): string {
+    let directory = process.cwd();
+    while (true) {
+        const fullPath = path.join(directory, 'tsconfig.json');
+        if (fs.existsSync(fullPath))
+            return fullPath;
+        const prev = directory;
+        directory = path.dirname(directory);
+        if (directory === prev)
+            throw new Error(`Cannot find tsconfig.json for current directory.`);
+    }
+}
+
+function createProgram(configFile: string): ts.Program {
+    const config = ts.readConfigFile(configFile, ts.sys.readFile);
+    if (config.error !== undefined)
+        throw new Error(ts.formatDiagnostics([config.error], {
+            getCanonicalFileName: (f) => f,
+            getCurrentDirectory: process.cwd,
+            getNewLine: () => '\n',
+        }));
+    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configFile), {noEmit: true});
+    if (parsed.errors !== undefined) {
+        // ignore 'TS18003: No inputs were found in config file ...'
+        const errors = parsed.errors.filter((d) => d.code !== 18003);
+        if (errors.length !== 0)
+            throw new Error(ts.formatDiagnostics(errors, {
+                getCanonicalFileName: (f) => f,
+                getCurrentDirectory: process.cwd,
+                getNewLine: () => '\n',
+            }));
+    }
+    return ts.createProgram(parsed.fileNames, parsed.options, ts.createCompilerHost(parsed.options, true));
+}
+
+function checkConfigDirectory(fileOrDirName: string): string {
+    let stat: fs.Stats;
+    try {
+        stat = fs.statSync(fileOrDirName);
+    } catch {
+        throw new Error(`The specified path does not exist: '${fileOrDirName}'`);
+    }
+    if (stat.isDirectory()) {
+        fileOrDirName = path.join(fileOrDirName, 'tsconfig.json');
+        if (!fs.existsSync(fileOrDirName))
+            throw new Error(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
+    }
+    return fileOrDirName;
+}
+
 /** Ensure that all non-pattern arguments, that are not excluded, matched  */
-function checkFilesExist(patterns: string[], ignore: string[], matches: string[]) {
-    patterns = patterns.filter((p) => !glob.hasMagic(p));
+function checkFilesExist(patterns: string[], ignore: string[], matches: string[], errorSuffix: string) {
+    patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(p));
     if (patterns.length === 0)
         return;
-    const exclude = ignore.map((p) => new Minimatch(p, {dot: true}));
+    const exclude = ignore.map((p) => new Minimatch(path.resolve(p), {dot: true}));
     for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
-        if (!matches.some(createMinimatchFilter(path.resolve(filename))))
-            throw new Error(`'${filename}' does not exist.`);
+        if (!matches.some(createMinimatchFilter(filename)))
+            throw new Error(`'${filename}' ${errorSuffix}.`);
 }
 
 function runInit(options: InitCommand): boolean {
