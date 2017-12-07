@@ -7,7 +7,7 @@
     "compile": "tsc -p .",
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p .",
-    "lint:wotan": "node lib/cli lint 'src/**/*.ts'",
+    "lint:wotan": "node lib/cli lint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
