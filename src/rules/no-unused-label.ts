@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary } from 'tsutils';
-import { RuleFailure, AbstractRule } from '../linter';
+import { AbstractRule, Replacement } from '../linter';
 
 interface Label {
     node: ts.LabeledStatement;
@@ -9,23 +9,21 @@ interface Label {
 }
 
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-    public apply(sourceFile: ts.SourceFile) {
-        const failures: RuleFailure[] = [];
+    public apply() {
+        if (this.sourceFile.isDeclarationFile)
+            return;
         let labels: Label[] = [];
         const cb = (node: ts.Node): void => {
             if (isLabeledStatement(node)) {
                 if (!isIterationStatement(node.statement) && node.statement.kind !== ts.SyntaxKind.SwitchStatement) {
-                    addFailure(node);
+                    this.fail(node);
                     return cb(node.statement);
                 }
                 labels.unshift({node, name: node.label.text, used: false});
                 cb(node.statement);
                 const label = labels.shift()!;
                 if (!label.used)
-                    addFailure(label.node);
+                    this.fail(label.node);
                 return;
             }
             if (isBreakOrContinueStatement(node)) {
@@ -47,22 +45,16 @@ export class Rule extends AbstractRule {
             return ts.forEachChild(node, cb);
         };
 
-        sourceFile.statements.forEach(cb);
+        return this.sourceFile.statements.forEach(cb);
+    }
 
-        return failures;
-
-        function addFailure(statement: ts.LabeledStatement) {
-            const start = statement.label.getStart(sourceFile);
-            failures.push({
-                start,
-                end: statement.label.end,
-                message: `Unused label '${statement.label.text}'.`,
-                fix: {
-                    start,
-                    end: statement.statement.getStart(sourceFile),
-                    text: '',
-                },
-            });
-        }
+    private fail(statement: ts.LabeledStatement) {
+        const start = statement.label.getStart(this.sourceFile);
+        this.addFailure(
+            start,
+            statement.label.end,
+            `Unused label '${statement.label.text}'.`,
+            Replacement.delete(start, statement.statement.getStart(this.sourceFile)),
+        );
     }
 }

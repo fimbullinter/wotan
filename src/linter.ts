@@ -4,10 +4,10 @@ import * as ts from 'typescript';
 import { EffectiveConfig } from './configuration';
 
 const CORE_RULES_DIRECTORY = path.join(__dirname, 'rules');
-const RULE_CACHE = new Map<string, typeof AbstractRule | null>();
+const RULE_CACHE = new Map<string, RuleConstructor | null>();
 
-export function lint(file: ts.SourceFile, config: EffectiveConfig): Failure[] {
-    return getFailures(file, config);
+export function lint(file: ts.SourceFile, config: EffectiveConfig, program?: ts.Program): Failure[] {
+    return getFailures(file, config, program);
 }
 
 export interface LintAndFixResult {
@@ -15,14 +15,22 @@ export interface LintAndFixResult {
     failures: Failure[];
 }
 
+export interface UpdateFileResult {
+    file: ts.SourceFile;
+    program?: ts.Program;
+}
+
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
+
 export function lintAndFix(
     file: ts.SourceFile,
     config: EffectiveConfig,
+    updateFile: UpdateFileCallback,
     iterations: number = 10,
-    updateFile: (content: string, range: ts.TextChangeRange) => ts.SourceFile,
+    program?: ts.Program,
 ): LintAndFixResult {
     let totalFixes = 0;
-    let failures = getFailures(file, config);
+    let failures = getFailures(file, config, program);
     for (let i = 0; i < iterations; ++i) {
         if (failures.length === 0)
             break;
@@ -33,8 +41,8 @@ export function lintAndFix(
         if (fixed.fixed === 0)
             break;
         totalFixes += fixed.fixed;
-        file = updateFile(fixed.result, fixed.range);
-        failures = getFailures(file, config);
+        ({program, file} = updateFile(fixed.result, fixed.range));
+        failures = getFailures(file, config, program);
     }
     return {
         failures,
@@ -42,16 +50,19 @@ export function lintAndFix(
     };
 }
 
-function getFailures(file: ts.SourceFile, config: EffectiveConfig) {
+function getFailures(file: ts.SourceFile, config: EffectiveConfig, program: ts.Program | undefined) {
     const result: Failure[] = [];
     for (const [ruleName, {severity, options}] of config.rules) {
         if (severity === 'off')
             continue;
         const ctor = findRule(ruleName, config.rulesDirectories);
-        if (ctor.supports !== undefined && !ctor.supports(file))
+        if (program === undefined && ctor.requiresTypeInformation) {
+            console.warn(`'${ruleName}' requires type information.`);
             continue;
-        const rule = new (<RuleConstructor><{}>ctor)(options, config.settings);
-        for (const failure of rule.apply(file))
+        }
+        const rule = new ctor(file, options, config.settings, program);
+        rule.apply();
+        for (const failure of rule.getFailures())
             result.push({
                 ruleName,
                 severity: severity === 'warn' ? 'warning' : severity,
@@ -151,16 +162,40 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
 }
 
 interface RuleConstructor {
-    new(options: any, settings: Map<string, any>): AbstractRule;
+    requiresTypeInformation: boolean;
+    new(sourceFile: ts.SourceFile, options: any, settings: Map<string, any>, program?: ts.Program): AbstractRule;
 }
 
 export abstract class AbstractRule {
-    public static supports?(sourceFile: ts.SourceFile): boolean;
-    public static validateConfig?(config: any): string[] | undefined;
+    public static readonly requiresTypeInformation: boolean = false;
+    constructor(public sourceFile: ts.SourceFile, public options: any, public settings: Map<string, any>, public program?: ts.Program) {}
+    private failures: RuleFailure[] = [];
+    public validateConfig?(): string[] | string | undefined;
+    public abstract apply(): void;
 
-    constructor(protected options: any, protected settings: Map<string, any>) {}
+    public addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]) {
+        this.failures.push({start, end, message, fix});
+    }
 
-    public abstract apply(sourceFile: ts.SourceFile): RuleFailure[];
+    public addFailureAt(start: number, length: number, message: string, fix?: Replacement | Replacement[]) {
+        this.addFailure(start, start + length, message, fix);
+    }
+
+    public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | Replacement[]) {
+        this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
+    }
+
+    public getFailures(): ReadonlyArray<Readonly<RuleFailure>> {
+        return this.failures;
+    }
+}
+
+export abstract class TypedRule extends AbstractRule {
+    public static readonly requiresTypeInformation = true;
+    public program: ts.Program;
+    constructor(sourceFile: ts.SourceFile, options: any, settings: Map<string, any>, program: ts.Program) {
+        super(sourceFile, options, settings, program);
+    }
 }
 
 export interface RuleFailure {
@@ -174,6 +209,21 @@ export interface Replacement {
     start: number;
     end: number;
     text: string;
+}
+
+export abstract class Replacement {
+    public static append(pos: number, text: string): Replacement {
+        return {text, start: pos, end: 0};
+    }
+    public static delete(start: number, end: number): Replacement {
+        return {start, end, text: ''};
+    }
+    public static replaceAt(start: number, length: number, text: string): Replacement {
+        return {start, text, end: start + length};
+    }
+    public static deleteAt(start: number, length: number): Replacement {
+        return {start, end: start + length, text: ''};
+    }
 }
 
 export interface Fix {
@@ -208,7 +258,7 @@ export interface Failure {
     fix: Fix | undefined;
 }
 
-function findRule(name: string, rulesDirectories: EffectiveConfig['rulesDirectories']): typeof AbstractRule {
+function findRule(name: string, rulesDirectories: EffectiveConfig['rulesDirectories']): RuleConstructor {
     const slashIndex = name.lastIndexOf('/');
     if (slashIndex === -1) {
         const ctor = loadCachedRule(path.join(CORE_RULES_DIRECTORY, name), loadCoreRule);
@@ -238,14 +288,14 @@ function loadCachedRule(filename: string, load: typeof loadCoreRule | typeof loa
     return loaded;
 }
 
-function loadCoreRule(filename: string): typeof AbstractRule | undefined {
+function loadCoreRule(filename: string): RuleConstructor | undefined {
     filename = filename + '.js';
     if (!fs.existsSync(filename))
         return;
     return require(filename).Rule;
 }
 
-function loadCustomRule(filename: string): typeof AbstractRule | undefined {
+function loadCustomRule(filename: string): RuleConstructor | undefined {
     try {
         filename = require.resolve(filename);
     } catch {
