@@ -213,7 +213,7 @@ export interface Replacement {
 
 export abstract class Replacement {
     public static append(pos: number, text: string): Replacement {
-        return {text, start: pos, end: 0};
+        return {text, start: pos, end: pos};
     }
     public static delete(start: number, end: number): Replacement {
         return {start, end, text: ''};
