@@ -1,15 +1,7 @@
-import { Failure } from './linter';
 import * as resolve from 'resolve';
+import { AbstractFormatter, FormatterConstructor } from './types';
 
-export interface Formatter {
-    format(failures: Failure[], fixed: number): string;
-}
-
-interface FormatterConstructor {
-    new(): Formatter;
-}
-
-export function loadFormatter(name: string): Formatter {
+export function loadFormatter(name: string): AbstractFormatter {
     let formatter: FormatterConstructor | undefined;
     if (/^[a-zA-Z]+$/.test(name))
         formatter = loadCoreFormatter(name);

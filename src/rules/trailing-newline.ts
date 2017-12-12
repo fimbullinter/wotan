@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '../linter';
+import { AbstractRule, Replacement } from '../types';
 
 export class Rule extends AbstractRule {
     public apply() {

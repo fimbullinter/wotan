@@ -1,8 +1,8 @@
-import { Failure } from '../linter';
+import { Failure, AbstractFormatter } from '../types';
 import chalk from 'chalk';
 import * as path from 'path';
 
-export class Formatter {
+export class Formatter extends AbstractFormatter {
     public format(failures: Failure[], fixed: number) {
         const lines: string[] = [];
         let lastFile: string | undefined;

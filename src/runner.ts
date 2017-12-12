@@ -7,7 +7,7 @@ import { lint, lintAndFix } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
-import { loadFormatter } from './format';
+import { loadFormatter } from './formatter-loader';
 
 export const enum CommandName {
     Lint = 'lint',
