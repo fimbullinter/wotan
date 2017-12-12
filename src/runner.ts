@@ -131,20 +131,27 @@ function updateProgram(
     currentFile: ts.SourceFile,
     newContent: string,
     changeRange: ts.TextChangeRange,
+): ts.Program;
+function updateProgram(
+    oldProgram: ts.Program | undefined,
+    fixed: Map<string, string>,
+    currentFile: ts.SourceFile,
+    newContent: string,
+    changeRange: ts.TextChangeRange,
 ): ts.Program {
-    const hostBackend = ts.createCompilerHost(oldProgram.getCompilerOptions(), true);
+    const hostBackend = ts.createCompilerHost(oldProgram!.getCompilerOptions(), true);
     const host: ts.CompilerHost = {
         getSourceFile(fileName, languageVersion, _onError, shouldCreateNewSourceFile) {
             if (!shouldCreateNewSourceFile) {
                 if (ts.sys.resolvePath(fileName) === currentFile.fileName)
                     return ts.updateSourceFile(currentFile, newContent, changeRange);
-                const sourceFile = oldProgram.getSourceFile(fileName);
+                const sourceFile = oldProgram && oldProgram.getSourceFile(fileName);
                 if (sourceFile !== undefined)
                     return sourceFile;
             }
             let content = fixed.get(fileName);
             if (content === undefined) {
-                const file = oldProgram.getSourceFile(fileName);
+                const file = oldProgram && oldProgram.getSourceFile(fileName);
                 if (file !== undefined)
                     content = file.text;
             }
@@ -162,11 +169,14 @@ function updateProgram(
         getNewLine: hostBackend.getNewLine,
         fileExists: hostBackend.fileExists,
         readFile: hostBackend.readFile,
+        realpath: hostBackend.realpath,
         resolveModuleNames: hostBackend.resolveModuleNames,
         resolveTypeReferenceDirectives: hostBackend.resolveTypeReferenceDirectives,
     };
 
-    return ts.createProgram(oldProgram.getRootFileNames(), oldProgram.getCompilerOptions(), host, oldProgram);
+    const program = ts.createProgram(oldProgram!.getRootFileNames(), oldProgram!.getCompilerOptions(), host, oldProgram);
+    oldProgram = undefined; // remove reference to avoid capturing in closure
+    return program;
 }
 
 function getFilesAndProgram(options: LintCommand): {files: string[], program?: ts.Program} {

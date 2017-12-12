@@ -108,6 +108,7 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
     let fixed = fixes.length;
     const replacements = [];
     for (const fix of fixes) {
+        // TODO combine adjacent replacements
         const state: FixWithState = {replacements: fix.replacements, skip: false, state: undefined};
         for (const replacement of fix.replacements)
             replacements.push({fix: state, ...replacement});
