@@ -1,5 +1,6 @@
 import { Failure } from '../linter';
 import chalk from 'chalk';
+import * as path from 'path';
 
 export class Formatter {
     public format(failures: Failure[], fixed: number) {
@@ -14,7 +15,7 @@ export class Formatter {
                 if (lastFile !== undefined)
                     lines.push('');
                 lastFile = failure.fileName;
-                lines.push(failure.fileName + chalk.hidden(':' + position));
+                lines.push(path.normalize(failure.fileName) + chalk.hidden(':' + position));
             }
             const positionColor = failure.severity === 'warning' ? chalk.blue : chalk.red;
             lines.push(
@@ -23,7 +24,7 @@ export class Formatter {
             );
         }
         if (fixed !== 0) {
-            if (lines.length !== 0)
+            if (failures.length !== 0)
                 lines.push('');
             lines.push(`Automatically fixed ${fixed} failure${fixed === 1 ? '' : 's'}.`);
         }

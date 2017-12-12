@@ -96,7 +96,7 @@ interface FixResult {
 
 /**
  * Tries to apply all fixes. The replacements of all fixes are sorted by index ascending.
- * They are then applied in order. If a a replacement overlaps (or touches) the range of the previous replacement,
+ * They are then applied in order. If a replacement overlaps (or touches) the range of the previous replacement,
  * the process rolls back to the state before the first replacement of the offending fix was applied. The replacements
  * of this fix are not applied again.
  */
@@ -108,8 +108,7 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
     let fixed = fixes.length;
     const replacements = [];
     for (const fix of fixes) {
-        // TODO combine adjacent replacements
-        const state: FixWithState = {replacements: fix.replacements, skip: false, state: undefined};
+        const state: FixWithState = {replacements: combineReplacements(fix.replacements), skip: false, state: undefined};
         for (const replacement of fix.replacements)
             replacements.push({fix: state, ...replacement});
     }
@@ -122,7 +121,7 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
     };
     let output = '';
     let position = -1;
-    replacements.sort((a, b) => a.start - b.start);
+    replacements.sort(compareReplacements);
     for (let i = 0; i < replacements.length; ++i) {
         const replacement = replacements[i];
         if (replacement.fix.skip)
@@ -160,6 +159,41 @@ function applyFixes(source: string, fixes: Fix[]): FixResult {
         range,
         result: output,
     };
+}
+
+function compareReplacements(a: Replacement, b: Replacement): number {
+    return a.start - b.start || a.end - b.end;
+}
+
+/** Combine adjacent replacements to avoid sorting replacements of other fixes between them. */
+function combineReplacements(replacements: Replacement[]): Replacement[] {
+    if (replacements.length === 1)
+        return replacements;
+    replacements = replacements.slice().sort(compareReplacements);
+    const result = [];
+    let current = replacements[0];
+    let wasInsertion = current.start === current.end;
+    for (let i = 1; i < replacements.length; ++i) {
+        const replacement = replacements[i];
+        if (current.end > replacement.start)
+            throw new Error('Replacements of fix overlap.');
+        const isInsertion = replacement.start === replacement.end;
+        if (isInsertion && wasInsertion)
+            throw new Error('Multiple insertion replacements at the same position.');
+        wasInsertion = isInsertion;
+        if (current.end === replacement.start) {
+            current = {
+                start: current.start,
+                end: replacement.end,
+                text: current.text + replacement.text,
+            };
+        } else {
+            result.push(current);
+            current = replacement;
+        }
+    }
+    result.push(current);
+    return result;
 }
 
 interface RuleConstructor {
