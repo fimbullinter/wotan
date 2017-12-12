@@ -103,7 +103,7 @@ function runLint(options: LintCommand): boolean {
                         sourceFile = ts.updateSourceFile(sourceFile, content, range);
                         return {file: sourceFile};
                     }
-                    program = updateProgram(program, fixedFiles);
+                    program = updateProgram(program, fixedFiles, sourceFile, content, range);
                     sourceFile = program.getSourceFile(file);
                     return {program, file: sourceFile};
                 },
@@ -125,10 +125,23 @@ function runLint(options: LintCommand): boolean {
     return failures.length === 0;
 }
 
-function updateProgram(oldProgram: ts.Program, fixed: Map<string, string>): ts.Program {
+function updateProgram(
+    oldProgram: ts.Program,
+    fixed: Map<string, string>,
+    currentFile: ts.SourceFile,
+    newContent: string,
+    changeRange: ts.TextChangeRange,
+): ts.Program {
     const hostBackend = ts.createCompilerHost(oldProgram.getCompilerOptions(), true);
     const host: ts.CompilerHost = {
-        getSourceFile(fileName, languageVersion) {
+        getSourceFile(fileName, languageVersion, _onError, shouldCreateNewSourceFile) {
+            if (!shouldCreateNewSourceFile) {
+                if (ts.sys.resolvePath(fileName) === currentFile.fileName)
+                    return ts.updateSourceFile(currentFile, newContent, changeRange);
+                const sourceFile = oldProgram.getSourceFile(fileName);
+                if (sourceFile !== undefined)
+                    return sourceFile;
+            }
             let content = fixed.get(fileName);
             if (content === undefined) {
                 const file = oldProgram.getSourceFile(fileName);
