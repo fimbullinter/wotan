@@ -7,6 +7,8 @@
       "**/CVS": true,
       "**/.DS_Store": true,
       "**/node_modules": true,
+      "**/coverage": true,
+      "**/.nyc_output": true,
       "**/*.js": {
         "when": "$(basename).ts"
       },

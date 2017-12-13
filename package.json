@@ -8,7 +8,9 @@
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p .",
     "lint:wotan": "node src/cli lint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava test/conformance",
+    "coverage": "nyc run-s test",
+    "report-coverage": "cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
@@ -40,7 +42,9 @@
     "@types/node": "^8.0.53",
     "@types/resolve": "0.0.4",
     "ava": "^0.24.0",
+    "coveralls": "^3.0.0",
     "npm-run-all": "^4.1.2",
+    "nyc": "^11.3.0",
     "tslint": "^5.8.0",
     "tslint-consistent-codestyle": "^1.10.1",
     "typescript": "^2.6.1"

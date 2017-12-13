@@ -63,3 +63,5 @@ typings/
 *.js.map
 *.d.ts
 !/src/custom-typings/*.d.ts
+/coverage
+/.nyc_output

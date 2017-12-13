@@ -22,9 +22,9 @@ jobs:
       - run:
           name: Lint
           command: npm run lint
-#      - run:
-#          name: Test with Coverage
-#          command: npm run coverage
-#      - run:
-#          name: Report code coverage
-#          command: 'npm run report-coverage'
+      - run:
+          name: Test with Coverage
+          command: npm run coverage
+      - run:
+          name: Report code coverage
+          command: 'npm run report-coverage'
