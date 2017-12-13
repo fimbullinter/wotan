@@ -8,13 +8,13 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/lib/cli.js",
+            "program": "${workspaceFolder}/src/cli.js",
             "args": [
               "lint"
             ],
             "outputCapture": "std",
             "outFiles": [
-              "${workspaceFolder}/lib/**/*.js"
+              "${workspaceFolder}/src/**/*.js"
             ],
             "sourceMaps": true
         }
