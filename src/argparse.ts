@@ -3,26 +3,24 @@ import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitComman
 export function parseArguments(args: string[]): Command {
     args = args.map(trimSingleQuotes);
 
-    if (args.length === 0)
-        throw new Error('expected subcommand');
-
     const command = <CommandName>args[0];
-    args = args.slice(1);
     switch (command) {
         case CommandName.Lint:
-            return parseLintCommand(args);
+            return parseLintCommand(args.slice(1));
         case CommandName.Init:
-            return parseInitCommand(args);
+            return parseInitCommand(args.slice(1));
         case CommandName.Test:
-            return parseTestCommand(args);
+            return parseTestCommand(args.slice(1));
         case CommandName.Show:
-            return parseShowCommand(args);
+            return parseShowCommand(args.slice(1));
         case CommandName.Verify:
-            return parseVerifyCommand(args);
+            return parseVerifyCommand(args.slice(1));
         default:
-            return assertNever(command, `Invalid subcommand '${command}'`);
+            return parseLintCommand(<AssertNever<typeof command>>args);
     }
 }
+
+type AssertNever<T extends never> = T;
 
 function parseLintCommand(args: string[]): LintCommand {
     const result: LintCommand = {
@@ -46,7 +44,7 @@ function parseLintCommand(args: string[]): LintCommand {
                 result.exclude.push(expectStringArgument(args, ++i, arg));
                 break;
             case '-f':
-            case '--formatter':
+            case '--format':
                 result.format = expectStringArgument(args, ++i, arg);
                 break;
             case '--fix':
