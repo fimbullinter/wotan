@@ -1,9 +1,9 @@
 import test from 'ava';
 import { parseArguments } from '../../src/argparse';
-import { CommandName } from '../../src/runner';
+import { CommandName, Command, Format } from '../../src/runner';
 
 test('defaults to lint command', (t) => {
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments([]),
         {
             command: CommandName.Lint,
@@ -14,7 +14,7 @@ test('defaults to lint command', (t) => {
             fix: false,
         },
     );
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['foo']),
         {
             command: CommandName.Lint,
@@ -28,7 +28,7 @@ test('defaults to lint command', (t) => {
 });
 
 test('parses lint command', (t) => {
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--format', '--project']),
         {
             command: CommandName.Lint,
@@ -41,7 +41,7 @@ test('parses lint command', (t) => {
         'treats all arguments after -- as files',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(["'lint'", "'--fix'"]),
         {
             command: CommandName.Lint,
@@ -54,7 +54,7 @@ test('parses lint command', (t) => {
         'trims single quotes',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['lint', '--fix', '-p', '.']),
         {
             command: CommandName.Lint,
@@ -67,7 +67,7 @@ test('parses lint command', (t) => {
         '--fix argument is optional',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['lint', '--fix', 'false', '-p', '.']),
         {
             command: CommandName.Lint,
@@ -80,7 +80,20 @@ test('parses lint command', (t) => {
         '--fix can be set to false',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--fix', 'true']),
+        {
+            command: CommandName.Lint,
+            files: [],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: true,
+        },
+        '--fix can be set to true',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['lint', '--fix', '10', '--project', '.']),
         {
             command: CommandName.Lint,
@@ -93,7 +106,7 @@ test('parses lint command', (t) => {
         '--fix can be set to any number',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['lint', '-e', '**/*.d.ts', '-f', 'json', '--exclude', 'node_modules/**']),
         {
             command: CommandName.Lint,
@@ -106,7 +119,7 @@ test('parses lint command', (t) => {
         '--exclude is accumulated',
     );
 
-    t.deepEqual(
+    t.deepEqual<Command>(
         parseArguments(['lint', '-f', 'json', 'foo', '--format', 'stylish', 'bar']),
         {
             command: CommandName.Lint,
@@ -124,4 +137,43 @@ test('parses lint command', (t) => {
     t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
     t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
+});
+
+test('parses show command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(['show', '-f', 'json', 'foo']),
+        {
+            command: CommandName.Show,
+            file: 'foo',
+            format: Format.Json,
+        },
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['show', 'foo']),
+        {
+            command: CommandName.Show,
+            file: 'foo',
+            format: undefined,
+        },
+        '--format is optional',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['show', '--format', 'yaml', '--', '-f']),
+        {
+            command: CommandName.Show,
+            file: '-f',
+            format: Format.Yaml,
+        },
+        '-- ends options',
+    );
+
+    t.throws(() => parseArguments(['show', '-f']), "Option '-f' expects an argument.");
+    t.throws(() => parseArguments(['show', '-f', 'foobar']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
+
+    t.throws(() => parseArguments(['show']), 'filename expected');
+    t.throws(() => parseArguments(['show', 'foo', 'bar']), 'more than one filename provided');
+
+    t.throws(() => parseArguments(['show', '--foobar']), "Unknown option '--foobar'.");
 });
