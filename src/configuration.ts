@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as resolve from 'resolve';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
-import * as multimatch from 'multimatch';
+import { Minimatch } from 'minimatch';
 
 declare global {
     interface NodeModule {
@@ -213,7 +213,7 @@ export function reduceConfigurationForFile(config: Configuration, filename: stri
 
 function reduceConfig(config: Configuration, filename: string, receiver: EffectiveConfig): EffectiveConfig | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
-    if (config.exclude !== undefined && matchesGlobs(relativeFilename, config.exclude))
+    if (config.exclude !== undefined && matchesGlobs(relativeFilename, config.exclude, false))
             return;
     for (const base of config.base)
         if (reduceConfig(base, filename, receiver) === undefined)
@@ -227,13 +227,24 @@ function reduceConfig(config: Configuration, filename: string, receiver: Effecti
     extendConfig(receiver, config);
     if (config.overrides !== undefined)
         for (const override of config.overrides)
-            if (matchesGlobs(relativeFilename, override.files))
+            if (matchesGlobs(relativeFilename, override.files, true))
                 extendConfig(receiver, override);
     return receiver;
 }
 
-function matchesGlobs(file: string, patterns: string[]): boolean {
-    return multimatch([file], patterns).length !== 0;
+function matchesGlobs(file: string, patterns: string[], matchBase: boolean): boolean {
+    let result = false;
+    for (let pattern of patterns) {
+        const negate = pattern[0] === '!';
+        if (negate)
+            pattern = pattern.substr(1);
+        const local = pattern.startsWith('./');
+        if (local)
+            pattern = pattern.substr(2);
+        if (new Minimatch(pattern, {matchBase: matchBase && !local}).match(file))
+            result = negate;
+    }
+    return result;
 }
 
 function extendRulesDirectories(receiver: Map<string, string[]>, current: Map<string, string>) {
