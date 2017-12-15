@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';
-import { lint, lintAndFix } from './linter';
+import { lintFile, lintAndFix } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
@@ -139,7 +139,7 @@ export function doLint(options: LintOptions): LintResult {
             };
         } else {
             summary = {
-                failures: lint(sourceFile, effectiveConfig, program),
+                failures: lintFile(sourceFile, effectiveConfig, program),
                 fixes: 0,
                 text: sourceFile.text,
             };

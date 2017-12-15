@@ -11,13 +11,6 @@ export interface LintAndFixFileResult {
     failures: Failure[];
 }
 
-export interface UpdateFileResult {
-    file: ts.SourceFile;
-    program?: ts.Program;
-}
-
-export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
-
 export interface RuleFailure {
     start: number;
     end: number;

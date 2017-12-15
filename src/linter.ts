@@ -1,11 +1,18 @@
 import * as ts from 'typescript';
-import { Failure, EffectiveConfiguration, UpdateFileCallback, LintAndFixFileResult } from './types';
+import { Failure, EffectiveConfiguration, LintAndFixFileResult } from './types';
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 
-export function lint(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
+export function lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
     return getFailures(file, config, program);
 }
+
+export interface UpdateFileResult {
+    file: ts.SourceFile;
+    program?: ts.Program;
+}
+
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
 
 export function lintAndFix(
     file: ts.SourceFile,
