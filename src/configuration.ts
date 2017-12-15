@@ -6,6 +6,7 @@ import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
+import { Configuration, RawConfiguration, EffectiveConfiguration } from './types';
 
 declare global {
     interface NodeModule {
@@ -15,51 +16,6 @@ declare global {
 
 export const CONFIG_EXTENSIONS = ['yaml', 'yml', 'json5', 'json', 'js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext);
-
-export type RuleSeverity = 'off' | 'warn' | 'error';
-
-export interface RuleConfig {
-    severity?: RuleSeverity;
-    options?: any;
-}
-
-export type RuleConfigValue = RuleSeverity | RuleConfig;
-
-export interface RawConfigBase {
-    rules?: {[key: string]: RuleConfigValue};
-    settings?: {[key: string]: any};
-}
-
-export interface RawOverride extends RawConfigBase {
-    files: string | string[];
-}
-
-export interface RawConfig extends RawConfigBase {
-    extends?: string | string[];
-    root?: boolean;
-    overrides?: RawOverride[];
-    rulesDirectory?: {[prefix: string]: string};
-    exclude?: string | string[];
-    processor?: string;
-}
-
-export interface BaseConfiguration {
-    rules: {[key: string]: RuleConfig} | undefined;
-    settings: {[key: string]: any} | undefined;
-}
-
-export interface Configuration extends BaseConfiguration {
-    filename: string;
-    overrides: Override[] | undefined;
-    base: Configuration[];
-    rulesDirectory: Map<string, string> | undefined;
-    processor: string | undefined;
-    exclude: string[] | undefined;
-}
-
-export interface Override extends BaseConfiguration {
-    files: string[];
-}
 
 export function findConfigurationPath(filename: string): string | undefined {
     return findupConfig(path.resolve(filename));
@@ -78,7 +34,7 @@ export function findConfiguration(filename: string): Configuration | undefined {
     return config === undefined ? undefined : parseConfigFile(readConfigFile(config), config, cascade);
 }
 
-export function readConfigFile(filename: string): RawConfig {
+export function readConfigFile(filename: string): RawConfiguration {
     switch (path.extname(filename)) {
         case '.json':
         case '.json5':
@@ -130,11 +86,11 @@ function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
             : [maybeArr];
 }
 
-export function parseConfigFile(raw: RawConfig, filename: string, cascade?: boolean): Configuration {
+export function parseConfigFile(raw: RawConfiguration, filename: string, cascade?: boolean): Configuration {
     return parseConfigWorker(raw, filename, [filename], cascade);
 }
 
-function parseConfigWorker(raw: RawConfig, filename: string, stack: string[], cascade?: boolean): Configuration {
+function parseConfigWorker(raw: RawConfiguration, filename: string, stack: string[], cascade?: boolean): Configuration {
     const dirname = path.dirname(filename);
     let base = arrayify(raw.extends).map((name) => {
         name = resolveConfigFile(name, dirname);
@@ -148,8 +104,8 @@ function parseConfigWorker(raw: RawConfig, filename: string, stack: string[], ca
             base = [parseConfigFile(readConfigFile(next), next, true), ...base];
     }
     return {
-        base,
         filename,
+        extends: base,
         overrides: raw.overrides && raw.overrides.map(mapOverride),
         rules: raw.rules && mapRules(raw.rules),
         rulesDirectory: raw.rulesDirectory && mapRulesDirectory(raw.rulesDirectory, dirname),
@@ -159,7 +115,7 @@ function parseConfigWorker(raw: RawConfig, filename: string, stack: string[], ca
     };
 }
 
-function mapOverride(raw: RawOverride): Override {
+function mapOverride(raw: RawConfiguration.Override): Configuration.Override {
     return {
         files: arrayify(raw.files),
         rules: raw.rules && mapRules(raw.rules),
@@ -174,17 +130,22 @@ function mapRulesDirectory(raw: {[prefix: string]: string}, dirname: string) {
     return result;
 }
 
-function mapRules(raw: {[name: string]: RuleConfigValue}) {
-    const result: {[name: string]: RuleConfig} = {};
+function mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
+    const result: {[name: string]: Configuration.RuleConfig} = {};
     for (const key of Object.keys(raw))
         result[key] = mapRuleConfig(raw[key]);
     return result;
 }
 
-function mapRuleConfig(value: RuleConfigValue): RuleConfig {
-    return typeof value === 'string'
-        ? { severity: value }
-        : value;
+function mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
+    if (typeof value === 'string')
+        return { severity: value === 'warn' ? 'warning' : value };
+    const result: Configuration.RuleConfig = {};
+    if ('options' in value)
+        result.options = value.options;
+    if ('severity' in value)
+        result.severity = value.severity === 'warn' ? 'warning' : value.severity;
+    return result;
 }
 
 function findupConfig(current: string): string | undefined {
@@ -207,18 +168,6 @@ function findConfigFileInDirectory(dir: string): string | undefined {
     return;
 }
 
-export interface EffectiveRuleConfig {
-    severity: RuleSeverity;
-    options: any;
-}
-
-export interface EffectiveConfig {
-    rules: Map<string, EffectiveRuleConfig>;
-    settings: Map<string, any>;
-    rulesDirectories: Map<string, string[]>;
-    processors: string[];
-}
-
 export function reduceConfigurationForFile(config: Configuration, filename: string) {
     return reduceConfig(config, path.resolve(filename), {
         rules: new Map(),
@@ -228,11 +177,11 @@ export function reduceConfigurationForFile(config: Configuration, filename: stri
     });
 }
 
-function reduceConfig(config: Configuration, filename: string, receiver: EffectiveConfig): EffectiveConfig | undefined {
+function reduceConfig(config: Configuration, filename: string, receiver: EffectiveConfiguration): EffectiveConfiguration | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
     if (config.exclude !== undefined && matchesGlobs(relativeFilename, config.exclude, false))
             return;
-    for (const base of config.base)
+    for (const base of config.extends)
         if (reduceConfig(base, filename, receiver) === undefined)
             return;
 
@@ -275,7 +224,7 @@ function extendRulesDirectories(receiver: Map<string, string[]>, current: Map<st
     });
 }
 
-function extendConfig(receiver: EffectiveConfig, {rules, settings}: Partial<BaseConfiguration>) {
+function extendConfig(receiver: EffectiveConfiguration, {rules, settings}: Partial<Configuration | Configuration.Override>) {
     if (rules !== undefined) {
         for (const key of Object.keys(rules)) {
             const prev = receiver.rules.get(key);

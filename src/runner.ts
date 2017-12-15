@@ -2,13 +2,14 @@ import * as glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as ts from 'typescript';
-import { Configuration, findConfiguration, reduceConfigurationForFile, RawConfig } from './configuration';
+import { findConfiguration, reduceConfigurationForFile } from './configuration';
 import { lint, lintAndFix } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
+import { Configuration, RawConfiguration } from './types';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -289,7 +290,7 @@ function runInit(options: InitCommand): boolean {
             console.error(`'${fullPath}' already exists.`);
             success = false;
         } else {
-            fs.writeFileSync(fullPath, format<RawConfig>({extends: 'wotan:recommended', root: options.root}, options.format));
+            fs.writeFileSync(fullPath, format<RawConfiguration>({extends: 'wotan:recommended', root: options.root}, options.format));
         }
     }
     return success;

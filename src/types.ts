@@ -106,3 +106,66 @@ export abstract class AbstractFormatter {
 export interface FormatterConstructor {
     new(): AbstractFormatter;
 }
+
+export interface RawConfiguration {
+    rules?: {[key: string]: RawConfiguration.RuleConfigValue};
+    settings?: {[key: string]: any};
+    extends?: string | string[];
+    root?: boolean;
+    overrides?: RawConfiguration.Override[];
+    rulesDirectory?: {[prefix: string]: string};
+    exclude?: string | string[];
+    processor?: string;
+}
+
+export namespace RawConfiguration {
+    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
+    export interface RuleConfig {
+        severity?: RuleSeverity;
+        options?: any;
+    }
+    export type RuleConfigValue = RuleSeverity | RuleConfig;
+    export interface Override {
+        files: string | string[];
+        rules?: {[key: string]: RawConfiguration.RuleConfigValue};
+        settings?: {[key: string]: any};
+    }
+}
+
+export interface Configuration {
+    rules: {[key: string]: Configuration.RuleConfig} | undefined;
+    settings: {[key: string]: any} | undefined;
+    filename: string;
+    overrides: Configuration.Override[] | undefined;
+    extends: Configuration[];
+    rulesDirectory: Map<string, string> | undefined;
+    processor: string | undefined;
+    exclude: string[] | undefined;
+}
+
+export namespace Configuration {
+    export type RuleSeverity = 'off' | 'warning' | 'error';
+    export interface RuleConfig {
+        severity?: RuleSeverity;
+        options?: any;
+    }
+    export interface Override {
+        rules: {[key: string]: RuleConfig} | undefined;
+        settings: {[key: string]: any} | undefined;
+        files: string[];
+    }
+}
+
+export interface EffectiveConfiguration {
+    rules: Map<string, EffectiveConfiguration.RuleConfig>;
+    settings: Map<string, any>;
+    rulesDirectories: Map<string, string[]>;
+    processors: string[];
+}
+
+export namespace EffectiveConfiguration {
+    export interface RuleConfig {
+        severity: Configuration.RuleSeverity;
+        options: any;
+    }
+}

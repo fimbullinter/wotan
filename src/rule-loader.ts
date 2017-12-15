@@ -1,5 +1,4 @@
-import { EffectiveConfig } from './configuration';
-import { RuleConstructor } from './types';
+import { RuleConstructor, EffectiveConfiguration } from './types';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -7,7 +6,7 @@ const CORE_RULES_DIRECTORY = path.join(__dirname, 'rules');
 const RULE_CACHE = new Map<string, RuleConstructor | null>();
 
 // @internal
-export function findRule(name: string, rulesDirectories: EffectiveConfig['rulesDirectories']): RuleConstructor {
+export function findRule(name: string, rulesDirectories: EffectiveConfiguration['rulesDirectories']): RuleConstructor {
     const slashIndex = name.lastIndexOf('/');
     if (slashIndex === -1) {
         const ctor = loadCachedRule(path.join(CORE_RULES_DIRECTORY, name), loadCoreRule);

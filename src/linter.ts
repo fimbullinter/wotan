@@ -1,10 +1,9 @@
 import * as ts from 'typescript';
-import { EffectiveConfig } from './configuration';
-import { Failure } from './types';
+import { Failure, EffectiveConfiguration } from './types';
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 
-export function lint(file: ts.SourceFile, config: EffectiveConfig, program?: ts.Program): Failure[] {
+export function lint(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
     return getFailures(file, config, program);
 }
 
@@ -22,7 +21,7 @@ export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) =>
 
 export function lintAndFix(
     file: ts.SourceFile,
-    config: EffectiveConfig,
+    config: EffectiveConfiguration,
     updateFile: UpdateFileCallback,
     iterations: number = 10,
     program?: ts.Program,
@@ -48,7 +47,7 @@ export function lintAndFix(
     };
 }
 
-function getFailures(file: ts.SourceFile, config: EffectiveConfig, program: ts.Program | undefined) {
+function getFailures(file: ts.SourceFile, config: EffectiveConfiguration, program: ts.Program | undefined) {
     const result: Failure[] = [];
     for (const [ruleName, {severity, options}] of config.rules) {
         if (severity === 'off')
@@ -63,7 +62,7 @@ function getFailures(file: ts.SourceFile, config: EffectiveConfig, program: ts.P
         for (const failure of rule.getFailures())
             result.push({
                 ruleName,
-                severity: severity === 'warn' ? 'warning' : severity,
+                severity,
                 message: failure.message,
                 start: {
                     position: failure.start,
