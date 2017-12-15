@@ -213,8 +213,17 @@ function getFilesAndProgram(options: LintOptions): {files: string[], program?: t
     let files: string[];
     if (tsconfig === undefined) {
         files = [];
+        const globOptions = {
+            absolute: true,
+            cache: {},
+            ignore: options.exclude,
+            nodir: true,
+            realpathCache: {},
+            statCache: {},
+            symlinks: {},
+        };
         for (const pattern of options.files)
-            files.push(...glob.sync(pattern, {ignore: options.exclude, absolute: true, nodir: true}));
+            files.push(...glob.sync(pattern, globOptions));
         files = Array.from(new Set(files)); // deduplicate files
         checkFilesExist(options.files, options.exclude, files, 'does not exist');
         return { files };
