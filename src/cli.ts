@@ -1,6 +1,14 @@
 import { parseArguments } from './argparse';
 import { run } from './runner';
+import { ConfigurationError } from './error';
 
-const args = parseArguments(process.argv.slice(2));
-if (!run(args))
-    process.exitCode = 2;
+try {
+    const args = parseArguments(process.argv.slice(2));
+    if (!run(args))
+        process.exitCode = 2;
+} catch (e) {
+    if (!(e instanceof ConfigurationError))
+        throw e;
+    console.error(e.message);
+    process.exitCode = 1;
+}

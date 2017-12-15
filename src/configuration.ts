@@ -5,6 +5,7 @@ import * as resolve from 'resolve';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import { Minimatch } from 'minimatch';
+import { ConfigurationError } from './error';
 
 declare global {
     interface NodeModule {
@@ -81,14 +82,21 @@ export function readConfigFile(filename: string): RawConfig {
     switch (path.extname(filename)) {
         case '.json':
         case '.json5':
-            return json5.parse(fs.readFileSync(filename, 'utf8'));
+            try {
+                return json5.parse(fs.readFileSync(filename, 'utf8'));
+            } catch (e) {
+                throw new ConfigurationError(`Error parsing '${filename}': ${e.message}`);
+            }
         case '.yaml':
         case '.yml':
-            return yaml.safeLoad(fs.readFileSync(filename, 'utf8'), {
-                filename,
-                schema: yaml.JSON_SCHEMA,
-                strict: true,
-            });
+            try {
+                return yaml.safeLoad(fs.readFileSync(filename, 'utf8'), {
+                    schema: yaml.JSON_SCHEMA,
+                    strict: true,
+                });
+            } catch (e) {
+                throw new ConfigurationError(`Error parsing '${filename}': ${e.message}`);
+            }
         default:
             delete require.cache[filename];
             return require(filename);
@@ -96,13 +104,22 @@ export function readConfigFile(filename: string): RawConfig {
 }
 
 export function resolveConfigFile(name: string, basedir: string): string {
-    if (name.startsWith('wotan:'))
-        return require.resolve(`./configs/${name.substr('wotan:'.length)}`);
-    return resolve.sync(name, {
-        basedir,
-        extensions: CONFIG_EXTENSIONS,
-        paths: module.paths.slice(1), // fall back to search relative to executable
-    });
+    if (name.startsWith('wotan:')) {
+        try {
+            return require.resolve(`./configs/${name.substr('wotan:'.length)}`);
+        } catch {
+            throw new ConfigurationError(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
+        }
+    }
+    try {
+        return resolve.sync(name, {
+            basedir,
+            extensions: CONFIG_EXTENSIONS,
+            paths: module.paths.slice(1), // fall back to search relative to executable
+        });
+    } catch (e) {
+        throw new ConfigurationError(e.message);
+    }
 }
 
 function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
@@ -122,7 +139,7 @@ function parseConfigWorker(raw: RawConfig, filename: string, stack: string[], ca
     let base = arrayify(raw.extends).map((name) => {
         name = resolveConfigFile(name, dirname);
         if (stack.includes(name))
-            throw new Error(`Circular configuration dependency ${stack.join(' => ')} => ${name}`);
+            throw new ConfigurationError(`Circular configuration dependency ${stack.join(' => ')} => ${name}`);
         return parseConfigWorker(readConfigFile(name), name, [...stack, name]);
     });
     if (cascade && !raw.root) {

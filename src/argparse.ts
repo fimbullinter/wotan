@@ -1,4 +1,5 @@
 import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand, Format } from './runner';
+import { ConfigurationError } from './error';
 
 export function parseArguments(args: string[]): Command {
     args = args.map(trimSingleQuotes);
@@ -55,7 +56,7 @@ function parseLintCommand(args: string[]): LintCommand {
                 break outer;
             default:
                 if (arg.startsWith('-'))
-                    throw new Error(`Unknown option '${arg}'.`);
+                    throw new ConfigurationError(`Unknown option '${arg}'.`);
                 result.files.push(arg);
         }
     }
@@ -77,7 +78,7 @@ function parseTestCommand(args: string[]): TestCommand {
                 break outer;
             default:
                 if (arg.startsWith('-'))
-                    throw new Error(`Unknown option '${arg}'.`);
+                    throw new ConfigurationError(`Unknown option '${arg}'.`);
                 result.files.push(arg);
         }
     }
@@ -101,13 +102,13 @@ function parseShowCommand(args: string[]): ShowCommand {
                 break outer;
             default:
                 if (arg.startsWith('-'))
-                    throw new Error(`Unknown option '${arg}'.`);
+                    throw new ConfigurationError(`Unknown option '${arg}'.`);
                 files.push(arg);
         }
     }
     switch (files.length) {
         case 0:
-            throw new Error('filename expected');
+            throw new ConfigurationError('filename expected');
         case 1:
             return {
                 format,
@@ -115,7 +116,7 @@ function parseShowCommand(args: string[]): ShowCommand {
                 file: files[0],
             };
         default:
-            throw new Error('more than one filename provided');
+            throw new ConfigurationError('more than one filename provided');
     }
 }
 
@@ -143,7 +144,7 @@ function parseInitCommand(args: string[]): InitCommand {
                 break outer;
             default:
                 if (arg.startsWith('-'))
-                    throw new Error(`Unknown option '${arg}'.`);
+                    throw new ConfigurationError(`Unknown option '${arg}'.`);
                 result.directories.push(arg);
         }
     }
@@ -165,7 +166,7 @@ function parseVerifyCommand(args: string[]): VerifyCommand {
                 break outer;
             default:
                 if (arg.startsWith('-'))
-                    throw new Error(`Unknown option '${arg}'.`);
+                    throw new ConfigurationError(`Unknown option '${arg}'.`);
                 result.files.push(arg);
         }
     }
@@ -216,7 +217,7 @@ function expectFormatArgument(args: string[], index: number, opt: string): Forma
 
 function expectStringArgument(args: string[], index: number, opt: string): string {
     if (index === args.length)
-        throw new Error(`Option '${opt}' expects an argument.`);
+        throw new ConfigurationError(`Option '${opt}' expects an argument.`);
     return args[index];
 }
 
@@ -225,5 +226,5 @@ function trimSingleQuotes(str: string) {
 }
 
 function assertNever(_: never, message: string): never {
-    throw new Error(message);
+    throw new ConfigurationError(message);
 }

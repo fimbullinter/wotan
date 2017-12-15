@@ -8,6 +8,7 @@ import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import { loadFormatter } from './formatter-loader';
+import { ConfigurationError } from './error';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -190,7 +191,8 @@ function getFilesAndProgram(options: LintCommand): {files: string[], program?: t
     if (tsconfig === undefined) {
         files = [];
         for (const pattern of options.files)
-            files.push(...glob.sync(pattern, {ignore: options.exclude, absolute: true}));
+            files.push(...glob.sync(pattern, {ignore: options.exclude, absolute: true, nodir: true}));
+        files = Array.from(new Set(files)); // deduplicate files
         checkFilesExist(options.files, options.exclude, files, 'does not exist');
         return { files };
     }
@@ -225,14 +227,14 @@ function findupTsconfig(): string {
         const prev = directory;
         directory = path.dirname(directory);
         if (directory === prev)
-            throw new Error(`Cannot find tsconfig.json for current directory.`);
+            throw new ConfigurationError(`Cannot find tsconfig.json for current directory.`);
     }
 }
 
 function createProgram(configFile: string): ts.Program {
     const config = ts.readConfigFile(configFile, ts.sys.readFile);
     if (config.error !== undefined)
-        throw new Error(ts.formatDiagnostics([config.error], {
+        throw new ConfigurationError(ts.formatDiagnostics([config.error], {
             getCanonicalFileName: (f) => f,
             getCurrentDirectory: process.cwd,
             getNewLine: () => '\n',
@@ -242,7 +244,7 @@ function createProgram(configFile: string): ts.Program {
         // ignore 'TS18003: No inputs were found in config file ...'
         const errors = parsed.errors.filter((d) => d.code !== 18003);
         if (errors.length !== 0)
-            throw new Error(ts.formatDiagnostics(errors, {
+            throw new ConfigurationError(ts.formatDiagnostics(errors, {
                 getCanonicalFileName: (f) => f,
                 getCurrentDirectory: process.cwd,
                 getNewLine: () => '\n',
@@ -256,12 +258,12 @@ function checkConfigDirectory(fileOrDirName: string): string {
     try {
         stat = fs.statSync(fileOrDirName);
     } catch {
-        throw new Error(`The specified path does not exist: '${fileOrDirName}'`);
+        throw new ConfigurationError(`The specified path does not exist: '${fileOrDirName}'`);
     }
     if (stat.isDirectory()) {
         fileOrDirName = path.join(fileOrDirName, 'tsconfig.json');
         if (!fs.existsSync(fileOrDirName))
-            throw new Error(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
+            throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
     }
     return fileOrDirName;
 }
@@ -274,7 +276,7 @@ function checkFilesExist(patterns: string[], ignore: string[], matches: string[]
     const exclude = ignore.map((p) => new Minimatch(path.resolve(p), {dot: true}));
     for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
         if (!matches.some(createMinimatchFilter(filename)))
-            throw new Error(`'${filename}' ${errorSuffix}.`);
+            throw new ConfigurationError(`'${filename}' ${errorSuffix}.`);
 }
 
 function runInit(options: InitCommand): boolean {
@@ -364,5 +366,5 @@ function convertToPrintable(value: any): any {
 }
 
 function assertNever(v: never): never {
-    throw new Error(`unexpected value '${v}'`);
+    throw new ConfigurationError(`unexpected value '${v}'`);
 }
