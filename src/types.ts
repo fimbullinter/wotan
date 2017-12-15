@@ -1,5 +1,23 @@
 import * as ts from 'typescript';
 
+export type LintResult = Map<string, FileSummary>;
+
+export interface FileSummary extends LintAndFixFileResult {
+    text: string;
+}
+
+export interface LintAndFixFileResult {
+    fixes: number;
+    failures: Failure[];
+}
+
+export interface UpdateFileResult {
+    file: ts.SourceFile;
+    program?: ts.Program;
+}
+
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
+
 export interface RuleFailure {
     start: number;
     end: number;
@@ -36,7 +54,6 @@ export interface Failure {
     start: FailurePosition;
     end: FailurePosition;
     message: string;
-    fileName: string;
     ruleName: string;
     severity: Severity;
     fix: Fix | undefined;
@@ -44,11 +61,7 @@ export interface Failure {
 
 export namespace Failure {
     export function compare(a: Failure, b: Failure): number {
-        return a.fileName === b.fileName
-            ? a.start.position - b.start.position
-            : a.fileName < b.fileName
-                ? -1
-                : 1;
+        return a.start.position - b.start.position;
     }
 }
 
@@ -99,7 +112,7 @@ export abstract class TypedRule extends AbstractRule {
 }
 
 export abstract class AbstractFormatter {
-    public abstract format(failures: Failure[], fixed: number): string;
+    public abstract format(result: LintResult): string;
 }
 
 // @internal

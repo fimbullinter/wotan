@@ -9,7 +9,7 @@ import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
-import { Configuration, RawConfiguration } from './types';
+import { Configuration, RawConfiguration, FileSummary, LintResult } from './types';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -25,8 +25,11 @@ export const enum Format {
     Json5 = 'json5',
 }
 
-export interface LintCommand {
+export interface LintCommand extends LintOptions {
     command: CommandName.Lint;
+}
+
+export interface LintOptions {
     files: string[];
     exclude: string[];
     project: string | undefined;
@@ -77,11 +80,25 @@ export function run(command: Command): boolean {
 }
 
 function runLint(options: LintCommand): boolean {
+    const result = doLint(options);
+    let success = true;
+    for (const [file, summary] of result) {
+        if (summary.failures.length !== 0)
+            success = false;
+        if (options.fix && summary.fixes)
+            fs.writeFileSync(file, summary.text, 'utf8');
+    }
+
+    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
+    console.log(formatter.format(result));
+    return success;
+}
+
+export function doLint(options: LintOptions): LintResult {
     let {files, program} = getFilesAndProgram(options);
-    const failures = [];
+    const result: LintResult = new Map();
     let dir: string | undefined;
     let config: Configuration | undefined;
-    let totalFixes = 0;
     const fixedFiles = new Map<string, string>();
     for (const file of files) {
         const dirname = path.dirname(file);
@@ -95,11 +112,14 @@ function runLint(options: LintCommand): boolean {
         let sourceFile = program === undefined
             ? ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.ESNext, true)
             : program.getSourceFile(file)!;
+        let summary: FileSummary;
         if (options.fix) {
+            let fileContent = sourceFile.text;
             const fixed = lintAndFix(
                 sourceFile,
                 effectiveConfig,
                 (content, range) => {
+                    fileContent = content;
                     fixedFiles.set(file, content);
                     if (program === undefined) {
                         sourceFile = ts.updateSourceFile(sourceFile, content, range);
@@ -112,19 +132,21 @@ function runLint(options: LintCommand): boolean {
                 options.fix === true ? undefined : options.fix,
                 program,
             );
-            failures.push(...fixed.failures);
-            totalFixes += fixed.fixes;
+            summary = {
+                failures: fixed.failures,
+                fixes: fixed.fixes,
+                text: fileContent,
+            };
         } else {
-            failures.push(...lint(sourceFile, effectiveConfig, program));
+            summary = {
+                failures: lint(sourceFile, effectiveConfig, program),
+                fixes: 0,
+                text: sourceFile.text,
+            };
         }
+        result.set(file, summary);
     }
-    if (options.fix && fixedFiles.size !== 0)
-        for (const [file, content] of fixedFiles)
-            fs.writeFileSync(file, content, 'utf8');
-
-    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
-    console.log(formatter.format(failures, totalFixes));
-    return failures.length === 0;
+    return result;
 }
 
 function updateProgram(
@@ -181,7 +203,7 @@ function updateProgram(
     return program;
 }
 
-function getFilesAndProgram(options: LintCommand): {files: string[], program?: ts.Program} {
+function getFilesAndProgram(options: LintOptions): {files: string[], program?: ts.Program} {
     let tsconfig: string | undefined;
     if (options.project !== undefined) {
         tsconfig = path.resolve(checkConfigDirectory(options.project));

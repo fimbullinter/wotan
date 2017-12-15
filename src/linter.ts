@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Failure, EffectiveConfiguration } from './types';
+import { Failure, EffectiveConfiguration, UpdateFileCallback, LintAndFixFileResult } from './types';
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 
@@ -7,25 +7,13 @@ export function lint(file: ts.SourceFile, config: EffectiveConfiguration, progra
     return getFailures(file, config, program);
 }
 
-export interface LintAndFixResult {
-    fixes: number;
-    failures: Failure[];
-}
-
-export interface UpdateFileResult {
-    file: ts.SourceFile;
-    program?: ts.Program;
-}
-
-export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
-
 export function lintAndFix(
     file: ts.SourceFile,
     config: EffectiveConfiguration,
     updateFile: UpdateFileCallback,
     iterations: number = 10,
     program?: ts.Program,
-): LintAndFixResult {
+): LintAndFixFileResult {
     let totalFixes = 0;
     let failures = getFailures(file, config, program);
     for (let i = 0; i < iterations; ++i) {
@@ -72,7 +60,6 @@ function getFailures(file: ts.SourceFile, config: EffectiveConfiguration, progra
                     position: failure.end,
                     ...ts.getLineAndCharacterOfPosition(file, failure.end),
                 },
-                fileName: file.fileName,
                 fix: failure.fix === undefined
                     ? undefined
                     : !Array.isArray(failure.fix)
