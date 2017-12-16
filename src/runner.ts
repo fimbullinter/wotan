@@ -12,6 +12,7 @@ import { ConfigurationError } from './error';
 import { Configuration, RawConfiguration, FileSummary, LintResult, Failure } from './types';
 import * as resolveGlob from 'to-absolute-glob';
 import { unixifyPath } from './utils';
+import chalk from 'chalk';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -381,6 +382,7 @@ function runTest(options: TestCommand): boolean {
                 },
                 root,
             );
+            console.log(`${testcase} ${chalk.green('PASSED')}`);
         }
     }
     return true;
