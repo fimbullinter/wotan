@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/ajafff/wotan#readme",
   "devDependencies": {
+    "@types/diff": "^3.2.2",
     "@types/glob": "^5.0.33",
     "@types/js-yaml": "^3.10.1",
     "@types/json5": "0.0.29",
@@ -54,6 +55,7 @@
   },
   "dependencies": {
     "chalk": "^2.3.0",
+    "diff": "^3.4.0",
     "glob": "^7.1.2",
     "import-local": "^0.1.1",
     "is-negated-glob": "^1.0.0",

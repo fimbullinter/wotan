@@ -14,6 +14,7 @@ import * as resolveGlob from 'to-absolute-glob';
 import { unixifyPath } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
+import * as diff from 'diff';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -46,6 +47,7 @@ export interface TestCommand {
     command: CommandName.Test;
     files: string[];
     updateBaselines: boolean;
+    bail: boolean;
 }
 
 export interface VerifyCommand {
@@ -358,6 +360,43 @@ function runShow(options: ShowCommand): boolean {
 }
 
 function runTest(options: TestCommand): boolean {
+    let baselineDir: string;
+    let root: string;
+    let success = true;
+    const host: RuleTestHost = {
+        getBaseDirectory() { return root; },
+        checkBaseline(file, kind, actual) {
+            const relative = path.relative(root, file);
+            if (relative.startsWith('..' + path.sep))
+                throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
+            const baselineFile = path.resolve(baselineDir, relative) + kind;
+            if (!fs.existsSync(baselineFile)) {
+                if (!options.updateBaselines) {
+                    console.log(`  ${chalk.grey(baselineFile)} ${chalk.red('MISSING')}`);
+                    success = false;
+                    return !options.bail;
+                }
+                mkdirp.sync(path.dirname(baselineFile));
+                fs.writeFileSync(baselineFile, actual, 'utf8');
+                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('CREATED')}`);
+                return true;
+            }
+            const expected = fs.readFileSync(baselineFile, 'utf8');
+            if (expected === actual) {
+                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('PASSED')}`);
+                return true;
+            }
+            if (options.updateBaselines) {
+                fs.writeFileSync(baselineFile, actual, 'utf8');
+                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('UPDATED')}`);
+                return true;
+            }
+            console.log(`  ${chalk.grey(baselineFile)} ${chalk.red('FAILED')}`);
+            printDiff(actual, expected);
+            success = false;
+            return !options.bail;
+        },
+    };
     const globOptions = {
         absolute: true,
         cache: {},
@@ -368,25 +407,29 @@ function runTest(options: TestCommand): boolean {
     };
     for (const pattern of options.files) {
         for (const testcase of glob.sync(pattern, globOptions)) {
-            const testConfig = <Partial<TestOptions>>require(testcase);
-            const root = path.dirname(testcase);
-            test(
+            interface TestOptions extends LintOptions {
+                baselines: string;
+            }
+            const {baselines, ...testConfig} = <Partial<TestOptions>>require(testcase);
+            root = path.dirname(testcase);
+            baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
+            console.log(testcase);
+            const result = test(
                 {
-                    baselines: root,
                     config: undefined,
                     exclude: [],
                     files: [],
                     fix: true,
                     project: undefined,
                     ...testConfig,
-                    updateBaselines: options.updateBaselines,
                 },
-                root,
+                host,
             );
-            console.log(`${testcase} ${chalk.green('PASSED')}`);
+            if (!result)
+                return false;
         }
     }
-    return true;
+    return success;
 }
 
 function format<T = any>(value: T, fmt = Format.Yaml): string {
@@ -445,20 +488,31 @@ function assertNever(v: never): never {
     throw new ConfigurationError(`unexpected value '${v}'`);
 }
 
-export interface TestOptions extends LintOptions {
-    baselines: string;
-    updateBaselines: boolean;
+export const enum BaselineKind {
+    Lint = '.lint',
+    Fix = '.fix',
 }
 
-export function test(options: TestOptions, cwd: string) {
-    const baselineDir = path.resolve(cwd, options.baselines);
-    const lintOptions: TestOptions = {...options, fix: false};
+export interface RuleTestHost {
+    getBaseDirectory(): string;
+    checkBaseline(file: string, kind: BaselineKind, baseline: string): boolean;
+}
+
+export function test(config: LintOptions, host: RuleTestHost): boolean {
+    const lintOptions: LintOptions = {...config, fix: false};
+    const cwd = host.getBaseDirectory();
     const lintResult = doLint(lintOptions, cwd);
-    checkResult(lintResult, cwd, baselineDir, '.lint', options.updateBaselines);
-    if (options.fix) {
-        const fixResult = containsFixes(lintResult) ? doLint(options, cwd) : lintResult;
-        checkResult(fixResult, cwd, baselineDir, '.fix', options.updateBaselines);
+    for (const [fileName, summary] of lintResult)
+        if (!host.checkBaseline(fileName, BaselineKind.Lint, createBaseline(summary)))
+            return false;
+
+    if (config.fix) {
+        const fixResult = containsFixes(lintResult) ? doLint(config, cwd) : lintResult;
+        for (const [fileName, summary] of fixResult)
+            if (!host.checkBaseline(fileName, BaselineKind.Fix, createBaseline(summary)))
+                return false;
     }
+    return true;
 }
 
 function containsFixes(result: LintResult): boolean {
@@ -469,26 +523,20 @@ function containsFixes(result: LintResult): boolean {
     return false;
 }
 
-function checkResult(result: LintResult, cwd: string, baselineDir: string, suffix: '.lint' | '.fix', update: boolean) {
-    for (const [fileName, summary] of result) {
-        const relative = path.relative(cwd, fileName);
-        if (relative.startsWith(`..${path.sep}`))
-            throw new Error(`Linting file '${fileName}' outside of '${cwd}'.`);
-        const baselineFile = path.join(baselineDir, relative) + suffix;
-        if (!fs.existsSync(baselineFile)) {
-            if (!update)
-                throw new Error(`Baseline '${baselineFile}' is missing.`);
-            mkdirp.sync(path.dirname(baselineFile));
-            fs.writeFileSync(baselineFile, createBaseline(summary), 'utf8');
-        } else {
-            const expected = fs.readFileSync(baselineFile, 'utf8');
-            const actual = createBaseline(summary);
-            if (expected !== actual) {
-                if (!update)
-                    throw new Error(`Baseline mismatch in '${baselineFile}'.`);
-                fs.writeFileSync(baselineFile, actual, 'utf8');
-            }
+function printDiff(actual: string, expected: string) {
+    const lines = diff.createPatch('', expected, actual, '', '').split(/\n/g).slice(4);
+    for (let line of lines) {
+        switch (line[0]) {
+            case '@':
+                line = chalk.blueBright(line);
+                break;
+            case '+':
+                line = chalk.green(line);
+                break;
+            case '-':
+                line = chalk.red(line);
         }
+        console.log(line);
     }
 }
 

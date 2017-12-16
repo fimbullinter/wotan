@@ -71,6 +71,7 @@ function parseLintCommand(args: string[]): LintCommand {
 
 function parseTestCommand(args: string[]): TestCommand {
     const result: TestCommand = {
+        bail: false,
         command: CommandName.Test,
         files: [],
         updateBaselines: false,
@@ -79,7 +80,9 @@ function parseTestCommand(args: string[]): TestCommand {
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
         switch (arg) {
-            case '-u':
+            case '--bail':
+                ({index: i, argument: result.bail} = parseOptionalBoolean(args, i));
+                break;
             case '--update':
                 ({index: i, argument: result.updateBaselines} = parseOptionalBoolean(args, i));
                 break;
