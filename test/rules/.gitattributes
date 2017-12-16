@@ -1,2 +1,2 @@
-**/*.clrf.* text eol=clrf
-**/crlf.* text eol=crlf
+**/*.crlf.*     text eol=crlf
+**/crlf.*       text eol=crlf
