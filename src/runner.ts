@@ -372,26 +372,26 @@ function runTest(options: TestCommand): boolean {
             const baselineFile = path.resolve(baselineDir, relative) + kind;
             if (!fs.existsSync(baselineFile)) {
                 if (!options.updateBaselines) {
-                    console.log(`  ${chalk.grey(baselineFile)} ${chalk.red('MISSING')}`);
+                    console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.red('MISSING')}`);
                     success = false;
                     return !options.bail;
                 }
                 mkdirp.sync(path.dirname(baselineFile));
                 fs.writeFileSync(baselineFile, actual, 'utf8');
-                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('CREATED')}`);
+                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('CREATED')}`);
                 return true;
             }
             const expected = fs.readFileSync(baselineFile, 'utf8');
             if (expected === actual) {
-                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('PASSED')}`);
+                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('PASSED')}`);
                 return true;
             }
             if (options.updateBaselines) {
                 fs.writeFileSync(baselineFile, actual, 'utf8');
-                console.log(`  ${chalk.grey(baselineFile)} ${chalk.green('UPDATED')}`);
+                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('UPDATED')}`);
                 return true;
             }
-            console.log(`  ${chalk.grey(baselineFile)} ${chalk.red('FAILED')}`);
+            console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.red('FAILED')}`);
             printDiff(actual, expected);
             success = false;
             return !options.bail;
@@ -531,10 +531,10 @@ function printDiff(actual: string, expected: string) {
                 line = chalk.blueBright(line);
                 break;
             case '+':
-                line = chalk.green(line);
+                line = chalk.green(line.replace(/\r$/, '\u240d') + '\u240a');
                 break;
             case '-':
-                line = chalk.red(line);
+                line = chalk.red(line.replace(/\r$/, '\u240d') + '\u240a');
         }
         console.log(line);
     }
