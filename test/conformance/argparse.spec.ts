@@ -7,6 +7,7 @@ test('defaults to lint command', (t) => {
         parseArguments([]),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -18,6 +19,7 @@ test('defaults to lint command', (t) => {
         parseArguments(['foo']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: ['foo'],
             exclude: [],
             format: undefined,
@@ -32,6 +34,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--format', '--project']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: ['-foo', '--bar', '--fix', '--exclude', '--format', '--project'],
             exclude: [],
             format: undefined,
@@ -45,6 +48,7 @@ test('parses lint command', (t) => {
         parseArguments(["'lint'", "'--fix'"]),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -58,6 +62,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', '-p', '.']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -71,6 +76,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', 'false', '-p', '.']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -84,6 +90,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', 'true']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -97,6 +104,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', '10', '--project', '.']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: [],
             format: undefined,
@@ -110,6 +118,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '-e', '**/*.d.ts', '-f', 'json', '--exclude', 'node_modules/**']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: [],
             exclude: ['**/*.d.ts', 'node_modules/**'],
             format: 'json',
@@ -123,6 +132,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '-f', 'json', 'foo', '--format', 'stylish', 'bar']),
         {
             command: CommandName.Lint,
+            config: undefined,
             files: ['foo', 'bar'],
             exclude: [],
             format: 'stylish',
@@ -132,11 +142,40 @@ test('parses lint command', (t) => {
         'files can be interspersed, specifying an option multiple times overrides its value',
     );
 
+    t.deepEqual<Command>(
+        parseArguments(['lint', '-c', 'foo.json']),
+        {
+            command: CommandName.Lint,
+            config: 'foo.json',
+            files: [],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+        },
+        '-c specifies config',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--config', '../bar.yaml']),
+        {
+            command: CommandName.Lint,
+            config: '../bar.yaml',
+            files: [],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+        },
+        '--config specifies config',
+    );
+
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
 
     t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
     t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
+    t.throws(() => parseArguments(['lint', '--config']), "Option '--config' expects an argument.");
 });
 
 test('parses show command', (t) => {

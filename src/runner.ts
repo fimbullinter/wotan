@@ -2,14 +2,14 @@ import * as glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as ts from 'typescript';
-import { findConfiguration, reduceConfigurationForFile } from './configuration';
+import { findConfiguration, reduceConfigurationForFile, parseConfigFile, resolveConfigFile, readConfigFile } from './configuration';
 import { lintFile, lintAndFix } from './linter';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
-import { Configuration, RawConfiguration, FileSummary, LintResult } from './types';
+import { Configuration, RawConfiguration, FileSummary, LintResult, Failure } from './types';
 import * as resolveGlob from 'to-absolute-glob';
 import { unixifyPath } from './utils';
 
@@ -29,13 +29,14 @@ export const enum Format {
 
 export interface LintCommand extends LintOptions {
     command: CommandName.Lint;
+    format: string | undefined;
 }
 
 export interface LintOptions {
+    config: string | undefined;
     files: string[];
     exclude: string[];
     project: string | undefined;
-    format: string | undefined;
     fix: boolean | number;
 }
 
@@ -100,13 +101,15 @@ export function doLint(options: LintOptions): LintResult {
     let {files, program} = getFilesAndProgram(options);
     const result: LintResult = new Map();
     let dir: string | undefined;
-    let config: Configuration | undefined;
+    let config = options.config !== undefined ? resolveConfig(options.config) : undefined;
     const fixedFiles = new Map<string, string>();
     for (const file of files) {
-        const dirname = path.dirname(file);
-        if (dir !== dirname) {
-            config = findConfiguration(file);
-            dir = dirname;
+        if (options.config === undefined) {
+            const dirname = path.dirname(file);
+            if (dir !== dirname) {
+                config = findConfiguration(file);
+                dir = dirname;
+            }
         }
         const effectiveConfig = config && reduceConfigurationForFile(config, file);
         if (effectiveConfig === undefined)
@@ -149,6 +152,11 @@ export function doLint(options: LintOptions): LintResult {
         result.set(file, summary);
     }
     return result;
+}
+
+function resolveConfig(pathOrName: string): Configuration {
+    const resolved = resolveConfigFile(pathOrName, process.cwd());
+    return parseConfigFile(readConfigFile(resolved), resolved, false);
 }
 
 function updateProgram(

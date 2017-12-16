@@ -26,6 +26,7 @@ type AssertNever<T extends never> = T;
 function parseLintCommand(args: string[]): LintCommand {
     const result: LintCommand = {
         command: CommandName.Lint,
+        config: undefined,
         files: [],
         exclude: [],
         project: undefined,
@@ -47,6 +48,10 @@ function parseLintCommand(args: string[]): LintCommand {
             case '-f':
             case '--format':
                 result.format = expectStringArgument(args, ++i, arg);
+                break;
+            case '-c':
+            case '--config':
+                result.config = expectStringArgument(args, ++i, arg);
                 break;
             case '--fix':
                 ({index: i, argument: result.fix} = parseOptionalBooleanOrNumber(args, i));
