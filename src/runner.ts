@@ -553,39 +553,31 @@ function createBaseline(summary: FileSummary): string {
         lines.push(line);
         const nextLineStart = lineStart + line.length + 1;
         const lineLength = line.length - (line.endsWith('\r') ? 1 : 0);
-        const lineEnd = lineStart + lineLength;
-        const pending = [];
-        for (const failure of pendingFailures) {
-            const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position - lineStart;
-            let errorLine = failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
-            if (failure.end.position <= nextLineStart) {
-                errorLine = addPadding(errorLine, lineLength);
-                errorLine += `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
-            } else {
-                pending.push(failure);
-            }
-            lines.push(errorLine);
-        }
+        const pending: Failure[] = [];
+        for (const failure of pendingFailures)
+            lines.push(formatFailure(failure, lineStart, lineLength, nextLineStart, pending));
         pendingFailures = pending;
 
-        for (; failurePosition < failures.length && failures[failurePosition].start.position < nextLineStart; ++failurePosition) {
-            const failure = failures[failurePosition];
-            let errorLine = ' '.repeat(failure.start.position - lineStart);
-            const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position;
-            errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
-            if (failure.end.position <= nextLineStart) {
-                errorLine = addPadding(errorLine, lineLength);
-                errorLine += `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
-            } else {
-                pendingFailures.push(failure);
-            }
-            lines.push(errorLine);
-        }
+        for (; failurePosition < failures.length && failures[failurePosition].start.position < nextLineStart; ++failurePosition)
+            lines.push(formatFailure(failures[failurePosition], lineStart, lineLength, nextLineStart, pendingFailures));
 
         lineStart = nextLineStart;
     }
 
     return lines.join('\n');
+}
+
+function formatFailure(failure: Failure, lineStart: number, lineLength: number, nextLineStart: number, remaining: Failure[]): string {
+    const lineEnd = lineStart + lineLength;
+    let errorLine = ' '.repeat(failure.start.position - lineStart);
+    const failureLength = Math.min(lineEnd, failure.end.position) - Math.max(failure.start.position, lineStart);
+    errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
+    if (failure.end.position <= nextLineStart)
+        return addPadding(errorLine, lineLength) +
+            `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
+
+    remaining.push(failure);
+    return errorLine;
 }
 
 function addPadding(line: string, minLength: number): string {
