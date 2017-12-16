@@ -9,3 +9,7 @@ export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
         return cached!;
     };
 }
+
+export function unixifyPath(path: string): string {
+    return path.replace(/\\/g, '/');
+}

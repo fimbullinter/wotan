@@ -7,6 +7,7 @@ import * as json5 from 'json5';
 import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
 import { Configuration, RawConfiguration, EffectiveConfiguration } from './types';
+import * as isNegated from 'is-negated-glob';
 
 declare global {
     interface NodeModule {
@@ -199,18 +200,15 @@ function reduceConfig(config: Configuration, filename: string, receiver: Effecti
 }
 
 function matchesGlobs(file: string, patterns: string[], matchBase: boolean): boolean {
-    let result = false;
-    for (let pattern of patterns) {
-        const negate = pattern[0] === '!';
-        if (negate)
-            pattern = pattern.substr(1);
-        const local = pattern.startsWith('./');
+    for (let i = patterns.length - 1; i >= 0; --i) {
+        const glob = isNegated(patterns[i]);
+        const local = glob.pattern.startsWith('./');
         if (local)
-            pattern = pattern.substr(2);
-        if (new Minimatch(pattern, {matchBase: matchBase && !local}).match(file))
-            result = negate;
+            glob.pattern = glob.pattern.substr(2);
+        if (new Minimatch(glob.pattern, {matchBase: matchBase && !local}).match(file))
+            return !glob.negated;
     }
-    return result;
+    return false;
 }
 
 function extendRulesDirectories(receiver: Map<string, string[]>, current: Map<string, string>) {

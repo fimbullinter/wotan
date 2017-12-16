@@ -10,6 +10,8 @@ import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { Configuration, RawConfiguration, FileSummary, LintResult } from './types';
+import * as resolveGlob from 'to-absolute-glob';
+import { unixifyPath } from './utils';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -224,7 +226,7 @@ function getFilesAndProgram(options: LintOptions): {files: string[], program?: t
         };
         for (const pattern of options.files)
             files.push(...glob.sync(pattern, globOptions));
-        files = Array.from(new Set(files)); // deduplicate files
+        files = Array.from(new Set(files.map(unixifyPath))); // deduplicate files
         checkFilesExist(options.files, options.exclude, files, 'does not exist');
         return { files };
     }
@@ -237,13 +239,13 @@ function getFilesAndProgram(options: LintOptions): {files: string[], program?: t
             )
             .map((f) => f.fileName);
         if (options.exclude.length !== 0) {
-            const exclude = options.exclude.map((p) => new Minimatch(path.resolve(p), {dot: true}));
+            const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p), {dot: true}));
             files = files.filter((f) => exclude.some((e) => e.match(f)));
         }
     } else {
         files = program.getSourceFiles().map((f) => f.fileName);
-        const patterns = options.files.map((p) => new Minimatch(path.resolve(p)));
-        const exclude = options.exclude.map((p) => new Minimatch(path.resolve(p)));
+        const patterns = options.files.map((p) => new Minimatch(resolveGlob(p)));
+        const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p)));
         files = files.filter((f) => patterns.some((p) => p.match(f)) && !exclude.some((e) => e.match(f)));
         checkFilesExist(options.files, options.exclude, files, 'is not included in the project');
     }
@@ -305,7 +307,7 @@ function checkFilesExist(patterns: string[], ignore: string[], matches: string[]
     patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(p));
     if (patterns.length === 0)
         return;
-    const exclude = ignore.map((p) => new Minimatch(path.resolve(p), {dot: true}));
+    const exclude = ignore.map((p) => new Minimatch(resolveGlob(p), {dot: true}));
     for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
         if (!matches.some(createMinimatchFilter(filename)))
             throw new ConfigurationError(`'${filename}' ${errorSuffix}.`);
