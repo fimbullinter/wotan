@@ -17,6 +17,8 @@
       },
       "**/*.js.map": {
         "when": "$(basename)"
-      }
+      },
+      "test/rules/**/*.fix": true,
+      "test/rules/**/*.lint": true
     }
 }

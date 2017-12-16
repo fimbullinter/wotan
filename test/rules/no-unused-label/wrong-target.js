@@ -1,5 +1,4 @@
 bar: for (;;) {
-~~~             [error no-unused-label: Unused label 'bar'.]
     break;
     bar: switch (true) {
         case true:
