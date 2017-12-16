@@ -502,13 +502,15 @@ function createBaseline(summary: FileSummary): string {
     for (const line of summary.text.split(/\n/g)) {
         lines.push(line);
         const nextLineStart = lineStart + line.length + 1;
-        const lineEnd = lineStart + line.length - (line.endsWith('\r') ? 1 : 0);
+        const lineLength = line.length - (line.endsWith('\r') ? 1 : 0);
+        const lineEnd = lineStart + lineLength;
         const pending = [];
         for (const failure of pendingFailures) {
             const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position - lineStart;
             let errorLine = failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
             if (failure.end.position <= nextLineStart) {
-                errorLine += ` ${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}`;
+                errorLine = addPadding(errorLine, lineLength);
+                errorLine += `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
             } else {
                 pending.push(failure);
             }
@@ -522,7 +524,8 @@ function createBaseline(summary: FileSummary): string {
             const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position;
             errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
             if (failure.end.position <= nextLineStart) {
-                errorLine += ` ${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}`;
+                errorLine = addPadding(errorLine, lineLength);
+                errorLine += `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
             } else {
                 pendingFailures.push(failure);
             }
@@ -533,4 +536,8 @@ function createBaseline(summary: FileSummary): string {
     }
 
     return lines.join('\n');
+}
+
+function addPadding(line: string, minLength: number): string {
+    return line + ' '.repeat(Math.max(1, minLength - line.length + 1));
 }
