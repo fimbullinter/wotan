@@ -375,7 +375,7 @@ function runTest(options: TestCommand): boolean {
                     config: undefined,
                     exclude: [],
                     files: [],
-                    fix: false,
+                    fix: true,
                     project: undefined,
                     ...testConfig,
                     updateBaselines: options.updateBaselines,

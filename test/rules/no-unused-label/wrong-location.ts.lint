@@ -1,0 +1,6 @@
+foo: for (;;) {
+    bar: baz: let foo = bar;
+    ~~~ error no-unused-label: Unused label 'bar'.
+         ~~~ error no-unused-label: Unused label 'baz'.
+    break foo;
+}
