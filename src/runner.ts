@@ -13,6 +13,7 @@ import { Configuration, RawConfiguration, FileSummary, LintResult, Failure } fro
 import * as resolveGlob from 'to-absolute-glob';
 import { unixifyPath } from './utils';
 import chalk from 'chalk';
+import * as mkdirp from 'mkdirp';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -477,6 +478,7 @@ function checkResult(result: LintResult, cwd: string, baselineDir: string, suffi
         if (!fs.existsSync(baselineFile)) {
             if (!update)
                 throw new Error(`Baseline '${baselineFile}' is missing.`);
+            mkdirp.sync(path.dirname(baselineFile));
             fs.writeFileSync(baselineFile, createBaseline(summary), 'utf8');
         } else {
             const expected = fs.readFileSync(baselineFile, 'utf8');
