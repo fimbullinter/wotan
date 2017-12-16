@@ -54,8 +54,19 @@ export interface Failure {
 
 export namespace Failure {
     export function compare(a: Failure, b: Failure): number {
-        return a.start.position - b.start.position;
+        return a.start.position - b.start.position
+            || a.end.position - b.end.position
+            || compareStrings(a.ruleName, b.ruleName)
+            || compareStrings(a.message, b.message);
     }
+}
+
+function compareStrings(a: string, b: string): number {
+    return a < b
+        ? -1
+        : a > b
+            ? 1
+            : 0;
 }
 
 export interface FailurePosition {
