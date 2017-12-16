@@ -12,7 +12,8 @@
     "test:api": "ava test/conformance",
     "test:rules": "node src/cli test 'test/rules/**/{,*.}test.json'",
     "coverage": "nyc run-s test",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls"
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "verify": "run-p compile lint:tslint && run-p lint:wotan coverage"
   },
   "repository": {
     "type": "git",
