@@ -73,11 +73,16 @@ function parseTestCommand(args: string[]): TestCommand {
     const result: TestCommand = {
         command: CommandName.Test,
         files: [],
+        updateBaselines: false,
     };
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
         switch (arg) {
+            case '-u':
+            case '--update':
+                ({index: i, argument: result.updateBaselines} = parseOptionalBoolean(args, i));
+                break;
             case '--':
                 result.files.push(...args.slice(i + 1));
                 break outer;
@@ -87,6 +92,8 @@ function parseTestCommand(args: string[]): TestCommand {
                 result.files.push(arg);
         }
     }
+    if (result.files.length === 0)
+        throw new ConfigurationError('filename expected.');
 
     return result;
 }

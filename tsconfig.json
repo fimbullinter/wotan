@@ -20,5 +20,8 @@
     "moduleResolution": "node",
     "inlineSourceMap": false,
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "exclude": [
+    "test/rules"
+  ]
 }

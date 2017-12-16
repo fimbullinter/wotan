@@ -18,12 +18,12 @@ declare global {
 export const CONFIG_EXTENSIONS = ['yaml', 'yml', 'json5', 'json', 'js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext);
 
-export function findConfigurationPath(filename: string): string | undefined {
-    return findupConfig(path.resolve(filename));
+export function findConfigurationPath(filename: string, cwd = process.cwd()): string | undefined {
+    return findupConfig(path.resolve(cwd, filename));
 }
 
-export function findConfiguration(filename: string): Configuration | undefined {
-    let config = findConfigurationPath(filename);
+export function findConfiguration(filename: string, cwd?: string): Configuration | undefined {
+    let config = findConfigurationPath(filename, cwd);
     let cascade = true;
     if (config === undefined) {
         cascade = false;
@@ -110,7 +110,7 @@ function parseConfigWorker(raw: RawConfiguration, filename: string, stack: strin
         overrides: raw.overrides && raw.overrides.map(mapOverride),
         rules: raw.rules && mapRules(raw.rules),
         rulesDirectory: raw.rulesDirectory && mapRulesDirectory(raw.rulesDirectory, dirname),
-        processor: raw.processor === undefined ? undefined : path.resolve(filename, raw.processor),
+        processor: raw.processor === undefined ? undefined : path.resolve(path.dirname(filename), raw.processor),
         exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude === undefined ? undefined : [raw.exclude],
         settings: raw.settings,
     };
@@ -169,8 +169,8 @@ function findConfigFileInDirectory(dir: string): string | undefined {
     return;
 }
 
-export function reduceConfigurationForFile(config: Configuration, filename: string) {
-    return reduceConfig(config, path.resolve(filename), {
+export function reduceConfigurationForFile(config: Configuration, filename: string, cwd = process.cwd()) {
+    return reduceConfig(config, path.resolve(cwd, filename), {
         rules: new Map(),
         settings: new Map(),
         rulesDirectories: new Map(),

@@ -43,6 +43,7 @@ export interface LintOptions {
 export interface TestCommand {
     command: CommandName.Test;
     files: string[];
+    updateBaselines: boolean;
 }
 
 export interface VerifyCommand {
@@ -83,7 +84,7 @@ export function run(command: Command): boolean {
 }
 
 function runLint(options: LintCommand): boolean {
-    const result = doLint(options);
+    const result = doLint(options, process.cwd());
     let success = true;
     for (const [file, summary] of result) {
         if (summary.failures.length !== 0)
@@ -97,21 +98,21 @@ function runLint(options: LintCommand): boolean {
     return success;
 }
 
-export function doLint(options: LintOptions): LintResult {
-    let {files, program} = getFilesAndProgram(options);
+export function doLint(options: LintOptions, cwd: string): LintResult {
+    let {files, program} = getFilesAndProgram(options, cwd);
     const result: LintResult = new Map();
     let dir: string | undefined;
-    let config = options.config !== undefined ? resolveConfig(options.config) : undefined;
+    let config = options.config !== undefined ? resolveConfig(options.config, cwd) : undefined;
     const fixedFiles = new Map<string, string>();
     for (const file of files) {
         if (options.config === undefined) {
             const dirname = path.dirname(file);
             if (dir !== dirname) {
-                config = findConfiguration(file);
+                config = findConfiguration(file, cwd);
                 dir = dirname;
             }
         }
-        const effectiveConfig = config && reduceConfigurationForFile(config, file);
+        const effectiveConfig = config && reduceConfigurationForFile(config, file, cwd);
         if (effectiveConfig === undefined)
             continue;
         let sourceFile = program === undefined
@@ -154,8 +155,9 @@ export function doLint(options: LintOptions): LintResult {
     return result;
 }
 
-function resolveConfig(pathOrName: string): Configuration {
-    const resolved = resolveConfigFile(pathOrName, process.cwd());
+function resolveConfig(pathOrName: string, cwd: string): Configuration {
+    const absolute = path.resolve(cwd, pathOrName);
+    const resolved = fs.existsSync(absolute) ? absolute : resolveConfigFile(pathOrName, cwd);
     return parseConfigFile(readConfigFile(resolved), resolved, false);
 }
 
@@ -173,11 +175,12 @@ function updateProgram(
     newContent: string,
     changeRange: ts.TextChangeRange,
 ): ts.Program {
+    const cwd = oldProgram!.getCurrentDirectory();
     const hostBackend = ts.createCompilerHost(oldProgram!.getCompilerOptions(), true);
     const host: ts.CompilerHost = {
         getSourceFile(fileName, languageVersion, _onError, shouldCreateNewSourceFile) {
             if (!shouldCreateNewSourceFile) {
-                if (ts.sys.resolvePath(fileName) === currentFile.fileName)
+                if (fileName === currentFile.fileName)
                     return ts.updateSourceFile(currentFile, newContent, changeRange);
                 const sourceFile = oldProgram && oldProgram.getSourceFile(fileName);
                 if (sourceFile !== undefined)
@@ -196,7 +199,7 @@ function updateProgram(
         getDefaultLibFileName: hostBackend.getDefaultLibFileName,
         getDefaultLibLocation: hostBackend.getDefaultLibLocation,
         writeFile() {},
-        getCurrentDirectory: process.cwd,
+        getCurrentDirectory: () => cwd,
         getDirectories: hostBackend.getDirectories,
         getCanonicalFileName: hostBackend.getCanonicalFileName,
         useCaseSensitiveFileNames: hostBackend.useCaseSensitiveFileNames,
@@ -213,17 +216,18 @@ function updateProgram(
     return program;
 }
 
-function getFilesAndProgram(options: LintOptions): {files: string[], program?: ts.Program} {
+function getFilesAndProgram(options: LintOptions, cwd: string): {files: string[], program?: ts.Program} {
     let tsconfig: string | undefined;
     if (options.project !== undefined) {
-        tsconfig = path.resolve(checkConfigDirectory(options.project));
+        tsconfig = checkConfigDirectory(path.resolve(cwd, options.project));
     } else if (options.files.length === 0) {
-        tsconfig = findupTsconfig();
+        tsconfig = findupTsconfig(cwd);
     }
     let files: string[];
     if (tsconfig === undefined) {
         files = [];
         const globOptions = {
+            cwd,
             absolute: true,
             cache: {},
             ignore: options.exclude,
@@ -235,10 +239,10 @@ function getFilesAndProgram(options: LintOptions): {files: string[], program?: t
         for (const pattern of options.files)
             files.push(...glob.sync(pattern, globOptions));
         files = Array.from(new Set(files.map(unixifyPath))); // deduplicate files
-        checkFilesExist(options.files, options.exclude, files, 'does not exist');
+        checkFilesExist(options.files, options.exclude, files, 'does not exist', cwd);
         return { files };
     }
-    const program = createProgram(tsconfig);
+    const program = createProgram(tsconfig, cwd);
     if (options.files.length === 0) {
         const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
         files = program.getSourceFiles()
@@ -247,21 +251,20 @@ function getFilesAndProgram(options: LintOptions): {files: string[], program?: t
             )
             .map((f) => f.fileName);
         if (options.exclude.length !== 0) {
-            const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p), {dot: true}));
+            const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
             files = files.filter((f) => exclude.some((e) => e.match(f)));
         }
     } else {
         files = program.getSourceFiles().map((f) => f.fileName);
-        const patterns = options.files.map((p) => new Minimatch(resolveGlob(p)));
-        const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p)));
+        const patterns = options.files.map((p) => new Minimatch(resolveGlob(p, {cwd})));
+        const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd})));
         files = files.filter((f) => patterns.some((p) => p.match(f)) && !exclude.some((e) => e.match(f)));
-        checkFilesExist(options.files, options.exclude, files, 'is not included in the project');
+        checkFilesExist(options.files, options.exclude, files, 'is not included in the project', cwd);
     }
     return {files, program};
 }
 
-function findupTsconfig(): string {
-    let directory = process.cwd();
+function findupTsconfig(directory: string): string {
     while (true) {
         const fullPath = path.join(directory, 'tsconfig.json');
         if (fs.existsSync(fullPath))
@@ -273,12 +276,12 @@ function findupTsconfig(): string {
     }
 }
 
-function createProgram(configFile: string): ts.Program {
+function createProgram(configFile: string, cwd: string): ts.Program {
     const config = ts.readConfigFile(configFile, ts.sys.readFile);
     if (config.error !== undefined)
         throw new ConfigurationError(ts.formatDiagnostics([config.error], {
             getCanonicalFileName: (f) => f,
-            getCurrentDirectory: process.cwd,
+            getCurrentDirectory: () => cwd,
             getNewLine: () => '\n',
         }));
     const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configFile), {noEmit: true});
@@ -288,7 +291,7 @@ function createProgram(configFile: string): ts.Program {
         if (errors.length !== 0)
             throw new ConfigurationError(ts.formatDiagnostics(errors, {
                 getCanonicalFileName: (f) => f,
-                getCurrentDirectory: process.cwd,
+                getCurrentDirectory: () => cwd,
                 getNewLine: () => '\n',
             }));
     }
@@ -311,11 +314,11 @@ function checkConfigDirectory(fileOrDirName: string): string {
 }
 
 /** Ensure that all non-pattern arguments, that are not excluded, matched  */
-function checkFilesExist(patterns: string[], ignore: string[], matches: string[], errorSuffix: string) {
-    patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(p));
+function checkFilesExist(patterns: string[], ignore: string[], matches: string[], errorSuffix: string, cwd: string) {
+    patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(cwd, p));
     if (patterns.length === 0)
         return;
-    const exclude = ignore.map((p) => new Minimatch(resolveGlob(p), {dot: true}));
+    const exclude = ignore.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
     for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
         if (!matches.some(createMinimatchFilter(filename)))
             throw new ConfigurationError(`'${filename}' ${errorSuffix}.`);
@@ -342,16 +345,44 @@ function runVerify(_options: VerifyCommand): boolean {
 }
 
 function runShow(options: ShowCommand): boolean {
-    const config = findConfiguration(options.file);
+    const cwd = process.cwd();
+    const config = findConfiguration(options.file, cwd);
     if (config === undefined) {
         console.error(`Could not find configuration for '${options.file}'.`);
         return false;
     }
-    console.log(format(reduceConfigurationForFile(config, options.file), options.format));
+    console.log(format(reduceConfigurationForFile(config, options.file, cwd), options.format));
     return true;
 }
 
-function runTest(_options: TestCommand): boolean {
+function runTest(options: TestCommand): boolean {
+    const globOptions = {
+        absolute: true,
+        cache: {},
+        nodir: true,
+        realpathCache: {},
+        statCache: {},
+        symlinks: {},
+    };
+    for (const pattern of options.files) {
+        for (const testcase of glob.sync(pattern, globOptions)) {
+            const testConfig = <Partial<TestOptions>>require(testcase);
+            const root = path.dirname(testcase);
+            test(
+                {
+                    baselines: root,
+                    config: undefined,
+                    exclude: [],
+                    files: [],
+                    fix: false,
+                    project: undefined,
+                    ...testConfig,
+                    updateBaselines: options.updateBaselines,
+                },
+                root,
+            );
+        }
+    }
     return true;
 }
 
@@ -409,4 +440,95 @@ function convertToPrintable(value: any): any {
 
 function assertNever(v: never): never {
     throw new ConfigurationError(`unexpected value '${v}'`);
+}
+
+export interface TestOptions extends LintOptions {
+    baselines: string;
+    updateBaselines: boolean;
+}
+
+export function test(options: TestOptions, cwd: string) {
+    const baselineDir = path.resolve(cwd, options.baselines);
+    const lintOptions: TestOptions = {...options, fix: false};
+    const lintResult = doLint(lintOptions, cwd);
+    checkResult(lintResult, cwd, baselineDir, '.lint', options.updateBaselines);
+    if (options.fix) {
+        const fixResult = containsFixes(lintResult) ? doLint(options, cwd) : lintResult;
+        checkResult(fixResult, cwd, baselineDir, '.fix', options.updateBaselines);
+    }
+}
+
+function containsFixes(result: LintResult): boolean {
+    for (const {failures} of result.values())
+        for (const failure of failures)
+            if (failure.fix !== undefined)
+                return true;
+    return false;
+}
+
+function checkResult(result: LintResult, cwd: string, baselineDir: string, suffix: '.lint' | '.fix', update: boolean) {
+    for (const [fileName, summary] of result) {
+        const relative = path.relative(cwd, fileName);
+        if (relative.startsWith(`..${path.sep}`))
+            throw new Error(`Linting file '${fileName}' outside of '${cwd}'.`);
+        const baselineFile = path.join(baselineDir, relative) + suffix;
+        if (!fs.existsSync(baselineFile)) {
+            if (!update)
+                throw new Error(`Baseline '${baselineFile}' is missing.`);
+            fs.writeFileSync(baselineFile, createBaseline(summary), 'utf8');
+        } else {
+            const expected = fs.readFileSync(baselineFile, 'utf8');
+            const actual = createBaseline(summary);
+            if (expected !== actual) {
+                if (!update)
+                    throw new Error(`Baseline mismatch in '${baselineFile}'.`);
+                fs.writeFileSync(baselineFile, actual, 'utf8');
+            }
+        }
+    }
+}
+
+function createBaseline(summary: FileSummary): string {
+    if (summary.failures.length === 0)
+        return summary.text;
+
+    const failures = summary.failures.slice().sort(Failure.compare);
+    const lines: string[] = [];
+    let lineStart = 0;
+    let failurePosition = 0;
+    let pendingFailures: Failure[] = [];
+    for (const line of summary.text.split(/\n/g)) {
+        lines.push(line);
+        const nextLineStart = lineStart + line.length + 1;
+        const lineEnd = lineStart + line.length - (line.endsWith('\r') ? 1 : 0);
+        const pending = [];
+        for (const failure of pendingFailures) {
+            const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position - lineStart;
+            let errorLine = failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
+            if (failure.end.position <= nextLineStart) {
+                errorLine += ` ${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}`;
+            } else {
+                pending.push(failure);
+            }
+            lines.push(errorLine);
+        }
+        pendingFailures = pending;
+
+        for (; failurePosition < failures.length && failures[failurePosition].start.position < nextLineStart; ++failurePosition) {
+            const failure = failures[failurePosition];
+            let errorLine = ' '.repeat(failure.start.position - lineStart);
+            const failureLength = Math.min(lineEnd, failure.end.position) - failure.start.position;
+            errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
+            if (failure.end.position <= nextLineStart) {
+                errorLine += ` ${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}`;
+            } else {
+                pendingFailures.push(failure);
+            }
+            lines.push(errorLine);
+        }
+
+        lineStart = nextLineStart;
+    }
+
+    return lines.join('\n');
 }
