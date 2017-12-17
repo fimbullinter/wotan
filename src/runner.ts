@@ -414,18 +414,7 @@ function runTest(options: TestCommand): boolean {
             root = path.dirname(testcase);
             baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
             console.log(testcase);
-            const result = test(
-                {
-                    config: undefined,
-                    exclude: [],
-                    files: [],
-                    fix: true,
-                    project: undefined,
-                    ...testConfig,
-                },
-                host,
-            );
-            if (!result)
+            if (!test(testConfig, host))
                 return false;
         }
     }
@@ -498,16 +487,24 @@ export interface RuleTestHost {
     checkBaseline(file: string, kind: BaselineKind, baseline: string): boolean;
 }
 
-export function test(config: LintOptions, host: RuleTestHost): boolean {
-    const lintOptions: LintOptions = {...config, fix: false};
+export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean {
+    const lintOptions: LintOptions = {
+        config: undefined,
+        exclude: [],
+        files: [],
+        project: undefined,
+        ...config,
+        fix: false,
+    };
     const cwd = host.getBaseDirectory();
     const lintResult = doLint(lintOptions, cwd);
     for (const [fileName, summary] of lintResult)
         if (!host.checkBaseline(fileName, BaselineKind.Lint, createBaseline(summary)))
             return false;
 
-    if (config.fix) {
-        const fixResult = containsFixes(lintResult) ? doLint(config, cwd) : lintResult;
+    if (!('fix' in config) || config.fix) {
+        lintOptions.fix = config.fix || true; // fix defaults to true if not specified
+        const fixResult = containsFixes(lintResult) ? doLint(lintOptions, cwd) : lintResult;
         for (const [fileName, summary] of fixResult)
             if (!host.checkBaseline(fileName, BaselineKind.Fix, createBaseline(summary)))
                 return false;
