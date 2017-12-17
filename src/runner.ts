@@ -365,10 +365,11 @@ function runTest(options: TestCommand): boolean {
     let success = true;
     const host: RuleTestHost = {
         getBaseDirectory() { return root; },
-        checkBaseline(file, kind, actual) {
+        checkResult(file, kind, summary) {
             const relative = path.relative(root, file);
             if (relative.startsWith('..' + path.sep))
                 throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
+            const actual = createBaseline(summary);
             const baselineFile = path.resolve(baselineDir, relative) + kind;
             if (!fs.existsSync(baselineFile)) {
                 if (!options.updateBaselines) {
@@ -484,7 +485,7 @@ export const enum BaselineKind {
 
 export interface RuleTestHost {
     getBaseDirectory(): string;
-    checkBaseline(file: string, kind: BaselineKind, baseline: string): boolean;
+    checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
 }
 
 export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean {
@@ -499,14 +500,14 @@ export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean 
     const cwd = host.getBaseDirectory();
     const lintResult = doLint(lintOptions, cwd);
     for (const [fileName, summary] of lintResult)
-        if (!host.checkBaseline(fileName, BaselineKind.Lint, createBaseline(summary)))
+        if (!host.checkResult(fileName, BaselineKind.Lint, summary))
             return false;
 
     if (!('fix' in config) || config.fix) {
         lintOptions.fix = config.fix || true; // fix defaults to true if not specified
         const fixResult = containsFixes(lintResult) ? doLint(lintOptions, cwd) : lintResult;
         for (const [fileName, summary] of fixResult)
-            if (!host.checkBaseline(fileName, BaselineKind.Fix, createBaseline(summary)))
+            if (!host.checkResult(fileName, BaselineKind.Fix, summary))
                 return false;
     }
     return true;
