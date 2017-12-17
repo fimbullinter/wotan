@@ -1,0 +1,30 @@
+debugger;
+~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+label: debugger
+       ~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+if (foo)
+    debugger;
+    ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+else {
+    debugger;
+    ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+}
+foo.debugger;
+foo.debugger();
+"debugger";
+"debugger;";
+for (;;) debugger
+         ~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+do
+    debugger
+    ~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+while (true)
+`
+    debugger
+    debugger;
+`
+
+class Foo {
+    debugger;
+    static debugger;
+}
