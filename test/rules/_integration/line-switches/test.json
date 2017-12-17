@@ -1,0 +1,4 @@
+{
+  "files": ["*.{t,j}s?(x)"],
+  "fix": false
+}
