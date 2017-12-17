@@ -7,12 +7,12 @@ export type DisableMap = Map<string, ts.TextRange[]>;
 
 export function getDisabledRanges(enabledRules: string[], sourceFile: ts.SourceFile): DisableMap {
     const commentRegex =
-        /\/[/*]\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)?[\w-]+\s*,\s*)*(?:[\w-]+\/)?[\w-]+)?\s*(?:$|\r?\n|\*\/)/g;
+        /\/[/*]\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)?[\w-]+\s*,\s*)*(?:[\w-]+\/)?[\w-]+)?\s*(?:$|\*\/)/mg;
     const result: DisableMap = new Map();
 
     for (let match = commentRegex.exec(sourceFile.text); match !== null; match = commentRegex.exec(sourceFile.text)) {
         const comment = getCommentAtPosition(sourceFile, match.index);
-        if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + lengthWithoutLineBreak(match[0]))
+        if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
             continue;
         const rules = match[3] === undefined ? undefined : Array.from(new Set(match[3].trim().split(/\s*,\s*/g)));
         let pos = comment.pos;
@@ -66,11 +66,4 @@ function switchRules(map: DisableMap, enabledRules: string[], rules = enabledRul
                 existing.push({pos: end, end: Infinity});
         }
     }
-}
-
-function lengthWithoutLineBreak(str: string): number {
-    const length = str.length;
-    return str[length - 1] !== '\n'
-        ? length
-        : length - (str[length - 2] === '\r' ? 2 : 1);
 }
