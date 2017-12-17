@@ -522,6 +522,8 @@ function containsFixes(result: LintResult): boolean {
 }
 
 function printDiff(actual: string, expected: string) {
+    console.log(chalk.red('Expected'));
+    console.log(chalk.green('Actual'));
     const lines = diff.createPatch('', expected, actual, '', '').split(/\n/g).slice(4);
     for (let line of lines) {
         switch (line[0]) {
