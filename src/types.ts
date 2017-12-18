@@ -11,13 +11,6 @@ export interface LintAndFixFileResult {
     failures: Failure[];
 }
 
-export interface RuleFailure {
-    start: number;
-    end: number;
-    message: string;
-    fix?: Replacement[] | Replacement;
-}
-
 export interface Replacement {
     start: number;
     end: number;
@@ -80,18 +73,61 @@ export type Severity = 'error' | 'warning';
 // @internal
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
-    new(sourceFile: ts.SourceFile, options: any, settings: Map<string, any>, program?: ts.Program): AbstractRule;
+    supports?(sourceFile: ts.SourceFile): boolean;
+    new(context: RuleContext, options: any): AbstractRule;
+}
+
+export interface RuleContext {
+    readonly program?: ts.Program;
+    readonly sourceFile: ts.SourceFile;
+    readonly settings: ReadonlyMap<string, any>;
+    addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
+    addFailureAt(this: void, start: number, length: number, message: string, fix?: Replacement | Replacement[]): void;
+    addFailureAtNode(this: void, node: ts.Node, message: string, fix?: Replacement | Replacement[]): void;
+    /**
+     * Detect if the rule is disabled somewhere in the given range.
+     * A rule is considered disabled if the given range contains or overlaps a range disabled by line switches.
+     * This can be used to avoid CPU intensive check if the error is ignored anyway.
+     *
+     * @param range The range to check for disables. If you only care about a single position, set `pos` and `end` to the same value.
+     */
+    isDisabled(this: void, range: ts.TextRange): boolean;
+}
+
+export interface TypedRuleContext extends RuleContext {
+    readonly program: ts.Program;
+}
+
+export interface ConfigurableRule<T> {
+    options: T;
+    parseOptions(options: any): T;
+}
+
+function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
+    return 'parseOptions' in rule;
 }
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
-    constructor(public sourceFile: ts.SourceFile, public options: any, public settings: Map<string, any>, public program?: ts.Program) {}
-    private failures: RuleFailure[] = [];
-    public validateConfig?(): string[] | string | undefined;
+    public static supports?(sourceFile: ts.SourceFile): boolean;
+    public static validateConfig?(config: any): string[] | string | undefined;
+
+    public readonly settings: ReadonlyMap<string, any>;
+    public readonly sourceFile: ts.SourceFile;
+    public readonly program: ts.Program | undefined;
+
+    constructor(public readonly context: RuleContext, options: any) {
+        this.settings = context.settings;
+        this.sourceFile = context.sourceFile;
+        this.program = context.program;
+        if (isConfigurableRule(this))
+            this.options = this.parseOptions(options);
+    }
+
     public abstract apply(): void;
 
     public addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]) {
-        this.failures.push({start, end, message, fix});
+        this.context.addFailure(start, end, message, fix);
     }
 
     public addFailureAt(start: number, length: number, message: string, fix?: Replacement | Replacement[]) {
@@ -101,17 +137,14 @@ export abstract class AbstractRule {
     public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | Replacement[]) {
         this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
     }
-
-    public getFailures(): ReadonlyArray<Readonly<RuleFailure>> {
-        return this.failures;
-    }
 }
 
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
-    public program: ts.Program;
-    constructor(sourceFile: ts.SourceFile, options: any, settings: Map<string, any>, program: ts.Program) {
-        super(sourceFile, options, settings, program);
+    public readonly context: TypedRuleContext;
+    public readonly program: ts.Program;
+    constructor(context: TypedRuleContext, options: any) {
+        super(context, options);
     }
 }
 

@@ -3,14 +3,14 @@ import * as ts from 'typescript';
 import { getTokenAtPosition, isIterationStatement } from 'tsutils';
 
 export class Rule extends AbstractRule {
+    public static supports(sourceFile: ts.SourceFile) {
+        return !sourceFile.isDeclarationFile;
+    }
     public apply() {
-        const sourceFile = this.sourceFile;
-        if (sourceFile.isDeclarationFile)
-            return;
         const re = /\bdebugger\s*(?:;|$)/mg;
-        const text = sourceFile.text;
+        const text = this.sourceFile.text;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const token = getTokenAtPosition(sourceFile, match.index);
+            const token = getTokenAtPosition(this.sourceFile, match.index);
             if (token !== undefined && token.kind === ts.SyntaxKind.DebuggerKeyword) {
                 const statement = <ts.DebuggerStatement>token.parent!;
                 this.addFailureAtNode(

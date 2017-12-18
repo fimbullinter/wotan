@@ -9,9 +9,10 @@ interface Label {
 }
 
 export class Rule extends AbstractRule {
+    public static supports(sourceFile: ts.SourceFile) {
+        return !sourceFile.isDeclarationFile;
+    }
     public apply() {
-        if (this.sourceFile.isDeclarationFile)
-            return;
         let labels: Label[] = [];
         const cb = (node: ts.Node): void => {
             if (isLabeledStatement(node)) {
