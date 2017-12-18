@@ -22,3 +22,5 @@ class Foo {
     debugger;
     static debugger;
 }
+// debugger;
+debugger;

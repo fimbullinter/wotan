@@ -10,8 +10,8 @@ export class Rule extends AbstractRule {
         const re = /\bdebugger\s*(?:;|$)/mg;
         const text = this.sourceFile.text;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const token = getTokenAtPosition(this.sourceFile, match.index);
-            if (token !== undefined && token.kind === ts.SyntaxKind.DebuggerKeyword) {
+            const token = getTokenAtPosition(this.sourceFile, match.index)!;
+            if (token.kind === ts.SyntaxKind.DebuggerKeyword && token.end === match.index + 'debugger'.length) {
                 const statement = <ts.DebuggerStatement>token.parent!;
                 this.addFailureAtNode(
                     statement,

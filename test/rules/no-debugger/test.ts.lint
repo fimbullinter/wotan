@@ -28,3 +28,6 @@ class Foo {
     debugger;
     static debugger;
 }
+// debugger;
+debugger;
+~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
