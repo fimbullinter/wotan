@@ -4,6 +4,7 @@
   "description": "Pluggable TypeScript and JavaScript linter",
   "main": "bin/main.js",
   "scripts": {
+    "clean": "rimraf 'src/{,!(custom-typings)/}*.{js?(.map),d.ts}'",
     "compile": "tsc -p .",
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p .",
@@ -13,7 +14,7 @@
     "test:rules": "node src/cli test 'test/rules/**/{,*.}test.json'",
     "coverage": "nyc run-s test",
     "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "verify": "run-p compile lint:tslint && run-p lint:wotan coverage"
+    "verify": "npm-run-all -s clean -p compile lint:tslint -p lint:wotan coverage"
   },
   "repository": {
     "type": "git",
@@ -49,6 +50,7 @@
     "coveralls": "^3.0.0",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.3.0",
+    "rimraf": "^2.6.2",
     "tslint": "^5.8.0",
     "tslint-consistent-codestyle": "^1.10.1",
     "typescript": "^2.6.1"
