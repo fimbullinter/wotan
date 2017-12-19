@@ -531,13 +531,17 @@ function printDiff(actual: string, expected: string) {
                 line = chalk.blueBright(line);
                 break;
             case '+':
-                line = chalk.green(line.replace(/\r$/, '\u240d') + '\u240a');
+                line = chalk.green(isCodeLine(line.substr(1)) ? line.replace(/\r$/, '\u240d') + '\u240a' : line);
                 break;
             case '-':
-                line = chalk.red(line.replace(/\r$/, '\u240d') + '\u240a');
+                line = chalk.red(isCodeLine(line.substr(1)) ? line.replace(/\r$/, '\u240d') + '\u240a' : line);
         }
         console.log(line);
     }
+}
+
+function isCodeLine(line: string): boolean {
+    return !/^ *~(~*|nil)( +\[.+\])?$/.test(line);
 }
 
 function createBaseline(summary: FileSummary): string {
