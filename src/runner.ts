@@ -157,14 +157,27 @@ function getFilesAndProgram(options: LintOptions, cwd: string): {files: string[]
     const program = createProgram(tsconfig, cwd);
     if (options.files.length === 0) {
         const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
-        files = program.getSourceFiles()
-            .filter(
-                (f) => path.relative(libDirectory, f.fileName) !== path.basename(f.fileName) && !program.isSourceFileFromExternalLibrary(f),
-            )
-            .map((f) => f.fileName);
-        if (options.exclude.length !== 0) {
-            const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
-            files = files.filter((f) => exclude.some((e) => e.match(f)));
+        const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
+        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), {
+            getCurrentDirectory() { return cwd; },
+        });
+        files = [];
+        for (const sourceFile of program.getSourceFiles()) {
+            const {fileName} = sourceFile;
+            if (path.relative(libDirectory, fileName) === path.basename(fileName))
+                continue; // lib.xxx.d.ts
+            if (program.isSourceFileFromExternalLibrary(sourceFile))
+                continue;
+            if (exclude.some((e) => e.match(fileName)))
+                continue;
+            if (typeRoots !== undefined) {
+                for (const typeRoot of typeRoots) {
+                    const relative = path.relative(typeRoot, fileName);
+                    if (!relative.startsWith('..' + path.sep))
+                        continue;
+                }
+            }
+            files.push(fileName);
         }
     } else {
         files = program.getSourceFiles().map((f) => f.fileName);
