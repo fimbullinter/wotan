@@ -22,6 +22,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "exclude": [
-    "test/rules"
+    "test/rules",
+    "test/integration"
   ]
 }

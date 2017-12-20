@@ -6,7 +6,7 @@
       "**/.hg": true,
       "**/CVS": true,
       "**/.DS_Store": true,
-      "**/node_modules": true,
+      "node_modules": true,
       "**/coverage": true,
       "**/.nyc_output": true,
       "**/*.js": {
@@ -18,7 +18,6 @@
       "**/*.js.map": {
         "when": "$(basename)"
       },
-      "test/rules/**/*.fix": true,
-      "test/rules/**/*.lint": true
+      "test/{integration,rules}/**/*.{fix,lint}": true,
     }
 }
