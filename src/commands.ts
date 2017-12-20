@@ -120,8 +120,8 @@ export function runTest(options: TestCommand): boolean {
     let baselineDir: string;
     let root: string;
     let success = true;
-    let baselinesSeen: string[] = [];
-    let baselinesAvailable: string[] = [];
+    const baselinesSeen: string[] = [];
+    const baselinesAvailable: string[] = [];
     const host: RuleTestHost = {
         getBaseDirectory() { return root; },
         checkResult(file, kind, summary) {
