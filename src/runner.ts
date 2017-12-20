@@ -160,9 +160,16 @@ function getFilesAndProgram(options: LintOptions, cwd: string): {files: string[]
         const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
         const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), {
             getCurrentDirectory() { return cwd; },
+            directoryExists(dir) {
+                try {
+                    return fs.statSync(dir).isDirectory();
+                } catch {
+                    return false;
+                }
+            },
         });
         files = [];
-        for (const sourceFile of program.getSourceFiles()) {
+        outer: for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
             if (path.relative(libDirectory, fileName) === path.basename(fileName))
                 continue; // lib.xxx.d.ts
@@ -174,7 +181,7 @@ function getFilesAndProgram(options: LintOptions, cwd: string): {files: string[]
                 for (const typeRoot of typeRoots) {
                     const relative = path.relative(typeRoot, fileName);
                     if (!relative.startsWith('..' + path.sep))
-                        continue;
+                        continue outer;
                 }
             }
             files.push(fileName);
