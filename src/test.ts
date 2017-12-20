@@ -2,7 +2,7 @@ import { Failure, FileSummary, LintResult } from './types';
 import chalk from 'chalk';
 import * as diff from 'diff';
 import { LintOptions } from './linter';
-import { doLint } from './commands';
+import { lintCollection } from './runner';
 
 export const enum BaselineKind {
     Lint = 'lint',
@@ -24,14 +24,14 @@ export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean 
         fix: false,
     };
     const cwd = host.getBaseDirectory();
-    const lintResult = doLint(lintOptions, cwd);
+    const lintResult = lintCollection(lintOptions, cwd);
     for (const [fileName, summary] of lintResult)
         if (!host.checkResult(fileName, BaselineKind.Lint, summary))
             return false;
 
     if (!('fix' in config) || config.fix) {
         lintOptions.fix = config.fix || true; // fix defaults to true if not specified
-        const fixResult = containsFixes(lintResult) ? doLint(lintOptions, cwd) : lintResult;
+        const fixResult = containsFixes(lintResult) ? lintCollection(lintOptions, cwd) : lintResult;
         for (const [fileName, summary] of fixResult)
             if (!host.checkResult(fileName, BaselineKind.Fix, summary))
                 return false;

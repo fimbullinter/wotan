@@ -1,10 +1,10 @@
 import { parseArguments } from './argparse';
-import { run } from './commands';
+import { runCommand } from './commands';
 import { ConfigurationError } from './error';
 
 try {
     const args = parseArguments(process.argv.slice(2));
-    if (!run(args))
+    if (!runCommand(args))
         process.exitCode = 2;
 } catch (e) {
     if (!(e instanceof ConfigurationError))
