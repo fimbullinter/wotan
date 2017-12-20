@@ -76,11 +76,15 @@ function parseTestCommand(args: string[]): TestCommand {
         command: CommandName.Test,
         files: [],
         updateBaselines: false,
+        full: false,
     };
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
         switch (arg) {
+            case '--full':
+                ({index: i, argument: result.full} = parseOptionalBoolean(args, i));
+                break;
             case '--bail':
                 ({index: i, argument: result.bail} = parseOptionalBoolean(args, i));
                 break;

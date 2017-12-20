@@ -6,7 +6,7 @@ import { LintOptions } from './linter';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
-import { format, assertNever } from './utils';
+import { format, assertNever, unixifyPath } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
@@ -30,6 +30,7 @@ export interface TestCommand {
     files: string[];
     updateBaselines: boolean;
     bail: boolean;
+    full: boolean;
 }
 
 export interface VerifyCommand {
@@ -119,6 +120,8 @@ export function runTest(options: TestCommand): boolean {
     let baselineDir: string;
     let root: string;
     let success = true;
+    let baselinesSeen: string[] = [];
+    let baselinesAvailable: string[] = [];
     const host: RuleTestHost = {
         getBaseDirectory() { return root; },
         checkResult(file, kind, summary) {
@@ -127,6 +130,7 @@ export function runTest(options: TestCommand): boolean {
                 throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
             const actual = createBaseline(summary);
             const baselineFile = `${path.resolve(baselineDir, relative)}.${kind}`;
+            baselinesSeen.push(baselineFile);
             if (!fs.existsSync(baselineFile)) {
                 if (!options.updateBaselines) {
                     console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.red('MISSING')}`);
@@ -170,9 +174,25 @@ export function runTest(options: TestCommand): boolean {
             const {baselines, ...testConfig} = <Partial<TestOptions>>require(testcase);
             root = path.dirname(testcase);
             baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
+            if (options.full)
+                baselinesAvailable.push(...glob.sync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
             console.log(testcase);
             if (!test(testConfig, host))
                 return false;
+        }
+    }
+    if (options.full) {
+        const totalBaselines = new Set(baselinesAvailable);
+        for (const seen of baselinesSeen)
+            totalBaselines.delete(seen);
+        for (const baseline of totalBaselines) {
+            if (options.updateBaselines) {
+                fs.unlinkSync(baseline);
+                console.log(`  ${chalk.grey.dim(baseline)} ${chalk.green('REMOVED')}`);
+            } else {
+                console.log(`  ${chalk.grey.dim(baseline)} ${chalk.red('NOT CHECKED')}`);
+                success = false;
+            }
         }
     }
     return success;

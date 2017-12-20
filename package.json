@@ -11,8 +11,8 @@
     "lint:wotan": "node src/cli lint",
     "test": "run-p test:api test:rules test:integration",
     "test:api": "ava test/conformance",
-    "test:integration": "node src/cli test 'test/integration/**/{,*.}test.json'",
-    "test:rules": "node src/cli test 'test/rules/**/{,*.}test.json'",
+    "test:integration": "node src/cli test 'test/integration/**/{,*.}test.json' --full",
+    "test:rules": "node src/cli test 'test/rules/**/{,*.}test.json' --full",
     "coverage": "nyc run-s test",
     "report-coverage": "cat ./coverage/lcov.info | coveralls",
     "verify": "npm-run-all -s clean -p compile lint:tslint -p lint:wotan coverage"
