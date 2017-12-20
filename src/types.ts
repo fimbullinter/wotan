@@ -179,6 +179,7 @@ export namespace RawConfiguration {
         files: string | string[];
         rules?: {[key: string]: RawConfiguration.RuleConfigValue};
         settings?: {[key: string]: any};
+        processor?: string;
     }
 }
 
@@ -203,20 +204,21 @@ export namespace Configuration {
         rules: {[key: string]: RuleConfig} | undefined;
         settings: {[key: string]: any} | undefined;
         files: string[];
+        processor: string | undefined;
     }
 }
 
 export interface EffectiveConfiguration {
     rules: Map<string, EffectiveConfiguration.RuleConfig>;
     settings: Map<string, any>;
-    rulesDirectories: Map<string, string[]>;
-    processors: string[];
+    processor: string | undefined;
 }
 
 export namespace EffectiveConfiguration {
     export interface RuleConfig {
         severity: Configuration.RuleSeverity;
         options: any;
+        rulesDirectories: string[] | undefined;
     }
 }
 

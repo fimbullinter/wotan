@@ -67,10 +67,10 @@ function getFailures(sourceFile: ts.SourceFile, config: EffectiveConfiguration, 
 
 function prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
     const rules: PreparedRule[] = [];
-    for (const [ruleName, {options, severity}] of config.rules) {
+    for (const [ruleName, {options, severity, rulesDirectories}] of config.rules) {
         if (severity === 'off')
             continue;
-        const ctor = findRule(ruleName, config.rulesDirectories);
+        const ctor = findRule(ruleName, rulesDirectories);
         if (program === undefined && ctor.requiresTypeInformation) {
             console.warn(`'${ruleName}' requires type information.`); // TODO call method on Host
             continue;

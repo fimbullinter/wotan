@@ -196,7 +196,7 @@ function createProgram(configFile: string, cwd: string): ts.Program {
             getCurrentDirectory: () => cwd,
             getNewLine: () => '\n',
         }));
-    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configFile), {noEmit: true});
+    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configFile), {noEmit: true}, configFile);
     if (parsed.errors !== undefined) {
         // ignore 'TS18003: No inputs were found in config file ...'
         const errors = parsed.errors.filter((d) => d.code !== 18003);

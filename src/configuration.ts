@@ -8,6 +8,7 @@ import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
 import { Configuration, RawConfiguration, EffectiveConfiguration } from './types';
 import * as isNegated from 'is-negated-glob';
+import { resolveExecutable } from './utils';
 
 declare global {
     interface NodeModule {
@@ -107,20 +108,21 @@ function parseConfigWorker(raw: RawConfiguration, filename: string, stack: strin
     return {
         filename,
         extends: base,
-        overrides: raw.overrides && raw.overrides.map(mapOverride),
+        overrides: raw.overrides && raw.overrides.map(mapOverride, path.dirname(filename)),
         rules: raw.rules && mapRules(raw.rules),
         rulesDirectory: raw.rulesDirectory && mapRulesDirectory(raw.rulesDirectory, dirname),
-        processor: raw.processor === undefined ? undefined : path.resolve(path.dirname(filename), raw.processor),
+        processor: raw.processor === undefined ? undefined : resolveExecutable(raw.processor, path.dirname(filename)),
         exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude === undefined ? undefined : [raw.exclude],
         settings: raw.settings,
     };
 }
 
-function mapOverride(raw: RawConfiguration.Override): Configuration.Override {
+function mapOverride(this: string, raw: RawConfiguration.Override): Configuration.Override {
     return {
         files: arrayify(raw.files),
         rules: raw.rules && mapRules(raw.rules),
         settings: raw.settings,
+        processor: raw.processor && resolveExecutable(raw.processor, this),
     };
 }
 
@@ -170,32 +172,39 @@ function findConfigFileInDirectory(dir: string): string | undefined {
 }
 
 export function reduceConfigurationForFile(config: Configuration, filename: string, cwd = process.cwd()) {
-    return reduceConfig(config, path.resolve(cwd, filename), {
+    return reduceConfig(config, path.resolve(cwd, filename), new Map(), {
         rules: new Map(),
         settings: new Map(),
-        rulesDirectories: new Map(),
-        processors: [],
+        processor: undefined,
     });
 }
 
-function reduceConfig(config: Configuration, filename: string, receiver: EffectiveConfiguration): EffectiveConfiguration | undefined {
+type RulesDirectoryMap = Map<string, string[]>;
+
+function reduceConfig(
+    config: Configuration,
+    filename: string,
+    rulesDirectories: RulesDirectoryMap,
+    receiver: EffectiveConfiguration,
+): EffectiveConfiguration | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
     if (config.exclude !== undefined && matchesGlobs(relativeFilename, config.exclude, false))
             return;
-    for (const base of config.extends)
-        if (reduceConfig(base, filename, receiver) === undefined)
+    for (const base of config.extends) {
+        const tmpRulesDirs: RulesDirectoryMap = new Map();
+        if (reduceConfig(base, filename, tmpRulesDirs, receiver) === undefined)
             return;
+        extendRulesDirectories(rulesDirectories, tmpRulesDirs, identityFn);
+    }
 
-    if (config.processor !== undefined)
-        receiver.processors.unshift(config.processor);
     if (config.rulesDirectory !== undefined)
-        extendRulesDirectories(receiver.rulesDirectories, config.rulesDirectory);
+        extendRulesDirectories(rulesDirectories, config.rulesDirectory, arrayFn);
 
-    extendConfig(receiver, config);
+    extendConfig(receiver, config, rulesDirectories);
     if (config.overrides !== undefined)
         for (const override of config.overrides)
             if (matchesGlobs(relativeFilename, override.files, true))
-                extendConfig(receiver, override);
+                extendConfig(receiver, override, rulesDirectories);
     return receiver;
 }
 
@@ -211,22 +220,42 @@ function matchesGlobs(file: string, patterns: string[], matchBase: boolean): boo
     return false;
 }
 
-function extendRulesDirectories(receiver: Map<string, string[]>, current: Map<string, string>) {
+function identityFn<T>(v: T): T {
+    return v;
+}
+
+function arrayFn<T>(v: T): T[] {
+    return [v];
+}
+
+function extendRulesDirectories<T extends string | string[]>(
+    receiver: Map<string, string[]>,
+    current: Map<string, T>,
+    mapFn: (v: T) => string[],
+) {
     current.forEach((dir, key) => {
         const prev = receiver.get(key);
         if (prev !== undefined) {
-            prev.unshift(dir);
+            prev.unshift(...mapFn(dir));
         } else {
-            receiver.set(key, [dir]);
+            receiver.set(key, mapFn(dir));
         }
     });
 }
 
-function extendConfig(receiver: EffectiveConfiguration, {rules, settings}: Partial<Configuration | Configuration.Override>) {
+function extendConfig(
+    receiver: EffectiveConfiguration,
+    {processor, rules, settings}: Partial<Configuration | Configuration.Override>,
+    rulesDirectoryMap: RulesDirectoryMap,
+) {
+    if (processor !== undefined)
+        receiver.processor = processor;
     if (rules !== undefined) {
         for (const key of Object.keys(rules)) {
+            const slashPos = key.lastIndexOf('/');
+            const rulesDirectories = slashPos === -1 ? undefined : rulesDirectoryMap.get(key.substr(0, slashPos));
             const prev = receiver.rules.get(key);
-            receiver.rules.set(key, {severity: 'error', options: undefined, ...prev, ...rules[key]});
+            receiver.rules.set(key, {severity: 'error', options: undefined, ...prev, ...rules[key], rulesDirectories});
         }
     }
     if (settings !== undefined)

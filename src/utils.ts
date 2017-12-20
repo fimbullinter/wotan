@@ -1,6 +1,8 @@
 import { Format } from './types';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
+import * as resolve from 'resolve';
+import { ConfigurationError } from './error';
 
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
     const cache = new Map<T, U>();
@@ -72,4 +74,16 @@ function convertToPrintable(value: any): any {
 
 export function assertNever(v: never): never {
     throw new Error(`unexpected value '${v}'`);
+}
+
+export function resolveExecutable(name: string, basedir: string, paths?: string[]): string {
+    try {
+        return resolve.sync(name, {
+            basedir,
+            paths,
+            extensions: Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+        });
+    } catch (e) {
+        throw new ConfigurationError(e.message);
+    }
 }

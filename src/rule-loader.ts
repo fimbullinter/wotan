@@ -6,7 +6,7 @@ const CORE_RULES_DIRECTORY = path.join(__dirname, 'rules');
 const RULE_CACHE = new Map<string, RuleConstructor | null>();
 
 // @internal
-export function findRule(name: string, rulesDirectories: EffectiveConfiguration['rulesDirectories']): RuleConstructor {
+export function findRule(name: string, directories: EffectiveConfiguration.RuleConfig['rulesDirectories']): RuleConstructor {
     const slashIndex = name.lastIndexOf('/');
     if (slashIndex === -1) {
         const ctor = loadCachedRule(path.join(CORE_RULES_DIRECTORY, name), loadCoreRule);
@@ -14,10 +14,8 @@ export function findRule(name: string, rulesDirectories: EffectiveConfiguration[
             throw new Error(`Could not find core rule '${name}'.`);
         return ctor;
     }
-    const prefix = name.substr(0, slashIndex);
-    const directories = rulesDirectories.get(prefix);
     if (directories === undefined)
-        throw new Error(`No 'rulesDirectory' for prefix '${prefix}'.`);
+        throw new Error(`No 'rulesDirectory' for prefix '${name.substr(0, slashIndex)}'.`);
     name = name.substr(slashIndex + 1);
     for (const dir of directories) {
         const ctor = loadCachedRule(path.join(dir, name), loadCustomRule);
