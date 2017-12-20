@@ -103,13 +103,9 @@ function formatFailure(failure: Failure, lineStart: number, lineLength: number, 
     const failureLength = Math.min(lineEnd, failure.end.position) - Math.max(failure.start.position, lineStart);
     errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
     if (failure.end.position <= nextLineStart)
-        return addPadding(errorLine, lineLength) +
+        return errorLine + ' '.repeat(Math.max(1, lineLength - errorLine.length + 1)) +
             `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
 
     remaining.push(failure);
     return errorLine;
-}
-
-function addPadding(line: string, minLength: number): string {
-    return line + ' '.repeat(Math.max(1, minLength - line.length + 1));
 }
