@@ -1,5 +1,6 @@
-import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand, Format } from './runner';
+import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand } from './commands';
 import { ConfigurationError } from './error';
+import { Format } from './types';
 
 export function parseArguments(args: string[]): Command {
     args = args.map(trimSingleQuotes);

@@ -1,6 +1,7 @@
 import test from 'ava';
 import { parseArguments } from '../../src/argparse';
-import { CommandName, Command, Format } from '../../src/runner';
+import { CommandName, Command } from '../../src/commands';
+import { Format } from '../../src/types';
 
 test('defaults to lint command', (t) => {
     t.deepEqual<Command>(

@@ -4,6 +4,14 @@ import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 import { getDisabledRanges, DisableMap } from './line-switches';
 
+export interface LintOptions {
+    config: string | undefined;
+    files: string[];
+    exclude: string[];
+    project: string | undefined;
+    fix: boolean | number;
+}
+
 export function lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
     return getFailures(file, config, program);
 }

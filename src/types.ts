@@ -219,3 +219,9 @@ export namespace EffectiveConfiguration {
         options: any;
     }
 }
+
+export const enum Format {
+    Yaml = 'yaml',
+    Json = 'json',
+    Json5 = 'json5',
+}

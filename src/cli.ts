@@ -1,5 +1,5 @@
 import { parseArguments } from './argparse';
-import { run } from './runner';
+import { run } from './commands';
 import { ConfigurationError } from './error';
 
 try {
