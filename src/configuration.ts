@@ -110,7 +110,7 @@ function parseConfigWorker(raw: RawConfiguration, filename: string, stack: strin
         extends: base,
         overrides: raw.overrides && raw.overrides.map(mapOverride, path.dirname(filename)),
         rules: raw.rules && mapRules(raw.rules),
-        rulesDirectory: raw.rulesDirectory && mapRulesDirectory(raw.rulesDirectory, dirname),
+        rulesDirectories: raw.rulesDirectories && mapRulesDirectory(raw.rulesDirectories, dirname),
         processor: raw.processor === undefined ? undefined : resolveExecutable(raw.processor, path.dirname(filename)),
         exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude === undefined ? undefined : [raw.exclude],
         settings: raw.settings,
@@ -197,8 +197,8 @@ function reduceConfig(
         extendRulesDirectories(rulesDirectories, tmpRulesDirs, identityFn);
     }
 
-    if (config.rulesDirectory !== undefined)
-        extendRulesDirectories(rulesDirectories, config.rulesDirectory, arrayFn);
+    if (config.rulesDirectories !== undefined)
+        extendRulesDirectories(rulesDirectories, config.rulesDirectories, arrayFn);
 
     extendConfig(receiver, config, rulesDirectories);
     if (config.overrides !== undefined)

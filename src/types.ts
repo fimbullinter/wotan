@@ -163,7 +163,7 @@ export interface RawConfiguration {
     extends?: string | string[];
     root?: boolean;
     overrides?: RawConfiguration.Override[];
-    rulesDirectory?: {[prefix: string]: string};
+    rulesDirectories?: {[prefix: string]: string};
     exclude?: string | string[];
     processor?: string;
 }
@@ -189,7 +189,7 @@ export interface Configuration {
     filename: string;
     overrides: Configuration.Override[] | undefined;
     extends: Configuration[];
-    rulesDirectory: Map<string, string> | undefined;
+    rulesDirectories: Map<string, string> | undefined;
     processor: string | undefined;
     exclude: string[] | undefined;
 }
