@@ -71,6 +71,8 @@ export function runCommand(command: Command): boolean {
 }
 
 function runLint(options: LintCommand): boolean {
+    // fail early if formatter does not exist
+    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
     const result = lintCollection(options, process.cwd());
     let success = true;
     for (const [file, summary] of result) {
@@ -79,8 +81,6 @@ function runLint(options: LintCommand): boolean {
         if (options.fix && summary.fixes)
             fs.writeFileSync(file, summary.text, 'utf8');
     }
-
-    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
     console.log(formatter.format(result));
     return success;
 }

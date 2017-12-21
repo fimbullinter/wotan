@@ -8,7 +8,7 @@ import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
 import { Configuration, RawConfiguration, EffectiveConfiguration } from './types';
 import * as isNegated from 'is-negated-glob';
-import { resolveExecutable } from './utils';
+import { resolveExecutable, OFFSET_TO_NODE_MODULES } from './utils';
 
 declare global {
     interface NodeModule {
@@ -73,7 +73,7 @@ export function resolveConfigFile(name: string, basedir: string): string {
         return resolve.sync(name, {
             basedir,
             extensions: CONFIG_EXTENSIONS,
-            paths: module.paths.slice(1), // fall back to search relative to executable
+            paths: module.paths.slice(OFFSET_TO_NODE_MODULES), // fall back to search relative to executable
         });
     } catch (e) {
         throw new ConfigurationError(e.message);

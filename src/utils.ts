@@ -4,6 +4,16 @@ import * as yaml from 'js-yaml';
 import * as resolve from 'resolve';
 import { ConfigurationError } from './error';
 
+// @internal
+/**
+ * Number of .. until the containing node_modules.
+ * __dirname -> src
+ * ..        -> project root
+ * ../..     -> node_modules (or @scope)
+ * ../../..  -> node_modules if @scoped package
+ */
+export const OFFSET_TO_NODE_MODULES = 2; // add 1 if published as scoped module
+
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
     const cache = new Map<T, U>();
     return (arg: T): U => {
@@ -76,12 +86,12 @@ export function assertNever(v: never): never {
     throw new Error(`unexpected value '${v}'`);
 }
 
-export function resolveExecutable(name: string, basedir: string, paths?: string[]): string {
+export function resolveExecutable(name: string, basedir: string): string {
     try {
         return resolve.sync(name, {
             basedir,
-            paths,
             extensions: Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+            paths: module.paths.slice(OFFSET_TO_NODE_MODULES),
         });
     } catch (e) {
         throw new ConfigurationError(e.message);
