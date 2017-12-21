@@ -175,7 +175,7 @@ export namespace RawConfiguration {
         severity?: RuleSeverity;
         options?: any;
     }
-    export type RuleConfigValue = RuleSeverity | RuleConfig;
+    export type RuleConfigValue = RuleSeverity | RuleConfig | null;
     export interface Override {
         files: string | string[];
         rules?: {[key: string]: RawConfiguration.RuleConfigValue};

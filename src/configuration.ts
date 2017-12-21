@@ -164,6 +164,8 @@ function mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
 function mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
     if (typeof value === 'string')
         return { severity: value === 'warn' ? 'warning' : value };
+    if (!value)
+        return {};
     const result: Configuration.RuleConfig = {};
     if ('options' in value)
         result.options = value.options;
