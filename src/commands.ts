@@ -1,4 +1,3 @@
-import * as glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';
@@ -6,7 +5,7 @@ import { LintOptions } from './linter';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
-import { format, assertNever, unixifyPath, writeFile } from './utils';
+import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
@@ -117,39 +116,49 @@ function runShow(options: ShowCommand): boolean {
     return true;
 }
 
-export function runTest(options: TestCommand): boolean {
+export async function runTest(options: TestCommand): Promise<boolean> {
     let baselineDir: string;
     let root: string;
     let success = true;
     const baselinesSeen: string[] = [];
-    const baselinesAvailable: string[] = [];
+    const baselinesAvailable = [];
     const host: RuleTestHost = {
         getBaseDirectory() { return root; },
-        checkResult(file, kind, summary) {
+        async checkResult(file, kind, summary) {
             const relative = path.relative(root, file);
             if (relative.startsWith('..' + path.sep))
                 throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
             const actual = createBaseline(summary);
             const baselineFile = `${path.resolve(baselineDir, relative)}.${kind}`;
             baselinesSeen.push(baselineFile);
-            if (!fs.existsSync(baselineFile)) {
+            let expected: string;
+            try {
+                expected = await readFile(baselineFile);
+            } catch (e) {
+                if (e.code !== 'ENOENT')
+                    throw e;
                 if (!options.updateBaselines) {
                     console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.red('MISSING')}`);
                     success = false;
                     return !options.bail;
                 }
-                mkdirp.sync(path.dirname(baselineFile));
-                fs.writeFileSync(baselineFile, actual, 'utf8');
-                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('CREATED')}`);
-                return true;
+                return new Promise<boolean>((res, rej) => {
+                    mkdirp(path.dirname(baselineFile), (err) => {
+                        if (err)
+                            return rej(err);
+                        return res(writeFile(baselineFile, actual).then(() => {
+                                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('CREATED')}`);
+                                return true;
+                            }));
+                    });
+                });
             }
-            const expected = fs.readFileSync(baselineFile, 'utf8');
             if (expected === actual) {
                 console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('PASSED')}`);
                 return true;
             }
             if (options.updateBaselines) {
-                fs.writeFileSync(baselineFile, actual, 'utf8');
+                await writeFile(baselineFile, actual);
                 console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('UPDATED')}`);
                 return true;
             }
@@ -168,7 +177,7 @@ export function runTest(options: TestCommand): boolean {
         symlinks: {},
     };
     for (const pattern of options.files) {
-        for (const testcase of glob.sync(pattern, globOptions)) {
+        for (const testcase of await globAsync(pattern, globOptions)) {
             interface TestOptions extends LintOptions {
                 baselines: string;
             }
@@ -176,24 +185,32 @@ export function runTest(options: TestCommand): boolean {
             root = path.dirname(testcase);
             baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
             if (options.exact)
-                baselinesAvailable.push(...glob.sync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
+                baselinesAvailable.push(globAsync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
             console.log(testcase);
-            if (!test(testConfig, host))
+            if (!await test(testConfig, host))
                 return false;
         }
     }
     if (options.exact) {
-        const totalBaselines = new Set(baselinesAvailable);
+        const totalBaselines = new Set();
+        for (const result of baselinesAvailable)
+            for (const baseline of await result)
+                totalBaselines.add(baseline);
+
         for (const seen of baselinesSeen)
             totalBaselines.delete(seen);
-        for (const baseline of totalBaselines) {
+
+        if (totalBaselines.size !== 0) {
+            let suffix: string;
             if (options.updateBaselines) {
-                fs.unlinkSync(baseline);
-                console.log(`  ${chalk.grey.dim(baseline)} ${chalk.green('REMOVED')}`);
+                suffix = chalk.green('REMOVED');
+                await Promise.all([...totalBaselines].map(unlinkFile));
             } else {
-                console.log(`  ${chalk.grey.dim(baseline)} ${chalk.red('NOT CHECKED')}`);
+                suffix = chalk.red('NOT CHECKED');
                 success = false;
             }
+            for (const baseline of totalBaselines)
+                console.log(`  ${chalk.grey.dim(baseline)} ${suffix}`);
         }
     }
     return success;

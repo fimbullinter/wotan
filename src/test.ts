@@ -11,10 +11,10 @@ export const enum BaselineKind {
 
 export interface RuleTestHost {
     getBaseDirectory(): string;
-    checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
+    checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean | Promise<boolean>;
 }
 
-export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean {
+export async function test(config: Partial<LintOptions>, host: RuleTestHost): Promise<boolean> {
     const lintOptions: LintOptions = {
         config: undefined,
         exclude: [],
@@ -26,14 +26,14 @@ export function test(config: Partial<LintOptions>, host: RuleTestHost): boolean 
     const cwd = host.getBaseDirectory();
     const lintResult = lintCollection(lintOptions, cwd);
     for (const [fileName, summary] of lintResult)
-        if (!host.checkResult(fileName, BaselineKind.Lint, summary))
+        if (!await host.checkResult(fileName, BaselineKind.Lint, summary))
             return false;
 
     if (!('fix' in config) || config.fix) {
         lintOptions.fix = config.fix || true; // fix defaults to true if not specified
         const fixResult = containsFixes(lintResult) ? lintCollection(lintOptions, cwd) : lintResult;
         for (const [fileName, summary] of fixResult)
-            if (!host.checkResult(fileName, BaselineKind.Fix, summary))
+            if (!await host.checkResult(fileName, BaselineKind.Fix, summary))
                 return false;
     }
     return true;

@@ -4,6 +4,7 @@ import * as yaml from 'js-yaml';
 import * as resolve from 'resolve';
 import { ConfigurationError } from './error';
 import * as fs from 'fs';
+import * as glob from 'glob';
 
 // @internal
 /**
@@ -101,8 +102,24 @@ export function resolveExecutable(name: string, basedir: string): string {
 
 export function writeFile(path: string, content: string): Promise<void> {
     return new Promise((res, rej) => {
-        fs.writeFile(path, content, 'utf8', (err) => {
-            return err ? rej(err) : res();
-        });
+        return fs.writeFile(path, content, 'utf8', (err) => err ? rej(err) : res());
+    });
+}
+
+export function readFile(path: string): Promise<string> {
+    return new Promise((res, rej) => {
+        return fs.readFile(path, 'utf8', (err, data) => err ? rej(err) : res(data));
+    });
+}
+
+export function unlinkFile(path: string): Promise<void> {
+    return new Promise((res, rej) => {
+        return fs.unlink(path, (err) => err ? rej(err) : res());
+    });
+}
+
+export function globAsync(pattern: string, options: glob.IOptions): Promise<string[]> {
+    return new Promise((res, rej) => {
+        return glob(pattern, options, (err, matches) => err ? rej(err) : res(matches));
     });
 }
