@@ -158,6 +158,7 @@ export interface FormatterConstructor {
 }
 
 export interface RawConfiguration {
+    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null}};
     rules?: {[key: string]: RawConfiguration.RuleConfigValue};
     settings?: {[key: string]: any};
     extends?: string | string[];
@@ -181,9 +182,14 @@ export namespace RawConfiguration {
         settings?: {[key: string]: any};
         processor?: string;
     }
+    export interface Alias {
+        rule: string;
+        options?: any;
+    }
 }
 
 export interface Configuration {
+    aliases: {[name: string]: Configuration.Alias | null} | undefined;
     rules: {[key: string]: Configuration.RuleConfig} | undefined;
     settings: {[key: string]: any} | undefined;
     filename: string;
@@ -206,6 +212,10 @@ export namespace Configuration {
         files: string[];
         processor: string | undefined;
     }
+    export interface Alias {
+        rule: string;
+        options?: any;
+    }
 }
 
 export interface EffectiveConfiguration {
@@ -219,6 +229,7 @@ export namespace EffectiveConfiguration {
         severity: Configuration.RuleSeverity;
         options: any;
         rulesDirectories: string[] | undefined;
+        rule: string | undefined;
     }
 }
 

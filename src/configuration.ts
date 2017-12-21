@@ -108,6 +108,7 @@ function parseConfigWorker(raw: RawConfiguration, filename: string, stack: strin
     return {
         filename,
         extends: base,
+        aliases: raw.aliases && mapAliases(raw.aliases),
         overrides: raw.overrides && raw.overrides.map(mapOverride, path.dirname(filename)),
         rules: raw.rules && mapRules(raw.rules),
         rulesDirectories: raw.rulesDirectories && mapRulesDirectory(raw.rulesDirectories, dirname),
@@ -117,7 +118,27 @@ function parseConfigWorker(raw: RawConfiguration, filename: string, stack: strin
     };
 }
 
+function mapAliases(aliases: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null }}) {
+    const result: Configuration['aliases'] = {};
+    for (const prefix of Object.keys(aliases)) {
+        const obj = aliases[prefix];
+        if (!obj)
+            continue;
+        for (const name of Object.keys(obj)) {
+            const config = obj[name];
+            const fullName = `${prefix}/${name}`;
+            if (config && !config.rule)
+                throw new ConfigurationError(`Alias '${fullName}' does not specify a rule.`);
+            result[fullName] = config;
+        }
+    }
+    return result;
+}
+
 function mapOverride(this: string, raw: RawConfiguration.Override): Configuration.Override {
+    const files = arrayify(raw.files);
+    if (files.length === 0)
+        throw new ConfigurationError(`Override does not specify files.`);
     return {
         files: arrayify(raw.files),
         rules: raw.rules && mapRules(raw.rules),
@@ -172,7 +193,7 @@ function findConfigFileInDirectory(dir: string): string | undefined {
 }
 
 export function reduceConfigurationForFile(config: Configuration, filename: string, cwd = process.cwd()) {
-    return reduceConfig(config, path.resolve(cwd, filename), new Map(), {
+    return reduceConfig(config, path.resolve(cwd, filename), new Map(), new Map(), {
         rules: new Map(),
         settings: new Map(),
         processor: undefined,
@@ -180,31 +201,48 @@ export function reduceConfigurationForFile(config: Configuration, filename: stri
 }
 
 type RulesDirectoryMap = Map<string, string[]>;
+interface ReducedAlias extends Configuration.Alias {
+    rulesDirectories: string[] | undefined;
+}
+type AliasMap = Map<string, ReducedAlias | null>;
 
 function reduceConfig(
     config: Configuration,
     filename: string,
     rulesDirectories: RulesDirectoryMap,
+    aliases: AliasMap,
     receiver: EffectiveConfiguration,
 ): EffectiveConfiguration | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
-    if (config.exclude !== undefined && matchesGlobs(relativeFilename, config.exclude, false))
+    if (config.exclude && matchesGlobs(relativeFilename, config.exclude, false))
             return;
     for (const base of config.extends) {
         const tmpRulesDirs: RulesDirectoryMap = new Map();
-        if (reduceConfig(base, filename, tmpRulesDirs, receiver) === undefined)
+        const tmpAliases: AliasMap = new Map();
+        if (reduceConfig(base, filename, tmpRulesDirs, tmpAliases, receiver) === undefined)
             return;
         extendRulesDirectories(rulesDirectories, tmpRulesDirs, identityFn);
+        for (const [name, alias] of tmpAliases)
+            aliases.set(name, alias);
     }
 
-    if (config.rulesDirectories !== undefined)
+    if (config.rulesDirectories)
         extendRulesDirectories(rulesDirectories, config.rulesDirectories, arrayFn);
+    if (config.aliases) {
+        for (const name of Object.keys(config.aliases)) {
+            const options = config.aliases[name];
+            aliases.set(name, options && {
+                ...options,
+                rulesDirectories: getRulesDirectoriesByName(name, rulesDirectories),
+            });
+        }
+    }
 
-    extendConfig(receiver, config, rulesDirectories);
-    if (config.overrides !== undefined)
+    extendConfig(receiver, config, rulesDirectories, aliases);
+    if (config.overrides)
         for (const override of config.overrides)
             if (matchesGlobs(relativeFilename, override.files, true))
-                extendConfig(receiver, override, rulesDirectories);
+                extendConfig(receiver, override, rulesDirectories, aliases);
     return receiver;
 }
 
@@ -218,6 +256,11 @@ function matchesGlobs(file: string, patterns: string[], matchBase: boolean): boo
             return !glob.negated;
     }
     return false;
+}
+
+function getRulesDirectoriesByName(name: string, rulesDirectories: RulesDirectoryMap) {
+    const slashIndex = name.lastIndexOf('/');
+    return slashIndex === -1 ? undefined : rulesDirectories.get(name.substr(0, slashIndex));
 }
 
 function identityFn<T>(v: T): T {
@@ -247,18 +290,43 @@ function extendConfig(
     receiver: EffectiveConfiguration,
     {processor, rules, settings}: Partial<Configuration | Configuration.Override>,
     rulesDirectoryMap: RulesDirectoryMap,
+    aliases: AliasMap,
 ) {
     if (processor !== undefined)
         receiver.processor = processor;
-    if (rules !== undefined) {
+    if (rules) {
         for (const key of Object.keys(rules)) {
-            const slashPos = key.lastIndexOf('/');
-            const rulesDirectories = slashPos === -1 ? undefined : rulesDirectoryMap.get(key.substr(0, slashPos));
             const prev = receiver.rules.get(key);
-            receiver.rules.set(key, {severity: 'error', options: undefined, ...prev, ...rules[key], rulesDirectories});
+            receiver.rules.set(key, {
+                severity: 'error',
+                options: undefined,
+                ...prev,
+                rulesDirectories: getRulesDirectoriesByName(key, rulesDirectoryMap),
+                ...resolveAlias(key, aliases),
+                ...rules[key],
+            });
         }
     }
-    if (settings !== undefined)
+    if (settings)
         for (const key of Object.keys(settings))
             receiver.settings.set(key, settings[key]);
+}
+
+function resolveAlias(name: string, aliases: AliasMap) {
+    const result: Partial<ReducedAlias> & {rule: string | undefined} = {
+        rule: undefined,
+    };
+    let next = aliases.get(name);
+    if (next) {
+        const names = [];
+        do {
+            names.push(name);
+            name = next.rule;
+            if (names.includes(name))
+                throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${name}`);
+            Object.assign(result, next);
+            next = aliases.get(name);
+        } while (next);
+    }
+    return result;
 }
