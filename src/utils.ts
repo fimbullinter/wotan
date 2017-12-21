@@ -3,6 +3,7 @@ import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import * as resolve from 'resolve';
 import { ConfigurationError } from './error';
+import * as fs from 'fs';
 
 // @internal
 /**
@@ -96,4 +97,12 @@ export function resolveExecutable(name: string, basedir: string): string {
     } catch (e) {
         throw new ConfigurationError(e.message);
     }
+}
+
+export function writeFile(path: string, content: string): Promise<void> {
+    return new Promise((res, rej) => {
+        fs.writeFile(path, content, 'utf8', (err) => {
+            return err ? rej(err) : res();
+        });
+    });
 }

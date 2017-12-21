@@ -6,7 +6,7 @@ import { LintOptions } from './linter';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
-import { format, assertNever, unixifyPath } from './utils';
+import { format, assertNever, unixifyPath, writeFile } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
@@ -53,7 +53,7 @@ export interface InitCommand {
 
 export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | TestCommand;
 
-export function runCommand(command: Command): boolean {
+export async function runCommand(command: Command): Promise<boolean> {
     switch (command.command) {
         case CommandName.Lint:
             return runLint(command);
@@ -70,19 +70,20 @@ export function runCommand(command: Command): boolean {
     }
 }
 
-function runLint(options: LintCommand): boolean {
+function runLint(options: LintCommand) {
     // fail early if formatter does not exist
     const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
     const result = lintCollection(options, process.cwd());
     let success = true;
+    const fixes = [];
     for (const [file, summary] of result) {
         if (summary.failures.length !== 0)
             success = false;
         if (options.fix && summary.fixes)
-            fs.writeFileSync(file, summary.text, 'utf8');
+            fixes.push(writeFile(file, summary.text));
     }
     console.log(formatter.format(result));
-    return success;
+    return fixes.length === 0 ? success : Promise.all(fixes).then(() => success);
 }
 
 function runInit(options: InitCommand): boolean {
