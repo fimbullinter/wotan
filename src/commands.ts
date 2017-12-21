@@ -30,7 +30,7 @@ export interface TestCommand {
     files: string[];
     updateBaselines: boolean;
     bail: boolean;
-    full: boolean;
+    exact: boolean;
 }
 
 export interface VerifyCommand {
@@ -175,14 +175,14 @@ export function runTest(options: TestCommand): boolean {
             const {baselines, ...testConfig} = <Partial<TestOptions>>require(testcase);
             root = path.dirname(testcase);
             baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
-            if (options.full)
+            if (options.exact)
                 baselinesAvailable.push(...glob.sync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
             console.log(testcase);
             if (!test(testConfig, host))
                 return false;
         }
     }
-    if (options.full) {
+    if (options.exact) {
         const totalBaselines = new Set(baselinesAvailable);
         for (const seen of baselinesSeen)
             totalBaselines.delete(seen);
