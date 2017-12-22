@@ -5,6 +5,7 @@ import * as resolve from 'resolve';
 import { ConfigurationError } from './error';
 import * as fs from 'fs';
 import * as glob from 'glob';
+import * as ts from 'typescript';
 
 // @internal
 /**
@@ -122,4 +123,28 @@ export function globAsync(pattern: string, options: glob.IOptions): Promise<stri
     return new Promise((res, rej) => {
         return glob(pattern, options, (err, matches) => err ? rej(err) : res(matches));
     });
+}
+
+export function calculateChangeRange(original: string, changed: string): ts.TextChangeRange {
+    const diff = changed.length - original.length;
+    let start = 0;
+    let end = original.length;
+    const minEnd = diff >= 0 ? end : changed.length;
+    for (; start < minEnd && original[start] === changed[start]; ++start)
+        ;
+    if (start !== minEnd) {
+        const maxStart = end - minEnd + start;
+        // tslint:disable-next-line:ban-comma-operator
+        for (let changedEnd = changed.length; maxStart < end && original[end - 1] === changed[changedEnd - 1]; --end, --changedEnd)
+            ;
+    }
+
+    const length = end - start;
+    return {
+        span: {
+            start,
+            length,
+        },
+        newLength: length + diff,
+    };
 }
