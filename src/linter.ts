@@ -3,6 +3,9 @@ import { Failure, EffectiveConfiguration, LintAndFixFileResult, Replacement, Rul
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 import { getDisabledRanges, DisableMap } from './line-switches';
+import * as debug from 'debug';
+
+const log = debug('wotan:linter');
 
 export interface LintOptions {
     config: string | undefined;
@@ -59,9 +62,12 @@ interface PreparedRule {
 }
 
 function getFailures(sourceFile: ts.SourceFile, config: EffectiveConfiguration, program: ts.Program | undefined) {
+    log('Linting file %s', sourceFile.fileName);
     const rules = prepareRules(config, sourceFile, program);
-    if (rules.length === 0)
+    if (rules.length === 0) {
+        log('No active rules');
         return [];
+    }
     return applyRules(sourceFile, program, rules, config.settings);
 }
 
@@ -75,8 +81,10 @@ function prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile,
             console.warn(`'${ruleName}' requires type information.`); // TODO call method on Host
             continue;
         }
-        if (ctor.supports !== undefined && !ctor.supports(sourceFile))
+        if (ctor.supports !== undefined && !ctor.supports(sourceFile)) {
+            log(`Rule %s does not support this file`, ruleName);
             continue;
+        }
         rules.push({ruleName, options, severity, ctor});
     }
     return rules;
@@ -102,6 +110,7 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
     };
     for (const rule of rules) {
         ({ruleName, severity} = rule);
+        log('Executing rule %s', ruleName);
         new rule.ctor(context, rule.options).apply();
     }
     return result;
