@@ -203,8 +203,11 @@ export function reduceConfigurationForFile(config: Configuration, filename: stri
 }
 
 type RulesDirectoryMap = Map<string, string[]>;
-interface ReducedAlias extends Configuration.Alias {
+interface ResolvedAlias extends Configuration.Alias {
     rulesDirectories: string[] | undefined;
+}
+interface ReducedAlias extends ResolvedAlias {
+    aliases: AliasMap;
 }
 type AliasMap = Map<string, ReducedAlias | null>;
 
@@ -235,7 +238,8 @@ function reduceConfig(
             const options = config.aliases[name];
             aliases.set(name, options && {
                 ...options,
-                rulesDirectories: getRulesDirectoriesByName(name, rulesDirectories),
+                aliases,
+                rulesDirectories: getRulesDirectoriesByName(options.rule, rulesDirectories),
             });
         }
     }
@@ -283,7 +287,7 @@ function extendRulesDirectories<T extends string | string[]>(
         if (prev !== undefined) {
             prev.unshift(...mapFn(dir));
         } else {
-            receiver.set(key, mapFn(dir));
+            receiver.set(key, mapFn(dir).slice());
         }
     });
 }
@@ -314,21 +318,30 @@ function extendConfig(
             receiver.settings.set(key, settings[key]);
 }
 
-function resolveAlias(name: string, aliases: AliasMap) {
-    const result: Partial<ReducedAlias> & {rule: string | undefined} = {
-        rule: undefined,
+function resolveAlias(rule: string, aliases: AliasMap) {
+    let next = aliases.get(rule);
+    if (!next)
+        return { rule };
+    const names = [];
+    let startIndex = 0;
+    const result: ResolvedAlias = {
+        rule,
+        rulesDirectories: undefined,
     };
-    let next = aliases.get(name);
-    if (next) {
-        const names = [];
-        do {
-            names.push(name);
-            name = next.rule;
-            if (names.includes(name))
-                throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${name}`);
-            Object.assign(result, next);
-            next = aliases.get(name);
-        } while (next);
-    }
+    do {
+        names.push(rule);
+        rule = next.rule;
+        if (next.aliases !== aliases) {
+            startIndex = names.length - 1;
+            aliases = next.aliases;
+        } else if (names.includes(rule, startIndex)) {
+            throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${rule}.`);
+        }
+        result.rule = next.rule;
+        result.rulesDirectories = next.rulesDirectories;
+        if ('options' in next)
+            result.options = next.options;
+        next = aliases.get(rule);
+    } while (next);
     return result;
 }
