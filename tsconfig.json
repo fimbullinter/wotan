@@ -21,8 +21,8 @@
     "inlineSourceMap": false,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "test/rules",
-    "test/integration"
+  "include": [
+    "src",
+    "test/conformance"
   ]
 }
