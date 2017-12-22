@@ -189,15 +189,15 @@ export namespace RawConfiguration {
 }
 
 export interface Configuration {
-    aliases: {[name: string]: Configuration.Alias | null} | undefined;
-    rules: {[key: string]: Configuration.RuleConfig} | undefined;
-    settings: {[key: string]: any} | undefined;
+    aliases?: {[name: string]: Configuration.Alias | null};
+    rules?: {[key: string]: Configuration.RuleConfig};
+    settings?: {[key: string]: any};
     filename: string;
-    overrides: Configuration.Override[] | undefined;
+    overrides?: Configuration.Override[];
     extends: Configuration[];
-    rulesDirectories: Map<string, string> | undefined;
-    processor: string | undefined;
-    exclude: string[] | undefined;
+    rulesDirectories?: Map<string, string>;
+    processor?: string;
+    exclude?: string[];
 }
 
 export namespace Configuration {
@@ -207,10 +207,10 @@ export namespace Configuration {
         options?: any;
     }
     export interface Override {
-        rules: {[key: string]: RuleConfig} | undefined;
-        settings: {[key: string]: any} | undefined;
+        rules?: {[key: string]: RuleConfig};
+        settings?: {[key: string]: any};
         files: string[];
-        processor: string | undefined;
+        processor?: string;
     }
     export interface Alias {
         rule: string;
@@ -229,7 +229,7 @@ export namespace EffectiveConfiguration {
         severity: Configuration.RuleSeverity;
         options: any;
         rulesDirectories: string[] | undefined;
-        rule: string | undefined;
+        rule: string;
     }
 }
 
