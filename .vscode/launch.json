@@ -21,6 +21,16 @@
         {
           "type": "node",
           "request": "launch",
+          "name": "Run Testrunner",
+          "program": "${workspaceFolder}/src/cli.js",
+          "args": [
+            "test", "${file}"
+          ],
+          "outputCapture": "std"
+      },
+        {
+          "type": "node",
+          "request": "launch",
           "name": "Run AVA test",
           "program": "${workspaceRoot}/node_modules/ava/profile.js",
           "args": [

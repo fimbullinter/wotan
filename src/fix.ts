@@ -21,7 +21,6 @@ export function applyFixes(source: string, fixes: Fix[]): FixResult {
     let fixed = fixes.length;
     const replacements = [];
     for (const fix of fixes) {
-        // @internal
         const state: FixWithState = {replacements: combineReplacements(fix.replacements), skip: false, state: undefined};
         for (const replacement of fix.replacements)
             replacements.push({fix: state, ...replacement});
