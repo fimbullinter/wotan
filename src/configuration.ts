@@ -330,18 +330,21 @@ function resolveAlias(rule: string, aliases: AliasMap) {
     };
     do {
         names.push(rule);
-        rule = next.rule;
+        if (next.rule === rule)
+            throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${next.rule}.`);
         if (next.aliases !== aliases) {
             startIndex = names.length - 1;
             aliases = next.aliases;
-        } else if (names.includes(rule, startIndex)) {
-            throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${rule}.`);
+        } else if (names.includes(next.rule, startIndex)) {
+            throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${next.rule}.`);
         }
         result.rule = next.rule;
         result.rulesDirectories = next.rulesDirectories;
         if ('options' in next)
             result.options = next.options;
+        rule = next.rule;
         next = aliases.get(rule);
     } while (next);
+
     return result;
 }

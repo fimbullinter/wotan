@@ -70,11 +70,15 @@ test('Aliases refer to rules or aliases in the scope they are declared', (t) => 
     const config: Configuration = {
         aliases: {
             'my/foo': { rule: 'other/foo' },
+            'my/circular': { rule: 'circular/circular' },
         },
         extends: [{
             aliases: {
                 'other/foo': {
                     rule: 'my/foo',
+                },
+                'circular/circular': {
+                    rule: 'circular/circular',
                 },
             },
             extends: [],
@@ -87,6 +91,14 @@ test('Aliases refer to rules or aliases in the scope they are declared', (t) => 
                 severity: 'error',
             },
         },
+        overrides: [{
+            files: ['b.ts'],
+            rules: {
+                'my/circular': {
+                    severity: 'error',
+                },
+            },
+        }],
         rulesDirectories: new Map([['my', '/extendingRules']]),
     };
     t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
@@ -99,4 +111,9 @@ test('Aliases refer to rules or aliases in the scope they are declared', (t) => 
             rulesDirectories: ['/baseRules'],
         }]]),
     });
+
+    t.throws(
+        () => reduceConfigurationForFile(config, '/b.ts', '/'),
+        'Circular alias: my/circular => circular/circular => circular/circular.',
+    );
 });
