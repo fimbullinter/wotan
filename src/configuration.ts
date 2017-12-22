@@ -1,4 +1,4 @@
-import * as path from 'path';
+﻿import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as resolve from 'resolve';
@@ -340,7 +340,7 @@ function resolveAlias(rule: string, aliases: AliasMap) {
         }
         result.rule = next.rule;
         result.rulesDirectories = next.rulesDirectories;
-        if ('options' in next)
+        if ('options' in next && !('options' in result))
             result.options = next.options;
         rule = next.rule;
         next = aliases.get(rule);
