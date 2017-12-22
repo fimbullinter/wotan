@@ -39,9 +39,13 @@ export function lintAndFix(
         if (failures.length === 0)
             break;
         const fixes = failures.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
-        if (fixes.length === 0)
+        if (fixes.length === 0) {
+            log('No fixes');
             break;
+        }
+        log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
         const fixed = applyFixes(file.text, fixes);
+        log('Applied %d fixes', fixes.length);
         if (fixed.fixed === 0)
             break;
         totalFixes += fixed.fixed;
@@ -113,6 +117,7 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
         log('Executing rule %s', ruleName);
         new rule.ctor(context, rule.options).apply();
     }
+    log('Found %d failures', result.length);
     return result;
 
     function addFailure(pos: number, end: number, message: string, fix?: Replacement | Replacement[]) {
