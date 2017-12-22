@@ -1,20 +1,24 @@
-import { LintOptions, lintAndFix, lintFile } from './linter';
-import { LintResult, FileSummary, Configuration } from './types';
+import { LintOptions, lintAndFix, getFailures } from './linter';
+import { LintResult, FileSummary, Configuration, AbstractProcessor } from './types';
 import * as path from 'path';
 import { findConfiguration, reduceConfigurationForFile, parseConfigFile, readConfigFile, resolveConfigFile } from './configuration';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath } from './utils';
+import { unixifyPath, calculateChangeRange } from './utils';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
+import { loadProcessor } from './processor-loader';
 
 export function lintCollection(options: LintOptions, cwd: string): LintResult {
     let {files, program} = getFilesAndProgram(options, cwd);
     const result: LintResult = new Map();
     let dir: string | undefined;
     let config = options.config !== undefined ? resolveConfig(options.config, cwd) : undefined;
+    if (program === undefined)
+        return lintFiles(files, options, cwd, config);
+
     const fixedFiles = new Map<string, string>();
     for (const file of files) {
         if (options.config === undefined) {
@@ -35,6 +39,7 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
             let fileContent = sourceFile.text;
             const fixed = lintAndFix(
                 sourceFile,
+                fileContent,
                 effectiveConfig,
                 (content, range) => {
                     fileContent = content;
@@ -48,6 +53,7 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
                     return {program, file: sourceFile};
                 },
                 options.fix === true ? undefined : options.fix,
+                undefined,
                 program,
             );
             summary = {
@@ -57,9 +63,81 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
             };
         } else {
             summary = {
-                failures: lintFile(sourceFile, effectiveConfig, program),
+                failures: getFailures(sourceFile, effectiveConfig, undefined, program),
                 fixes: 0,
                 text: sourceFile.text,
+            };
+        }
+        result.set(file, summary);
+    }
+    return result;
+}
+
+function lintFiles(files: string[], options: LintOptions, cwd: string, config: Configuration | undefined) {
+    const result: LintResult = new Map();
+    let dir: string | undefined;
+    let processor: AbstractProcessor | undefined;
+    for (const file of files) {
+        if (options.config === undefined) {
+            const dirname = path.dirname(file);
+            if (dir !== dirname) {
+                config = findConfiguration(file, cwd);
+                dir = dirname;
+            }
+        }
+        const effectiveConfig = config && reduceConfigurationForFile(config, file, cwd);
+        if (effectiveConfig === undefined)
+            continue;
+        let originalContent = fs.readFileSync(file, 'utf8');
+        let name: string;
+        let content: string;
+        if (effectiveConfig.processor) {
+            const ctor = loadProcessor(effectiveConfig.processor);
+            name = ctor.transformName(file, effectiveConfig.settings);
+            processor = new ctor(originalContent, file, name, effectiveConfig.settings);
+            content = processor.preprocess();
+        } else {
+            processor = undefined;
+            name = file;
+            content = originalContent;
+        }
+
+        let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
+        let summary: FileSummary;
+        if (options.fix) {
+            const fixed = lintAndFix(
+                sourceFile,
+                originalContent,
+                effectiveConfig,
+                (newContent, range) => {
+                    originalContent = newContent;
+                    if (processor) {
+                        const {transformed, changeRange} = processor.updateSource(originalContent, range);
+                        range = changeRange !== undefined ? changeRange : calculateChangeRange(content, transformed);
+                        content = transformed;
+                    } else {
+                        content = originalContent;
+                    }
+                    sourceFile = ts.updateSourceFile(sourceFile, content, range);
+                    return {file: sourceFile};
+                },
+                options.fix === true ? undefined : options.fix,
+                (failures) => processor === undefined ? failures : processor.postprocess(failures),
+            );
+            summary = {
+                failures: fixed.failures,
+                fixes: fixed.fixes,
+                text: originalContent,
+            };
+        } else {
+            summary = {
+                failures: getFailures(
+                    sourceFile,
+                    effectiveConfig,
+                    processor === undefined ? undefined : (failures) => processor!.postprocess(failures),
+                ),
+                fixes: 0,
+                text: originalContent,
             };
         }
         result.set(file, summary);

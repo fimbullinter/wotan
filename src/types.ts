@@ -238,3 +238,36 @@ export const enum Format {
     Json = 'json',
     Json5 = 'json5',
 }
+
+// @internal
+export interface ProcessorConstructor {
+    transformName(fileName: string, settings: ReadonlyMap<string, any>): string;
+    new(source: string, sourceFileName: string, targetFileName: string, settings: ReadonlyMap<string, any>): AbstractProcessor;
+}
+
+export interface ProcessorUpdateResult {
+    transformed: string;
+    changeRange?: ts.TextChangeRange;
+}
+
+export abstract class AbstractProcessor {
+    /**
+     * Returns the resulting file name.
+     */
+    public static transformName(fileName: string, _settings: ReadonlyMap<string, any>): string {
+        return fileName;
+    }
+
+    constructor(
+        protected source: string,
+        protected sourceFileName: string,
+        protected targetFileName: string,
+        protected settings: ReadonlyMap<string, any>,
+    ) {}
+
+    public abstract preprocess(): string;
+
+    public abstract postprocess(failures: Failure[]): Failure[];
+
+    public abstract updateSource(newSource: string, changeRange: ts.TextChangeRange): ProcessorUpdateResult;
+}

@@ -1,0 +1,14 @@
+//// debugger;
+     ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+//// // debugger;
+//// "debugger";
+//// debugger
+     ~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+//// "debugger"; debugger; "debugger";
+                 ~~~~~~~~~             [error no-debugger: 'debugger' statements are forbidden.]
+//// debugger; debugger
+     ~~~~~~~~~          [error no-debugger: 'debugger' statements are forbidden.]
+               ~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+//// if (foo)
+////     debugger;
+         ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]

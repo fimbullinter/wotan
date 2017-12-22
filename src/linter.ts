@@ -16,7 +16,7 @@ export interface LintOptions {
 }
 
 export function lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
-    return getFailures(file, config, program);
+    return getFailures(file, config, undefined, program);
 }
 
 export interface UpdateFileResult {
@@ -25,16 +25,19 @@ export interface UpdateFileResult {
 }
 
 export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
+export type PostprocessCallback = (failures: Failure[]) => Failure[];
 
 export function lintAndFix(
     file: ts.SourceFile,
+    content: string,
     config: EffectiveConfiguration,
     updateFile: UpdateFileCallback,
     iterations: number = 10,
+    postprocess?: PostprocessCallback,
     program?: ts.Program,
 ): LintAndFixFileResult {
     let totalFixes = 0;
-    let failures = getFailures(file, config, program);
+    let failures = getFailures(file, config, postprocess, program);
     for (let i = 0; i < iterations; ++i) {
         if (failures.length === 0)
             break;
@@ -44,13 +47,14 @@ export function lintAndFix(
             break;
         }
         log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
-        const fixed = applyFixes(file.text, fixes);
-        log('Applied %d fixes', fixes.length);
+        const fixed = applyFixes(content, fixes);
+        log('Applied %d fixes', fixed.fixed);
         if (fixed.fixed === 0)
             break;
         totalFixes += fixed.fixed;
+        content = fixed.result;
         ({program, file} = updateFile(fixed.result, fixed.range));
-        failures = getFailures(file, config, program);
+        failures = getFailures(file, config, postprocess, program);
     }
     return {
         failures,
@@ -65,14 +69,16 @@ interface PreparedRule {
     severity: Severity;
 }
 
-function getFailures(sourceFile: ts.SourceFile, config: EffectiveConfiguration, program: ts.Program | undefined) {
-    log('Linting file %s', sourceFile.fileName);
-    const rules = prepareRules(config, sourceFile, program);
+// @internal
+export function getFailures(file: ts.SourceFile, config: EffectiveConfiguration, postprocess?: PostprocessCallback, program?: ts.Program) {
+    log('Linting file %s', file.fileName);
+    const rules = prepareRules(config, file, program);
     if (rules.length === 0) {
         log('No active rules');
         return [];
     }
-    return applyRules(sourceFile, program, rules, config.settings);
+    const failures = applyRules(file, program, rules, config.settings);
+    return postprocess === undefined || failures.length === 0 ? failures : postprocess(failures);
 }
 
 function prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
