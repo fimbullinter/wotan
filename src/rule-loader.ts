@@ -15,7 +15,7 @@ export function findRule(name: string, directories: EffectiveConfiguration.RuleC
         return ctor;
     }
     if (directories === undefined)
-        throw new Error(`No 'rulesDirectory' for prefix '${name.substr(0, slashIndex)}'.`);
+        throw new Error(`No 'rulesDirectories' for rule '${name}'.`);
     name = name.substr(slashIndex + 1);
     for (const dir of directories) {
         const ctor = loadCachedRule(path.join(dir, name), loadCustomRule);
