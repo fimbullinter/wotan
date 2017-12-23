@@ -1,0 +1,5 @@
+{
+  "project": ".",
+  "fix": false,
+  "baselines": "./project-baselines"
+}

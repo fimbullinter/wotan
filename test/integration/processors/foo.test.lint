@@ -1,3 +1,4 @@
+//// import * as other from './other.test';
 //// debugger;
      ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
 //// // debugger;

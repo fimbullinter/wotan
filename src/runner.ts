@@ -240,6 +240,7 @@ function getFilesAndProgram(options: LintOptions, cwd: string): {files: string[]
         return { files };
     }
     const program = createProgram(tsconfig, cwd);
+    // TODO reverse mapping for file names
     if (options.files.length === 0) {
         const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
         const exclude = options.exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
@@ -437,7 +438,7 @@ class ProcessorHost {
             return content === null ? undefined : content;
         const realFile = this.getFileSystemFile(file);
         if (realFile === undefined) {
-            this.fileContent.set(file, null);
+            this.fileContent.set(file, null); // tslint:disable-line:no-null-keyword
             return;
         }
         try {
@@ -451,10 +452,11 @@ class ProcessorHost {
             if (file === realFile)
                 return content;
             if (content === undefined) {
-                this.fileContent.set(file, null);
+                this.fileContent.set(file, null); // tslint:disable-line:no-null-keyword
                 return;
             }
-            const processor = new (loadProcessor(getProcessorForFile(this.config || findConfiguration(realFile)!, realFile)!))(content, realFile, file, new Map());
+            const config = this.config || findConfiguration(realFile)!;
+            const processor = new (loadProcessor(getProcessorForFile(config, realFile)!))(content, realFile, file, new Map());
             this.processedFiles.set(file, {
                 processor,
                 originalContent: content,
