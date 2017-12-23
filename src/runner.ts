@@ -1,5 +1,5 @@
 import { LintOptions, lintAndFix, getFailures } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor, ProcessorConstructor } from './types';
+import { LintResult, FileSummary, Configuration, AbstractProcessor } from './types';
 import * as path from 'path';
 import {
     findConfiguration,
@@ -311,13 +311,164 @@ declare module 'typescript' {
     }
 }
 
-interface ProcessorInfo {
-    originalName: string;
-    config: Configuration | undefined;
-    processor: ProcessorConstructor;
+const enum FileKind {
+    NonExistent,
+    Unknown,
+    File,
+    Mapped,
+    Directory,
 }
 
-type FileMap = Map<string, ProcessorInfo>;
+interface ProcessedFileInfo {
+    originalName: string;
+    originalContent: string;
+    processor: AbstractProcessor;
+}
+
+class ProcessorHost {
+    public reverseMap = new Map<string, string>();
+    public map = new Map<string, string>();
+    public mappedDirectories = new Map<string, ts.FileSystemEntries>();
+    public seen = new Map<string, FileKind>();
+    public processedFiles = new Map<string, ProcessedFileInfo>();
+    public fileContent = new Map<string, string | null>();
+
+    constructor(public config?: Configuration) {}
+
+    public processDirectory(dir: string): ts.FileSystemEntries {
+        let result = this.mappedDirectories.get(dir);
+        if (result !== undefined)
+            return result;
+        const files: string[] = [];
+        const directories: string[] = [];
+        result = {files, directories};
+        this.mappedDirectories.set(dir, result);
+        const knownKind = this.seen.get(dir);
+        if (knownKind !== undefined && knownKind !== FileKind.Directory)
+            return result;
+        let entries;
+        try {
+            entries = fs.readdirSync(dir);
+        } catch (e) {
+            if (e.code === 'ENOENT')
+                this.seen.set(dir, FileKind.NonExistent);
+            return result;
+        }
+        this.seen.set(dir, FileKind.Directory);
+        if (entries.length !== 0) {
+            let c: Configuration | undefined | 'initial' = this.config || 'initial';
+            for (const entry of entries) {
+                const fileName = `${dir}/${entry}`;
+                switch (this.getFileKind(fileName)) {
+                    case FileKind.File:
+                        if (c === 'initial')
+                            c = findConfiguration(fileName);
+                        const processor = c && getProcessorForFile(c, fileName);
+                        let newName: string;
+                        if (processor) {
+                            const ctor = loadProcessor(processor);
+                            newName = ctor.transformName(fileName, new Map());
+                            this.seen.set(newName, FileKind.Mapped);
+                        } else {
+                            newName = fileName;
+                        }
+                        files.push(newName);
+                        this.map.set(fileName, newName);
+                        this.reverseMap.set(newName, fileName);
+                        break;
+                    case FileKind.Directory:
+                        directories.push(fileName);
+                }
+            }
+        }
+        return result;
+    }
+
+    public fileExists(file: string): boolean {
+        switch (this.getFileKind(file)) {
+            case FileKind.Directory:
+            case FileKind.Unknown:
+                return false;
+            case FileKind.File:
+            case FileKind.Mapped:
+                return true;
+            default: {
+                return this.getFileSystemFile(file) !== undefined;
+            }
+        }
+    }
+
+    public directoryExists(dir: string) {
+        return this.getFileKind(dir) === FileKind.Directory;
+    }
+
+    public getFileKind(fileName: string) {
+        let result = this.seen.get(fileName);
+        if (result === undefined) {
+            try {
+                const stat = fs.statSync(fileName);
+                result = stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Unknown;
+            } catch {
+                result = FileKind.NonExistent;
+            }
+            this.seen.set(fileName, result);
+        }
+        return result;
+    }
+
+    private getFileSystemFile(file: string): string | undefined {
+        if (this.map.has(file))
+            return file;
+        const reverse = this.reverseMap.get(file);
+        if (reverse !== undefined)
+            return reverse;
+        const dirname = path.dirname(file);
+        if (this.mappedDirectories.has(dirname))
+            return;
+        this.processDirectory(dirname);
+        return this.getFileSystemFile(file);
+    }
+
+    public readFile(file: string): string | undefined {
+        let content = this.fileContent.get(file);
+        if (content !== undefined)
+            return content === null ? undefined : content;
+        const realFile = this.getFileSystemFile(file);
+        if (realFile === undefined) {
+            this.fileContent.set(file, null);
+            return;
+        }
+        try {
+            content = this.fileContent.get(realFile);
+            if (content === undefined) {
+                content = fs.readFileSync(realFile, 'utf8');
+                this.fileContent.set(realFile, content);
+            } else if (content === null) {
+                content = undefined;
+            }
+            if (file === realFile)
+                return content;
+            if (content === undefined) {
+                this.fileContent.set(file, null);
+                return;
+            }
+            const processor = new (loadProcessor(getProcessorForFile(this.config || findConfiguration(realFile)!, realFile)!))(content, realFile, file, new Map());
+            this.processedFiles.set(file, {
+                processor,
+                originalContent: content,
+                originalName: realFile,
+            });
+            content = processor.preprocess();
+            this.fileContent.set(file, content);
+            return content;
+        } catch {
+            this.fileContent.set(file, '');
+            if (file !== realFile)
+                this.fileContent.set(realFile, '');
+            return '';
+        }
+    }
+}
 
 function createProgram(configFile: string, cwd: string, c?: Configuration): ts.Program {
     const config = ts.readConfigFile(configFile, ts.sys.readFile);
@@ -327,10 +478,10 @@ function createProgram(configFile: string, cwd: string, c?: Configuration): ts.P
             getCurrentDirectory: () => cwd,
             getNewLine: () => '\n',
         }));
-    const fileMap: FileMap = new Map();
+    const host = new ProcessorHost(c);
     const parsed = ts.parseJsonConfigFileContent(
         config.config,
-        createParseConfigHost(cwd, fileMap, c),
+        createParseConfigHost(cwd, host),
         path.dirname(configFile),
         {noEmit: true},
         configFile,
@@ -345,46 +496,52 @@ function createProgram(configFile: string, cwd: string, c?: Configuration): ts.P
                 getNewLine: () => '\n',
             }));
     }
-    return ts.createProgram(parsed.fileNames, parsed.options, ts.createCompilerHost(parsed.options, true));
+    return ts.createProgram(parsed.fileNames, parsed.options, createCompilerHost(cwd, host));
 }
 
-function createParseConfigHost(cwd: string, fileMap: FileMap, config?: Configuration): ts.ParseConfigHost {
+function createCompilerHost(cwd: string, host: ProcessorHost): ts.CompilerHost {
+    return {
+        getCanonicalFileName: ts.sys.useCaseSensitiveFileNames ? (f) => f : (f) => f.toLowerCase(),
+        getSourceFile(fileName, languageVersion, _onError, _shouldCreateNewSourceFile) {
+            const content = host.readFile(fileName);
+            return content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
+        },
+        getDefaultLibFileName: ts.getDefaultLibFilePath,
+        writeFile() {},
+        getCurrentDirectory: () => cwd,
+        getDirectories(dir) {
+            const processed = host.mappedDirectories.get(dir);
+            if (processed !== undefined)
+                return processed.directories.map(path.dirname);
+            const directories = [];
+            for (const entry of fs.readdirSync(dir))
+                if (host.directoryExists(`${dir}/${entry}`))
+                    directories.push(entry);
+            return directories;
+        },
+        directoryExists(dir) {
+            return host.directoryExists(dir);
+        },
+        useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
+        getNewLine: () => '\n',
+        fileExists(f) {
+            return host.fileExists(f);
+        },
+        readFile(f) {
+            return host.readFile(f);
+        },
+        realpath(f) {
+            return fs.realpathSync(f);
+        },
+    };
+}
+
+function createParseConfigHost(cwd: string, host: ProcessorHost): ts.ParseConfigHost {
     return {
         useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
         readDirectory(rootDir, extensions, excludes, includes, depth) {
             return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, cwd, depth, (dir) => {
-                const files = [];
-                const directories = [];
-                const entries = fs.readdirSync(dir);
-                if (entries.length !== 0) {
-                    let c: Configuration | undefined | 'initial' = config === undefined ? 'initial' : config;
-                    for (const entry of entries) {
-                        try {
-                            const fileName = `${dir}/${entry}`;
-                            const stat = fs.statSync(fileName);
-                            if (stat.isFile()) {
-                                if (c === 'initial')
-                                    c = findConfiguration(fileName, cwd);
-                                const processor = c && getProcessorForFile(c, fileName, cwd);
-                                if (processor) {
-                                    const ctor = loadProcessor(processor);
-                                    const newName = ctor.transformName(fileName, new Map());
-                                    files.push(newName);
-                                    fileMap.set(newName, {
-                                        originalName: fileName,
-                                        config: c,
-                                        processor: ctor,
-                                    });
-                                } else {
-                                    files.push(fileName);
-                                }
-                            } else if (stat.isDirectory()) {
-                                directories.push(fileName);
-                            }
-                        } catch {}
-                    }
-                }
-                return {files, directories};
+                return host.processDirectory(dir);
             });
         },
         fileExists: ts.sys.fileExists,

@@ -2,7 +2,7 @@ const {AbstractProcessor} = require('../../../src/types');
 
 class Processor extends AbstractProcessor {
     static transformName(name) {
-        return name.endsWith('.test') ? name.slice(0, -4) + 'ts' : undefined;
+        return name + '.ts';
     }
 
     constructor(...args) {
