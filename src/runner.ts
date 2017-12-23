@@ -356,7 +356,9 @@ class ProcessorHost {
         }
         this.seen.set(dir, FileKind.Directory);
         if (entries.length !== 0) {
-            let c: Configuration | undefined | 'initial' = this.config || 'initial';
+            let c: Configuration | undefined | 'initial' = /\/node_modules(\/|$)/.test(dir)
+                ? undefined // don't use processors in node_modules
+                : this.config || 'initial';
             for (const entry of entries) {
                 const fileName = `${dir}/${entry}`;
                 switch (this.getFileKind(fileName)) {
