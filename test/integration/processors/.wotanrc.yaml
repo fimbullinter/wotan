@@ -1,0 +1,6 @@
+root: true
+rules:
+  no-debugger: error
+overrides:
+  - files: "*.test"
+    processor: ./processor.js

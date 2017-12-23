@@ -4,7 +4,7 @@
   "description": "Pluggable TypeScript and JavaScript linter",
   "main": "bin/main.js",
   "scripts": {
-    "clean": "rimraf 'src/{,!(custom-typings)/}*.{js?(.map),d.ts}'",
+    "clean": "rimraf '{src,test/conformance}/**/*.{js?(.map),d.ts}'",
     "compile": "tsc -p .",
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p .",

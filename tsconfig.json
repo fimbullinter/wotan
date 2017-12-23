@@ -23,6 +23,11 @@
   },
   "include": [
     "src",
+    "custom-typings",
     "test/conformance"
+  ],
+  "exclude": [
+    "src/**/*.d.ts",
+    "test/conformance/**/*.d.ts"
   ]
 }
