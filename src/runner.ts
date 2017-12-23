@@ -1,7 +1,14 @@
 import { LintOptions, lintAndFix, getFailures } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor } from './types';
+import { LintResult, FileSummary, Configuration, AbstractProcessor, ProcessorConstructor } from './types';
 import * as path from 'path';
-import { findConfiguration, reduceConfigurationForFile, parseConfigFile, readConfigFile, resolveConfigFile } from './configuration';
+import {
+    findConfiguration,
+    reduceConfigurationForFile,
+    parseConfigFile,
+    readConfigFile,
+    resolveConfigFile,
+    getProcessorForFile,
+} from './configuration';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as glob from 'glob';
@@ -286,7 +293,33 @@ function findupTsconfig(directory: string): string {
     }
 }
 
-function createProgram(configFile: string, cwd: string): ts.Program {
+declare module 'typescript' {
+    export function matchFiles(
+        path: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string>,
+        includes: ReadonlyArray<string>,
+        useCaseSensitiveFileNames: boolean,
+        currentDirectory: string,
+        depth: number | undefined,
+        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
+    ): string[];
+
+    export interface FileSystemEntries {
+        readonly files: ReadonlyArray<string>;
+        readonly directories: ReadonlyArray<string>;
+    }
+}
+
+interface ProcessorInfo {
+    originalName: string;
+    config: Configuration | undefined;
+    processor: ProcessorConstructor;
+}
+
+type FileMap = Map<string, ProcessorInfo>;
+
+function createProgram(configFile: string, cwd: string, c?: Configuration): ts.Program {
     const config = ts.readConfigFile(configFile, ts.sys.readFile);
     if (config.error !== undefined)
         throw new ConfigurationError(ts.formatDiagnostics([config.error], {
@@ -294,7 +327,14 @@ function createProgram(configFile: string, cwd: string): ts.Program {
             getCurrentDirectory: () => cwd,
             getNewLine: () => '\n',
         }));
-    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configFile), {noEmit: true}, configFile);
+    const fileMap: FileMap = new Map();
+    const parsed = ts.parseJsonConfigFileContent(
+        config.config,
+        createParseConfigHost(cwd, fileMap, c),
+        path.dirname(configFile),
+        {noEmit: true},
+        configFile,
+    );
     if (parsed.errors !== undefined) {
         // ignore 'TS18003: No inputs were found in config file ...'
         const errors = parsed.errors.filter((d) => d.code !== 18003);
@@ -306,6 +346,50 @@ function createProgram(configFile: string, cwd: string): ts.Program {
             }));
     }
     return ts.createProgram(parsed.fileNames, parsed.options, ts.createCompilerHost(parsed.options, true));
+}
+
+function createParseConfigHost(cwd: string, fileMap: FileMap, config?: Configuration): ts.ParseConfigHost {
+    return {
+        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+        readDirectory(rootDir, extensions, excludes, includes, depth) {
+            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, cwd, depth, (dir) => {
+                const files = [];
+                const directories = [];
+                const entries = fs.readdirSync(dir);
+                if (entries.length !== 0) {
+                    let c: Configuration | undefined | 'initial' = config === undefined ? 'initial' : config;
+                    for (const entry of entries) {
+                        try {
+                            const fileName = `${dir}/${entry}`;
+                            const stat = fs.statSync(fileName);
+                            if (stat.isFile()) {
+                                if (c === 'initial')
+                                    c = findConfiguration(fileName, cwd);
+                                const processor = c && getProcessorForFile(c, fileName, cwd);
+                                if (processor) {
+                                    const ctor = loadProcessor(processor);
+                                    const newName = ctor.transformName(fileName, new Map());
+                                    files.push(newName);
+                                    fileMap.set(newName, {
+                                        originalName: fileName,
+                                        config: c,
+                                        processor: ctor,
+                                    });
+                                } else {
+                                    files.push(fileName);
+                                }
+                            } else if (stat.isDirectory()) {
+                                directories.push(fileName);
+                            }
+                        } catch {}
+                    }
+                }
+                return {files, directories};
+            });
+        },
+        fileExists: ts.sys.fileExists,
+        readFile: ts.sys.readFile,
+    };
 }
 
 function checkConfigDirectory(fileOrDirName: string): string {
@@ -324,12 +408,12 @@ function checkConfigDirectory(fileOrDirName: string): string {
 }
 
 /** Ensure that all non-pattern arguments, that are not excluded, matched  */
-function checkFilesExist(patterns: string[], ignore: string[], matches: string[], errorSuffix: string, cwd: string) {
+function checkFilesExist(patterns: string[], ignore: string[], files: string[], errorSuffix: string, cwd: string) {
     patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(cwd, p));
     if (patterns.length === 0)
         return;
     const exclude = ignore.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
     for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
-        if (!matches.some(createMinimatchFilter(filename)))
+        if (!files.some(createMinimatchFilter(filename)))
             throw new ConfigurationError(`'${filename}' ${errorSuffix}.`);
 }
