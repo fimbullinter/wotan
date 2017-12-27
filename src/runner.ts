@@ -420,6 +420,8 @@ class ProcessorHost {
     }
 
     private getFileSystemFile(file: string): string | undefined {
+        if (/\/node_modules\//.test(file))
+            return this.getFileKind(file) === FileKind.File ? file : undefined;
         if (this.map.has(file))
             return file;
         const reverse = this.reverseMap.get(file);
