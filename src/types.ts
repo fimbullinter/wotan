@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { injectable, inject } from 'inversify';
 
 export type LintResult = Map<string, FileSummary>;
 
@@ -77,6 +78,7 @@ export interface RuleConstructor {
     new(context: RuleContext, options: any): AbstractRule;
 }
 
+export const RuleContext = Symbol.for('RuleContext');
 export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
@@ -94,6 +96,7 @@ export interface RuleContext {
     isDisabled(this: void, range: ts.TextRange): boolean;
 }
 
+export const TypedRuleContext = Symbol.for('TypedRuleContext');
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
 }
@@ -107,6 +110,9 @@ function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
     return 'parseOptions' in rule;
 }
 
+export const RuleOptions = Symbol.for('RuleOptions');
+
+@injectable()
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static supports?(sourceFile: ts.SourceFile): boolean;
@@ -116,7 +122,7 @@ export abstract class AbstractRule {
     public readonly sourceFile: ts.SourceFile;
     public readonly program: ts.Program | undefined;
 
-    constructor(public readonly context: RuleContext, options: any) {
+    constructor(@inject(RuleContext) public readonly context: RuleContext, @inject(RuleOptions) options: any) {
         this.settings = context.settings;
         this.sourceFile = context.sourceFile;
         this.program = context.program;
@@ -139,11 +145,12 @@ export abstract class AbstractRule {
     }
 }
 
+@injectable()
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
     public readonly context: TypedRuleContext;
     public readonly program: ts.Program;
-    constructor(context: TypedRuleContext, options: any) {
+    constructor(@inject(TypedRuleContext) context: TypedRuleContext, @inject(RuleOptions) options: any) {
         super(context, options);
     }
 }

@@ -1,9 +1,20 @@
 import * as ts from 'typescript';
-import { Failure, EffectiveConfiguration, LintAndFixFileResult, Replacement, RuleContext, Severity, RuleConstructor } from './types';
+import {
+    Failure,
+    EffectiveConfiguration,
+    LintAndFixFileResult,
+    Replacement,
+    RuleContext,
+    Severity,
+    RuleConstructor,
+    TypedRuleContext,
+    RuleOptions,
+} from './types';
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
 import { getDisabledRanges, DisableMap } from './line-switches';
 import * as debug from 'debug';
+import { Container } from 'inversify';
 
 const log = debug('wotan:linter');
 
@@ -99,6 +110,8 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
     let disables: DisableMap | undefined;
     let ruleName: string;
     let severity: Severity;
+    let options: any;
+    let ctor: RuleConstructor;
     const context: RuleContext = {
         addFailure,
         isDisabled,
@@ -112,11 +125,18 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
             addFailure(node.getStart(sourceFile), node.end, message, fix);
         },
     };
-    for (const rule of rules) {
-        ({ruleName, severity} = rule);
+
+    const container = new Container();
+    container.bind<RuleContext>(RuleContext).toConstantValue(context);
+    container.bind(RuleOptions).toDynamicValue(() => options);
+    if (program !== undefined)
+        container.bind<TypedRuleContext>(TypedRuleContext).toConstantValue(<TypedRuleContext>context);
+
+    for ({ruleName, severity, options, ctor} of rules) {
         log('Executing rule %s', ruleName);
-        new rule.ctor(context, rule.options).apply();
+        container.resolve(ctor).apply();
     }
+
     log('Found %d failures', result.length);
     return result;
 

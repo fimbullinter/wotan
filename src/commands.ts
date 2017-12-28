@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';

@@ -12,7 +12,7 @@ export class Rule extends AbstractRule {
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
             const token = getTokenAtPosition(this.sourceFile, match.index)!;
             if (token.kind === ts.SyntaxKind.DebuggerKeyword && token.end === match.index + 'debugger'.length) {
-                const statement = <ts.DebuggerStatement>token.parent!;
+                const statement = <ts.DebuggerStatement>token.parent;
                 this.addFailureAtNode(
                     statement,
                     "'debugger' statements are forbidden.",
