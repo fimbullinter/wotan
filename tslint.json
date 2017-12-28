@@ -49,7 +49,6 @@
     "no-eval": true,
     "no-implicit-dependencies": true,
     "no-import-side-effect": [true, {"ignore-module": "^reflect-metadata$"}],
-    "no-invalid-this": true,
     "no-inferrable-types": [
       true,
       "ignore-params"

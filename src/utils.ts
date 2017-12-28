@@ -21,6 +21,17 @@ export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean 
     return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
 }
 
+export const memoizeGetter: MethodDecorator = (_target, property, descriptor) => {
+    if (descriptor.get === undefined)
+        throw new Error('@memoizeGetter can only be used with get accessors');
+    const originalGetter = descriptor.get;
+    descriptor.get = function() {
+        const value = originalGetter.call(this);
+        Object.defineProperty(this, property, {value, writable: false});
+        return value;
+    };
+};
+
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
     const cache = new Map<T, U>();
     return (arg: T): U => {

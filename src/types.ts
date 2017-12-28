@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { injectable, inject } from 'inversify';
+import { memoizeGetter } from './utils';
 
 export type LintResult = Map<string, FileSummary>;
 
@@ -150,6 +151,13 @@ export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
     public readonly context: TypedRuleContext;
     public readonly program: ts.Program;
+
+    /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
+    @memoizeGetter
+    public get checker() {
+        return this.program.getTypeChecker();
+    }
+
     constructor(@inject(TypedRuleContext) context: TypedRuleContext, @inject(RuleOptions) options: any) {
         super(context, options);
     }

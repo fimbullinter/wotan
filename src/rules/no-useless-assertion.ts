@@ -15,7 +15,6 @@ export class Rule extends TypedRule {
     }
 
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
-    private checker = this.program.getTypeChecker();
 
     public apply(): void {
         return this.sourceFile.statements.forEach(this.visitNode);
