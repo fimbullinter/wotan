@@ -29,7 +29,7 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
             continue;
         let sourceFile = program === undefined
             ? ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.ESNext, true)
-            : program.getSourceFile(file)!;
+            : program.getSourceFile(file);
         let summary: FileSummary;
         if (options.fix) {
             let fileContent = sourceFile.text;

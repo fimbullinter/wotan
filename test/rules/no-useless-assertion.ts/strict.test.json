@@ -1,0 +1,4 @@
+{
+  "baselines": "./strict",
+  "project": "tsconfig.json"
+}

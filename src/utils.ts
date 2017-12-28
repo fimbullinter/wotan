@@ -17,6 +17,10 @@ import * as ts from 'typescript';
  */
 export const OFFSET_TO_NODE_MODULES = 2; // add 1 if published as scoped module
 
+export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
+    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
+}
+
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
     const cache = new Map<T, U>();
     return (arg: T): U => {
