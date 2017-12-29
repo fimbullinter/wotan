@@ -7,10 +7,11 @@ import * as resolve from 'resolve';
 export class NodeResolver implements Resolver {
     constructor(private fs: CachedFileSystem) {}
 
-    public resolve(id: string, basedir: string, extensions: string[]): string {
+    public resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string {
         return resolve.sync(id, {
             basedir,
             extensions,
+            paths,
             isFile: (file) => this.fs.isFile(file),
             readFileSync: (file) => this.fs.readFile(file)!,
         });

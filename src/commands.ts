@@ -3,13 +3,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';
 import { LintOptions, lintCollection } from './runner';
-import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
 import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
+import { FormatterLoader } from './services/formatter-loader';
+import { NodeFormatterLoader } from './services/formatter-loader-host';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -70,9 +71,11 @@ export async function runCommand(command: Command): Promise<boolean> {
 }
 
 function runLint(options: LintCommand) {
+    const cwd = process.cwd();
     // fail early if formatter does not exist
-    const formatter = loadFormatter(options.format === undefined ? 'stylish' : options.format);
-    const result = lintCollection(options, process.cwd());
+    const formatterLoader = new FormatterLoader(new NodeFormatterLoader());
+    const formatter = new (formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format, cwd))();
+    const result = lintCollection(options, cwd);
     let success = true;
     const fixes = [];
     for (const [file, summary] of result) {

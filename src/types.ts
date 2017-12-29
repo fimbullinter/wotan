@@ -267,6 +267,12 @@ export interface RuleLoaderHost {
 }
 export abstract class RuleLoaderHost {}
 
+export interface FormatterLoaderHost {
+    loadCoreFormatter(name: string): FormatterConstructor | undefined;
+    loadCustomFormatter(name: string, basedir: string): FormatterConstructor | undefined;
+}
+export abstract class FormatterLoaderHost {}
+
 export interface CacheManager {
     get<K, V>(id: CacheIdentifier<K, V>, key: K): V | undefined;
     resolve<K, V>(id: CacheIdentifier<K, V>, key: K, cb: (key: K) => V): V;
@@ -284,7 +290,7 @@ export class CacheIdentifier<K, V> {
 }
 
 export interface Resolver {
-    resolve(id: string, basedir: string, extensions: string[]): string;
+    resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string;
     require(id: string): any;
 }
 export abstract class Resolver {}
