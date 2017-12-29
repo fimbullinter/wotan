@@ -9,6 +9,7 @@ import {
     RuleConstructor,
     TypedRuleContext,
     RuleOptions,
+    GlobalSettings,
 } from './types';
 import { applyFixes } from './fix';
 import { findRule } from './rule-loader';
@@ -96,7 +97,7 @@ function prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile,
             console.warn(`'${ruleName}' requires type information.`); // TODO call method on Host
             continue;
         }
-        if (ctor.supports !== undefined && !ctor.supports(sourceFile)) {
+        if (ctor.supports !== undefined && !ctor.supports(sourceFile, options, config.settings)) {
             log(`Rule %s does not support this file`, ruleName);
             continue;
         }
@@ -116,7 +117,6 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
         addFailure,
         isDisabled,
         program,
-        settings,
         sourceFile,
         addFailureAt(start, length, message, fix) {
             addFailure(start, start + length, message, fix);
@@ -129,8 +129,9 @@ function applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, 
     const container = new Container();
     container.bind<RuleContext>(RuleContext).toConstantValue(context);
     container.bind(RuleOptions).toDynamicValue(() => options);
+    container.bind(GlobalSettings).toConstantValue(settings);
     if (program !== undefined)
-        container.bind<TypedRuleContext>(TypedRuleContext).toConstantValue(<TypedRuleContext>context);
+        container.bind<RuleContext>(TypedRuleContext).toService(RuleContext);
 
     for ({ruleName, severity, options, ctor} of rules) {
         log('Executing rule %s', ruleName);

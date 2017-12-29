@@ -75,15 +75,13 @@ export type Severity = 'error' | 'warning';
 // @internal
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
-    supports?(sourceFile: ts.SourceFile): boolean;
-    new(context: RuleContext, options: any): AbstractRule;
+    supports?(sourceFile: ts.SourceFile, options: any, settings: ReadonlyMap<string, any>): boolean;
+    new(context: RuleContext): AbstractRule;
 }
 
-export const RuleContext = Symbol.for('RuleContext');
 export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
-    readonly settings: ReadonlyMap<string, any>;
     addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     addFailureAt(this: void, start: number, length: number, message: string, fix?: Replacement | Replacement[]): void;
     addFailureAtNode(this: void, node: ts.Node, message: string, fix?: Replacement | Replacement[]): void;
@@ -96,39 +94,30 @@ export interface RuleContext {
      */
     isDisabled(this: void, range: ts.TextRange): boolean;
 }
+export abstract class RuleContext {}
 
-export const TypedRuleContext = Symbol.for('TypedRuleContext');
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
 }
+export abstract class TypedRuleContext {}
 
-export interface ConfigurableRule<T> {
-    options: T;
-    parseOptions(options: any): T;
-}
+export const RuleOptions = Symbol('RuleOptions');
 
-function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
-    return 'parseOptions' in rule;
-}
-
-export const RuleOptions = Symbol.for('RuleOptions');
+export interface GlobalSettings extends ReadonlyMap<string, any> {}
+export abstract class GlobalSettings {}
 
 @injectable()
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
-    public static supports?(sourceFile: ts.SourceFile): boolean;
+    public static supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
     public static validateConfig?(config: any): string[] | string | undefined;
 
-    public readonly settings: ReadonlyMap<string, any>;
     public readonly sourceFile: ts.SourceFile;
     public readonly program: ts.Program | undefined;
 
-    constructor(@inject(RuleContext) public readonly context: RuleContext, @inject(RuleOptions) options: any) {
-        this.settings = context.settings;
+    constructor(@inject(RuleContext) public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
         this.program = context.program;
-        if (isConfigurableRule(this))
-            this.options = this.parseOptions(options);
     }
 
     public abstract apply(): void;
@@ -158,8 +147,8 @@ export abstract class TypedRule extends AbstractRule {
         return this.program.getTypeChecker();
     }
 
-    constructor(@inject(TypedRuleContext) context: TypedRuleContext, @inject(RuleOptions) options: any) {
-        super(context, options);
+    constructor(context: TypedRuleContext) {
+        super(context);
     }
 }
 
