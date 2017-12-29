@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';
-import { LintOptions } from './linter';
+import { LintOptions, lintCollection } from './runner';
 import { loadFormatter } from './formatter-loader';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
@@ -10,7 +10,6 @@ import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlin
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
-import { lintCollection } from './runner';
 
 export const enum CommandName {
     Lint = 'lint',

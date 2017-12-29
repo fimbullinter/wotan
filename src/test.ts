@@ -1,8 +1,7 @@
 import { Failure, FileSummary, LintResult } from './types';
 import chalk from 'chalk';
 import * as diff from 'diff';
-import { LintOptions } from './linter';
-import { lintCollection } from './runner';
+import { lintCollection, LintOptions } from './runner';
 
 export const enum BaselineKind {
     Lint = 'lint',

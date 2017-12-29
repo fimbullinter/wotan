@@ -1,5 +1,5 @@
-import { LintOptions, lintAndFix, lintFile } from './linter';
-import { LintResult, FileSummary, Configuration } from './types';
+import { Linter } from './linter';
+import { LintResult, FileSummary, Configuration, CacheManager, MessageHandler, RuleLoaderHost } from './types';
 import * as path from 'path';
 import { findConfiguration, reduceConfigurationForFile, parseConfigFile, readConfigFile, resolveConfigFile } from './configuration';
 import * as fs from 'fs';
@@ -9,8 +9,27 @@ import { unixifyPath } from './utils';
 import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
+import { Container, BindingScopeEnum } from 'inversify';
+import { DefaultCacheManager } from './services/cache-manager';
+import { ConsoleMessageHandler } from './services/message-handler';
+import { NodeRuleLoader } from './services/rule-loader-host';
+import { RuleLoader } from './services/rule-loader';
+
+export interface LintOptions {
+    config: string | undefined;
+    files: string[];
+    exclude: string[];
+    project: string | undefined;
+    fix: boolean | number;
+}
 
 export function lintCollection(options: LintOptions, cwd: string): LintResult {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
+    container.bind(RuleLoaderHost).to(NodeRuleLoader);
+    container.bind(RuleLoader).toSelf();
+    const linter = container.resolve(Linter);
     let {files, program} = getFilesAndProgram(options, cwd);
     const result: LintResult = new Map();
     let dir: string | undefined;
@@ -33,7 +52,7 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
         let summary: FileSummary;
         if (options.fix) {
             let fileContent = sourceFile.text;
-            const fixed = lintAndFix(
+            const fixed = linter.lintAndFix(
                 sourceFile,
                 effectiveConfig,
                 (content, range) => {
@@ -57,7 +76,7 @@ export function lintCollection(options: LintOptions, cwd: string): LintResult {
             };
         } else {
             summary = {
-                failures: lintFile(sourceFile, effectiveConfig, program),
+                failures: linter.lintFile(sourceFile, effectiveConfig, program),
                 fixes: 0,
                 text: sourceFile.text,
             };

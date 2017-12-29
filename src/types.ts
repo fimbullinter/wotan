@@ -242,3 +242,42 @@ export const enum Format {
     Json = 'json',
     Json5 = 'json5',
 }
+
+export interface MessageHandler {
+    log(message: string): void;
+    warn(message: string): void;
+    error(e: Error): void;
+}
+export abstract class MessageHandler {}
+
+export interface FileSystemReader {
+    readFile(file: string): Buffer;
+    readDirectory(dir: string): string[];
+    stat(path: string): Stats;
+}
+
+export interface Stats {
+    isDirectory(): boolean;
+    isFile(): boolean;
+}
+
+export interface RuleLoaderHost {
+    loadCoreRule(name: string): RuleConstructor | undefined;
+    loadCustomRule(name: string, directory: string): RuleConstructor | undefined;
+}
+export abstract class RuleLoaderHost {}
+
+export interface CacheManager {
+    get<K, V>(id: CacheIdentifier<K, V>, key: K): V | undefined;
+    resolve<K, V>(id: CacheIdentifier<K, V>, key: K, cb: (key: K) => V): V;
+    set<K, V>(id: CacheIdentifier<K, V>, key: K, value: V): void;
+    delete<K>(id: CacheIdentifier<K, any>, key: K): void;
+    has<K>(id: CacheIdentifier<K, any>, key: K): boolean;
+    clear(id: CacheIdentifier<any, any>): void;
+}
+export abstract class CacheManager {}
+
+export class CacheIdentifier<K, V> {
+    protected key: K;
+    protected value: V;
+}
