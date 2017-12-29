@@ -9,9 +9,9 @@ const enum FileKind {
     Other = 4,
 }
 
-const fileContent = new CacheIdentifier<string, Buffer | undefined>();
-const fileKind = new CacheIdentifier<string, FileKind>();
-const directoryEntries = new CacheIdentifier<string, string[]>();
+const fileContent = new CacheIdentifier<string, Buffer | undefined>('fileContent');
+const fileKind = new CacheIdentifier<string, FileKind>('fileKind');
+const directoryEntries = new CacheIdentifier<string, string[]>('directoryEntries');
 
 @injectable()
 export class CachedFileSystem {

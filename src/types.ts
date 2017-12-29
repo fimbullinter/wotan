@@ -280,4 +280,11 @@ export abstract class CacheManager {}
 export class CacheIdentifier<K, V> {
     protected key: K;
     protected value: V;
+    constructor(public description: string) {}
 }
+
+export interface Resolver {
+    resolve(id: string, basedir: string, extensions: string[]): string;
+    require(id: string): any;
+}
+export abstract class Resolver {}

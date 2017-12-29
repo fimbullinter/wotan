@@ -4,7 +4,7 @@ import { ConfigurationError } from '../error';
 import * as debug from 'debug';
 import bind from 'bind-decorator';
 
-const cacheId = new CacheIdentifier<string, RuleConstructor | undefined>();
+const cacheId = new CacheIdentifier<string, RuleConstructor | undefined>('rules');
 const log = debug('wotan:ruleLoader');
 
 @injectable()
