@@ -1,5 +1,5 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, CacheManager, MessageHandler, RuleLoaderHost } from './types';
+import { LintResult, FileSummary, Configuration } from './types';
 import * as path from 'path';
 import { findConfiguration, reduceConfigurationForFile, parseConfigFile, readConfigFile, resolveConfigFile } from './configuration';
 import * as fs from 'fs';
@@ -10,10 +10,8 @@ import { Minimatch, filter as createMinimatchFilter } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
 import { Container, BindingScopeEnum } from 'inversify';
-import { DefaultCacheManager } from './services/cache-manager';
-import { ConsoleMessageHandler } from './services/message-handler';
-import { NodeRuleLoader } from './services/rule-loader-host';
-import { RuleLoader } from './services/rule-loader';
+import { DEFAULT_DI_MODULE } from './di/default.module';
+import { CORE_DI_MODULE } from './di/core.module';
 
 export interface LintOptions {
     config: string | undefined;
@@ -25,11 +23,8 @@ export interface LintOptions {
 
 export function lintCollection(options: LintOptions, cwd: string): LintResult {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
-    container.bind(CacheManager).to(DefaultCacheManager);
-    container.bind(MessageHandler).to(ConsoleMessageHandler);
-    container.bind(RuleLoaderHost).to(NodeRuleLoader);
-    container.bind(RuleLoader).toSelf();
-    const linter = container.resolve(Linter);
+    container.load(DEFAULT_DI_MODULE, CORE_DI_MODULE);
+    const linter = container.get(Linter);
     let {files, program} = getFilesAndProgram(options, cwd);
     const result: LintResult = new Map();
     let dir: string | undefined;
