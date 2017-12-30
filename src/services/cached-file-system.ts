@@ -9,7 +9,7 @@ const enum FileKind {
     Other = 4,
 }
 
-const fileContent = new CacheIdentifier<string, Buffer | undefined>('fileContent');
+const fileContent = new CacheIdentifier<string, string | undefined>('fileContent');
 const fileKind = new CacheIdentifier<string, FileKind>('fileKind');
 const directoryEntries = new CacheIdentifier<string, string[]>('directoryEntries');
 
@@ -50,7 +50,7 @@ export class CachedFileSystem {
         }
     }
 
-    public readFile(path: string): Buffer | undefined {
+    public readFile(path: string): string | undefined {
         return this.cache.resolve(fileContent, path, this.doReadFile);
     }
 

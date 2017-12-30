@@ -283,7 +283,7 @@ export interface MessageHandler {
 export abstract class MessageHandler {}
 
 export interface FileSystemReader {
-    readFile(file: string): Buffer;
+    readFile(file: string): string;
     readDirectory(dir: string): string[];
     stat(path: string): Stats;
 }

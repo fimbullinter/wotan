@@ -53,7 +53,7 @@ export class ConfigurationManager {
                 if (content === undefined)
                     throw new ConfigurationError(`Error parsing '${filename}': file not found.`);
                 try {
-                    return json5.parse(content.toString('utf8'));
+                    return json5.parse(content);
                 } catch (e) {
                     throw new ConfigurationError(`Error parsing '${filename}': ${e.message}`);
                 }
@@ -64,7 +64,7 @@ export class ConfigurationManager {
                 if (content === undefined)
                     throw new ConfigurationError(`Error parsing '${filename}': file not found.`);
                 try {
-                    return yaml.safeLoad(content.toString('utf8'), {
+                    return yaml.safeLoad(content, {
                         schema: yaml.JSON_SCHEMA,
                         strict: true,
                     });
