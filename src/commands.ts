@@ -73,8 +73,8 @@ export async function runCommand(command: Command): Promise<boolean> {
 function runLint(options: LintCommand) {
     const cwd = process.cwd();
     // fail early if formatter does not exist
-    const formatterLoader = new FormatterLoader(new NodeFormatterLoader());
-    const formatter = new (formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format, cwd))();
+    const formatterLoader = new FormatterLoader(new NodeFormatterLoader(), cwd);
+    const formatter = new (formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
     const result = lintCollection(options, cwd);
     let success = true;
     const fixes = [];
