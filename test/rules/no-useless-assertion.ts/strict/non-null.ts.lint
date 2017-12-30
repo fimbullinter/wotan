@@ -1,0 +1,67 @@
+export {};
+
+1!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+(1 + 2)!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+null!;
+undefined!;
+
+const a = 1;
+a!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let b: string | undefined;
+b = "b";
+b!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+b = undefined;
+b!;
+
+const c = !b ? "foo" : undefined;
+c!;
+
+const obj = {
+    prop: c,
+};
+obj!.prop!;
+   ~        [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let d: string;
+d!;
+d = "foo";
+d!;
+
+let e: string | number;
+e!;
+e = 1;
+e!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+const f = c ? c : null;
+f!;
+f!!;
+  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let g: string;
+g!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let {h} = {h: ''};
+h!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let i: string;
+i!;
+{
+    i!;
+}
+function foo(j: string) {
+    j!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    i!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+foobar!;
+      ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]

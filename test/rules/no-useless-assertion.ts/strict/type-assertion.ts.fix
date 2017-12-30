@@ -1,0 +1,57 @@
+export {};
+
+1;
+1;
+(1 + 1);
+
+let a: string = "foo";
+a;
+a;
+
+let b = a ? a : undefined;
+b as string;
+b!;
+
+"".trim();
+
+let c = !!b;
+c;
+
+interface I {
+    prop: string;
+    method(): number;
+}
+
+declare let d: I;
+d;
+d.method();
+
+let e = "foo";
+e;
+
+['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
+let f: Array<[number, string]> = ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
+
+interface NotATuple {
+    0: number,
+    0.5: number,
+    2: number,
+}
+
+interface AlsoNotATuple {}
+
+declare const notATuple: NotATuple;
+notATuple;
+
+declare const alsoNoTuple: AlsoNotATuple;
+alsoNoTuple;
+
+unknownName;
+
+function fn<T extends string | undefined>(param: T) {
+    param as string;
+    param; // TODO get base constraint of type parameter
+    param;
+    param!;
+    b;
+}

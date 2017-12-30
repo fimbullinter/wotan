@@ -1,0 +1,4 @@
+{
+  "baselines": "./loose",
+  "project": "tsconfig-loose.json"
+}

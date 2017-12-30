@@ -163,15 +163,27 @@ function mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
 
 function mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
     if (typeof value === 'string')
-        return { severity: value === 'warn' ? 'warning' : value };
+        return { severity: mapRuleSeverity(value) };
     if (!value)
         return {};
     const result: Configuration.RuleConfig = {};
     if ('options' in value)
         result.options = value.options;
     if ('severity' in value)
-        result.severity = value.severity === 'warn' ? 'warning' : value.severity;
+        result.severity = mapRuleSeverity(value.severity!);
     return result;
+}
+
+function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration.RuleSeverity {
+    switch (severity) {
+        case 'off':
+            return 'off';
+        case 'warn':
+        case 'warning':
+            return 'warning';
+        default:
+            return 'error';
+    }
 }
 
 function findupConfig(current: string): string | undefined {
@@ -219,7 +231,7 @@ function reduceConfig(
     receiver: EffectiveConfiguration,
 ): EffectiveConfiguration | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
-    if (config.exclude && matchesGlobs(relativeFilename, config.exclude, false))
+    if (config.exclude && matchesGlobs(relativeFilename, config.exclude))
             return;
     for (const base of config.extends) {
         const tmpRulesDirs: RulesDirectoryMap = new Map();
@@ -247,18 +259,18 @@ function reduceConfig(
     extendConfig(receiver, config, rulesDirectories, aliases);
     if (config.overrides)
         for (const override of config.overrides)
-            if (matchesGlobs(relativeFilename, override.files, true))
+            if (matchesGlobs(relativeFilename, override.files))
                 extendConfig(receiver, override, rulesDirectories, aliases);
     return receiver;
 }
 
-function matchesGlobs(file: string, patterns: string[], matchBase: boolean): boolean {
+function matchesGlobs(file: string, patterns: string[]): boolean {
     for (let i = patterns.length - 1; i >= 0; --i) {
         const glob = isNegated(patterns[i]);
         const local = glob.pattern.startsWith('./');
         if (local)
             glob.pattern = glob.pattern.substr(2);
-        if (new Minimatch(glob.pattern, {matchBase: matchBase && !local}).match(file))
+        if (new Minimatch(glob.pattern, {matchBase: !local}).match(file))
             return !glob.negated;
     }
     return false;
@@ -282,14 +294,14 @@ function extendRulesDirectories<T extends string | string[]>(
     current: Map<string, T>,
     mapFn: (v: T) => string[],
 ) {
-    current.forEach((dir, key) => {
+    for (const [key, dir] of current) {
         const prev = receiver.get(key);
         if (prev !== undefined) {
             prev.unshift(...mapFn(dir));
         } else {
             receiver.set(key, mapFn(dir).slice());
         }
-    });
+    }
 }
 
 function extendConfig(
@@ -358,7 +370,7 @@ function findProcessorInConfig(config: Configuration, fileName: string): string 
         const relative = path.relative(path.dirname(config.filename), fileName);
         for (let i = config.overrides.length - 1; i >= 0; --i) {
             const override = config.overrides[i];
-            if (override.processor !== undefined && matchesGlobs(relative, override.files, true))
+            if (override.processor !== undefined && matchesGlobs(relative, override.files))
                 return override.processor;
         }
     }

@@ -1,14 +1,15 @@
 import * as ts from 'typescript';
+import { injectable, inject } from 'inversify';
+import { memoizeGetter } from './utils';
 
 export type LintResult = Map<string, FileSummary>;
 
-export interface FileSummary extends LintAndFixFileResult {
-    text: string;
-}
+export type FileSummary = LintAndFixFileResult;
 
 export interface LintAndFixFileResult {
-    fixes: number;
+    content: string;
     failures: Failure[];
+    fixes: number;
 }
 
 export interface Replacement {
@@ -73,14 +74,13 @@ export type Severity = 'error' | 'warning';
 // @internal
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
-    supports?(sourceFile: ts.SourceFile): boolean;
-    new(context: RuleContext, options: any): AbstractRule;
+    supports?(sourceFile: ts.SourceFile, options: any, settings: ReadonlyMap<string, any>): boolean;
+    new(context: RuleContext): AbstractRule;
 }
 
 export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
-    readonly settings: ReadonlyMap<string, any>;
     addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     addFailureAt(this: void, start: number, length: number, message: string, fix?: Replacement | Replacement[]): void;
     addFailureAtNode(this: void, node: ts.Node, message: string, fix?: Replacement | Replacement[]): void;
@@ -93,35 +93,30 @@ export interface RuleContext {
      */
     isDisabled(this: void, range: ts.TextRange): boolean;
 }
+export abstract class RuleContext {}
 
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
 }
+export abstract class TypedRuleContext {}
 
-export interface ConfigurableRule<T> {
-    options: T;
-    parseOptions(options: any): T;
-}
+export const RuleOptions = Symbol('RuleOptions');
 
-function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
-    return 'parseOptions' in rule;
-}
+export interface GlobalSettings extends ReadonlyMap<string, any> {}
+export abstract class GlobalSettings {}
 
+@injectable()
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
-    public static supports?(sourceFile: ts.SourceFile): boolean;
+    public static supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
     public static validateConfig?(config: any): string[] | string | undefined;
 
-    public readonly settings: ReadonlyMap<string, any>;
     public readonly sourceFile: ts.SourceFile;
     public readonly program: ts.Program | undefined;
 
-    constructor(public readonly context: RuleContext, options: any) {
-        this.settings = context.settings;
+    constructor(@inject(RuleContext) public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
         this.program = context.program;
-        if (isConfigurableRule(this))
-            this.options = this.parseOptions(options);
     }
 
     public abstract apply(): void;
@@ -139,12 +134,20 @@ export abstract class AbstractRule {
     }
 }
 
+@injectable()
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
     public readonly context: TypedRuleContext;
     public readonly program: ts.Program;
-    constructor(context: TypedRuleContext, options: any) {
-        super(context, options);
+
+    /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
+    @memoizeGetter
+    public get checker() {
+        return this.program.getTypeChecker();
+    }
+
+    constructor(context: TypedRuleContext) {
+        super(context);
     }
 }
 
@@ -271,3 +274,59 @@ export abstract class AbstractProcessor {
 
     public abstract updateSource(newSource: string, changeRange: ts.TextChangeRange): ProcessorUpdateResult;
 }
+
+export interface MessageHandler {
+    log(message: string): void;
+    warn(message: string): void;
+    error(e: Error): void;
+}
+export abstract class MessageHandler {}
+
+export interface FileSystemReader {
+    readFile(file: string): Buffer;
+    readDirectory(dir: string): string[];
+    stat(path: string): Stats;
+}
+export abstract class FileSystemReader {}
+
+export interface Stats {
+    isDirectory(): boolean;
+    isFile(): boolean;
+}
+
+export interface RuleLoaderHost {
+    loadCoreRule(name: string): RuleConstructor | undefined;
+    loadCustomRule(name: string, directory: string): RuleConstructor | undefined;
+}
+export abstract class RuleLoaderHost {}
+
+export interface FormatterLoaderHost {
+    loadCoreFormatter(name: string): FormatterConstructor | undefined;
+    loadCustomFormatter(name: string, basedir: string): FormatterConstructor | undefined;
+}
+export abstract class FormatterLoaderHost {}
+
+export interface CacheManager {
+    get<K, V>(id: CacheIdentifier<K, V>, key: K): V | undefined;
+    resolve<K, V>(id: CacheIdentifier<K, V>, key: K, cb: (key: K) => V): V;
+    set<K, V>(id: CacheIdentifier<K, V>, key: K, value: V): void;
+    delete<K>(id: CacheIdentifier<K, any>, key: K): void;
+    has<K>(id: CacheIdentifier<K, any>, key: K): boolean;
+    clear(id: CacheIdentifier<any, any>): void;
+}
+export abstract class CacheManager {}
+
+export class CacheIdentifier<K, V> {
+    protected key: K;
+    protected value: V;
+    constructor(public description: string) {}
+}
+
+export interface Resolver {
+    resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string;
+    require(id: string, options?: {cache?: boolean}): any;
+}
+export abstract class Resolver {}
+
+export const CurrentDirectory = Symbol('CurrentDirectory');
+export const HomeDirectory = Symbol('HomeDirectory');

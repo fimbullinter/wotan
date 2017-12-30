@@ -48,8 +48,7 @@
     "no-empty-interface": true,
     "no-eval": true,
     "no-implicit-dependencies": true,
-    "no-import-side-effect": true,
-    "no-invalid-this": true,
+    "no-import-side-effect": [true, {"ignore-module": "^reflect-metadata$"}],
     "no-inferrable-types": [
       true,
       "ignore-params"
@@ -154,6 +153,7 @@
       true,
       {"type": "default", "format": "camelCase", "leadingUnderscore": "forbid", "trailingUnderscore": "forbid"},
       {"type": "variable", "modifiers": ["global", "const"], "format": ["camelCase", "UPPER_CASE"]},
+      {"type": "variable", "modifiers": ["export", "const"], "format": ["camelCase", "UPPER_CASE", "PascalCase"]},
       {"type": "parameter", "modifiers": "unused", "leadingUnderscore": "allow"},
       {"type": "property", "modifiers": ["public", "static", "const"], "format": ["camelCase", "UPPER_CASE"]},
       {"type": "type", "format": "PascalCase"},

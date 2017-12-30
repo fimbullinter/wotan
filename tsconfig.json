@@ -19,7 +19,9 @@
     "noImplicitReturns": true,
     "moduleResolution": "node",
     "inlineSourceMap": false,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src",
