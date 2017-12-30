@@ -11,7 +11,7 @@ const FAIL_MESSAGE = `This assertion is unnecesary as it doesn't change the type
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
+        return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
     }
 
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
