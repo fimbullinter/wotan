@@ -360,3 +360,26 @@ function resolveAlias(rule: string, aliases: AliasMap) {
 
     return result;
 }
+
+export function getProcessorForFile(config: Configuration, fileName: string, cwd = process.cwd()) {
+    return findProcessorInConfig(config, path.resolve(cwd, fileName)) || undefined;
+}
+
+function findProcessorInConfig(config: Configuration, fileName: string): string | undefined {
+    if (config.overrides) {
+        const relative = path.relative(path.dirname(config.filename), fileName);
+        for (let i = config.overrides.length - 1; i >= 0; --i) {
+            const override = config.overrides[i];
+            if (override.processor !== undefined && matchesGlobs(relative, override.files))
+                return override.processor;
+        }
+    }
+    if (config.processor !== undefined)
+        return config.processor;
+    for (let i = config.extends.length - 1; i >= 0; --i) {
+        const processor = findProcessorInConfig(config.extends[i], fileName);
+        if (processor !== undefined)
+            return processor;
+    }
+    return;
+}

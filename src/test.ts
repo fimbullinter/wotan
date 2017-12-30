@@ -71,14 +71,14 @@ export function isCodeLine(line: string): boolean {
 
 export function createBaseline(summary: FileSummary): string {
     if (summary.failures.length === 0)
-        return summary.text;
+        return summary.content;
 
     const failures = summary.failures.slice().sort(Failure.compare);
     const lines: string[] = [];
     let lineStart = 0;
     let failurePosition = 0;
     let pendingFailures: Failure[] = [];
-    for (const line of summary.text.split(/\n/g)) {
+    for (const line of summary.content.split(/\n/g)) {
         lines.push(line);
         const nextLineStart = lineStart + line.length + 1;
         const lineLength = line.length - (line.endsWith('\r') ? 1 : 0);

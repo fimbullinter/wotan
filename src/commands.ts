@@ -82,7 +82,7 @@ function runLint(options: LintCommand) {
         if (summary.failures.length !== 0)
             success = false;
         if (options.fix && summary.fixes)
-            fixes.push(writeFile(file, summary.text));
+            fixes.push(writeFile(file, summary.content));
     }
     console.log(formatter.format(result));
     return fixes.length === 0 ? success : Promise.all(fixes).then(() => success);

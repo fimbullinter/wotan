@@ -11,12 +11,14 @@ import {
     RuleOptions,
     GlobalSettings,
     MessageHandler,
+    AbstractProcessor,
 } from './types';
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
 import * as debug from 'debug';
 import { Container, injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
+import { calculateChangeRange } from './utils';
 
 const log = debug('wotan:linter');
 
@@ -26,24 +28,27 @@ export interface UpdateFileResult {
 }
 
 export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
+export type PostprocessCallback = (failures: Failure[]) => Failure[];
 
 @injectable()
 export class Linter {
     constructor(private ruleLoader: RuleLoader, private logger: MessageHandler) {}
 
     public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
-        return this.getFailures(file, config, program);
+        return this.getFailures(file, config, program, undefined);
     }
 
     public lintAndFix(
         file: ts.SourceFile,
+        content: string,
         config: EffectiveConfiguration,
         updateFile: UpdateFileCallback,
         iterations: number = 10,
         program?: ts.Program,
+        processor?: AbstractProcessor,
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let failures = this.getFailures(file, config, program);
+        let failures = this.getFailures(file, config, program, processor);
         for (let i = 0; i < iterations; ++i) {
             if (failures.length === 0)
                 break;
@@ -53,28 +58,47 @@ export class Linter {
                 break;
             }
             log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
-            const fixed = applyFixes(file.text, fixes);
+            const fixed = applyFixes(content, fixes);
             log('Applied %d fixes', fixes.length);
             if (fixed.fixed === 0)
                 break;
             totalFixes += fixed.fixed;
-            ({program, file} = updateFile(fixed.result, fixed.range));
-            failures = this.getFailures(file, config, program);
+            content = fixed.result;
+            let newSource: string;
+            let fixedRange: ts.TextChangeRange;
+            if (processor !== undefined) {
+                const {transformed, changeRange} = processor.updateSource(content, fixed.range);
+                fixedRange = changeRange !== undefined ? changeRange : calculateChangeRange(file.text, transformed);
+                newSource = transformed;
+            } else {
+                newSource = content;
+                fixedRange = fixed.range;
+            }
+            ({program, file} = updateFile(newSource, fixedRange));
+            failures = this.getFailures(file, config, program, processor);
         }
         return {
+            content,
             failures,
             fixes: totalFixes,
         };
     }
 
-    private getFailures(sourceFile: ts.SourceFile, config: EffectiveConfiguration, program: ts.Program | undefined) {
+    // @internal
+    public getFailures(
+        sourceFile: ts.SourceFile,
+        config: EffectiveConfiguration,
+        program: ts.Program | undefined,
+        processor: AbstractProcessor | undefined,
+    ) {
         log('Linting file %s', sourceFile.fileName);
         const rules = this.prepareRules(config, sourceFile, program);
         if (rules.length === 0) {
             log('No active rules');
             return [];
         }
-        return this.applyRules(sourceFile, program, rules, config.settings);
+        const failures = this.applyRules(sourceFile, program, rules, config.settings);
+        return processor === undefined || failures.length === 0 ? failures : processor.postprocess(failures);
     }
 
     private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
