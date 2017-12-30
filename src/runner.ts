@@ -202,7 +202,9 @@ function getFilesAndProgram(
     if (project !== undefined) {
         project = checkConfigDirectory(path.resolve(cwd, project));
     } else {
-        project = findupTsconfig(host.cwd);
+        project = ts.findConfigFile(cwd, fs.existsSync);
+        if (project === undefined)
+            throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
     }
     const program = createProgram(project, host);
     const files: string[] = [];
@@ -255,18 +257,6 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
         if (e.match(file))
             return true;
     return false;
-}
-
-function findupTsconfig(directory: string): string {
-    while (true) {
-        const fullPath = path.join(directory, 'tsconfig.json');
-        if (fs.existsSync(fullPath))
-            return fullPath;
-        const prev = directory;
-        directory = path.dirname(directory);
-        if (directory === prev)
-            throw new ConfigurationError(`Cannot find tsconfig.json for current directory.`);
-    }
 }
 
 declare module 'typescript' {

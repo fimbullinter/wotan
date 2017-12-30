@@ -9,7 +9,7 @@
       "**/*.js": {
         "when": "$(basename).ts"
       },
-      "{src,test/integration,test/rules}/**/*.d.ts": true,
+      "{src,test/conformance}/**/*.d.ts": true,
       "**/*.js.map": true,
       "test/{integration,rules}/**/*.{fix,lint}": true,
     }
