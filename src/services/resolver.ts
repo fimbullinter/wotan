@@ -17,5 +17,9 @@ export class NodeResolver implements Resolver {
         });
     }
 
-    public require = require;
+    public require(id: string, options?: {cache?: boolean}) {
+        if (options !== undefined && options.cache === false)
+            delete require.cache[id];
+        return require(id);
+    }
 }

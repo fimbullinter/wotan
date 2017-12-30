@@ -32,6 +32,14 @@ export const memoizeGetter: MethodDecorator = (_target, property, descriptor) =>
     };
 };
 
+export function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
+    return Array.isArray(maybeArr)
+        ? maybeArr
+        : maybeArr === undefined
+            ? []
+            : [maybeArr];
+}
+
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
     const cache = new Map<T, U>();
     return (arg: T): U => {

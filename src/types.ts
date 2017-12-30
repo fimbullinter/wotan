@@ -255,6 +255,7 @@ export interface FileSystemReader {
     readDirectory(dir: string): string[];
     stat(path: string): Stats;
 }
+export abstract class FileSystemReader {}
 
 export interface Stats {
     isDirectory(): boolean;
@@ -291,7 +292,7 @@ export class CacheIdentifier<K, V> {
 
 export interface Resolver {
     resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string;
-    require(id: string): any;
+    require(id: string, options?: {cache?: boolean}): any;
 }
 export abstract class Resolver {}
 
