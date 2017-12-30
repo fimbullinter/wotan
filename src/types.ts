@@ -294,3 +294,6 @@ export interface Resolver {
     require(id: string): any;
 }
 export abstract class Resolver {}
+
+export const CurrentDirectory = Symbol('CurrentDirectory');
+export const HomeDirectory = Symbol('HomeDirectory');
