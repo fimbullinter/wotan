@@ -16,7 +16,7 @@ export class NodeFormatterLoader implements FormatterLoaderHost {
     public loadCustomFormatter(name: string, basedir: string): FormatterConstructor | undefined {
         let resolved: string;
         try {
-            resolved = resolveExecutable(name, basedir);
+            resolved = resolveExecutable(name, basedir); // TODO use Resolver
         } catch {
             return;
         }
