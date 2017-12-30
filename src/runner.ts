@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as glob from 'glob';
 import { unixifyPath } from './utils';
-import { Minimatch } from 'minimatch';
+import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
 import { loadProcessor } from './processor-loader';
@@ -112,8 +112,16 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): string[] 
         statCache: {},
         symlinks: {},
     };
-    for (const pattern of patterns)
-        result.push(...glob.sync(pattern, globOptions)); // TODO throw on unmatched non-magic pattern
+    for (const pattern of patterns) {
+        const match = glob.sync(pattern, globOptions);
+        if (match.length !== 0) {
+            result.push(...match);
+        } else if (!glob.hasMagic(pattern)) {
+            const normalized = new Minimatch(pattern).set[0].join('/');
+            if (!isExcluded(normalized, exclude.map((p) => new Minimatch(p, {dot: true}))))
+                throw new ConfigurationError(`'${pattern}' does not exist.`);
+        }
+    }
     return Array.from(new Set(result.map(unixifyPath))); // deduplicate files
 }
 
@@ -149,7 +157,7 @@ function lintFiles(linter: Linter, options: LintOptions, cwd: string, config: Co
         let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
         let summary: FileSummary;
         if (options.fix) {
-            const fixed = linter.lintAndFix(
+            summary = linter.lintAndFix(
                 sourceFile,
                 originalContent,
                 effectiveConfig,
@@ -161,11 +169,6 @@ function lintFiles(linter: Linter, options: LintOptions, cwd: string, config: Co
                 undefined,
                 processor,
             );
-            summary = {
-                failures: fixed.failures,
-                fixes: fixed.fixes,
-                content: fixed.content,
-            };
         } else {
             summary = {
                 failures: linter.getFailures(
@@ -233,8 +236,25 @@ function getFilesAndProgram(
             continue;
         files.push(fileName);
     }
-    // TODO throw on unmatched non-magic pattern
+    ensurePatternsMatch(include, ex, files);
     return {files, program};
+}
+
+function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[]) {
+    for (const pattern of include) {
+        if (!glob.hasMagic(pattern.pattern)) {
+            const normalized = pattern.set[0].join('/');
+            if (!files.includes(normalized) && !isExcluded(normalized, exclude))
+                throw new ConfigurationError(`'${normalized}' is not included in the project.`);
+        }
+    }
+}
+
+function isExcluded(file: string, exclude: IMinimatch[]): boolean {
+    for (const e of exclude)
+        if (e.match(file))
+            return true;
+    return false;
 }
 
 function findupTsconfig(directory: string): string {
@@ -528,14 +548,3 @@ function checkConfigDirectory(fileOrDirName: string): string {
     }
     return fileOrDirName;
 }
-
-/** Ensure that all non-pattern arguments, that are not excluded, matched
-function checkFilesExist(patterns: string[], ignore: string[], files: string[], errorSuffix: string, cwd: string) {
-    patterns = patterns.filter((p) => !glob.hasMagic(p)).map((p) => path.resolve(cwd, p));
-    if (patterns.length === 0)
-        return;
-    const exclude = ignore.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
-    for (const filename of patterns.filter((p) => !exclude.some((e) => e.match(p))))
-        if (!files.some(createMinimatchFilter(filename)))
-            throw new ConfigurationError(`'${filename}' ${errorSuffix}.`);
-} */
