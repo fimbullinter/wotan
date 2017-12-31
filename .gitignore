@@ -62,7 +62,7 @@ typings/
 !/bin/cli.js
 *.js.map
 *.d.ts
-!/src/custom-typings/*.d.ts
+!/custom-typings/*.d.ts
 !/test/rules/**
 !/test/integration/**
 !/test/fixtures/**
