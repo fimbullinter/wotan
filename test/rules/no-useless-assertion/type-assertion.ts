@@ -7,6 +7,8 @@ export {};
 let a: string = "foo";
 a as typeof a;
 <string><string>a as string as string as string;
+a as {} as number;
+a as any;
 
 let b = a ? a : undefined;
 b as string;
@@ -50,7 +52,7 @@ declare const alsoNoTuple: AlsoNotATuple;
 
 function fn<T extends string | undefined>(param: T) {
     param as string;
-    param as string | undefined; // TODO get base constraint of type parameter
+    param as string | undefined;
     param as typeof param;
     param!;
     b as T;

@@ -16,10 +16,14 @@ a as typeof a;
                   ~~~~~~~~~                      [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
                             ~~~~~~~~~            [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
                                       ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+a as {} as number;
+a as any;
 
 let b = a ? a : undefined;
 b as string;
+  ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 b! as string;
+ ~            [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
    ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 "".trim() as string;
@@ -69,11 +73,13 @@ declare const alsoNoTuple: AlsoNotATuple;
 
 function fn<T extends string | undefined>(param: T) {
     param as string;
+          ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param as string | undefined; // TODO get base constraint of type parameter
           ~~~~~~~~~~~~~~~~~~~~~                                                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param as typeof param;
           ~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     b as T;
       ~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }
