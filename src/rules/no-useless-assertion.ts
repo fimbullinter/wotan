@@ -100,19 +100,14 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeCheck
         return false;
     if (checker.getTypeAtLocation(node) !== checker.getTypeFromTypeNode(declaration.type))
         return false;
-    return findupParent(node.parent!, isFunctionScopeBoundary) === findupParent(declaration.parent!.parent!, isFunctionScopeBoundary);
+    return findupFunction(node.parent!.parent) === findupFunction(declaration.parent!.parent!.parent);
 }
 
-function findupParent<T extends ts.Node = ts.Node>(
-    node: ts.Node,
-    predicate: ((n: ts.Node) => n is T) | ((n: ts.Node) => boolean),
-): T | undefined {
-    do {
-        node = node.parent!;
-        if (predicate(node))
-            return node;
-    } while (node.parent !== undefined);
-    return;
+/** Finds the nearest parent that has a function scope. */
+function findupFunction(node: ts.Node | undefined) {
+    while (node !== undefined && !isFunctionScopeBoundary(node))
+        node = node.parent;
+    return node;
 }
 
 /**
