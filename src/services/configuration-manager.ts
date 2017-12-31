@@ -1,12 +1,12 @@
 import { injectable, inject, optional } from 'inversify';
 import { CachedFileSystem } from './cached-file-system';
-import { Resolver, CurrentDirectory, HomeDirectory, Configuration, RawConfiguration, CacheManager, CacheIdentifier } from '../types';
+import { Resolver, CurrentDirectory, HomeDirectory, Configuration, RawConfiguration, CacheManager, CacheIdentifier, Cache } from '../types';
 import * as path from 'path';
 import { CONFIG_FILENAMES, CONFIG_EXTENSIONS } from '../configuration';
 import * as json5 from 'json5';
 import { ConfigurationError } from '../error';
 import * as yaml from 'js-yaml';
-import { OFFSET_TO_NODE_MODULES, arrayify } from '../utils';
+import { OFFSET_TO_NODE_MODULES, arrayify, resolveCachedResult } from '../utils';
 
 // TODO refactor to use a ConfigurationReader/Finder instead of direct IO
 
@@ -15,17 +15,21 @@ const rootConfigCache = new CacheIdentifier<string, Configuration>('root configu
 
 @injectable()
 export class ConfigurationManager {
+    private rootConfigCache: Cache<string, Configuration>;
+    private cascadingConfigCache: Cache<string, Configuration>;
     constructor(
         private fs: CachedFileSystem,
         private resolver: Resolver,
-        private cache: CacheManager,
         @inject(CurrentDirectory) private cwd: string,
-        @inject(HomeDirectory) @optional() private homeDir?: string,
+        @inject(HomeDirectory) @optional() private homeDir: string | undefined,
+        cache: CacheManager,
     ) {
         if (!path.isAbsolute(cwd))
             throw new ConfigurationError('CurrentDirectory must be an absolute path.');
         if (homeDir !== undefined && !path.isAbsolute(homeDir))
             throw new ConfigurationError(`HomeDirectory must be an absolute path.`);
+        this.rootConfigCache = cache.create(rootConfigCache);
+        this.cascadingConfigCache = cache.create(cascadingConfigCache);
     }
 
     public findConfigurationPath(file: string): string | undefined {
@@ -96,7 +100,7 @@ export class ConfigurationManager {
     }
 
     private loadConfigurationFromPathWorker(file: string, stack: string[], cascade?: boolean): Configuration {
-        return this.cache.resolve(cascade ? cascadingConfigCache : rootConfigCache, file, () => {
+        return resolveCachedResult(cascade ? this.cascadingConfigCache : this.rootConfigCache, file, () => {
             return this.parseConfigWorker(this.readConfigFile(file), file, stack, cascade);
         });
     }

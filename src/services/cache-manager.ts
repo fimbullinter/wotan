@@ -1,44 +1,37 @@
 import { injectable } from 'inversify';
-import { CacheManager, CacheIdentifier } from '../types';
+import { CacheManager, CacheIdentifier, Cache } from '../types';
+
+class WeakCache<K extends object, V> implements Cache<K, V> {
+    private store = new WeakMap<K, V>();
+    public get(key: K): V | undefined {
+        return this.store.get(key);
+    }
+    public set(key: K, value: V): void {
+        this.store.set(key, value);
+    }
+    public delete(key: K): void {
+        this.store.delete(key);
+    }
+    public has(key: K): boolean {
+        return this.store.has(key);
+    }
+    public clear(): void {
+        this.store = new WeakMap();
+    }
+}
 
 @injectable()
 export class DefaultCacheManager implements CacheManager {
-    private cache = new WeakMap<CacheIdentifier<any, any>, Map<any, any>>();
-    public get<K, V>(id: CacheIdentifier<K, V>, key: K): V | undefined {
-        const cache = this.cache.get(id);
-        return cache === undefined ? undefined : cache.get(key);
+    private cache = new WeakMap<CacheIdentifier<any, any>, Cache<any, any>>();
+    public get<K, V>(id: CacheIdentifier<K, V>): Cache<K, V> | undefined {
+        return this.cache.get(id);
     }
-    public resolve<K, V>(id: CacheIdentifier<K, V>, key: K, cb: (key: K) => V): V {
-        let cache = this.cache.get(id);
-        if (cache === undefined) {
-            cache = new Map<K, V>();
-            this.cache.set(id, cache);
-        }
-        let result = cache.get(key);
-        if (result === undefined && !cache.has(key)) {
-            result = cb(key);
-            cache.set(key, result);
+    public create<K, V>(id: CacheIdentifier<K, V>): Cache<K, V> {
+        let result = this.cache.get(id);
+        if (result === undefined) {
+            result = id.weak ? new WeakCache() : new Map();
+            this.cache.set(id, result);
         }
         return result;
-    }
-    public set<K, V>(id: CacheIdentifier<K, V>, key: K, value: V): void {
-        let cache = this.cache.get(id);
-        if (cache === undefined) {
-            cache = new Map<K, V>();
-            this.cache.set(id, cache);
-        }
-        cache.set(key, value);
-    }
-    public delete<K>(id: CacheIdentifier<K, any>, key: K): void {
-        const cache = this.cache.get(id);
-        if (cache !== undefined)
-            cache.delete(key);
-    }
-    public has<K>(id: CacheIdentifier<K, any>, key: K): boolean {
-        const cache = this.cache.get(id);
-        return cache !== undefined && cache.has(key);
-    }
-    public clear(id: CacheIdentifier<any, any>): void {
-        this.cache.delete(id);
     }
 }

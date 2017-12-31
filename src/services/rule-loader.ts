@@ -1,20 +1,24 @@
 import { injectable } from 'inversify';
-import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheManager, CacheIdentifier } from '../types';
+import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheManager, CacheIdentifier, Cache } from '../types';
 import { ConfigurationError } from '../error';
 import * as debug from 'debug';
 import bind from 'bind-decorator';
+import { resolveCachedResult } from '../utils';
 
 const cacheId = new CacheIdentifier<string, RuleConstructor | undefined>('rules');
 const log = debug('wotan:ruleLoader');
 
 @injectable()
 export class RuleLoader {
-    constructor(private host: RuleLoaderHost, private logger: MessageHandler, private cache: CacheManager) {}
+    private cache: Cache<string, RuleConstructor | undefined>;
+    constructor(private host: RuleLoaderHost, private logger: MessageHandler, cache: CacheManager) {
+        this.cache = cache.create(cacheId);
+    }
 
     public loadRule(name: string, directories: string[] | undefined): RuleConstructor | undefined {
         const slashIndex = name.lastIndexOf('/');
         if (slashIndex === -1) {
-            const ctor = this.cache.resolve(cacheId, name, this.loadCoreRule);
+            const ctor = resolveCachedResult(this.cache, name, this.loadCoreRule);
             if (ctor === undefined)
                 this.logger.warn(`Could not find core rule '${name}'.`);
             return ctor;
@@ -23,7 +27,7 @@ export class RuleLoader {
             throw new ConfigurationError(`No 'rulesDirectories' for rule '${name}'.`);
         name = name.substr(slashIndex + 1);
         for (const dir of directories) {
-            const ctor = this.cache.resolve(cacheId, `${dir}💩${name}`, this.loadCustomRule);
+            const ctor = resolveCachedResult(this.cache, `${dir}💩${name}`, this.loadCustomRule);
             if (ctor !== undefined)
                 return ctor;
         }

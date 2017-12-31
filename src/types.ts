@@ -307,19 +307,27 @@ export interface FormatterLoaderHost {
 export abstract class FormatterLoaderHost {}
 
 export interface CacheManager {
-    get<K, V>(id: CacheIdentifier<K, V>, key: K): V | undefined;
-    resolve<K, V>(id: CacheIdentifier<K, V>, key: K, cb: (key: K) => V): V;
-    set<K, V>(id: CacheIdentifier<K, V>, key: K, value: V): void;
-    delete<K>(id: CacheIdentifier<K, any>, key: K): void;
-    has<K>(id: CacheIdentifier<K, any>, key: K): boolean;
-    clear(id: CacheIdentifier<any, any>): void;
+    get<K, V>(id: CacheIdentifier<K, V>): Cache<K, V> | undefined;
+    create<K, V>(id: CacheIdentifier<K, V>): Cache<K, V>;
 }
 export abstract class CacheManager {}
 
+export interface Cache<K, V> {
+    get(key: K): V | undefined;
+    set(key: K, value: V): void;
+    delete(key: K): void;
+    has(key: K): boolean;
+    clear(): void;
+}
+
 export class CacheIdentifier<K, V> {
+    public readonly weak: boolean = false;
     protected key: K;
     protected value: V;
     constructor(public description: string) {}
+}
+export class WeakCacheIdentifier<K extends object, V> extends CacheIdentifier<K, V> {
+    public readonly weak = true;
 }
 
 export interface Resolver {
