@@ -4,10 +4,10 @@ import * as fs from 'fs';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format, MessageHandler } from './types';
-import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile } from './utils';
+import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile, existsAsync } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
-import { RuleTestHost, createBaseline, printDiff, test } from './test';
+import { RuleTestHost, createBaseline, printDiff, test, BaselineKind } from './test';
 import { FormatterLoader } from './services/formatter-loader';
 import { Container, injectable } from 'inversify';
 import { CORE_DI_MODULE } from './di/core.module';
@@ -159,6 +159,17 @@ export async function runTest(options: TestCommand): Promise<boolean> {
                 throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
             const actual = createBaseline(summary);
             const baselineFile = `${path.resolve(baselineDir, relative)}.${kind}`;
+            if (kind === BaselineKind.Fix && summary.fixes === 0) {
+                if (!await existsAsync(baselineFile))
+                    return true;
+                if (options.updateBaselines) {
+                    await unlinkFile(baselineFile);
+                    console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.green('REMOVED')}`);
+                    return true;
+                }
+                console.log(`  ${chalk.grey.dim(baselineFile)} ${chalk.red('EXISTS')}`);
+                return !options.bail;
+            }
             baselinesSeen.push(baselineFile);
             let expected: string;
             try {

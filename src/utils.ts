@@ -125,6 +125,12 @@ export function unlinkFile(path: string): Promise<void> {
     });
 }
 
+export function existsAsync(path: string): Promise<boolean> {
+    return new Promise((res) => {
+        return fs.access(path, (err) => res(!err));
+    });
+}
+
 export function globAsync(pattern: string, options: glob.IOptions): Promise<string[]> {
     return new Promise((res, rej) => {
         return glob(pattern, options, (err, matches) => err ? rej(err) : res(matches));
