@@ -10,13 +10,14 @@ import {
     CacheIdentifier,
     Cache,
     EffectiveConfiguration,
+    GlobalSettings,
 } from '../types';
 import * as path from 'path';
 import * as json5 from 'json5';
 import { ConfigurationError } from '../error';
 import * as yaml from 'js-yaml';
 import { OFFSET_TO_NODE_MODULES, arrayify, resolveCachedResult } from '../utils';
-import { reduceConfigurationForFile, getProcessorForFile } from '../configuration';
+import { reduceConfigurationForFile, getProcessorForFile, getSettingsForFile } from '../configuration';
 
 export const CONFIG_EXTENSIONS = ['yaml', 'yml', 'json5', 'json', 'js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext);
@@ -114,6 +115,10 @@ export class ConfigurationManager {
 
     public getProcessorForFile(config: Configuration, file: string): string | undefined {
         return getProcessorForFile(config, file, this.cwd);
+    }
+
+    public getSettingsForFile(config: Configuration, file: string): GlobalSettings {
+        return getSettingsForFile(config, file, this.cwd);
     }
 
     public loadConfigurationFromPath(file: string, cascade?: boolean): Configuration {

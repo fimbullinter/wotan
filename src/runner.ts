@@ -331,7 +331,7 @@ class ProjectHost implements ts.CompilerHost {
                         let newName: string;
                         if (processor) {
                             const ctor = loadProcessor(processor);
-                            newName = ctor.transformName(fileName, new Map());
+                            newName = ctor.transformName(fileName, this.configManager.getSettingsForFile(c!, fileName));
                         } else {
                             newName = fileName;
                         }
@@ -389,7 +389,7 @@ class ProjectHost implements ts.CompilerHost {
 
         const config = this.config || this.configManager.findConfiguration(realFile)!;
         const ctor = loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
-        const processor = new ctor(content, realFile, file, new Map());
+        const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, file));
         this.processedFiles.set(file, {
             processor,
             originalContent: content,

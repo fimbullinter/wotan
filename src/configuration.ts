@@ -1,7 +1,7 @@
 ﻿import * as path from 'path';
 import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
-import { Configuration, EffectiveConfiguration } from './types';
+import { Configuration, EffectiveConfiguration, GlobalSettings } from './types';
 import * as isNegated from 'is-negated-glob';
 
 // @internal
@@ -125,8 +125,12 @@ function extendConfig(
         }
     }
     if (settings)
-        for (const key of Object.keys(settings))
-            receiver.settings.set(key, settings[key]);
+        extendSettings(settings, receiver.settings);
+}
+
+function extendSettings(settings: {[key: string]: any}, receiver: EffectiveConfiguration['settings']) {
+    for (const key of Object.keys(settings))
+        receiver.set(key, settings[key]);
 }
 
 function resolveAlias(rule: string, aliases: AliasMap) {
@@ -182,4 +186,24 @@ function findProcessorInConfig(config: Configuration, fileName: string): string 
             return processor;
     }
     return;
+}
+
+// @internal
+export function getSettingsForFile(config: Configuration, fileName: string, cwd: string): GlobalSettings {
+    const result = new Map<string, any>();
+    reduceSettings(config, path.resolve(cwd, fileName), result);
+    return result;
+}
+
+function reduceSettings(config: Configuration, fileName: string, receiver: Map<string, any>) {
+    for (const base of config.extends)
+        reduceSettings(base, fileName, receiver);
+    if (config.settings)
+        extendSettings(config.settings, receiver);
+    if (config.overrides) {
+        const relative = path.relative(path.dirname(config.filename), fileName);
+        for (const override of config.overrides)
+            if (override.settings && matchesGlobs(relative, override.files))
+                extendSettings(override.settings, receiver);
+    }
 }
