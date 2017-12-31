@@ -286,6 +286,7 @@ export interface FileSystemReader {
     readFile(file: string): string;
     readDirectory(dir: string): string[];
     stat(path: string): Stats;
+    realpath?(path: string): string;
 }
 export abstract class FileSystemReader {}
 

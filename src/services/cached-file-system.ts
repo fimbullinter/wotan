@@ -13,16 +13,19 @@ export const enum FileKind {
 const fileContent = new CacheIdentifier<string, string | undefined>('fileContent');
 const fileKind = new CacheIdentifier<string, FileKind>('fileKind');
 const directoryEntries = new CacheIdentifier<string, string[]>('directoryEntries');
+const realpathCache = new CacheIdentifier<string, string>('realpath');
 
 @injectable()
 export class CachedFileSystem {
     private fileKindCache: Cache<string, FileKind>;
     private fileContentCache: Cache<string, string | undefined>;
     private directoryEntryCache: Cache<string, string[]>;
+    private realpathCache: Cache<string, string>;
     constructor(private fs: FileSystemReader, cache: CacheManager) {
         this.fileKindCache = cache.create(fileKind);
         this.fileContentCache = cache.create(fileContent);
         this.directoryEntryCache = cache.create(directoryEntries);
+        this.realpathCache = cache.create(realpathCache);
     }
 
     public isFile(path: string): boolean {
@@ -72,4 +75,8 @@ export class CachedFileSystem {
             return;
         }
     }
+
+    public realpath = this.fs.realpath === undefined ? undefined : (path: string) => {
+        return resolveCachedResult(this.realpathCache, path, () => this.fs.realpath!(path));
+    };
 }

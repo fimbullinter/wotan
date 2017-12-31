@@ -408,10 +408,7 @@ class ProjectHost implements ts.CompilerHost {
     public getNewLine() {
         return '\n';
     }
-    public realpath(f: string) {
-        // TODO
-        return require('fs').realpathSync(f); // tslint:disable-line
-    }
+    public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
     public getCurrentDirectory() {
         return this.cwd;
     }

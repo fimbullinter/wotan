@@ -23,4 +23,7 @@ export class NodeFileSystemReader implements FileSystemReader {
     public stat(path: string) {
         return fs.statSync(path);
     }
+    public realpath(path: string) {
+        return fs.realpathSync(path);
+    }
 }
