@@ -1,4 +1,4 @@
-import { Format } from './types';
+import { Format, Cache } from './types';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import * as resolve from 'resolve';
@@ -38,6 +38,15 @@ export function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
         : maybeArr === undefined
             ? []
             : [maybeArr];
+}
+
+export function resolveCachedResult<K, V>(cache: Cache<K, V>, key: K, cb: (key: K) => V): V {
+    let result = cache.get(key);
+    if (result === undefined && !cache.has(key)) {
+        result = cb(key);
+        cache.set(key, result);
+    }
+    return result!;
 }
 
 export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {

@@ -1,12 +1,25 @@
 import { injectable, inject, optional } from 'inversify';
 import { CachedFileSystem } from './cached-file-system';
-import { Resolver, CurrentDirectory, HomeDirectory, Configuration, RawConfiguration, CacheManager, CacheIdentifier } from '../types';
+import {
+    Resolver,
+    CurrentDirectory,
+    HomeDirectory,
+    Configuration,
+    RawConfiguration,
+    CacheManager,
+    CacheIdentifier,
+    Cache,
+    EffectiveConfiguration,
+} from '../types';
 import * as path from 'path';
-import { CONFIG_FILENAMES, CONFIG_EXTENSIONS } from '../configuration';
 import * as json5 from 'json5';
 import { ConfigurationError } from '../error';
 import * as yaml from 'js-yaml';
-import { OFFSET_TO_NODE_MODULES, arrayify } from '../utils';
+import { OFFSET_TO_NODE_MODULES, arrayify, resolveCachedResult } from '../utils';
+import { reduceConfigurationForFile, getProcessorForFile } from '../configuration';
+
+export const CONFIG_EXTENSIONS = ['yaml', 'yml', 'json5', 'json', 'js'];
+export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext);
 
 // TODO refactor to use a ConfigurationReader/Finder instead of direct IO
 
@@ -15,17 +28,21 @@ const rootConfigCache = new CacheIdentifier<string, Configuration>('root configu
 
 @injectable()
 export class ConfigurationManager {
+    private rootConfigCache: Cache<string, Configuration>;
+    private cascadingConfigCache: Cache<string, Configuration>;
     constructor(
         private fs: CachedFileSystem,
         private resolver: Resolver,
-        private cache: CacheManager,
         @inject(CurrentDirectory) private cwd: string,
-        @inject(HomeDirectory) @optional() private homeDir?: string,
+        @inject(HomeDirectory) @optional() private homeDir: string | undefined,
+        cache: CacheManager,
     ) {
         if (!path.isAbsolute(cwd))
             throw new ConfigurationError('CurrentDirectory must be an absolute path.');
         if (homeDir !== undefined && !path.isAbsolute(homeDir))
             throw new ConfigurationError(`HomeDirectory must be an absolute path.`);
+        this.rootConfigCache = cache.create(rootConfigCache);
+        this.cascadingConfigCache = cache.create(cascadingConfigCache);
     }
 
     public findConfigurationPath(file: string): string | undefined {
@@ -45,7 +62,7 @@ export class ConfigurationManager {
         return config === undefined ? undefined : this.loadConfigurationFromPath(config, cascade);
     }
 
-    public readConfigFile(filename: string): RawConfiguration {
+    public readConfigurationFile(filename: string): RawConfiguration {
         switch (path.extname(filename)) {
             case '.json':
             case '.json5': {
@@ -91,17 +108,25 @@ export class ConfigurationManager {
         }
     }
 
+    public reduceConfigurationForFile(config: Configuration, file: string): EffectiveConfiguration | undefined {
+        return reduceConfigurationForFile(config, file, this.cwd);
+    }
+
+    public getProcessorForFile(config: Configuration, file: string): string | undefined {
+        return getProcessorForFile(config, file, this.cwd);
+    }
+
     public loadConfigurationFromPath(file: string, cascade?: boolean): Configuration {
         return this.loadConfigurationFromPathWorker(path.resolve(this.cwd, file), [file], cascade);
     }
 
     private loadConfigurationFromPathWorker(file: string, stack: string[], cascade?: boolean): Configuration {
-        return this.cache.resolve(cascade ? cascadingConfigCache : rootConfigCache, file, () => {
-            return this.parseConfigWorker(this.readConfigFile(file), file, stack, cascade);
+        return resolveCachedResult(cascade ? this.cascadingConfigCache : this.rootConfigCache, file, () => {
+            return this.parseConfigWorker(this.readConfigurationFile(file), file, stack, cascade);
         });
     }
 
-    public parseConfigFile(raw: RawConfiguration, filename: string, cascade?: boolean): Configuration {
+    public parseConfiguration(raw: RawConfiguration, filename: string, cascade?: boolean): Configuration {
         return this.parseConfigWorker(raw, filename, [filename], cascade);
     }
 

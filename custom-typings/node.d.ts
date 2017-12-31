@@ -1,0 +1,3 @@
+interface NodeModule {
+    paths: string[];
+}
