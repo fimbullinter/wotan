@@ -1,18 +1,18 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
-import { findConfiguration, reduceConfigurationForFile } from './configuration';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { RawConfiguration, Format } from './types';
+import { RawConfiguration, Format, MessageHandler } from './types';
 import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile } from './utils';
 import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
 import { FormatterLoader } from './services/formatter-loader';
-import { Container } from 'inversify';
+import { Container, injectable } from 'inversify';
 import { CORE_DI_MODULE } from './di/core.module';
 import { DEFAULT_DI_MODULE } from './di/default.module';
+import { ConfigurationManager } from './services/configuration-manager';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -56,70 +56,93 @@ export interface InitCommand {
 export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | TestCommand;
 
 export async function runCommand(command: Command): Promise<boolean> {
+    const container = new Container();
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     switch (command.command) {
         case CommandName.Lint:
-            return runLint(command);
+            container.bind(AbstractCommandRunner).to(LintCommandRunner);
+            break;
         case CommandName.Init:
-            return runInit(command);
+            container.bind(AbstractCommandRunner).to(InitCommandRunner);
+            break;
         case CommandName.Verify:
             return runVerify(command);
         case CommandName.Show:
-            return runShow(command);
+            container.bind(AbstractCommandRunner).to(ShowCommandRunner);
+            break;
         case CommandName.Test:
             return runTest(command);
         default:
             return assertNever(command);
     }
+    const commandRunner = container.get(AbstractCommandRunner);
+    return commandRunner.run(command);
 }
 
-function runLint(options: LintCommand) {
-    const container = new Container();
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
-    // fail early if formatter does not exist
-    const formatterLoader = container.get(FormatterLoader);
-    const formatter = new (formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
-    const result = container.get(Runner).lintCollection(options);
-    let success = true;
-    const fixes = [];
-    for (const [file, summary] of result) {
-        if (summary.failures.length !== 0)
-            success = false;
-        if (options.fix && summary.fixes)
-            fixes.push(writeFile(file, summary.content));
+@injectable()
+abstract class AbstractCommandRunner {
+    public abstract run(command: Command): boolean | Promise<boolean>;
+}
+
+@injectable()
+class LintCommandRunner extends AbstractCommandRunner {
+    constructor(private runner: Runner, private formatterLoader: FormatterLoader, private logger: MessageHandler) {
+        super();
     }
-    console.log(formatter.format(result));
-    return fixes.length === 0 ? success : Promise.all(fixes).then(() => success);
-}
-
-function runInit(options: InitCommand): boolean {
-    const filename = `.wotanrc.${options.format === undefined ? 'yaml' : options.format}`;
-    const dirs = options.directories.length === 0 ? [process.cwd()] : options.directories;
-    let success = true;
-    for (const dir of dirs) {
-        const fullPath = path.join(dir, filename);
-        if (fs.existsSync(fullPath)) {
-            console.error(`'${fullPath}' already exists.`);
-            success = false;
-        } else {
-            fs.writeFileSync(fullPath, format<RawConfiguration>({extends: 'wotan:recommended', root: options.root}, options.format));
+    public run(options: LintCommand) {
+        const formatter = new (this.formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
+        const result = this.runner.lintCollection(options);
+        let success = true;
+        const fixes = [];
+        for (const [file, summary] of result) {
+            if (summary.failures.length !== 0)
+                success = false;
+            if (options.fix && summary.fixes)
+                fixes.push(writeFile(file, summary.content));
         }
+        this.logger.log(formatter.format(result));
+        return fixes.length === 0 ? success : Promise.all(fixes).then(() => success);
     }
-    return success;
+}
+
+@injectable()
+class InitCommandRunner extends AbstractCommandRunner {
+    constructor(private logger: MessageHandler) {
+        super();
+    }
+    public run(options: InitCommand) {
+        const filename = `.wotanrc.${options.format === undefined ? 'yaml' : options.format}`;
+        const dirs = options.directories.length === 0 ? [process.cwd()] : options.directories;
+        let success = true;
+        for (const dir of dirs) {
+            const fullPath = path.join(dir, filename);
+            if (fs.existsSync(fullPath)) {
+                this.logger.warn(`'${fullPath}' already exists.`);
+                success = false;
+            } else {
+                fs.writeFileSync(fullPath, format<RawConfiguration>({extends: 'wotan:recommended', root: options.root}, options.format));
+            }
+        }
+        return success;
+    }
 }
 
 function runVerify(_options: VerifyCommand): boolean {
     return true;
 }
 
-function runShow(options: ShowCommand): boolean {
-    const cwd = process.cwd();
-    const config = findConfiguration(options.file, cwd);
-    if (config === undefined) {
-        console.error(`Could not find configuration for '${options.file}'.`);
-        return false;
+@injectable()
+class ShowCommandRunner extends AbstractCommandRunner {
+    constructor(private configManager: ConfigurationManager, private logger: MessageHandler) {
+        super();
     }
-    console.log(format(reduceConfigurationForFile(config, options.file, cwd), options.format));
-    return true;
+    public run(options: ShowCommand) {
+        const config = this.configManager.findConfiguration(options.file);
+        if (config === undefined)
+            throw new ConfigurationError(`Could not find configuration for '${options.file}'.`);
+        this.logger.log(format(this.configManager.reduceConfigurationForFile(config, options.file), options.format));
+        return true;
+    }
 }
 
 export async function runTest(options: TestCommand): Promise<boolean> {

@@ -1,10 +1,6 @@
 import { Linter } from './linter';
 import { LintResult, FileSummary, Configuration, AbstractProcessor, CurrentDirectory } from './types';
 import * as path from 'path';
-import {
-    reduceConfigurationForFile,
-    getProcessorForFile,
-} from './configuration';
 import * as ts from 'typescript';
 import * as glob from 'glob';
 import { unixifyPath } from './utils';
@@ -55,7 +51,7 @@ export class Runner {
                     dir = dirname;
                 }
             }
-            const effectiveConfig = config && reduceConfigurationForFile(config, file, this.cwd);
+            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
             let sourceFile = program.getSourceFile(file);
@@ -112,7 +108,7 @@ export class Runner {
                     dir = dirname;
                 }
             }
-            const effectiveConfig = config && reduceConfigurationForFile(config, file, this.cwd);
+            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
             const originalContent = this.fs.readFile(file)!;
@@ -331,7 +327,7 @@ class ProjectHost implements ts.CompilerHost {
                     case FileKind.File:
                         if (c === 'initial')
                             c = this.configManager.findConfiguration(fileName);
-                        const processor = c && getProcessorForFile(c, fileName, this.cwd);
+                        const processor = c && this.configManager.getProcessorForFile(c, fileName);
                         let newName: string;
                         if (processor) {
                             const ctor = loadProcessor(processor);
@@ -392,7 +388,8 @@ class ProjectHost implements ts.CompilerHost {
             return content;
 
         const config = this.config || this.configManager.findConfiguration(realFile)!;
-        const processor = new (loadProcessor(getProcessorForFile(config, realFile, this.cwd)!))(content, realFile, file, new Map());
+        const ctor = loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
+        const processor = new ctor(content, realFile, file, new Map());
         this.processedFiles.set(file, {
             processor,
             originalContent: content,
