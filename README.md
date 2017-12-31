@@ -1,5 +1,8 @@
 # wotan
+
 Pluggable TypeScript and JavaScript linter
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/ajafff/wotan.svg)](https://greenkeeper.io/)
 
 ## What does "wotan" mean?
 
