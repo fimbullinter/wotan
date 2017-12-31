@@ -4,7 +4,7 @@ export class Rule extends AbstractRule {
     public apply() {
         const sourceFile = this.sourceFile;
         const end = sourceFile.end;
-        if (end === 0 || end === 1 && sourceFile.text[0] === '\UFEFF' || sourceFile.text[end - 1] === '\n')
+        if (end === 0 || end === 1 && sourceFile.text[0] === '\uFEFF' || sourceFile.text[end - 1] === '\n')
             return;
         const lines = sourceFile.getLineStarts();
         this.addFailure(
