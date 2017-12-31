@@ -74,8 +74,8 @@ declare const alsoNoTuple: AlsoNotATuple;
 function fn<T extends string | undefined>(param: T) {
     param as string;
           ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
-    param as string | undefined; // TODO get base constraint of type parameter
-          ~~~~~~~~~~~~~~~~~~~~~                                                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    param as string | undefined;
+          ~~~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param as typeof param;
           ~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param!;

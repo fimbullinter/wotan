@@ -52,7 +52,7 @@ unknownName;
 
 function fn<T extends string | undefined>(param: T) {
     param as string;
-    param; // TODO get base constraint of type parameter
+    param;
     param;
     param!;
     b;
