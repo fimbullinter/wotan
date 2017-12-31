@@ -55,20 +55,27 @@ function containsFixes(result: LintResult): boolean {
 export function printDiff(actual: string, expected: string) {
     console.log(chalk.red('Expected'));
     console.log(chalk.green('Actual'));
-    const lines = diff.createPatch('', expected, actual, '', '').split(/\n/g).slice(4);
+    const lines = diff.createPatch('', expected, actual, '', '').split(/\n(?!\\)/g).slice(4);
     for (let line of lines) {
         switch (line[0]) {
             case '@':
                 line = chalk.blueBright(line);
                 break;
             case '+':
-                line = chalk.green(isCodeLine(line.substr(1)) ? line.replace(/\r$/, '\u240d') + '\u240a' : line);
+                line = chalk.green(isCodeLine(line.substr(1)) ? '+' + prettyCodeLine(line.substr(1)) : line);
                 break;
             case '-':
-                line = chalk.red(isCodeLine(line.substr(1)) ? line.replace(/\r$/, '\u240d') + '\u240a' : line);
+                line = chalk.red(isCodeLine(line.substr(1)) ? '-' + prettyCodeLine(line.substr(1)) : line);
         }
         console.log(line);
     }
+}
+
+export function prettyCodeLine(line: string): string {
+    return line
+        .replace(/\t/g, '\u2409') // ␉
+        .replace(/\r$/, '\u240d') // ␍
+        .replace(/^\uFEFF/, '<BOM>');
 }
 
 export function isCodeLine(line: string): boolean {
