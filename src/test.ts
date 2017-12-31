@@ -18,8 +18,8 @@ export interface RuleTestHost {
 
 export async function test(config: Partial<LintOptions>, host: RuleTestHost): Promise<boolean> {
     const container = new Container();
+    container.bind(CurrentDirectory).toDynamicValue(host.getBaseDirectory).inSingletonScope();
     container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
-    container.rebind(CurrentDirectory).toDynamicValue(host.getBaseDirectory).inSingletonScope();
     const runner = container.get(Runner);
     const lintOptions: LintOptions = {
         config: undefined,

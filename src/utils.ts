@@ -1,8 +1,6 @@
 import { Format, Cache } from './types';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
-import * as resolve from 'resolve';
-import { ConfigurationError } from './error';
 import * as fs from 'fs';
 import * as glob from 'glob';
 import * as ts from 'typescript';
@@ -47,18 +45,6 @@ export function resolveCachedResult<K, V>(cache: Cache<K, V>, key: K, cb: (key: 
         cache.set(key, result);
     }
     return result!;
-}
-
-export function memoize<T, U>(fn: (arg: T) => U): (arg: T) => U {
-    const cache = new Map<T, U>();
-    return (arg: T): U => {
-        let cached = cache.get(arg);
-        if (cached === undefined && !cache.has(arg)) {
-            cached = fn(arg);
-            cache.set(arg, cached);
-        }
-        return cached!;
-    };
 }
 
 export function unixifyPath(path: string): string {
@@ -119,18 +105,6 @@ function convertToPrintable(value: any): any {
 
 export function assertNever(v: never): never {
     throw new Error(`unexpected value '${v}'`);
-}
-
-export function resolveExecutable(name: string, basedir: string): string {
-    try {
-        return resolve.sync(name, {
-            basedir,
-            extensions: Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
-            paths: module.paths.slice(OFFSET_TO_NODE_MODULES),
-        });
-    } catch (e) {
-        throw new ConfigurationError(e.message);
-    }
 }
 
 export function writeFile(path: string, content: string): Promise<void> {
