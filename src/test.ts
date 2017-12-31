@@ -1,7 +1,10 @@
-import { Failure, FileSummary, LintResult } from './types';
+import { Failure, FileSummary, LintResult, CurrentDirectory } from './types';
 import chalk from 'chalk';
 import * as diff from 'diff';
-import { lintCollection, LintOptions } from './runner';
+import { Runner, LintOptions } from './runner';
+import { Container } from 'inversify';
+import { CORE_DI_MODULE } from './di/core.module';
+import { DEFAULT_DI_MODULE } from './di/default.module';
 
 export const enum BaselineKind {
     Lint = 'lint',
@@ -14,6 +17,10 @@ export interface RuleTestHost {
 }
 
 export async function test(config: Partial<LintOptions>, host: RuleTestHost): Promise<boolean> {
+    const container = new Container();
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.rebind(CurrentDirectory).toDynamicValue(host.getBaseDirectory).inSingletonScope();
+    const runner = container.get(Runner);
     const lintOptions: LintOptions = {
         config: undefined,
         exclude: [],
@@ -22,15 +29,14 @@ export async function test(config: Partial<LintOptions>, host: RuleTestHost): Pr
         ...config,
         fix: false,
     };
-    const cwd = host.getBaseDirectory();
-    const lintResult = lintCollection(lintOptions, cwd);
+    const lintResult = runner.lintCollection(lintOptions);
     for (const [fileName, summary] of lintResult)
         if (!await host.checkResult(fileName, BaselineKind.Lint, summary))
             return false;
 
     if (!('fix' in config) || config.fix) {
         lintOptions.fix = config.fix || true; // fix defaults to true if not specified
-        const fixResult = containsFixes(lintResult) ? lintCollection(lintOptions, cwd) : lintResult;
+        const fixResult = containsFixes(lintResult) ? runner.lintCollection(lintOptions) : lintResult;
         for (const [fileName, summary] of fixResult)
             if (!await host.checkResult(fileName, BaselineKind.Fix, summary))
                 return false;

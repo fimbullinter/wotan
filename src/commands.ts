@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findConfiguration, reduceConfigurationForFile } from './configuration';
-import { LintOptions, lintCollection } from './runner';
+import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format } from './types';
 import { format, assertNever, unixifyPath, writeFile, readFile, globAsync, unlinkFile } from './utils';
@@ -10,7 +10,9 @@ import chalk from 'chalk';
 import * as mkdirp from 'mkdirp';
 import { RuleTestHost, createBaseline, printDiff, test } from './test';
 import { FormatterLoader } from './services/formatter-loader';
-import { NodeFormatterLoader } from './services/formatter-loader-host';
+import { Container } from 'inversify';
+import { CORE_DI_MODULE } from './di/core.module';
+import { DEFAULT_DI_MODULE } from './di/default.module';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -71,11 +73,12 @@ export async function runCommand(command: Command): Promise<boolean> {
 }
 
 function runLint(options: LintCommand) {
-    const cwd = process.cwd();
+    const container = new Container();
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     // fail early if formatter does not exist
-    const formatterLoader = new FormatterLoader(new NodeFormatterLoader(), cwd);
+    const formatterLoader = container.get(FormatterLoader);
     const formatter = new (formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
-    const result = lintCollection(options, cwd);
+    const result = container.get(Runner).lintCollection(options);
     let success = true;
     const fixes = [];
     for (const [file, summary] of result) {

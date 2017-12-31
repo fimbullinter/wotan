@@ -1,15 +1,10 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor } from './types';
+import { LintResult, FileSummary, Configuration, AbstractProcessor, CurrentDirectory } from './types';
 import * as path from 'path';
 import {
-    findConfiguration,
     reduceConfigurationForFile,
-    parseConfigFile,
-    readConfigFile,
-    resolveConfigFile,
     getProcessorForFile,
 } from './configuration';
-import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as glob from 'glob';
 import { unixifyPath } from './utils';
@@ -17,9 +12,9 @@ import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
 import { loadProcessor } from './processor-loader';
-import { Container, BindingScopeEnum } from 'inversify';
-import { DEFAULT_DI_MODULE } from './di/default.module';
-import { CORE_DI_MODULE } from './di/core.module';
+import { injectable, inject } from 'inversify';
+import { CachedFileSystem, FileKind } from './services/cached-file-system';
+import { ConfigurationManager } from './services/configuration-manager';
 
 export interface LintOptions {
     config: string | undefined;
@@ -29,75 +24,212 @@ export interface LintOptions {
     fix: boolean | number;
 }
 
-export function lintCollection(options: LintOptions, cwd: string): LintResult {
-    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
-    container.load(DEFAULT_DI_MODULE, CORE_DI_MODULE);
-    const linter = container.get(Linter);
+@injectable()
+export class Runner {
+    constructor(
+        private fs: CachedFileSystem,
+        private configManager: ConfigurationManager,
+        private linter: Linter,
+        @inject(CurrentDirectory) private cwd: string,
+    ) {}
 
-    const config = options.config !== undefined ? resolveConfig(options.config, cwd) : undefined;
-    if (options.project === undefined && options.files.length !== 0)
-        return lintFiles(linter, options, cwd, config);
+    public lintCollection(options: LintOptions): LintResult {
+        const config = options.config !== undefined ? this.resolveConfig(options.config) : undefined;
+        if (options.project === undefined && options.files.length !== 0)
+            return this.lintFiles(options, config);
 
-    return lintProject(linter, options, cwd, config);
-}
+        return this.lintProject(options, config);
+    }
 
-function lintProject(linter: Linter, options: LintOptions, cwd: string, config?: Configuration) {
-    const processorHost = new ProcessorHost(cwd, config);
-    let {files, program} = getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
-    const result: LintResult = new Map();
-    let dir: string | undefined;
+    private lintProject(options: LintOptions, config: Configuration | undefined) {
+        const processorHost = new ProjectHost(this.cwd, config, this.fs, this.configManager);
+        let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
+        const result: LintResult = new Map();
+        let dir: string | undefined;
 
-    for (const file of files) {
-        if (options.config === undefined) {
-            const dirname = path.dirname(file);
-            if (dir !== dirname) {
-                config = findConfiguration(file, cwd);
-                dir = dirname;
+        for (const file of files) {
+            if (options.config === undefined) {
+                const dirname = path.dirname(file);
+                if (dir !== dirname) {
+                    config = this.configManager.findConfiguration(file);
+                    dir = dirname;
+                }
             }
-        }
-        const effectiveConfig = config && reduceConfigurationForFile(config, file, cwd);
-        if (effectiveConfig === undefined)
-            continue;
-        let sourceFile = program.getSourceFile(file);
-        const mapped = processorHost.processedFiles.get(file);
-        const originalName = mapped === undefined ? file : mapped.originalName;
-        const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
-        let summary: FileSummary;
-        if (options.fix) {
-            summary = linter.lintAndFix(
-                sourceFile,
-                originalContent,
-                effectiveConfig,
-                (content, range) => {
-                    sourceFile = ts.updateSourceFile(sourceFile, content, range);
-                    processorHost.sourceFiles.set(file, sourceFile);
-                    program = ts.createProgram(
-                        program.getRootFileNames(),
-                        program.getCompilerOptions(),
-                        createCompilerHost(processorHost),
-                        program,
-                    );
-                    return {program, file: sourceFile};
-                },
-                options.fix === true ? undefined : options.fix,
-                program,
-                mapped === undefined ? undefined : mapped.processor,
-            );
-        } else {
-            summary = {
-                failures: linter.getFailures(
+            const effectiveConfig = config && reduceConfigurationForFile(config, file, this.cwd);
+            if (effectiveConfig === undefined)
+                continue;
+            let sourceFile = program.getSourceFile(file);
+            const mapped = processorHost.processedFiles.get(file);
+            const originalName = mapped === undefined ? file : mapped.originalName;
+            const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
+            let summary: FileSummary;
+            if (options.fix) {
+                summary = this.linter.lintAndFix(
                     sourceFile,
+                    originalContent,
                     effectiveConfig,
+                    (content, range) => {
+                        sourceFile = ts.updateSourceFile(sourceFile, content, range);
+                        processorHost.sourceFiles.set(file, sourceFile);
+                        program = ts.createProgram(
+                            program.getRootFileNames(),
+                            program.getCompilerOptions(),
+                            processorHost,
+                            program,
+                        );
+                        return {program, file: sourceFile};
+                    },
+                    options.fix === true ? undefined : options.fix,
                     program,
                     mapped === undefined ? undefined : mapped.processor,
-                ),
-                fixes: 0,
-                content: originalContent,
-            };
+                );
+            } else {
+                summary = {
+                    failures: this.linter.getFailures(
+                        sourceFile,
+                        effectiveConfig,
+                        program,
+                        mapped === undefined ? undefined : mapped.processor,
+                    ),
+                    fixes: 0,
+                    content: originalContent,
+                };
+            }
+            result.set(originalName, summary);
         }
-        result.set(originalName, summary);
+        return result;
     }
-    return result;
+
+    private lintFiles(options: LintOptions, config: Configuration | undefined) {
+        const result: LintResult = new Map();
+        let dir: string | undefined;
+        let processor: AbstractProcessor | undefined;
+        for (const file of getFiles(options.files, options.exclude, this.cwd)) {
+            if (options.config === undefined) {
+                const dirname = path.dirname(file);
+                if (dir !== dirname) {
+                    config = this.configManager.findConfiguration(file);
+                    dir = dirname;
+                }
+            }
+            const effectiveConfig = config && reduceConfigurationForFile(config, file, this.cwd);
+            if (effectiveConfig === undefined)
+                continue;
+            const originalContent = this.fs.readFile(file)!;
+            let name: string;
+            let content: string;
+            if (effectiveConfig.processor) {
+                const ctor = loadProcessor(effectiveConfig.processor);
+                name = ctor.transformName(file, effectiveConfig.settings);
+                processor = new ctor(originalContent, file, name, effectiveConfig.settings);
+                content = processor.preprocess();
+            } else {
+                processor = undefined;
+                name = file;
+                content = originalContent;
+            }
+
+            let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
+            let summary: FileSummary;
+            if (options.fix) {
+                summary = this.linter.lintAndFix(
+                    sourceFile,
+                    originalContent,
+                    effectiveConfig,
+                    (newContent, range) => {
+                        sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
+                        return {file: sourceFile};
+                    },
+                    options.fix === true ? undefined : options.fix,
+                    undefined,
+                    processor,
+                );
+            } else {
+                summary = {
+                    failures: this.linter.getFailures(
+                        sourceFile,
+                        effectiveConfig,
+                        undefined,
+                        processor,
+                    ),
+                    fixes: 0,
+                    content: originalContent,
+                };
+            }
+            result.set(file, summary);
+        }
+        return result;
+    }
+
+    private resolveConfig(pathOrName: string): Configuration {
+        const absolute = path.resolve(this.cwd, pathOrName);
+        const resolved = this.fs.isFile(absolute) ? absolute : this.configManager.resolveConfigFile(pathOrName, this.cwd);
+        return this.configManager.loadConfigurationFromPath(resolved, false);
+    }
+
+    private getFilesAndProgram(
+        project: string | undefined,
+        patterns: string[],
+        exclude: string[],
+        host: ProjectHost,
+    ): {files: string[], program: ts.Program} {
+        const cwd = this.cwd;
+        if (project !== undefined) {
+            project = this.checkConfigDirectory(path.resolve(cwd, project));
+        } else {
+            project = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
+            if (project === undefined)
+                throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
+        }
+        const program = createProgram(project, host);
+        const files: string[] = [];
+        const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
+        const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
+        const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
+        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), {
+            getCurrentDirectory() { return cwd; },
+            directoryExists(dir) {
+                return host.directoryExists(dir);
+            },
+        });
+        outer: for (const sourceFile of program.getSourceFiles()) {
+            const {fileName} = sourceFile;
+            if (path.relative(libDirectory, fileName) === path.basename(fileName))
+                continue; // lib.xxx.d.ts
+            if (program.isSourceFileFromExternalLibrary(sourceFile))
+                continue;
+            if (typeRoots !== undefined) {
+                for (const typeRoot of typeRoots) {
+                    const relative = path.relative(typeRoot, fileName);
+                    if (!relative.startsWith('..' + path.sep))
+                        continue outer;
+                }
+            }
+            const mapped = host.processedFiles.get(fileName);
+            const originalName = mapped === undefined ? fileName : mapped.originalName;
+            if (include.length !== 0 && !include.some((e) => e.match(originalName)))
+                continue;
+            if (ex.some((e) => e.match(originalName)))
+                continue;
+            files.push(fileName);
+        }
+        ensurePatternsMatch(include, ex, files);
+        return {files, program};
+    }
+
+    private checkConfigDirectory(fileOrDirName: string): string {
+        switch (this.fs.getKind(fileOrDirName)) {
+            case FileKind.NonExistent:
+                throw new ConfigurationError(`The specified path does not exist: '${fileOrDirName}'`);
+            case FileKind.Directory:
+                fileOrDirName = path.join(fileOrDirName, 'tsconfig.json');
+                if (!this.fs.isFile(fileOrDirName))
+                throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
+                // falls through
+            default:
+                return fileOrDirName;
+        }
+    }
 }
 
 function getFiles(patterns: string[], exclude: string[], cwd: string): string[] {
@@ -123,123 +255,6 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): string[] 
         }
     }
     return Array.from(new Set(result.map(unixifyPath))); // deduplicate files
-}
-
-function lintFiles(linter: Linter, options: LintOptions, cwd: string, config: Configuration | undefined) {
-    const result: LintResult = new Map();
-    let dir: string | undefined;
-    let processor: AbstractProcessor | undefined;
-    for (const file of getFiles(options.files, options.exclude, cwd)) {
-        if (options.config === undefined) {
-            const dirname = path.dirname(file);
-            if (dir !== dirname) {
-                config = findConfiguration(file, cwd);
-                dir = dirname;
-            }
-        }
-        const effectiveConfig = config && reduceConfigurationForFile(config, file, cwd);
-        if (effectiveConfig === undefined)
-            continue;
-        const originalContent = fs.readFileSync(file, 'utf8');
-        let name: string;
-        let content: string;
-        if (effectiveConfig.processor) {
-            const ctor = loadProcessor(effectiveConfig.processor);
-            name = ctor.transformName(file, effectiveConfig.settings);
-            processor = new ctor(originalContent, file, name, effectiveConfig.settings);
-            content = processor.preprocess();
-        } else {
-            processor = undefined;
-            name = file;
-            content = originalContent;
-        }
-
-        let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
-        let summary: FileSummary;
-        if (options.fix) {
-            summary = linter.lintAndFix(
-                sourceFile,
-                originalContent,
-                effectiveConfig,
-                (newContent, range) => {
-                    sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
-                    return {file: sourceFile};
-                },
-                options.fix === true ? undefined : options.fix,
-                undefined,
-                processor,
-            );
-        } else {
-            summary = {
-                failures: linter.getFailures(
-                    sourceFile,
-                    effectiveConfig,
-                    undefined,
-                    processor,
-                ),
-                fixes: 0,
-                content: originalContent,
-            };
-        }
-        result.set(file, summary);
-    }
-    return result;
-}
-
-function resolveConfig(pathOrName: string, cwd: string): Configuration {
-    const absolute = path.resolve(cwd, pathOrName);
-    const resolved = fs.existsSync(absolute) ? absolute : resolveConfigFile(pathOrName, cwd);
-    return parseConfigFile(readConfigFile(resolved), resolved, false);
-}
-
-function getFilesAndProgram(
-    project: string | undefined,
-    patterns: string[],
-    exclude: string[],
-    host: ProcessorHost,
-): {files: string[], program: ts.Program} {
-    const {cwd} = host;
-    if (project !== undefined) {
-        project = checkConfigDirectory(path.resolve(cwd, project));
-    } else {
-        project = ts.findConfigFile(cwd, fs.existsSync);
-        if (project === undefined)
-            throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
-    }
-    const program = createProgram(project, host);
-    const files: string[] = [];
-    const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
-    const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
-    const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
-    const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), {
-        getCurrentDirectory() { return cwd; },
-        directoryExists(dir) {
-            return host.directoryExists(dir);
-        },
-    });
-    outer: for (const sourceFile of program.getSourceFiles()) {
-        const {fileName} = sourceFile;
-        if (path.relative(libDirectory, fileName) === path.basename(fileName))
-            continue; // lib.xxx.d.ts
-        if (program.isSourceFileFromExternalLibrary(sourceFile))
-            continue;
-        if (typeRoots !== undefined) {
-            for (const typeRoot of typeRoots) {
-                const relative = path.relative(typeRoot, fileName);
-                if (!relative.startsWith('..' + path.sep))
-                    continue outer;
-            }
-        }
-        const mapped = host.processedFiles.get(fileName);
-        const originalName = mapped === undefined ? fileName : mapped.originalName;
-        if (include.length !== 0 && !include.some((e) => e.match(originalName)))
-            continue;
-        if (ex.some((e) => e.match(originalName)))
-            continue;
-        files.push(fileName);
-    }
-    ensurePatternsMatch(include, ex, files);
-    return {files, program};
 }
 
 function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[]) {
@@ -277,32 +292,27 @@ declare module 'typescript' {
     }
 }
 
-const enum FileKind {
-    NonExistent,
-    Unknown,
-    File,
-    Mapped,
-    Directory,
-}
-
 interface ProcessedFileInfo {
     originalName: string;
     originalContent: string;
     processor: AbstractProcessor;
 }
 
-class ProcessorHost {
+class ProjectHost implements ts.CompilerHost {
     public reverseMap = new Map<string, string>();
     public map = new Map<string, string>();
     public mappedDirectories = new Map<string, ts.FileSystemEntries>();
-    public seen = new Map<string, FileKind>();
     public processedFiles = new Map<string, ProcessedFileInfo>();
-    public fileContent = new Map<string, string | null>();
     public sourceFiles = new Map<string, ts.SourceFile | undefined>();
 
-    constructor(public cwd: string, public config?: Configuration) {}
+    constructor(
+        public cwd: string,
+        public config: Configuration | undefined,
+        private fs: CachedFileSystem,
+        private configManager: ConfigurationManager,
+    ) {}
 
-    public processDirectory(dir: string): ts.FileSystemEntries {
+    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
         let result = this.mappedDirectories.get(dir);
         if (result !== undefined)
             return result;
@@ -310,34 +320,22 @@ class ProcessorHost {
         const directories: string[] = [];
         result = {files, directories};
         this.mappedDirectories.set(dir, result);
-        const knownKind = this.seen.get(dir);
-        if (knownKind !== undefined && knownKind !== FileKind.Directory)
-            return result;
-        let entries;
-        try {
-            entries = fs.readdirSync(dir);
-        } catch (e) {
-            if (e.code === 'ENOENT')
-                this.seen.set(dir, FileKind.NonExistent);
-            return result;
-        }
-        this.seen.set(dir, FileKind.Directory);
+        const entries = this.fs.readDirectory(dir);
         if (entries.length !== 0) {
             let c: Configuration | undefined | 'initial' = /\/node_modules(\/|$)/.test(dir)
                 ? undefined // don't use processors in node_modules
                 : this.config || 'initial';
             for (const entry of entries) {
-                const fileName = `${dir}/${entry}`;
-                switch (this.getFileKind(fileName)) {
+                const fileName = path.join(dir, entry);
+                switch (this.fs.getKind(fileName)) {
                     case FileKind.File:
                         if (c === 'initial')
-                            c = findConfiguration(fileName, this.cwd);
+                            c = this.configManager.findConfiguration(fileName);
                         const processor = c && getProcessorForFile(c, fileName, this.cwd);
                         let newName: string;
                         if (processor) {
                             const ctor = loadProcessor(processor);
                             newName = ctor.transformName(fileName, new Map());
-                            this.seen.set(newName, FileKind.Mapped);
                         } else {
                             newName = fileName;
                         }
@@ -354,12 +352,11 @@ class ProcessorHost {
     }
 
     public fileExists(file: string): boolean {
-        switch (this.getFileKind(file)) {
+        switch (this.fs.getKind(file)) {
             case FileKind.Directory:
-            case FileKind.Unknown:
+            case FileKind.Other:
                 return false;
             case FileKind.File:
-            case FileKind.Mapped:
                 return true;
             default: {
                 return this.getFileSystemFile(file) !== undefined;
@@ -368,26 +365,12 @@ class ProcessorHost {
     }
 
     public directoryExists(dir: string) {
-        return this.getFileKind(dir) === FileKind.Directory;
-    }
-
-    public getFileKind(fileName: string) {
-        let result = this.seen.get(fileName);
-        if (result === undefined) {
-            try {
-                const stat = fs.statSync(fileName);
-                result = stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Unknown;
-            } catch {
-                result = FileKind.NonExistent;
-            }
-            this.seen.set(fileName, result);
-        }
-        return result;
+        return this.fs.isDirectory(dir);
     }
 
     private getFileSystemFile(file: string): string | undefined {
         if (/\/node_modules\//.test(file))
-            return this.getFileKind(file) === FileKind.File ? file : undefined;
+            return this.fs.getKind(file) === FileKind.File ? file : undefined;
         if (this.map.has(file))
             return file;
         const reverse = this.reverseMap.get(file);
@@ -396,53 +379,59 @@ class ProcessorHost {
         const dirname = path.dirname(file);
         if (this.mappedDirectories.has(dirname))
             return;
-        this.processDirectory(dirname);
+        this.getDirectoryEntries(dirname);
         return this.getFileSystemFile(file);
     }
 
     public readFile(file: string): string | undefined {
-        let content = this.fileContent.get(file);
-        if (content !== undefined)
-            return content === null ? undefined : content;
         const realFile = this.getFileSystemFile(file);
-        if (realFile === undefined) {
-            this.fileContent.set(file, null); // tslint:disable-line:no-null-keyword
+        if (realFile === undefined)
             return;
-        }
-        try {
-            content = this.fileContent.get(realFile);
-            if (content === undefined) {
-                content = fs.readFileSync(realFile, 'utf8');
-                this.fileContent.set(realFile, content);
-            } else if (content === null) {
-                content = undefined;
-            }
-            if (file === realFile)
-                return content;
-            if (content === undefined) {
-                this.fileContent.set(file, null); // tslint:disable-line:no-null-keyword
-                return;
-            }
-            const config = this.config || findConfiguration(realFile, this.cwd)!;
-            const processor = new (loadProcessor(getProcessorForFile(config, realFile, this.cwd)!))(content, realFile, file, new Map());
-            this.processedFiles.set(file, {
-                processor,
-                originalContent: content,
-                originalName: realFile,
-            });
-            content = processor.preprocess();
-            this.fileContent.set(file, content);
+        let content = this.fs.readFile(realFile);
+        if (file === realFile || content === undefined)
             return content;
-        } catch {
-            this.fileContent.set(file, '');
-            if (file !== realFile)
-                this.fileContent.set(realFile, '');
-            return '';
-        }
+
+        const config = this.config || this.configManager.findConfiguration(realFile)!;
+        const processor = new (loadProcessor(getProcessorForFile(config, realFile, this.cwd)!))(content, realFile, file, new Map());
+        this.processedFiles.set(file, {
+            processor,
+            originalContent: content,
+            originalName: realFile,
+        });
+        content = processor.preprocess();
+        return content;
+    }
+
+    public writeFile() {}
+    public useCaseSensitiveFileNames() {
+        return ts.sys.useCaseSensitiveFileNames;
+    }
+    public getDefaultLibFileName = ts.getDefaultLibFilePath;
+    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
+    public getNewLine() {
+        return '\n';
+    }
+    public realpath(f: string) {
+        // TODO
+        return require('fs').realpathSync(f); // tslint:disable-line
+    }
+    public getCurrentDirectory() {
+        return this.cwd;
+    }
+    public getDirectories(dir: string) {
+        return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
+    }
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
+        if (this.sourceFiles.has(fileName))
+            return this.sourceFiles.get(fileName);
+        const content = this.readFile(fileName);
+        const result = content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
+        this.sourceFiles.set(fileName, result);
+        return result;
     }
 }
 
-function createProgram(configFile: string, host: ProcessorHost): ts.Program {
+function createProgram(configFile: string, host: ProjectHost): ts.Program {
     const config = ts.readConfigFile(configFile, ts.sys.readFile);
     if (config.error !== undefined)
         throw new ConfigurationError(ts.formatDiagnostics([config.error], {
@@ -467,74 +456,22 @@ function createProgram(configFile: string, host: ProcessorHost): ts.Program {
                 getNewLine: () => '\n',
             }));
     }
-    return ts.createProgram(parsed.fileNames, parsed.options, createCompilerHost(host));
+    return ts.createProgram(parsed.fileNames, parsed.options, host);
 }
 
-function createCompilerHost(host: ProcessorHost): ts.CompilerHost {
+function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
     return {
-        getCanonicalFileName: ts.sys.useCaseSensitiveFileNames ? (f) => f : (f) => f.toLowerCase(),
-        getSourceFile(fileName, languageVersion, _onError) {
-            if (host.sourceFiles.has(fileName))
-                return host.sourceFiles.get(fileName);
-            const content = host.readFile(fileName);
-            const result = content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
-            host.sourceFiles.set(fileName, result);
-            return result;
+        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+        readDirectory(rootDir, extensions, excludes, includes, depth) {
+            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, (dir) => {
+                return host.getDirectoryEntries(dir);
+            });
         },
-        getDefaultLibFileName: ts.getDefaultLibFilePath,
-        writeFile() {},
-        getCurrentDirectory: () => host.cwd,
-        getDirectories(dir) {
-            const processed = host.mappedDirectories.get(dir);
-            if (processed !== undefined)
-                return processed.directories.map(path.dirname);
-            const directories = [];
-            for (const entry of fs.readdirSync(dir))
-                if (host.directoryExists(`${dir}/${entry}`))
-                    directories.push(entry);
-            return directories;
-        },
-        directoryExists(dir) {
-            return host.directoryExists(dir);
-        },
-        useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
-        getNewLine: () => '\n',
         fileExists(f) {
             return host.fileExists(f);
         },
         readFile(f) {
             return host.readFile(f);
         },
-        realpath(f) {
-            return fs.realpathSync(f);
-        },
     };
-}
-
-function createParseConfigHost(host: ProcessorHost): ts.ParseConfigHost {
-    return {
-        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
-        readDirectory(rootDir, extensions, excludes, includes, depth) {
-            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, (dir) => {
-                return host.processDirectory(dir);
-            });
-        },
-        fileExists: ts.sys.fileExists,
-        readFile: ts.sys.readFile,
-    };
-}
-
-function checkConfigDirectory(fileOrDirName: string): string {
-    let stat: fs.Stats;
-    try {
-        stat = fs.statSync(fileOrDirName);
-    } catch {
-        throw new ConfigurationError(`The specified path does not exist: '${fileOrDirName}'`);
-    }
-    if (stat.isDirectory()) {
-        fileOrDirName = path.join(fileOrDirName, 'tsconfig.json');
-        if (!fs.existsSync(fileOrDirName))
-            throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
-    }
-    return fileOrDirName;
 }

@@ -2,11 +2,11 @@ import { injectable } from 'inversify';
 import { FileSystemReader, CacheManager, CacheIdentifier } from '../types';
 import bind from 'bind-decorator';
 
-const enum FileKind {
+export const enum FileKind {
     NonExistent,
-    File = 1,
-    Directory = 2,
-    Other = 4,
+    File,
+    Directory,
+    Other,
 }
 
 const fileContent = new CacheIdentifier<string, string | undefined>('fileContent');
@@ -18,7 +18,7 @@ export class CachedFileSystem {
     constructor(private fs: FileSystemReader, private cache: CacheManager) {}
 
     public isFile(path: string): boolean {
-        return this.cache.resolve(fileKind, path, this.getKind) === FileKind.Directory;
+        return this.cache.resolve(fileKind, path, this.getKind) === FileKind.File;
     }
 
     public isDirectory(path: string): boolean {
@@ -26,7 +26,7 @@ export class CachedFileSystem {
     }
 
     @bind
-    private getKind(path: string): FileKind {
+    public getKind(path: string): FileKind {
         try {
             const stat = this.fs.stat(path);
             return stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Other;

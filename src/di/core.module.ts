@@ -4,6 +4,7 @@ import { ConfigurationManager } from '../services/configuration-manager';
 import { FormatterLoader } from '../services/formatter-loader';
 import { RuleLoader } from '../services/rule-loader';
 import { Linter } from '../linter';
+import { Runner } from '../runner';
 
 export const CORE_DI_MODULE = new ContainerModule((bind) => {
     bind(CachedFileSystem).toSelf();
@@ -11,5 +12,6 @@ export const CORE_DI_MODULE = new ContainerModule((bind) => {
     bind(FormatterLoader).toSelf();
     bind(RuleLoader).toSelf();
     bind(Linter).toSelf();
+    bind(Runner).toSelf();
     bind<interfaces.Container>(Container).toDynamicValue((context) => context.container);
 });
