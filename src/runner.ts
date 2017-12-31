@@ -11,6 +11,7 @@ import { loadProcessor } from './processor-loader';
 import { injectable, inject } from 'inversify';
 import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
+import { ProjectHost } from './project-host';
 
 export interface LintOptions {
     config: string | undefined;
@@ -55,7 +56,7 @@ export class Runner {
             if (effectiveConfig === undefined)
                 continue;
             let sourceFile = program.getSourceFile(file);
-            const mapped = processorHost.processedFiles.get(file);
+            const mapped = processorHost.getProcessedFileInfo(file);
             const originalName = mapped === undefined ? file : mapped.originalName;
             const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
             let summary: FileSummary;
@@ -65,14 +66,7 @@ export class Runner {
                     originalContent,
                     effectiveConfig,
                     (content, range) => {
-                        sourceFile = ts.updateSourceFile(sourceFile, content, range);
-                        processorHost.sourceFiles.set(file, sourceFile);
-                        program = ts.createProgram(
-                            program.getRootFileNames(),
-                            program.getCompilerOptions(),
-                            processorHost,
-                            program,
-                        );
+                        ({sourceFile, program} = processorHost.updateSourceFile(sourceFile, program, content, range));
                         return {program, file: sourceFile};
                     },
                     options.fix === true ? undefined : options.fix,
@@ -114,7 +108,7 @@ export class Runner {
             const originalContent = this.fs.readFile(file)!;
             let name: string;
             let content: string;
-            if (effectiveConfig.processor) {
+            if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
                 const ctor = loadProcessor(effectiveConfig.processor);
                 name = ctor.transformName(file, effectiveConfig.settings);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
@@ -201,8 +195,7 @@ export class Runner {
                         continue outer;
                 }
             }
-            const mapped = host.processedFiles.get(fileName);
-            const originalName = mapped === undefined ? fileName : mapped.originalName;
+            const originalName = host.getFileSystemFile(fileName)!;
             if (include.length !== 0 && !include.some((e) => e.match(originalName)))
                 continue;
             if (ex.some((e) => e.match(originalName)))
@@ -285,143 +278,6 @@ declare module 'typescript' {
     export interface FileSystemEntries {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
-    }
-}
-
-interface ProcessedFileInfo {
-    originalName: string;
-    originalContent: string;
-    processor: AbstractProcessor;
-}
-
-class ProjectHost implements ts.CompilerHost {
-    public reverseMap = new Map<string, string>();
-    public map = new Map<string, string>();
-    public mappedDirectories = new Map<string, ts.FileSystemEntries>();
-    public processedFiles = new Map<string, ProcessedFileInfo>();
-    public sourceFiles = new Map<string, ts.SourceFile | undefined>();
-
-    constructor(
-        public cwd: string,
-        public config: Configuration | undefined,
-        private fs: CachedFileSystem,
-        private configManager: ConfigurationManager,
-    ) {}
-
-    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
-        let result = this.mappedDirectories.get(dir);
-        if (result !== undefined)
-            return result;
-        const files: string[] = [];
-        const directories: string[] = [];
-        result = {files, directories};
-        this.mappedDirectories.set(dir, result);
-        const entries = this.fs.readDirectory(dir);
-        if (entries.length !== 0) {
-            let c: Configuration | undefined | 'initial' = /\/node_modules(\/|$)/.test(dir)
-                ? undefined // don't use processors in node_modules
-                : this.config || 'initial';
-            for (const entry of entries) {
-                const fileName = path.join(dir, entry);
-                switch (this.fs.getKind(fileName)) {
-                    case FileKind.File:
-                        if (c === 'initial')
-                            c = this.configManager.findConfiguration(fileName);
-                        const processor = c && this.configManager.getProcessorForFile(c, fileName);
-                        let newName: string;
-                        if (processor) {
-                            const ctor = loadProcessor(processor);
-                            newName = ctor.transformName(fileName, this.configManager.getSettingsForFile(c!, fileName));
-                        } else {
-                            newName = fileName;
-                        }
-                        files.push(newName);
-                        this.map.set(fileName, newName);
-                        this.reverseMap.set(newName, fileName);
-                        break;
-                    case FileKind.Directory:
-                        directories.push(fileName);
-                }
-            }
-        }
-        return result;
-    }
-
-    public fileExists(file: string): boolean {
-        switch (this.fs.getKind(file)) {
-            case FileKind.Directory:
-            case FileKind.Other:
-                return false;
-            case FileKind.File:
-                return true;
-            default: {
-                return this.getFileSystemFile(file) !== undefined;
-            }
-        }
-    }
-
-    public directoryExists(dir: string) {
-        return this.fs.isDirectory(dir);
-    }
-
-    private getFileSystemFile(file: string): string | undefined {
-        if (/\/node_modules\//.test(file))
-            return this.fs.getKind(file) === FileKind.File ? file : undefined;
-        if (this.map.has(file))
-            return file;
-        const reverse = this.reverseMap.get(file);
-        if (reverse !== undefined)
-            return reverse;
-        const dirname = path.dirname(file);
-        if (this.mappedDirectories.has(dirname))
-            return;
-        this.getDirectoryEntries(dirname);
-        return this.getFileSystemFile(file);
-    }
-
-    public readFile(file: string): string | undefined {
-        const realFile = this.getFileSystemFile(file);
-        if (realFile === undefined)
-            return;
-        let content = this.fs.readFile(realFile);
-        if (file === realFile || content === undefined)
-            return content;
-
-        const config = this.config || this.configManager.findConfiguration(realFile)!;
-        const ctor = loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
-        const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, file));
-        this.processedFiles.set(file, {
-            processor,
-            originalContent: content,
-            originalName: realFile,
-        });
-        content = processor.preprocess();
-        return content;
-    }
-
-    public writeFile() {}
-    public useCaseSensitiveFileNames() {
-        return ts.sys.useCaseSensitiveFileNames;
-    }
-    public getDefaultLibFileName = ts.getDefaultLibFilePath;
-    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
-    public getNewLine() {
-        return '\n';
-    }
-    public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
-    public getCurrentDirectory() {
-        return this.cwd;
-    }
-    public getDirectories(dir: string) {
-        return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
-    }
-    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
-        if (this.sourceFiles.has(fileName))
-            return this.sourceFiles.get(fileName);
-        const content = this.readFile(fileName);
-        const result = content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
-        this.sourceFiles.set(fileName, result);
-        return result;
     }
 }
 
