@@ -1,9 +1,9 @@
-import { FileSystemReader } from '../types';
+import { FileSystemReader, FileSystemWriter } from '../types';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 
 @injectable()
-export class NodeFileSystemReader implements FileSystemReader {
+export class NodeFileSystem implements FileSystemReader, FileSystemWriter {
     public readFile(file: string) {
         const buf = fs.readFileSync(file);
         const len = buf.length;
@@ -25,5 +25,14 @@ export class NodeFileSystemReader implements FileSystemReader {
     }
     public realpath(path: string) {
         return fs.realpathSync(path);
+    }
+    public writeFile(file: string, content: string) {
+        return fs.writeFileSync(file, content);
+    }
+    public remove(path: string) {
+        return fs.unlinkSync(path);
+    }
+    public createDirectory(dir: string): void {
+        return fs.mkdirSync(dir);
     }
 }

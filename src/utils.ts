@@ -1,8 +1,6 @@
 import { Format, Cache } from './types';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
-import * as fs from 'fs';
-import * as glob from 'glob';
 import * as ts from 'typescript';
 
 // @internal
@@ -105,36 +103,6 @@ function convertToPrintable(value: any): any {
 
 export function assertNever(v: never): never {
     throw new Error(`unexpected value '${v}'`);
-}
-
-export function writeFile(path: string, content: string): Promise<void> {
-    return new Promise((res, rej) => {
-        return fs.writeFile(path, content, 'utf8', (err) => err ? rej(err) : res());
-    });
-}
-
-export function readFile(path: string): Promise<string> {
-    return new Promise((res, rej) => {
-        return fs.readFile(path, 'utf8', (err, data) => err ? rej(err) : res(data));
-    });
-}
-
-export function unlinkFile(path: string): Promise<void> {
-    return new Promise((res, rej) => {
-        return fs.unlink(path, (err) => err ? rej(err) : res());
-    });
-}
-
-export function existsAsync(path: string): Promise<boolean> {
-    return new Promise((res) => {
-        return fs.access(path, (err) => res(!err));
-    });
-}
-
-export function globAsync(pattern: string, options: glob.IOptions): Promise<string[]> {
-    return new Promise((res, rej) => {
-        return glob(pattern, options, (err, matches) => err ? rej(err) : res(matches));
-    });
 }
 
 export function calculateChangeRange(original: string, changed: string): ts.TextChangeRange {

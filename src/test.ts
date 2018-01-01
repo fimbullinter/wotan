@@ -1,47 +1,44 @@
-import { Failure, FileSummary, LintResult, CurrentDirectory } from './types';
+import { Failure, FileSummary, LintResult } from './types';
 import chalk from 'chalk';
 import * as diff from 'diff';
 import { Runner, LintOptions } from './runner';
-import { Container } from 'inversify';
-import { CORE_DI_MODULE } from './di/core.module';
-import { DEFAULT_DI_MODULE } from './di/default.module';
+import { injectable } from 'inversify';
 
 export const enum BaselineKind {
     Lint = 'lint',
     Fix = 'fix',
 }
 
-export interface RuleTestHost {
-    getBaseDirectory(): string;
-    checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean | Promise<boolean>;
+export abstract class RuleTestHost {
+    public abstract checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
 }
 
-export async function test(config: Partial<LintOptions>, host: RuleTestHost): Promise<boolean> {
-    const container = new Container();
-    container.bind(CurrentDirectory).toDynamicValue(host.getBaseDirectory).inSingletonScope();
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
-    const runner = container.get(Runner);
-    const lintOptions: LintOptions = {
-        config: undefined,
-        exclude: [],
-        files: [],
-        project: undefined,
-        ...config,
-        fix: false,
-    };
-    const lintResult = runner.lintCollection(lintOptions);
-    for (const [fileName, summary] of lintResult)
-        if (!await host.checkResult(fileName, BaselineKind.Lint, summary))
-            return false;
-
-    if (!('fix' in config) || config.fix) {
-        lintOptions.fix = config.fix || true; // fix defaults to true if not specified
-        const fixResult = containsFixes(lintResult) ? runner.lintCollection(lintOptions) : lintResult;
-        for (const [fileName, summary] of fixResult)
-            if (!await host.checkResult(fileName, BaselineKind.Fix, summary))
+@injectable()
+export class RuleTester {
+    constructor(private runner: Runner, private host: RuleTestHost) {}
+    public test(config: Partial<LintOptions>): boolean {
+        const lintOptions: LintOptions = {
+            config: undefined,
+            exclude: [],
+            files: [],
+            project: undefined,
+            ...config,
+            fix: false,
+        };
+        const lintResult = this.runner.lintCollection(lintOptions);
+        for (const [fileName, summary] of lintResult)
+            if (!this.host.checkResult(fileName, BaselineKind.Lint, summary))
                 return false;
+
+        if (!('fix' in config) || config.fix) {
+            lintOptions.fix = config.fix || true; // fix defaults to true if not specified
+            const fixResult = containsFixes(lintResult) ? this.runner.lintCollection(lintOptions) : lintResult;
+            for (const [fileName, summary] of fixResult)
+                if (!this.host.checkResult(fileName, BaselineKind.Fix, summary))
+                    return false;
+        }
+        return true;
     }
-    return true;
 }
 
 function containsFixes(result: LintResult): boolean {
@@ -52,9 +49,11 @@ function containsFixes(result: LintResult): boolean {
     return false;
 }
 
-export function printDiff(actual: string, expected: string) {
-    console.log(chalk.red('Expected'));
-    console.log(chalk.green('Actual'));
+export function createBaselineDiff(actual: string, expected: string) {
+    const result = [
+        chalk.red('Expected'),
+        chalk.green('Actual'),
+    ];
     const lines = diff.createPatch('', expected, actual, '', '').split(/\n(?!\\)/g).slice(4);
     for (let line of lines) {
         switch (line[0]) {
@@ -67,8 +66,9 @@ export function printDiff(actual: string, expected: string) {
             case '-':
                 line = chalk.red(isCodeLine(line.substr(1)) ? '-' + prettyCodeLine(line.substr(1)) : line);
         }
-        console.log(line);
+        result.push(line);
     }
+    return result.join('\n');
 }
 
 export function prettyCodeLine(line: string): string {

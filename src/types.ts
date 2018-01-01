@@ -295,6 +295,13 @@ export interface Stats {
     isFile(): boolean;
 }
 
+export interface FileSystemWriter {
+    writeFile(file: string, content: string): void;
+    remove(path: string): void;
+    createDirectory(dir: string): void;
+}
+export abstract class FileSystemWriter {}
+
 export interface RuleLoaderHost {
     loadCoreRule(name: string): RuleConstructor | undefined;
     loadCustomRule(name: string, directory: string): RuleConstructor | undefined;

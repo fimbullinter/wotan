@@ -8,12 +8,13 @@ import {
     MessageHandler,
     CurrentDirectory,
     HomeDirectory,
+    FileSystemWriter,
 } from '../types';
 import { NodeFormatterLoader } from '../services/formatter-loader-host';
 import { NodeRuleLoader } from '../services/rule-loader-host';
 import { NodeResolver } from '../services/resolver';
 import { DefaultCacheManager } from '../services/cache-manager';
-import { NodeFileSystemReader } from '../services/file-system-reader';
+import { NodeFileSystem } from '../services/file-system';
 import { ConsoleMessageHandler } from '../services/message-handler';
 import * as os from 'os';
 
@@ -27,7 +28,9 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
     if (!isBound(CacheManager))
         bind(CacheManager).to(DefaultCacheManager);
     if (!isBound(FileSystemReader))
-        bind(FileSystemReader).to(NodeFileSystemReader);
+        bind(FileSystemReader).to(NodeFileSystem);
+    if (!isBound(FileSystemWriter))
+        bind(FileSystemWriter).to(NodeFileSystem);
     if (!isBound(MessageHandler))
         bind(MessageHandler).to(ConsoleMessageHandler);
     if (!isBound(CurrentDirectory))
