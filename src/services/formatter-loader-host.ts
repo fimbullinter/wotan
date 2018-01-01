@@ -27,6 +27,6 @@ export class NodeFormatterLoader implements FormatterLoaderHost {
         } catch {
             return;
         }
-        return require(resolved).Formatter;
+        return this.resolver.require(resolved).Formatter;
     }
 }

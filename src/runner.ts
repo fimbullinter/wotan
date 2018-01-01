@@ -7,7 +7,7 @@ import { unixifyPath } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
-import { loadProcessor } from './processor-loader';
+import { ProcessorLoader } from './services/processor-loader';
 import { injectable, inject } from 'inversify';
 import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
@@ -27,6 +27,7 @@ export class Runner {
         private fs: CachedFileSystem,
         private configManager: ConfigurationManager,
         private linter: Linter,
+        private processorLoader: ProcessorLoader,
         @inject(CurrentDirectory) private cwd: string,
     ) {}
 
@@ -39,7 +40,7 @@ export class Runner {
     }
 
     private lintProject(options: LintOptions, config: Configuration | undefined) {
-        const processorHost = new ProjectHost(this.cwd, config, this.fs, this.configManager);
+        const processorHost = new ProjectHost(this.cwd, config, this.fs, this.configManager, this.processorLoader);
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
         const result: LintResult = new Map();
         let dir: string | undefined;
@@ -109,7 +110,7 @@ export class Runner {
             let name: string;
             let content: string;
             if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
-                const ctor = loadProcessor(effectiveConfig.processor);
+                const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
                 name = ctor.transformName(file, effectiveConfig.settings);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();

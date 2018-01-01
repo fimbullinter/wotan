@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import { resolveCachedResult } from './utils';
 import * as path from 'path';
-import { loadProcessor } from './processor-loader';
+import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
 import { Configuration, AbstractProcessor } from './types';
 import { bind } from 'bind-decorator';
@@ -27,6 +27,7 @@ export class ProjectHost implements ts.CompilerHost {
         public config: Configuration | undefined,
         private fs: CachedFileSystem,
         private configManager: ConfigurationManager,
+        private processorLoader: ProcessorLoader,
     ) {}
 
     public getProcessedFileInfo(fileName: string) {
@@ -54,7 +55,7 @@ export class ProjectHost implements ts.CompilerHost {
                         const processor = c && this.configManager.getProcessorForFile(c, fileName);
                         let newName: string;
                         if (processor) {
-                            const ctor = loadProcessor(processor);
+                            const ctor = this.processorLoader.loadProcessor(processor);
                             newName = ctor.transformName(fileName, this.configManager.getSettingsForFile(c!, fileName));
                         } else {
                             newName = fileName;
@@ -112,7 +113,7 @@ export class ProjectHost implements ts.CompilerHost {
             return content;
 
         const config = this.config || this.configManager.findConfiguration(realFile)!;
-        const ctor = loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
+        const ctor = this.processorLoader.loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
         const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, file));
         this.processedFiles.set(file, {
             processor,
