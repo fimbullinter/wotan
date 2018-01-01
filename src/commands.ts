@@ -16,7 +16,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 
 export const enum CommandName {
     Lint = 'lint',
-    Verify = 'verify',
+    Validate = 'validate',
     Show = 'show',
     Test = 'test',
     Init = 'init',
@@ -35,8 +35,8 @@ export interface TestCommand {
     exact: boolean;
 }
 
-export interface VerifyCommand {
-    command: CommandName.Verify;
+export interface ValidateCommand {
+    command: CommandName.Validate;
     files: string[];
 }
 
@@ -53,10 +53,12 @@ export interface InitCommand {
     root: boolean | undefined;
 }
 
-export type Command = LintCommand | ShowCommand | VerifyCommand | InitCommand | TestCommand;
+export type Command = LintCommand | ShowCommand | ValidateCommand | InitCommand | TestCommand;
 
-export async function runCommand(command: Command): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container): Promise<boolean> {
     const container = new Container();
+    if (diContainer !== undefined)
+        container.parent = diContainer;
     container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     switch (command.command) {
         case CommandName.Lint:
@@ -65,8 +67,9 @@ export async function runCommand(command: Command): Promise<boolean> {
         case CommandName.Init:
             container.bind(AbstractCommandRunner).to(InitCommandRunner);
             break;
-        case CommandName.Verify:
-            return runVerify(command);
+        case CommandName.Validate:
+            container.bind(AbstractCommandRunner).to(ValidateCommandRunner);
+            break;
         case CommandName.Show:
             container.bind(AbstractCommandRunner).to(ShowCommandRunner);
             break;
@@ -127,8 +130,11 @@ class InitCommandRunner extends AbstractCommandRunner {
     }
 }
 
-function runVerify(_options: VerifyCommand): boolean {
-    return true;
+@injectable()
+class ValidateCommandRunner extends AbstractCommandRunner {
+    public run(_options: ValidateCommand) {
+        return true;
+    }
 }
 
 @injectable()

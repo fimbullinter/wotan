@@ -1,4 +1,4 @@
-import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, VerifyCommand } from './commands';
+import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, ValidateCommand } from './commands';
 import { ConfigurationError } from './error';
 import { Format } from './types';
 
@@ -15,8 +15,8 @@ export function parseArguments(args: string[]): Command {
             return parseTestCommand(args.slice(1));
         case CommandName.Show:
             return parseShowCommand(args.slice(1));
-        case CommandName.Verify:
-            return parseVerifyCommand(args.slice(1));
+        case CommandName.Validate:
+            return parseValidateCommand(args.slice(1));
         default:
             return parseLintCommand(<AssertNever<typeof command>>args);
     }
@@ -172,9 +172,9 @@ function parseInitCommand(args: string[]): InitCommand {
     return result;
 }
 
-function parseVerifyCommand(args: string[]): VerifyCommand {
-    const result: VerifyCommand = {
-        command: CommandName.Verify,
+function parseValidateCommand(args: string[]): ValidateCommand {
+    const result: ValidateCommand = {
+        command: CommandName.Validate,
         files: [],
     };
 
