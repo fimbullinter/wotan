@@ -8,3 +8,9 @@ bar: for (;;) {
             continue bar;
     }
 }
+
+foo: for(;;)
+~~~          [error no-unused-label: Unused label 'foo'.]
+    foo: while(true)
+        break foo;
+break foo;

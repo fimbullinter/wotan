@@ -7,3 +7,8 @@ bar: for (;;) {
             continue bar;
     }
 }
+
+foo: for(;;)
+    foo: while(true)
+        break foo;
+break foo;
