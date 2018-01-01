@@ -1,0 +1,6 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "parameter-properties": [true, "member-access"]
+  }
+}

@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import { injectable, inject } from 'inversify';
 import { memoizeGetter } from './utils';
+import { NodeWrap } from 'tsutils';
 
 export type LintResult = Map<string, FileSummary>;
 
@@ -134,7 +135,6 @@ export abstract class AbstractRule {
     }
 }
 
-@injectable()
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
     public readonly context: TypedRuleContext;
@@ -339,3 +339,8 @@ export abstract class Resolver {}
 
 export const CurrentDirectory = Symbol('CurrentDirectory');
 export const HomeDirectory = Symbol('HomeDirectory');
+
+export interface WrappedAst extends NodeWrap {} // tslint:disable-line:no-empty-interface
+export abstract class WrappedAst {}
+export interface FlattenedAst extends ReadonlyArray<ts.Node> {}
+export abstract class FlattenedAst {}

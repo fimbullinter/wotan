@@ -12,6 +12,8 @@ import {
     GlobalSettings,
     MessageHandler,
     AbstractProcessor,
+    FlattenedAst,
+    WrappedAst,
 } from './types';
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
@@ -19,6 +21,7 @@ import * as debug from 'debug';
 import { Container, injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange } from './utils';
+import { ConvertedAst, convertAst } from 'tsutils';
 
 const log = debug('wotan:linter');
 
@@ -142,10 +145,21 @@ export class Linter {
             },
         };
 
+        let convertedAst: ConvertedAst | undefined;
         const container = new Container();
         container.bind<RuleContext>(RuleContext).toConstantValue(context);
         container.bind(RuleOptions).toDynamicValue(() => options);
         container.bind(GlobalSettings).toConstantValue(settings);
+        container.bind(WrappedAst).toDynamicValue(() => {
+            if (convertedAst === undefined)
+                convertedAst = convertAst(sourceFile);
+            return convertedAst.wrapped;
+        }).inSingletonScope();
+        container.bind(FlattenedAst).toDynamicValue(() => {
+            if (convertedAst === undefined)
+                convertedAst = convertAst(sourceFile);
+            return convertedAst.flat;
+        }).inSingletonScope();
         if (program !== undefined)
             container.bind<RuleContext>(TypedRuleContext).toService(RuleContext);
 

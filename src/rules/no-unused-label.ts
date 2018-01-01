@@ -1,7 +1,8 @@
 import * as ts from 'typescript';
-import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary } from 'tsutils';
-import { AbstractRule, Replacement } from '../types';
+import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
+import { AbstractRule, Replacement, RuleContext, WrappedAst } from '../types';
 import bind from 'bind-decorator';
+import { injectable } from 'inversify';
 
 interface Label {
     node: ts.LabeledStatement;
@@ -9,6 +10,7 @@ interface Label {
     used: boolean;
 }
 
+@injectable()
 export class Rule extends AbstractRule {
     private labels: Label[] = [];
 
@@ -16,19 +18,24 @@ export class Rule extends AbstractRule {
         return !sourceFile.isDeclarationFile;
     }
 
+    constructor(context: RuleContext, private ast: WrappedAst) {
+        super(context);
+    }
+
     public apply() {
-        return this.sourceFile.statements.forEach(this.visitNode);
+        return this.ast.children.forEach(this.visitNode, this);
     }
 
     @bind
-    private visitNode(node: ts.Node): void {
+    private visitNode(wrap: NodeWrap): void {
+        const {node} = wrap;
         if (isLabeledStatement(node)) {
             if (!isIterationStatement(node.statement) && node.statement.kind !== ts.SyntaxKind.SwitchStatement) {
                 this.fail(node);
-                return this.visitNode(node.statement);
+                return this.visitNode(wrap.children[1]);
             }
             this.labels.unshift({node, name: node.label.text, used: false});
-            this.visitNode(node.statement);
+            this.visitNode(wrap.children[1]);
             const label = this.labels.shift()!;
             if (!label.used)
                 this.fail(label.node);
@@ -46,11 +53,11 @@ export class Rule extends AbstractRule {
         if (this.labels.length !== 0 && isFunctionScopeBoundary(node)) {
             const saved = this.labels;
             this.labels = [];
-            ts.forEachChild(node, this.visitNode);
+            wrap.children.forEach(this.visitNode, this);
             this.labels = saved;
             return;
         }
-        return ts.forEachChild(node, this.visitNode);
+        return wrap.children.forEach(this.visitNode, this);
     }
 
     private fail(statement: ts.LabeledStatement) {

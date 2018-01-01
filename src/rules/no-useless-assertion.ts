@@ -1,14 +1,15 @@
-import { TypedRule, Replacement } from '../types';
+import { TypedRule, Replacement, TypedRuleContext, FlattenedAst } from '../types';
 import * as ts from 'typescript';
-import bind from 'bind-decorator';
 import { isStrictNullChecksEnabled } from '../utils';
 import { isVariableDeclaration, hasModifier, isFunctionScopeBoundary, isObjectType } from 'tsutils';
 import * as debug from 'debug';
+import { injectable } from 'inversify';
 
 const log = debug('wotan:rule:no-useless-assertion');
 
 const FAIL_MESSAGE = `This assertion is unnecesary as it doesn't change the type of the expression.`;
 
+@injectable()
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
@@ -16,23 +17,21 @@ export class Rule extends TypedRule {
 
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
 
-    public apply(): void {
-        return this.sourceFile.statements.forEach(this.visitNode);
+    constructor(context: TypedRuleContext, private flatAst: FlattenedAst) {
+        super(context);
     }
 
-    @bind
-    private visitNode(node: ts.Node): void {
-        switch (node.kind) {
-            case ts.SyntaxKind.NonNullExpression:
-                this.checkNonNullAssertion(<ts.NonNullExpression>node);
-                return this.visitNode((<ts.NonNullExpression>node).expression);
-            case ts.SyntaxKind.AsExpression:
-            case ts.SyntaxKind.TypeAssertionExpression:
-                this.checkTypeAssertion(<ts.AssertionExpression>node);
-                return this.visitNode((<ts.AssertionExpression>node).expression);
+    public apply(): void {
+        for (const node of this.flatAst) {
+            switch (node.kind) {
+                case ts.SyntaxKind.NonNullExpression:
+                    this.checkNonNullAssertion(<ts.NonNullExpression>node);
+                    break;
+                case ts.SyntaxKind.AsExpression:
+                case ts.SyntaxKind.TypeAssertionExpression:
+                    this.checkTypeAssertion(<ts.AssertionExpression>node);
+            }
         }
-
-        return ts.forEachChild(node, this.visitNode);
     }
 
     private checkNonNullAssertion(node: ts.NonNullExpression) {
