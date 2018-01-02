@@ -1,7 +1,15 @@
 import { TypedRule, Replacement, TypedRuleContext, FlattenedAst } from '../types';
 import * as ts from 'typescript';
 import { isStrictNullChecksEnabled } from '../utils';
-import { isVariableDeclaration, hasModifier, isFunctionScopeBoundary, isObjectType } from 'tsutils';
+import {
+    isVariableDeclaration,
+    hasModifier,
+    isFunctionScopeBoundary,
+    isObjectType,
+    isUnionType,
+    isNewExpression,
+    isCallExpression,
+} from 'tsutils';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 
@@ -35,16 +43,26 @@ export class Rule extends TypedRule {
     }
 
     private checkNonNullAssertion(node: ts.NonNullExpression) {
+        let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
-            if (type !== type.getNonNullableType())
-                return;
+            const flags = getNullableFlags(this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression)));
+            if (flags !== 0) { // type is nullable
+                const parent = node.parent!;
+                // If assertion is used as argument, check if the function accepts this expression without an assertion
+                // TODO expand this to TemplateExpression, JsxExpression, etc
+                if (!isCallExpression(parent) && !isNewExpression(parent) || node === parent.expression)
+                    return;
+                const contextualType = this.checker.getContextualType(node);
+                if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
+                    return;
+                message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
+            }
             if (maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
                 log('Identifier %s could be used before being assigned', node.expression.text);
                 return;
             }
         }
-        this.addFailure(node.end - 1, node.end, FAIL_MESSAGE, Replacement.delete(node.expression.end, node.end));
+        this.addFailure(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
@@ -53,7 +71,7 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         const sourceType = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
-        if (targetType !== sourceType && this.checker.typeToString(targetType) !== this.checker.typeToString(sourceType))
+        if (!this.typesAreEqual(sourceType, targetType))
             return;
         if (node.kind === ts.SyntaxKind.AsExpression) {
             this.addFailure(
@@ -66,6 +84,25 @@ export class Rule extends TypedRule {
             const start = node.getStart(this.sourceFile);
             this.addFailure(start, node.expression.pos, FAIL_MESSAGE, Replacement.delete(start, node.expression.getStart(this.sourceFile)));
         }
+    }
+
+    private typesAreEqual(a: ts.Type, b: ts.Type) {
+        return a === b || this.checker.typeToString(a) === this.checker.typeToString(b);
+    }
+}
+
+function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
+    let flags = 0;
+    for (const t of isUnionType(type) ? type.types : [type])
+        flags |= t.flags;
+    return ((receiver && flags & ts.TypeFlags.Any) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+}
+
+function formatNullableFlags(flags: ts.TypeFlags) {
+    switch (flags) {
+        case ts.TypeFlags.Null: return "'null'";
+        case ts.TypeFlags.Undefined: return "'undefined'";
+        default: return "'null' and 'undefined'";
     }
 }
 

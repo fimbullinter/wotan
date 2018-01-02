@@ -63,7 +63,7 @@ export class Rule extends AbstractRule {
             const saved = this.labels;
             this.labels = [];
             // can iterate as linked list again since there are no active labels to look for
-            this.iterate(wrap.next!, wrap.skip!);
+            this.iterate(wrap.next!, wrap.skip);
             this.labels = saved;
             return;
         }

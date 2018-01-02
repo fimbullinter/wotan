@@ -63,5 +63,51 @@ function foo(j: string) {
      ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }
 
+let k = b || c!; // this line should not be an error in strict mode
+k!; // but this line should
+ ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
 foobar!;
       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let possiblyNull: string | null;
+declare let possiblyUndefined: string | undefined;
+declare let possiblyBoth: string | null | undefined;
+
+function takeAny(arg: any) {}
+function takeNull(arg: string | null) {}
+function takeUndefined(arg: string | undefined) {}
+function takeBoth(arg: string | null | undefined) {}
+function takeStringNumberUndefined(arg: string | number | undefined) {}
+
+takeAny(possiblyNull!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeAny(possiblyUndefined!);
+                         ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeAny(possiblyBoth!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+
+takeNull(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeNull(possiblyUndefined!);
+takeNull(possiblyBoth!);
+
+takeUndefined(possiblyNull!);
+takeUndefined(possiblyUndefined!);
+                               ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeUndefined(possiblyBoth!);
+
+takeBoth(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeBoth(possiblyUndefined!);
+                          ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeBoth(possiblyBoth!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+
+takeStringNumberUndefined(possiblyNull!);
+takeStringNumberUndefined(possiblyUndefined!);
+                                           ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeStringNumberUndefined(possiblyBoth!);
+
+declare let functionOrAny: (() => void) | undefined;
+functionOrAny!();

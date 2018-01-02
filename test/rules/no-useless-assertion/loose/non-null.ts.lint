@@ -75,5 +75,59 @@ function foo(j: string) {
      ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }
 
+let k = b || c!; // this line should not be an error in strict mode
+              ~                                                     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+k!; // but this line should
+ ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
 foobar!;
       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let possiblyNull: string | null;
+declare let possiblyUndefined: string | undefined;
+declare let possiblyBoth: string | null | undefined;
+
+function takeAny(arg: any) {}
+function takeNull(arg: string | null) {}
+function takeUndefined(arg: string | undefined) {}
+function takeBoth(arg: string | null | undefined) {}
+function takeStringNumberUndefined(arg: string | number | undefined) {}
+
+takeAny(possiblyNull!);
+                    ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeAny(possiblyUndefined!);
+                         ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeAny(possiblyBoth!);
+                    ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+takeNull(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNull(possiblyUndefined!);
+                          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNull(possiblyBoth!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+takeUndefined(possiblyNull!);
+                          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeUndefined(possiblyUndefined!);
+                               ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeUndefined(possiblyBoth!);
+                          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+takeBoth(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeBoth(possiblyUndefined!);
+                          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeBoth(possiblyBoth!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+takeStringNumberUndefined(possiblyNull!);
+                                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeStringNumberUndefined(possiblyUndefined!);
+                                           ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeStringNumberUndefined(possiblyBoth!);
+                                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let functionOrAny: (() => void) | undefined;
+functionOrAny!();
+             ~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
