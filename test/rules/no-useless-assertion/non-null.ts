@@ -89,3 +89,13 @@ takeStringNumberUndefined(possiblyBoth!);
 
 declare let functionOrAny: (() => void) | undefined;
 functionOrAny!();
+
+function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
+    one!;
+    two!;
+    fn(one!, two!);
+    foo(one!);
+    fn(two!, one!);
+    foo(three!);
+    takeUndefined(one!);
+}

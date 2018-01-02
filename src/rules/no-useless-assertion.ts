@@ -45,14 +45,16 @@ export class Rule extends TypedRule {
     private checkNonNullAssertion(node: ts.NonNullExpression) {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            const flags = getNullableFlags(this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression)));
+            const originalType = this.checker.getTypeAtLocation(node.expression);
+            const flags = getNullableFlags(originalType);
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
-            }
-            if (maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
+            } else if (originalType.flags & ts.TypeFlags.TypeParameter) {
+                message = "Non-null assertions don't work with type parameters.";
+            } else if (maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
                 log('Identifier %s could be used before being assigned', node.expression.text);
                 return;
             }

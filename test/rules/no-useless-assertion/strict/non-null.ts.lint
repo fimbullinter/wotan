@@ -111,3 +111,22 @@ takeStringNumberUndefined(possiblyBoth!);
 
 declare let functionOrAny: (() => void) | undefined;
 functionOrAny!();
+
+function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
+    one!;
+       ~  [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    two!;
+       ~  [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    fn(one!, two!);
+          ~         [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+                ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    foo(one!);
+           ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    fn(two!, one!);
+          ~         [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+                ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    foo(three!);
+             ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    takeUndefined(one!);
+                     ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+}

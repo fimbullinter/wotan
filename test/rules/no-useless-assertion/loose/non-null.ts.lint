@@ -131,3 +131,22 @@ takeStringNumberUndefined(possiblyBoth!);
 declare let functionOrAny: (() => void) | undefined;
 functionOrAny!();
              ~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
+    one!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    two!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    fn(one!, two!);
+          ~         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(one!);
+           ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    fn(two!, one!);
+          ~         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(three!);
+             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(one!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}

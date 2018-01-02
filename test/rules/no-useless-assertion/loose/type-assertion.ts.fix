@@ -54,7 +54,6 @@ function fn<T extends string | undefined>(param: T) {
     param;
     param;
     param;
-    param;
     b as T;
     b = param;
     param = b as T;
