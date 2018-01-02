@@ -47,12 +47,7 @@ export class Rule extends TypedRule {
         if (this.strictNullChecks) {
             const flags = getNullableFlags(this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression)));
             if (flags !== 0) { // type is nullable
-                const parent = node.parent!;
-                // If assertion is used as argument, check if the function accepts this expression without an assertion
-                // TODO expand this to TemplateExpression, JsxExpression, etc
-                if (!isCallExpression(parent) && !isNewExpression(parent) || node === parent.expression)
-                    return;
-                const contextualType = this.checker.getContextualType(node);
+                const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
@@ -66,24 +61,43 @@ export class Rule extends TypedRule {
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
-        const targetType = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
+        let targetType = this.checker.getTypeAtLocation(node);
         if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
-        const sourceType = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
-        if (!this.typesAreEqual(sourceType, targetType))
-            return;
+        let sourceType = this.checker.getTypeAtLocation(node.expression);
+        if ((targetType.flags & ts.TypeFlags.TypeParameter) === 0) {
+            targetType = this.checker.getApparentType(targetType);
+            sourceType = this.checker.getApparentType(sourceType);
+        }
+        let message = FAIL_MESSAGE;
+        if (!this.typesAreEqual(sourceType, targetType)) {
+            const contextualType = this.getSafeContextualType(node);
+            if (contextualType === undefined || !this.typesAreEqual(sourceType, contextualType))
+                return;
+            message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
+        }
         if (node.kind === ts.SyntaxKind.AsExpression) {
             this.addFailure(
                 node.type.pos - 'as'.length,
                 node.end,
-                FAIL_MESSAGE,
+                message,
                 Replacement.delete(node.expression.end, node.end),
             );
         } else {
             const start = node.getStart(this.sourceFile);
             this.addFailure(start, node.expression.pos, FAIL_MESSAGE, Replacement.delete(start, node.expression.getStart(this.sourceFile)));
         }
+    }
+
+    /** Returns the contextual type if it is a position that does not contribute to control flow analysis. */
+    private getSafeContextualType(node: ts.Expression): ts.Type | undefined {
+        const parent = node.parent!;
+        // If assertion is used as argument, check if the function accepts this expression without an assertion
+        // TODO expand this to TemplateExpression, JsxExpression, etc
+        if (!isCallExpression(parent) && !isNewExpression(parent) || node === parent.expression)
+            return;
+        return this.checker.getContextualType(node);
     }
 
     private typesAreEqual(a: ts.Type, b: ts.Type) {

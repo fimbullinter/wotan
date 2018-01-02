@@ -18,7 +18,7 @@ export function parseArguments(args: string[]): Command {
         case CommandName.Validate:
             return parseValidateCommand(args.slice(1));
         default:
-            return parseLintCommand(<AssertNever<typeof command>>args);
+            return parseLintCommand(<AssertNever<typeof command>>args); // wotan-disable-line no-useless-assertion
     }
 }
 

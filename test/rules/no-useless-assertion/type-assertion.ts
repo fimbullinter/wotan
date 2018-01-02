@@ -56,4 +56,24 @@ function fn<T extends string | undefined>(param: T) {
     param as typeof param;
     param!;
     b as T;
+    b = param;
+    param = b as T;
+
+    function takeStringUndefined(p: string | undefined) {}
+
+    // better not add an error when calling `fn` as the assertion is used to infer T
+    fn(a as string | undefined);
+    fn(b);
+    fn(b as string);
+    fn(param);
+    fn(param as string);
+
+    // it's safe to show errors here
+    takeStringUndefined(a as string | undefined);
+    takeStringUndefined(b);
+    takeStringUndefined(b as T);
+    takeStringUndefined(param);
+    takeStringUndefined(param as T);
+    takeStringUndefined(param as string | undefined);
+    takeStringUndefined(b as string);
 }

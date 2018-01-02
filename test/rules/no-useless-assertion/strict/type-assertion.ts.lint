@@ -1,7 +1,6 @@
 export {};
 
 <1>1;
-~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 <number>1;
 ~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 <number>(1 + 1);
@@ -43,9 +42,7 @@ d.method() as number;
            ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 let e = "foo" as 'foo';
-              ~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 e as typeof e;
-  ~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 let f: Array<[number, string]> = ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
@@ -77,5 +74,28 @@ function fn<T extends string | undefined>(param: T) {
           ~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param!;
     b as T;
-      ~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    b = param;
+    param = b as T;
+
+    function takeStringUndefined(p: string | undefined) {}
+
+    // better not add an error when calling `fn` as the assertion is used to infer T
+    fn(a as string | undefined);
+    fn(b);
+    fn(b as string);
+    fn(param);
+    fn(param as string);
+
+    // it's safe to show errors here
+    takeStringUndefined(a as string | undefined);
+    takeStringUndefined(b);
+    takeStringUndefined(b as T);
+                          ~~~~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts the original type of the expression.]
+    takeStringUndefined(param);
+    takeStringUndefined(param as T);
+                              ~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeStringUndefined(param as string | undefined);
+                              ~~~~~~~~~~~~~~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeStringUndefined(b as string);
+                          ~~~~~~~~~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts the original type of the expression.]
 }
