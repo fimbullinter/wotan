@@ -55,6 +55,8 @@ function foo(j: string) {
 let k = b || c; // this line should not be an error in strict mode
 k; // but this line should
 
+let l: string | null;
+
 foobar;
 
 declare let possiblyNull: string | null;
@@ -70,10 +72,12 @@ function takeStringNumberUndefined(arg: string | number | undefined) {}
 takeAny(possiblyNull);
 takeAny(possiblyUndefined);
 takeAny(possiblyBoth);
+takeAny(l);
 
 takeNull(possiblyNull);
 takeNull(possiblyUndefined);
 takeNull(possiblyBoth);
+takeNull(l);
 
 takeUndefined(possiblyNull);
 takeUndefined(possiblyUndefined);

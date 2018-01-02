@@ -80,6 +80,8 @@ let k = b || c!; // this line should not be an error in strict mode
 k!; // but this line should
  ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
+let l: string | null;
+
 foobar!;
       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
@@ -99,6 +101,8 @@ takeAny(possiblyUndefined!);
                          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 takeAny(possiblyBoth!);
                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeAny(l!);
+         ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 takeNull(possiblyNull!);
                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
@@ -106,6 +110,8 @@ takeNull(possiblyUndefined!);
                           ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 takeNull(possiblyBoth!);
                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNull(l!);
+          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 takeUndefined(possiblyNull!);
                           ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]

@@ -46,17 +46,20 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
-            const flags = getNullableFlags(originalType);
-            if (flags !== 0) { // type is nullable
-                const contextualType = this.getSafeContextualType(node);
-                if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
-                    return;
-                message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
-            } else if (originalType.flags & ts.TypeFlags.TypeParameter) {
+            if (originalType.flags & ts.TypeFlags.TypeParameter) {
                 message = "Non-null assertions don't work with type parameters.";
-            } else if (maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
-                log('Identifier %s could be used before being assigned', node.expression.text);
-                return;
+            } else {
+                const flags = getNullableFlags(originalType);
+                if (flags !== 0) { // type is nullable
+                    const contextualType = this.getSafeContextualType(node);
+                    if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
+                        return;
+                    message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
+                }
+                if ((flags & ts.TypeFlags.Undefined) === 0 && maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
+                    log('Identifier %s could be used before being assigned', node.expression.text);
+                    return;
+                }
             }
         }
         this.addFailure(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
