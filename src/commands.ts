@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { RawConfiguration, Format, MessageHandler, CacheManager, CurrentDirectory, Failure } from './types';
+import { RawConfiguration, Format, MessageHandler, Failure, DirectoryService } from './types';
 import { format, assertNever, unixifyPath } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
@@ -56,7 +56,7 @@ export interface InitCommand {
 export type Command = LintCommand | ShowCommand | ValidateCommand | InitCommand | TestCommand;
 
 export async function runCommand(command: Command, diContainer?: Container): Promise<boolean> {
-    const container = new Container({defaultScope: BindingScopeEnum.Request});
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
     switch (command.command) {
@@ -74,6 +74,8 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
             break;
         case CommandName.Test:
             container.bind(AbstractCommandRunner).to(TestCommandRunner);
+            container.bind(FakeDirectoryService).to(FakeDirectoryService);
+            container.bind(DirectoryService).toService(FakeDirectoryService);
             break;
         default:
             return assertNever(command);
@@ -164,12 +166,20 @@ class ShowCommandRunner extends AbstractCommandRunner {
 }
 
 @injectable()
+class FakeDirectoryService implements DirectoryService {
+    public cwd: string;
+    public getCurrentDirectory() {
+        return this.cwd;
+    }
+}
+
+@injectable()
 class TestCommandRunner extends AbstractCommandRunner {
     constructor(
         private fs: CachedFileSystem,
         private container: Container,
         private logger: MessageHandler,
-        private cacheManager: CacheManager,
+        private directoryService: FakeDirectoryService,
     ) {
         super();
     }
@@ -224,7 +234,6 @@ class TestCommandRunner extends AbstractCommandRunner {
             },
         };
         this.container.bind(RuleTestHost).toConstantValue(host);
-        this.container.rebind(CacheManager).toConstantValue(this.cacheManager); // to reuse the same Cache for all tests
         const globOptions = {
             absolute: true,
             cache: {},
@@ -244,7 +253,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 if (options.exact)
                     baselinesAvailable.push(...glob.sync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
                 this.logger.log(testcase);
-                this.container.rebind(CurrentDirectory).toConstantValue(root);
+                this.directoryService.cwd = root;
                 if (!this.container.get(RuleTester).test(testConfig))
                     return false;
             }

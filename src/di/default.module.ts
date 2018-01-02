@@ -6,9 +6,8 @@ import {
     CacheManager,
     FileSystemReader,
     MessageHandler,
-    CurrentDirectory,
-    HomeDirectory,
     FileSystemWriter,
+    DirectoryService,
 } from '../types';
 import { NodeFormatterLoader } from '../services/formatter-loader-host';
 import { NodeRuleLoader } from '../services/rule-loader-host';
@@ -16,7 +15,7 @@ import { NodeResolver } from '../services/resolver';
 import { DefaultCacheManager } from '../services/cache-manager';
 import { NodeFileSystem } from '../services/file-system';
 import { ConsoleMessageHandler } from '../services/message-handler';
-import * as os from 'os';
+import { NodeDirectoryService } from '../services/directory-service';
 
 export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
     if (!isBound(FormatterLoaderHost))
@@ -33,8 +32,6 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
         bind(FileSystemWriter).to(NodeFileSystem);
     if (!isBound(MessageHandler))
         bind(MessageHandler).to(ConsoleMessageHandler);
-    if (!isBound(CurrentDirectory))
-        bind(CurrentDirectory).toDynamicValue(process.cwd).inSingletonScope();
-    if (!isBound(HomeDirectory))
-        bind(HomeDirectory).toDynamicValue(os.homedir).inSingletonScope();
+    if (!isBound(DirectoryService))
+        bind(DirectoryService).to(NodeDirectoryService);
 });

@@ -1,9 +1,7 @@
-import { injectable, inject, optional } from 'inversify';
+import { injectable } from 'inversify';
 import { CachedFileSystem } from './cached-file-system';
 import {
     Resolver,
-    CurrentDirectory,
-    HomeDirectory,
     Configuration,
     RawConfiguration,
     CacheManager,
@@ -11,6 +9,7 @@ import {
     Cache,
     EffectiveConfiguration,
     GlobalSettings,
+    DirectoryService,
 } from '../types';
 import * as path from 'path';
 import * as json5 from 'json5';
@@ -34,27 +33,22 @@ export class ConfigurationManager {
     constructor(
         private fs: CachedFileSystem,
         private resolver: Resolver,
-        @inject(CurrentDirectory) private cwd: string,
-        @inject(HomeDirectory) @optional() private homeDir: string | undefined,
+        private directories: DirectoryService,
         cache: CacheManager,
     ) {
-        if (!path.isAbsolute(cwd))
-            throw new ConfigurationError('CurrentDirectory must be an absolute path.');
-        if (homeDir !== undefined && !path.isAbsolute(homeDir))
-            throw new ConfigurationError(`HomeDirectory must be an absolute path.`);
         this.rootConfigCache = cache.create(rootConfigCache);
         this.cascadingConfigCache = cache.create(cascadingConfigCache);
     }
 
     public findConfigurationPath(file: string): string | undefined {
-        let result = this.findupConfig(path.resolve(this.cwd, file));
+        let result = this.findupConfig(path.resolve(this.directories.getCurrentDirectory(), file));
         if (result === undefined)
             result = this.findConfigurationInHomeDirectory();
         return result;
     }
 
     public findConfiguration(file: string): Configuration | undefined {
-        let config = this.findupConfig(path.resolve(this.cwd, file));
+        let config = this.findupConfig(path.resolve(this.directories.getCurrentDirectory(), file));
         let cascade = true;
         if (config === undefined) {
             cascade = false;
@@ -64,6 +58,7 @@ export class ConfigurationManager {
     }
 
     public readConfigurationFile(filename: string): RawConfiguration {
+        filename = path.resolve(this.directories.getCurrentDirectory(), filename);
         switch (path.extname(filename)) {
             case '.json':
             case '.json5': {
@@ -102,6 +97,7 @@ export class ConfigurationManager {
                 throw new ConfigurationError(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
             return fileName;
         }
+        basedir = path.resolve(this.directories.getCurrentDirectory(), basedir);
         try {
             return this.resolver.resolve(name, basedir, CONFIG_EXTENSIONS, module.paths.slice(OFFSET_TO_NODE_MODULES + 1));
         } catch (e) {
@@ -110,19 +106,19 @@ export class ConfigurationManager {
     }
 
     public reduceConfigurationForFile(config: Configuration, file: string): EffectiveConfiguration | undefined {
-        return reduceConfigurationForFile(config, file, this.cwd);
+        return reduceConfigurationForFile(config, file, this.directories.getCurrentDirectory());
     }
 
     public getProcessorForFile(config: Configuration, file: string): string | undefined {
-        return getProcessorForFile(config, file, this.cwd);
+        return getProcessorForFile(config, file, this.directories.getCurrentDirectory());
     }
 
     public getSettingsForFile(config: Configuration, file: string): GlobalSettings {
-        return getSettingsForFile(config, file, this.cwd);
+        return getSettingsForFile(config, file, this.directories.getCurrentDirectory());
     }
 
     public loadConfigurationFromPath(file: string, cascade?: boolean): Configuration {
-        return this.loadConfigurationFromPathWorker(path.resolve(this.cwd, file), [file], cascade);
+        return this.loadConfigurationFromPathWorker(path.resolve(this.directories.getCurrentDirectory(), file), [file], cascade);
     }
 
     private loadConfigurationFromPathWorker(file: string, stack: string[], cascade?: boolean): Configuration {
@@ -132,6 +128,7 @@ export class ConfigurationManager {
     }
 
     public parseConfiguration(raw: RawConfiguration, filename: string, cascade?: boolean): Configuration {
+        filename = path.resolve(this.directories.getCurrentDirectory(), filename);
         return this.parseConfigWorker(raw, filename, [filename], cascade);
     }
 
@@ -239,10 +236,11 @@ export class ConfigurationManager {
     }
 
     private findConfigurationInHomeDirectory(): string | undefined {
-        if (this.homeDir === undefined)
+        if (this.directories.getHomeDirectory === undefined)
             return;
-        const result = this.findConfigFileInDirectory(this.homeDir);
-        return result === undefined ? undefined : path.join(this.homeDir, result);
+        const homeDir = this.directories.getHomeDirectory();
+        const result = this.findConfigFileInDirectory(homeDir);
+        return result === undefined ? undefined : path.join(homeDir, result);
     }
 
     private findupConfig(current: string): string | undefined {

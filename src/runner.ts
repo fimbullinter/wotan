@@ -1,5 +1,5 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor, CurrentDirectory } from './types';
+import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService } from './types';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
@@ -8,7 +8,7 @@ import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
 import { ProcessorLoader } from './services/processor-loader';
-import { injectable, inject } from 'inversify';
+import { injectable } from 'inversify';
 import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
@@ -28,7 +28,7 @@ export class Runner {
         private configManager: ConfigurationManager,
         private linter: Linter,
         private processorLoader: ProcessorLoader,
-        @inject(CurrentDirectory) private cwd: string,
+        private directories: DirectoryService,
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
@@ -40,7 +40,13 @@ export class Runner {
     }
 
     private lintProject(options: LintOptions, config: Configuration | undefined) {
-        const processorHost = new ProjectHost(this.cwd, config, this.fs, this.configManager, this.processorLoader);
+        const processorHost = new ProjectHost(
+            this.directories.getCurrentDirectory(),
+            config,
+            this.fs,
+            this.configManager,
+            this.processorLoader,
+        );
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
         const result: LintResult = new Map();
         let dir: string | undefined;
@@ -95,7 +101,7 @@ export class Runner {
         const result: LintResult = new Map();
         let dir: string | undefined;
         let processor: AbstractProcessor | undefined;
-        for (const file of getFiles(options.files, options.exclude, this.cwd)) {
+        for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
             if (options.config === undefined) {
                 const dirname = path.dirname(file);
                 if (dir !== dirname) {
@@ -153,8 +159,10 @@ export class Runner {
     }
 
     private resolveConfig(pathOrName: string): Configuration {
-        const absolute = path.resolve(this.cwd, pathOrName);
-        const resolved = this.fs.isFile(absolute) ? absolute : this.configManager.resolveConfigFile(pathOrName, this.cwd);
+        const absolute = path.resolve(this.directories.getCurrentDirectory(), pathOrName);
+        const resolved = this.fs.isFile(absolute)
+            ? absolute
+            : this.configManager.resolveConfigFile(pathOrName, this.directories.getCurrentDirectory());
         return this.configManager.loadConfigurationFromPath(resolved, false);
     }
 
@@ -164,7 +172,7 @@ export class Runner {
         exclude: string[],
         host: ProjectHost,
     ): {files: string[], program: ts.Program} {
-        const cwd = this.cwd;
+        const cwd = this.directories.getCurrentDirectory();
         if (project !== undefined) {
             project = this.checkConfigDirectory(path.resolve(cwd, project));
         } else {

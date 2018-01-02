@@ -344,8 +344,11 @@ export interface Resolver {
 }
 export abstract class Resolver {}
 
-export const CurrentDirectory = Symbol('CurrentDirectory');
-export const HomeDirectory = Symbol('HomeDirectory');
+export interface DirectoryService {
+    getCurrentDirectory(): string;
+    getHomeDirectory?(): string;
+}
+export abstract class DirectoryService {}
 
 export interface WrappedAst extends NodeWrap {} // tslint:disable-line:no-empty-interface
 export abstract class WrappedAst {}
