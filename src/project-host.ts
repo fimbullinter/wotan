@@ -100,7 +100,7 @@ export class ProjectHost implements ts.CompilerHost {
         const dirname = path.dirname(file);
         if (this.directoryEntries.has(dirname))
             return;
-        this.processDirectory(dirname);
+        this.directoryEntries.set(dirname, this.processDirectory(dirname));
         return this.getFileSystemFile(file);
     }
 
