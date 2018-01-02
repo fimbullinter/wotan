@@ -1,3 +1,2 @@
-root: true
 rules:
   trailing-newline: error

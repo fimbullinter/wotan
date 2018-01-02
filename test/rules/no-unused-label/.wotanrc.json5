@@ -1,5 +1,4 @@
 {
-    root: true,
     rules: {
         "no-unused-label": 'error'
     }

@@ -165,7 +165,6 @@ export interface RawConfiguration {
     rules?: {[key: string]: RawConfiguration.RuleConfigValue};
     settings?: {[key: string]: any};
     extends?: string | string[];
-    root?: boolean;
     overrides?: RawConfiguration.Override[];
     rulesDirectories?: {[prefix: string]: string};
     exclude?: string | string[];

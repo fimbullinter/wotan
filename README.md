@@ -34,8 +34,14 @@ This one tries to avoid design decisions of other linters that turned out to be 
 
 * To extend a plugin or shareable config, use `extends: plugin-name`. The name will be resolved according to node's module resolution algorithm relative to the config file.
 * To use rules maintained inside your project, use `rulesDirectory: {"my-prefix": "./path/to/rules"}` and configure them as `my-prefix/rule-one: "error"`. The rules directory is a path relative to the config file.
-* Configuration cascading: starting from the directory of the file to lint all configuration files are picked up until one of them contains `root: true` or the root directory is reached. The nearer config overrides settings from configs further up the directory tree.
 * Overrides: You can override the main cofiguration by specifying one or more overrides. If the filename matches the glob pattern of the override, all settings provided by that override are applied. Overrides are processed in order, later overrides override settings from preceding overrides.
+  * patterns match relative to the configuration file they are specified in
+  * patterns without a slash are only matched against the basename of each file
+  * to limit a match to the current directory, prefix the pattern with `./`
+  * a negated pattern resets any prior matches
+* `linterOptions.exclude` -> `exclude`
+  * excludes are not overridden when extending a configuration
+  * pattern matching follows the same rules as overrides (see above)
 * JSON5 support for config files
 * Global settings that rules can pick up
 * Processors, even supports `--project`

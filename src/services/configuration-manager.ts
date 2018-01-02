@@ -23,21 +23,18 @@ export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc.' + ext
 
 // TODO refactor to use a ConfigurationReader/Finder instead of direct IO
 
-const cascadingConfigCache = new CacheIdentifier<string, Configuration>('cascading configuration');
-const rootConfigCache = new CacheIdentifier<string, Configuration>('root configuration');
+const configCache = new CacheIdentifier<string, Configuration>('configuration');
 
 @injectable()
 export class ConfigurationManager {
-    private rootConfigCache: Cache<string, Configuration>;
-    private cascadingConfigCache: Cache<string, Configuration>;
+    private configCache: Cache<string, Configuration>;
     constructor(
         private fs: CachedFileSystem,
         private resolver: Resolver,
         private directories: DirectoryService,
         cache: CacheManager,
     ) {
-        this.rootConfigCache = cache.create(rootConfigCache);
-        this.cascadingConfigCache = cache.create(cascadingConfigCache);
+        this.configCache = cache.create(configCache);
     }
 
     public findConfigurationPath(file: string): string | undefined {
@@ -48,13 +45,8 @@ export class ConfigurationManager {
     }
 
     public findConfiguration(file: string): Configuration | undefined {
-        let config = this.findupConfig(path.resolve(this.directories.getCurrentDirectory(), file));
-        let cascade = true;
-        if (config === undefined) {
-            cascade = false;
-            config = this.findConfigurationInHomeDirectory();
-        }
-        return config === undefined ? undefined : this.loadConfigurationFromPath(config, cascade);
+        const config = this.findConfigurationPath(file);
+        return config === undefined ? undefined : this.loadConfigurationFromPath(config);
     }
 
     public readConfigurationFile(filename: string): RawConfiguration {
@@ -117,34 +109,29 @@ export class ConfigurationManager {
         return getSettingsForFile(config, file, this.directories.getCurrentDirectory());
     }
 
-    public loadConfigurationFromPath(file: string, cascade?: boolean): Configuration {
-        return this.loadConfigurationFromPathWorker(path.resolve(this.directories.getCurrentDirectory(), file), [file], cascade);
+    public loadConfigurationFromPath(file: string): Configuration {
+        return this.loadConfigurationFromPathWorker(path.resolve(this.directories.getCurrentDirectory(), file), [file]);
     }
 
-    private loadConfigurationFromPathWorker(file: string, stack: string[], cascade?: boolean): Configuration {
-        return resolveCachedResult(cascade ? this.cascadingConfigCache : this.rootConfigCache, file, () => {
-            return this.parseConfigWorker(this.readConfigurationFile(file), file, stack, cascade);
+    private loadConfigurationFromPathWorker(file: string, stack: string[]): Configuration {
+        return resolveCachedResult(this.configCache, file, () => {
+            return this.parseConfigWorker(this.readConfigurationFile(file), file, stack);
         });
     }
 
-    public parseConfiguration(raw: RawConfiguration, filename: string, cascade?: boolean): Configuration {
+    public parseConfiguration(raw: RawConfiguration, filename: string): Configuration {
         filename = path.resolve(this.directories.getCurrentDirectory(), filename);
-        return this.parseConfigWorker(raw, filename, [filename], cascade);
+        return this.parseConfigWorker(raw, filename, [filename]);
     }
 
-    private parseConfigWorker(raw: RawConfiguration, filename: string, stack: string[], cascade?: boolean): Configuration {
+    private parseConfigWorker(raw: RawConfiguration, filename: string, stack: string[]): Configuration {
         const dirname = path.dirname(filename);
-        let base = arrayify(raw.extends).map((name) => {
+        const base = arrayify(raw.extends).map((name) => {
             name = this.resolveConfigFile(name, dirname);
             if (stack.includes(name))
                 throw new ConfigurationError(`Circular configuration dependency ${stack.join(' => ')} => ${name}`);
             return this.loadConfigurationFromPathWorker(name, [...stack, name]);
         });
-        if (cascade && !raw.root) {
-            const next = this.findupConfig(dirname);
-            if (next !== undefined)
-                base = [this.loadConfigurationFromPathWorker(next, [next], true), ...base];
-        }
         return {
             filename,
             extends: base,

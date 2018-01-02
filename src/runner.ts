@@ -163,7 +163,7 @@ export class Runner {
         const resolved = this.fs.isFile(absolute)
             ? absolute
             : this.configManager.resolveConfigFile(pathOrName, this.directories.getCurrentDirectory());
-        return this.configManager.loadConfigurationFromPath(resolved, false);
+        return this.configManager.loadConfigurationFromPath(resolved);
     }
 
     private getFilesAndProgram(

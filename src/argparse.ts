@@ -145,7 +145,6 @@ function parseInitCommand(args: string[]): InitCommand {
         command: CommandName.Init,
         directories: [],
         format: undefined,
-        root: undefined,
     };
 
     outer: for (let i = 0; i < args.length; ++i) {
@@ -154,10 +153,6 @@ function parseInitCommand(args: string[]): InitCommand {
             case '-f':
             case '--format':
                 result.format = expectFormatArgument(args, ++i, arg);
-                break;
-            case '-r':
-            case '--root':
-                ({index: i, argument: result.root} = parseOptionalBoolean(args, i));
                 break;
             case '--':
                 result.directories.push(...args.slice(i + 1));

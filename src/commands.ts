@@ -50,7 +50,6 @@ export interface InitCommand {
     command: CommandName.Init;
     directories: string[];
     format: Format | undefined;
-    root: boolean | undefined;
 }
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | InitCommand | TestCommand;
@@ -134,7 +133,7 @@ class InitCommandRunner extends AbstractCommandRunner {
                 this.logger.warn(`'${fullPath}' already exists.`);
                 success = false;
             } else {
-                this.fs.writeFile(fullPath, format<RawConfiguration>({extends: 'wotan:recommended', root: options.root}, options.format));
+                this.fs.writeFile(fullPath, format<RawConfiguration>({extends: 'wotan:recommended'}, options.format));
             }
         }
         return success;
