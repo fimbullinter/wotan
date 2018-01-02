@@ -25,17 +25,23 @@ This one tries to avoid design decisions of other linters that turned out to be 
 - [x] Lazy loading of rules to reduct startup time.
   - TSLint already does that
   - ESLint expects plugins to provide the rules as already loaded objects. That causes a lot of overhead if you only use a few rules of a big package.
-- [ ] Configurable caching of intermediate computation results.
-  - Configuration per directory, scope and usage analysis, flattened AST structures, ...
-  - Caching everything globally prevents tools like editor plugins to reload configuration when it might have changed.
-- [ ] Support for processors from the beginning. Enabling linting of *.vue files and many more.
+- [x] Caching of file system access and configuration. As the Cache is a DI service, API users can clear the cache when needed.
+- [x] Support for processors from the beginning. Enabling linting of *.vue files and many more.
+- [x] Aliases for rules with configuration. Can be used to treat rules like ESLint's `no-resticted-syntax` as distinct named rules for each config option.
+- [x] The whole API is powered by a DI container. That makes it easy to inject a different serivce. Rules have access to a limited set of DI bindings.
 
 ## Differences to TSLint
 
-* To extend a plugin, use `extends: plugin-name`. The name will be resolved according to node's module resolution algorithm relative to the config file.
+* To extend a plugin or shareable config, use `extends: plugin-name`. The name will be resolved according to node's module resolution algorithm relative to the config file.
 * To use rules maintained inside your project, use `rulesDirectory: {"my-prefix": "./path/to/rules"}` and configure them as `my-prefix/rule-one: "error"`. The rules directory is a path relative to the config file.
 * Configuration cascading: starting from the directory of the file to lint all configuration files are picked up until one of them contains `root: true` or the root directory is reached. The nearer config overrides settings from configs further up the directory tree.
 * Overrides: You can override the main cofiguration by specifying one or more overrides. If the filename matches the glob pattern of the override, all settings provided by that override are applied. Overrides are processed in order, later overrides override settings from preceding overrides.
 * JSON5 support for config files
 * Global settings that rules can pick up
-* Processors (WIP)
+* Processors, even supports `--project`
+* Aliases, see above
+* Fixing excludes overlapping replacements and runs a configurable number of iterations per file
+* Fixing with `--project` does not create the whole program from scratch, which makes it blazingly fast.
+* Testing
+  * Tests are configured in JSON files that can configure everything you can specify though the CLI
+  * Test files don't contain error markup. That avoids syntax errors and makes them easier to maintain. Lint results and fixed content are stored in separate baseline files.
