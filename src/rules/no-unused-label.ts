@@ -1,7 +1,6 @@
 import * as ts from 'typescript';
 import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
 import { AbstractRule, Replacement, RuleContext, WrappedAst } from '../types';
-import bind from 'bind-decorator';
 import { injectable } from 'inversify';
 
 interface Label {
@@ -23,10 +22,20 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        return this.ast.children.forEach(this.visitNode, this);
+        return this.iterate(this.ast.next!, undefined);
     }
 
-    @bind
+    private iterate(wrap: NodeWrap, end: NodeWrap | undefined) {
+        do { // iterate as linked list until we find the first labeled statement
+            if (wrap.node.kind === ts.SyntaxKind.LabeledStatement) {
+                this.visitNode(wrap); // to handle this label we need to recursively call visitNode
+                wrap = wrap.skip!; // continue right after the labeled statement
+            } else {
+                wrap = wrap.next!;
+            }
+        } while (wrap !== end);
+    }
+
     private visitNode(wrap: NodeWrap): void {
         const {node} = wrap;
         if (isLabeledStatement(node)) {
@@ -50,10 +59,11 @@ export class Rule extends AbstractRule {
             }
             return;
         }
-        if (this.labels.length !== 0 && isFunctionScopeBoundary(node)) {
+        if (isFunctionScopeBoundary(node)) {
             const saved = this.labels;
             this.labels = [];
-            wrap.children.forEach(this.visitNode, this);
+            // can iterate as linked list again since there are no active labels to look for
+            this.iterate(wrap.next!, wrap.skip!);
             this.labels = saved;
             return;
         }
