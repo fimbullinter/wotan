@@ -47,8 +47,9 @@
     "@types/json5": "0.0.29",
     "@types/minimatch": "^3.0.1",
     "@types/mkdirp": "^0.5.2",
-    "@types/node": "^8.0.53",
+    "@types/node": "^8.5.5",
     "@types/resolve": "0.0.4",
+    "@types/to-absolute-glob": "^2.0.0",
     "ava": "^0.24.0",
     "coveralls": "^3.0.0",
     "dependency-cruiser": "^2.10.1",
@@ -78,6 +79,6 @@
     "tsutils": "^2.15.0"
   },
   "peerDependencies": {
-    "typescript": "^2.4.1"
+    "typescript": "^2.4.1 || >= 2.7.0-dev"
   }
 }
