@@ -38,13 +38,25 @@
       "severity": "error",
       "from": {
         "path": "^(src|bin)",
-        "pathNot": "^src/services"
+        "pathNot": "^src/services/default"
       },
       "to": {
         "dependencyTypes": [
           "core"
         ],
         "pathNot": "^path$"
+      }
+    },
+    {
+      "name": "no-service-impl",
+      "comment": "Don't access the concretion of a service directly.",
+      "severity": "error",
+      "from": {
+        "path": "^src",
+        "pathNot": "^src/di/default\\.module\\.(js|ts)$"
+      },
+      "to": {
+        "path": "^src/services/default"
       }
     },
     {

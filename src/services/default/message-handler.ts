@@ -1,5 +1,5 @@
-import { MessageHandler } from '../types';
-import { ConfigurationError } from '../error';
+import { MessageHandler } from '../../types';
+import { ConfigurationError } from '../../error';
 import { injectable } from 'inversify';
 
 @injectable()

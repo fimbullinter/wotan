@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
-import { FormatterLoaderHost, FormatterConstructor, Resolver } from '../types';
-import { OFFSET_TO_NODE_MODULES } from '../utils';
+import { FormatterLoaderHost, FormatterConstructor, Resolver } from '../../types';
+import { OFFSET_TO_NODE_MODULES } from '../../utils';
 
 @injectable()
 export class NodeFormatterLoader implements FormatterLoaderHost {
@@ -8,7 +8,7 @@ export class NodeFormatterLoader implements FormatterLoaderHost {
 
     public loadCoreFormatter(name: string): FormatterConstructor | undefined {
         try {
-            return require(`../formatters/${name}.js`).Formatter;
+            return require(`../../formatters/${name}.js`).Formatter;
         } catch (e) {
             if (e != undefined && e.code === 'MODULE_NOT_FOUND')
                 return;

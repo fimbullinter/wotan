@@ -1,11 +1,11 @@
-import { RuleLoaderHost, RuleConstructor } from '../types';
+import { RuleLoaderHost, RuleConstructor } from '../../types';
 import * as debug from 'debug';
 import * as path from 'path';
 import { injectable } from 'inversify';
 
 const log = debug('wotan:ruleLoaderHost');
 
-const CORE_RULES_DIRECTORY = path.join(path.dirname(__dirname), 'rules');
+const CORE_RULES_DIRECTORY = path.join(__dirname, '../../rules');
 
 @injectable()
 export class NodeRuleLoader implements RuleLoaderHost {

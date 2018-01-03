@@ -9,13 +9,13 @@ import {
     FileSystemWriter,
     DirectoryService,
 } from '../types';
-import { NodeFormatterLoader } from '../services/formatter-loader-host';
-import { NodeRuleLoader } from '../services/rule-loader-host';
-import { NodeResolver } from '../services/resolver';
-import { DefaultCacheManager } from '../services/cache-manager';
-import { NodeFileSystem } from '../services/file-system';
-import { ConsoleMessageHandler } from '../services/message-handler';
-import { NodeDirectoryService } from '../services/directory-service';
+import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
+import { NodeRuleLoader } from '../services/default/rule-loader-host';
+import { NodeResolver } from '../services/default/resolver';
+import { DefaultCacheManager } from '../services/default/cache-manager';
+import { NodeFileSystem } from '../services/default/file-system';
+import { ConsoleMessageHandler } from '../services/default/message-handler';
+import { NodeDirectoryService } from '../services/default/directory-service';
 
 export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
     if (!isBound(FormatterLoaderHost))

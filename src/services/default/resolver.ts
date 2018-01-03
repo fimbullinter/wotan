@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
-import { Resolver } from '../types';
-import { CachedFileSystem } from './cached-file-system';
+import { Resolver } from '../../types';
+import { CachedFileSystem } from '../cached-file-system';
 import * as resolve from 'resolve';
 
 @injectable()

@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { DirectoryService } from '../types';
+import { DirectoryService } from '../../types';
 import * as os from 'os';
 
 @injectable()

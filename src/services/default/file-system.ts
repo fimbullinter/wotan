@@ -1,4 +1,4 @@
-import { FileSystemReader, FileSystemWriter } from '../types';
+import { FileSystemReader, FileSystemWriter } from '../../types';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 

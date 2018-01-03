@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { CacheManager, CacheIdentifier, Cache } from '../types';
+import { CacheManager, CacheIdentifier, Cache } from '../../types';
 
 class WeakCache<K extends object, V> implements Cache<K, V> {
     private store = new WeakMap<K, V>();
