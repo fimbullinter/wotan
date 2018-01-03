@@ -20,6 +20,9 @@ jobs:
           name: Compile
           command: npm run compile
       - run:
+          name: Dependency check
+          command: npm run check-dependencies
+      - run:
           name: Lint
           command: npm run lint
       - run:
