@@ -1,4 +1,5 @@
 {
   "baselines": "./loose",
-  "project": "tsconfig-loose.json"
+  "project": "tsconfig-loose.json",
+  "exclude": ["global2.ts"]
 }

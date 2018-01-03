@@ -3,3 +3,7 @@ foo!;
    ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 <string>foo;
 ~~~~~~~~     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+NaN!;
+   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+something!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]

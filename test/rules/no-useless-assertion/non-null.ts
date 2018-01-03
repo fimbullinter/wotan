@@ -4,6 +4,9 @@ export {};
 (1 + 2)!;
 null!;
 undefined!;
+NaN!;
+Infinity!;
+something!;
 
 const a = 1;
 a!;
@@ -57,6 +60,9 @@ k!; // but this line should
 
 let l: string | null;
 
+let m: any;
+m!;
+
 foobar!;
 
 declare let possiblyNull: string | null;
@@ -102,4 +108,6 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     fn(two!, one!);
     foo(three!);
     takeUndefined(one!);
+    let uninitialized: T;
+    uninitialized!;
 }

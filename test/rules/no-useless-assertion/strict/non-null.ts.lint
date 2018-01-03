@@ -6,6 +6,12 @@ export {};
        ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 null!;
 undefined!;
+NaN!;
+   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+Infinity!;
+        ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+something!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 const a = 1;
 a!;
@@ -68,6 +74,10 @@ k!; // but this line should
  ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 let l: string | null;
+
+let m: any;
+m!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 foobar!;
       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
@@ -133,4 +143,6 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
              ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
     takeUndefined(one!);
                      ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    let uninitialized: T;
+    uninitialized!;
 }

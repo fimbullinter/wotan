@@ -46,20 +46,20 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
-            if (originalType.flags & ts.TypeFlags.TypeParameter) {
-                message = "Non-null assertions don't work with type parameters.";
-            } else {
-                const flags = getNullableFlags(originalType);
-                if (flags !== 0) { // type is nullable
-                    const contextualType = this.getSafeContextualType(node);
-                    if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
-                        return;
-                    message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
-                }
-                if ((flags & ts.TypeFlags.Undefined) === 0 && maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
-                    log('Identifier %s could be used before being assigned', node.expression.text);
+            const flags = getNullableFlags(originalType);
+            if (flags !== 0) { // type is nullable
+                const contextualType = this.getSafeContextualType(node);
+                if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
-                }
+                message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
+            } else if (originalType.flags & ts.TypeFlags.TypeParameter) {
+                message = "Non-null assertions don't work with type parameters.";
+            }
+            if ((originalType.flags & ts.TypeFlags.Any) === 0 &&
+                (flags & ts.TypeFlags.Undefined) === 0 &&
+                maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
+                log('Identifier %s could be used before being assigned', node.expression.text);
+                return;
             }
         }
         this.addFailure(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
@@ -143,9 +143,7 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeCheck
     if (node.kind !== ts.SyntaxKind.Identifier)
         return false;
     const symbol = checker.getSymbolAtLocation(node);
-    if (symbol === undefined || symbol.declarations === undefined)
-        return false;
-    const declaration = symbol.declarations[0];
+    const declaration = symbol!.declarations![0];
     if (!isVariableDeclaration(declaration) ||
         declaration.parent!.kind !== ts.SyntaxKind.VariableDeclarationList ||
         declaration.initializer !== undefined ||
@@ -155,13 +153,13 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeCheck
         return false;
     if (checker.getTypeAtLocation(node) !== checker.getTypeFromTypeNode(declaration.type))
         return false;
-    return findupFunction(node.parent!.parent) === findupFunction(declaration.parent!.parent!.parent);
+    return findupFunction(node.parent!.parent!.parent!) === findupFunction(declaration.parent!.parent!.parent!);
 }
 
 /** Finds the nearest parent that has a function scope. */
-function findupFunction(node: ts.Node | undefined) {
-    while (node !== undefined && !isFunctionScopeBoundary(node))
-        node = node.parent;
+function findupFunction(node: ts.Node) {
+    while (!isFunctionScopeBoundary(node) && node.kind !== ts.SyntaxKind.SourceFile)
+        node = node.parent!;
     return node;
 }
 
