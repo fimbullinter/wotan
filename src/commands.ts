@@ -187,6 +187,7 @@ class TestCommandRunner extends AbstractCommandRunner {
         const basedir = process.cwd();
         let baselineDir: string;
         let root: string;
+        let baselinesSeen: string[];
         let success = true;
         const host: RuleTestHost = {
             checkResult: (file, kind, summary) => {
@@ -211,8 +212,10 @@ class TestCommandRunner extends AbstractCommandRunner {
                         this.fs.remove(baselineFile);
                         return end(true, 'REMOVED');
                     }
+                    baselinesSeen.push(baselineFile);
                     return end(false, 'EXISTS');
                 }
+                baselinesSeen.push(baselineFile);
                 const expected = this.fs.readFile(baselineFile);
                 if (expected === undefined) {
                     if (!options.updateBaselines)
@@ -249,8 +252,23 @@ class TestCommandRunner extends AbstractCommandRunner {
                 baselineDir = buildBaselineDirectoryName(basedir, 'baselines', testcase);
                 this.logger.log(testcase);
                 this.directoryService.cwd = root;
+                baselinesSeen = [];
                 if (!this.container.get(RuleTester).test(testConfig))
                     return false;
+                if (options.exact) {
+                    const remainingGlobOptions = {...globOptions, cwd: baselineDir, ignore: baselinesSeen};
+                    for (const unchecked of glob.sync('**', remainingGlobOptions)) {
+                        if (options.updateBaselines) {
+                            this.fs.remove(unchecked);
+                            this.logger.log(`  ${chalk.grey.dim(unchecked)} ${chalk.green('REMOVED')}`);
+                        } else {
+                            this.logger.log(`  ${chalk.grey.dim(unchecked)} ${chalk.red('UNCHECKED')}`);
+                            if (options.bail)
+                                return false;
+                            success = false;
+                        }
+                    }
+                }
             }
         }
         return success;
