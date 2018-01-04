@@ -1,1 +1,3 @@
-** text eol=lf
+**                           text eol=lf
+test/rules/**/*crlf*        -text
+baselines/rules/**/*crlf*   -text
