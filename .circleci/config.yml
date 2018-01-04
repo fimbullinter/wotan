@@ -18,16 +18,50 @@ jobs:
             - node_modules
       - run:
           name: Compile
-          command: npm run compile
+          command: yarn compile
       - run:
           name: Dependency check
-          command: npm run check-dependencies
+          command: yarn check-dependencies
       - run:
           name: Lint
-          command: npm run lint
+          command: yarn lint
+      - persist_to_workspace:
+          root: '.'
+          paths:
+            - src
+            - test
+            - yarn.lock
+  test:
+    parallelism: 3
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '.'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install correct version of TypeScript for testing
+          command: |
+            case $CIRCLE_NODE_INDEX in
+              0)
+                yarn add typescript@2.4;;
+              2)
+                yarn add typescript@next;;
+
       - run:
           name: Test with Coverage
-          command: npm run coverage
+          command: yarn coverage
       - run:
           name: Report code coverage
-          command: 'npm run report-coverage'
+          command: 'yarn report-coverage'
+
+workflows:
+  version: 2
+  verify:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
