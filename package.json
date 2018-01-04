@@ -49,6 +49,7 @@
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^8.5.5",
     "@types/resolve": "0.0.4",
+    "@types/semver": "^5.4.0",
     "@types/to-absolute-glob": "^2.0.0",
     "ava": "^0.24.0",
     "coveralls": "^3.0.0",
@@ -58,7 +59,7 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.8.0",
     "tslint-consistent-codestyle": "^1.10.1",
-    "typescript": "^2.6.2"
+    "typescript": "2.6.2"
   },
   "dependencies": {
     "bind-decorator": "^1.0.11",
@@ -74,6 +75,7 @@
     "minimatch": "^3.0.4",
     "reflect-metadata": "^0.1.10",
     "resolve": "^1.5.0",
+    "semver": "^5.4.1",
     "to-absolute-glob": "^2.0.1",
     "tslib": "^1.8.1",
     "tsutils": "^2.15.0"

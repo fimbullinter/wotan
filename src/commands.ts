@@ -13,6 +13,8 @@ import { DEFAULT_DI_MODULE } from './di/default.module';
 import { ConfigurationManager } from './services/configuration-manager';
 import { CachedFileSystem } from './services/cached-file-system';
 import * as glob from 'glob';
+import { SemVer, satisfies } from 'semver';
+import * as ts from 'typescript';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -184,6 +186,7 @@ class TestCommandRunner extends AbstractCommandRunner {
     }
 
     public run(options: TestCommand) {
+        const currentTypescriptVersion = getNormalizedTypescriptVersion();
         const basedir = process.cwd();
         let baselineDir: string;
         let root: string;
@@ -247,7 +250,11 @@ class TestCommandRunner extends AbstractCommandRunner {
                 interface TestOptions extends Partial<LintOptions> {
                     typescriptVersion?: string;
                 }
-                const {typescriptVersion: _, ...testConfig} = <TestOptions>require(testcase);
+                const {typescriptVersion, ...testConfig} = <TestOptions>require(testcase);
+                if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {
+                    this.logger.log(`${testcase} ${chalk.yellow(`SKIPPED, requires TypeScript ${typescriptVersion}`)}`);
+                    continue;
+                }
                 root = path.dirname(testcase);
                 baselineDir = buildBaselineDirectoryName(basedir, 'baselines', testcase);
                 this.logger.log(testcase);
@@ -292,4 +299,10 @@ function getTestName(basename: string): string {
     if (ext === '')
         return 'default';
     return basename.slice(0, -ext.length);
+}
+
+/** Removes everything related to prereleases and just returns MAJOR.MINOR.PATCH, thus treating prereleases like the stable release. */
+function getNormalizedTypescriptVersion() {
+    const v = new SemVer(ts.version);
+    return new SemVer(`${v.major}.${v.minor}.${v.patch}`);
 }
