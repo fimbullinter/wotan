@@ -1,4 +1,3 @@
 {
-  "project": ".",
-  "baselines": "./project-baselines"
+  "project": "."
 }

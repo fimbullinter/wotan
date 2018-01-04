@@ -3,7 +3,7 @@ import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format, MessageHandler, Failure, DirectoryService } from './types';
-import { format, assertNever, unixifyPath } from './utils';
+import { format, assertNever } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
 import { FormatterLoader } from './services/formatter-loader';
@@ -184,18 +184,17 @@ class TestCommandRunner extends AbstractCommandRunner {
     }
 
     public run(options: TestCommand) {
+        const basedir = process.cwd();
         let baselineDir: string;
         let root: string;
         let success = true;
-        const baselinesSeen: string[] = [];
-        const baselinesAvailable = [];
         const host: RuleTestHost = {
             checkResult: (file, kind, summary) => {
                 const relative = path.relative(root, file);
                 if (relative.startsWith('..' + path.sep))
                     throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
                 const actual = createBaseline(summary);
-                const baselineFile = `${path.resolve(baselineDir, relative)}.${kind}`;
+                const baselineFile = `${path.resolve(baselineDir, relative)}${kind === BaselineKind.Lint ? '.lint' : ''}`;
                 const end = (pass: boolean, text: string, diff?: string) => {
                     this.logger.log(`  ${chalk.grey.dim(baselineFile)} ${chalk[pass ? 'green' : 'red'](text)}`);
                     if (pass)
@@ -214,7 +213,6 @@ class TestCommandRunner extends AbstractCommandRunner {
                     }
                     return end(false, 'EXISTS');
                 }
-                baselinesSeen.push(baselineFile);
                 const expected = this.fs.readFile(baselineFile);
                 if (expected === undefined) {
                     if (!options.updateBaselines)
@@ -243,36 +241,27 @@ class TestCommandRunner extends AbstractCommandRunner {
         };
         for (const pattern of options.files) {
             for (const testcase of glob.sync(pattern, globOptions)) {
-                interface TestOptions extends LintOptions {
-                    baselines: string;
+                interface TestOptions extends Partial<LintOptions> {
+                    typescriptVersion?: string;
                 }
-                const {baselines, ...testConfig} = <Partial<TestOptions>>require(testcase);
+                const {typescriptVersion: _, ...testConfig} = <TestOptions>require(testcase);
                 root = path.dirname(testcase);
-                baselineDir = baselines === undefined ? root : path.resolve(root, baselines);
-                if (options.exact)
-                    baselinesAvailable.push(...glob.sync(`${unixifyPath(baselineDir)}/**/*.{lint,fix}`, globOptions));
+                baselineDir = path.join(basedir, 'baselines', path.relative(basedir, root), getTestName(path.basename(testcase)));
                 this.logger.log(testcase);
                 this.directoryService.cwd = root;
                 if (!this.container.get(RuleTester).test(testConfig))
                     return false;
             }
         }
-        if (options.exact) {
-            const totalBaselines = new Set(baselinesAvailable);
-
-            for (const seen of baselinesSeen)
-                totalBaselines.delete(seen);
-
-            for (const baseline of totalBaselines) {
-                if (options.updateBaselines) {
-                    this.fs.remove(baseline);
-                    this.logger.log(`  ${chalk.grey.dim(baseline)} ${chalk.green('REMOVED')}`);
-                } else {
-                    this.logger.log(`  ${chalk.grey.dim(baseline)} ${chalk.red('NOT CHECKED')}`);
-                    success = false;
-                }
-            }
-        }
         return success;
     }
+}
+
+function getTestName(basename: string): string {
+    let ext = path.extname(basename);
+    basename = basename.slice(0, -ext.length);
+    ext = path.extname(basename);
+    if (ext === '')
+        return 'default';
+    return basename.slice(0, -ext.length);
 }

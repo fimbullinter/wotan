@@ -1,5 +1,4 @@
 {
   "files": ["wrong-location.ts"],
-  "fix": 1,
-  "baselines": "fix-one"
+  "fix": 1
 }

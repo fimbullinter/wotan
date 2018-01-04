@@ -1,5 +1,4 @@
 {
-  "baselines": "./strict",
   "project": "tsconfig.json",
   "exclude": ["global2.ts"]
 }

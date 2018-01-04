@@ -152,9 +152,9 @@
     "naming-convention": [
       true,
       {"type": "default", "format": "camelCase", "leadingUnderscore": "forbid", "trailingUnderscore": "forbid"},
+      {"type": "default", "modifiers": "unused", "leadingUnderscore": "allow"},
       {"type": "variable", "modifiers": ["global", "const"], "format": ["camelCase", "UPPER_CASE"]},
       {"type": "variable", "modifiers": ["export", "const"], "format": ["camelCase", "UPPER_CASE", "PascalCase"]},
-      {"type": "parameter", "modifiers": "unused", "leadingUnderscore": "allow"},
       {"type": "property", "modifiers": ["public", "static", "const"], "format": ["camelCase", "UPPER_CASE"]},
       {"type": "type", "format": "PascalCase"},
       {"type": "genericTypeParameter", "regex": "^[A-Z]$"},
