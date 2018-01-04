@@ -246,7 +246,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 }
                 const {typescriptVersion: _, ...testConfig} = <TestOptions>require(testcase);
                 root = path.dirname(testcase);
-                baselineDir = path.join(basedir, 'baselines', path.relative(basedir, root), getTestName(path.basename(testcase)));
+                baselineDir = buildBaselineDirectoryName(basedir, 'baselines', testcase);
                 this.logger.log(testcase);
                 this.directoryService.cwd = root;
                 if (!this.container.get(RuleTester).test(testConfig))
@@ -255,6 +255,16 @@ class TestCommandRunner extends AbstractCommandRunner {
         }
         return success;
     }
+}
+
+function buildBaselineDirectoryName(basedir: string, baselineDir: string, testcase: string): string {
+    const dirname = path.dirname(testcase);
+    let relative = path.relative(basedir, dirname);
+    const separator = relative.indexOf(path.sep);
+    const firstPart = relative.substr(0, separator);
+    if (/^(__)?tests?(__)?$/.test(firstPart))
+        relative = relative.substr(separator + 1);
+    return path.resolve(basedir, baselineDir, relative, getTestName(path.basename(testcase)));
 }
 
 function getTestName(basename: string): string {
