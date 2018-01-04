@@ -66,5 +66,6 @@ typings/
 !/test/rules/**
 !/test/integration/**
 !/test/fixtures/**
+!/baselines/**
 /coverage
 /.nyc_output
