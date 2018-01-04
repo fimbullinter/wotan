@@ -25,18 +25,13 @@ jobs:
       - run:
           name: Lint
           command: yarn lint
-      - run:
-          name: Save environment for later reuse
-          command: echo "export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM" > .saved_env
       - persist_to_workspace:
           root: '.'
           paths:
             - src
             - test
             - yarn.lock
-            - .saved_env
   test:
-    parallelism: 3
     docker:
       - image: circleci/node:latest
     steps:
@@ -46,29 +41,41 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
-          name: Install correct version of TypeScript for testing
-          command: |
-            case $CIRCLE_NODE_INDEX in
-              0)
-                yarn add typescript@2.4;;
-              2)
-                yarn add typescript@next;;
-            esac
-
-      - run:
           name: Test with Coverage
           command: yarn coverage
       - run:
-          name: Restore environment
-          command: cat .saved_env >> $BASH_ENV
-      - run:
           name: Report code coverage
-          command: 'yarn report-coverage'
-          environment:
-            COVERALLS_PARALLEL: true
-      - deploy:
-          command: |
-            curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_JOB_ID&payload[status]=done"
+          command: yarn report-coverage
+  test@2.4:
+    docker:
+      - image: circleci/node:6
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '.'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install TypeScript@2.4
+          command: yarn add typescript@2.4
+      - run:
+          name: Test
+          command: yarn test
+  test@next:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - checkout
+      - attach_workspace:
+          at: '.'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install TypeScript@next
+          command: yarn add typescript@next
+      - run:
+          name: Test
+          command: yarn test
 
 workflows:
   version: 2
@@ -76,5 +83,11 @@ workflows:
     jobs:
       - build
       - test:
+          requires:
+            - build
+      - test@2.4:
+          requires:
+            - build
+      - test@next:
           requires:
             - build
