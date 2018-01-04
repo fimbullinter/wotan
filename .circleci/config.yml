@@ -25,12 +25,16 @@ jobs:
       - run:
           name: Lint
           command: yarn lint
+      - run:
+          name: Save environment for later reuse
+          command: echo "export COVERALLS_SERVICE_JOB_ID=$CIRCLE_BUILD_NUM" > .saved_env
       - persist_to_workspace:
           root: '.'
           paths:
             - src
             - test
             - yarn.lock
+            - .saved_env
   test:
     parallelism: 3
     docker:
@@ -55,11 +59,16 @@ jobs:
           name: Test with Coverage
           command: yarn coverage
       - run:
+          name: Restore environment
+          command: cat .saved_env >> $BASH_ENV
+      - run:
           name: Report code coverage
           command: 'yarn report-coverage'
+          environment:
+            COVERALLS_PARALLEL: true
       - deploy:
           command: |
-            curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$CIRCLE_BUILD_NUM&payload[status]=done"
+            curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_JOB_ID&payload[status]=done"
 
 workflows:
   version: 2
