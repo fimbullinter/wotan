@@ -71,7 +71,7 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
-        if ((targetType.flags & ts.TypeFlags.TypeParameter) === 0) {
+        if ((targetType.flags & (ts.TypeFlags.TypeParameter)) === 0 && (sourceType.flags & ts.TypeFlags.Literal) === 0) {
             targetType = this.checker.getApparentType(targetType);
             sourceType = this.checker.getApparentType(sourceType);
         }

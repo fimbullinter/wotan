@@ -1,7 +1,7 @@
 export {};
 
 <1>1;
-1;
+<number>1;
 (1 + 1);
 
 let a: string = "foo";
@@ -33,6 +33,13 @@ e as typeof e;
 
 ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 let f: Array<[number, string]> = ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
+
+declare const g: '1.0';
+g as string === '2.0';
+declare let h: Array<'a' | 'b' | 'c'>;
+(h as string[])[0] === 'z';
+declare let i: 'a' | 'b' | 'c';
+i as string === 'z';
 
 interface NotATuple {
     0: number,
