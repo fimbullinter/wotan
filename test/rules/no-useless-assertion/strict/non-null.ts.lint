@@ -144,5 +144,9 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     takeUndefined(one!);
                      ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
     let uninitialized: T;
-    uninitialized!;
+    uninitialized!; // TODO this one could change in typescript@2.7.0
+    let uninitialized2: U;
+    uninitialized2!;
+    let uninitialized3: V;
+    uninitialized3!;
 }
