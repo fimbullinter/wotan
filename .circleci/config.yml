@@ -49,6 +49,7 @@ jobs:
                 yarn add typescript@2.4;;
               2)
                 yarn add typescript@next;;
+            esac
 
       - run:
           name: Test with Coverage
