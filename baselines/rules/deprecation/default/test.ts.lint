@@ -91,3 +91,102 @@ declare let obj2: {
 obj2.a;
 obj2['b'];
 obj2[key];
+
+class HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor() {}
+}
+class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor(p: string);
+    constructor(p: number);
+    constructor(p: string | number) {
+        super();
+        ~~~~~~~  [error deprecation: This signature is deprecated.]
+    }
+}
+class Extending extends HasDeprecatedConstructorOverload {
+    constructor(p?: string) {
+        if (p !== undefined) {
+            super(p);
+            ~~~~~~~~  [error deprecation: This signature is deprecated.]
+        } else {
+            super(1);
+        }
+    }
+}
+
+new HasDeprecatedConstructor();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+new HasDeprecatedConstructorOverload('');
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+new HasDeprecatedConstructorOverload(1);
+new Extending('');
+new Extending();
+let _1: HasDeprecatedConstructor,
+    _2: HasDeprecatedConstructorOverload,
+    _3: Extending;
+
+class HasDeprecatedMethods {
+    prop: typeof bas;
+    /** @deprecated */
+    method(): void;
+    method(p: string): void;
+    method() {}
+
+    /** @deprecated */
+    deprecatedProp: typeof bas;
+
+    /** @deprecated */
+    deprecatedProp2: () => void;
+
+    initialized = baz;
+                  ~~~  [error deprecation: This variable is deprecated: Use the other overload instead. ]
+
+    /** @notDeprecated */
+    notDeprecated: () => void;
+}
+
+{
+    const v = new HasDeprecatedMethods();
+    v.prop;
+    v.prop();
+    ~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v.prop('');
+    v.method;
+    ~~~~~~~~  [error deprecation: This property is deprecated.]
+    v.method();
+    ~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+    v.method('');
+    v.deprecatedProp;
+    ~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    v.deprecatedProp();
+    ~~~~~~~~~~~~~~~~    [error deprecation: This property is deprecated.]
+    ~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v.deprecatedProp('');
+    ~~~~~~~~~~~~~~~~      [error deprecation: This property is deprecated.]
+    v.deprecatedProp2;
+    ~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    v.deprecatedProp2();
+    ~~~~~~~~~~~~~~~~~    [error deprecation: This property is deprecated.]
+    v.initialized;
+    v.initialized();
+    ~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v.initialized('');
+
+    v['prop']();
+    ~~~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v['notDeprecated']();
+    v[Boolean() ? 'prop' : 'notDeprecated']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v[Boolean() ? 'method' : 'notDeprecated']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+    v[Boolean() ? 'method' : 'deprecatedProp']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error deprecation: This property is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+    v['method'];
+    ~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    v['method']();
+    ~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+    v['prop'];
+}

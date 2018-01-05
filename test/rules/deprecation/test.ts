@@ -71,3 +71,80 @@ declare let obj2: {
 obj2.a;
 obj2['b'];
 obj2[key];
+
+class HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor() {}
+}
+class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor(p: string);
+    constructor(p: number);
+    constructor(p: string | number) {
+        super();
+    }
+}
+class Extending extends HasDeprecatedConstructorOverload {
+    constructor(p?: string) {
+        if (p !== undefined) {
+            super(p);
+        } else {
+            super(1);
+        }
+    }
+}
+
+new HasDeprecatedConstructor();
+new HasDeprecatedConstructorOverload('');
+new HasDeprecatedConstructorOverload(1);
+new Extending('');
+new Extending();
+let _1: HasDeprecatedConstructor,
+    _2: HasDeprecatedConstructorOverload,
+    _3: Extending;
+
+class HasDeprecatedMethods {
+    prop: typeof bas;
+    /** @deprecated */
+    method(): void;
+    method(p: string): void;
+    method() {}
+
+    /** @deprecated */
+    deprecatedProp: typeof bas;
+
+    /** @deprecated */
+    deprecatedProp2: () => void;
+
+    initialized = baz;
+
+    /** @notDeprecated */
+    notDeprecated: () => void;
+}
+
+{
+    const v = new HasDeprecatedMethods();
+    v.prop;
+    v.prop();
+    v.prop('');
+    v.method;
+    v.method();
+    v.method('');
+    v.deprecatedProp;
+    v.deprecatedProp();
+    v.deprecatedProp('');
+    v.deprecatedProp2;
+    v.deprecatedProp2();
+    v.initialized;
+    v.initialized();
+    v.initialized('');
+
+    v['prop']();
+    v['notDeprecated']();
+    v[Boolean() ? 'prop' : 'notDeprecated']();
+    v[Boolean() ? 'method' : 'notDeprecated']();
+    v[Boolean() ? 'method' : 'deprecatedProp']();
+    v['method'];
+    v['method']();
+    v['prop'];
+}

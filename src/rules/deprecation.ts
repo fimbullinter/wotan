@@ -20,7 +20,7 @@ const enum Kind {
     Signature = 'signature',
 }
 
-const functionLikeSymbol = ts.SymbolFlags.Constructor | ts.SymbolFlags.Function | ts.SymbolFlags.Method;
+const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 
 @injectable()
 export class Rule extends TypedRule {
@@ -102,7 +102,7 @@ function isPartOfCall(node: ts.Expression) {
                 return (<ts.NewExpression | ts.CallExpression>parent).expression === node;
             case ts.SyntaxKind.JsxOpeningElement:
             case ts.SyntaxKind.JsxSelfClosingElement:
-                return (<ts.JsxSelfClosingElement>parent).tagName === node;
+                return (<ts.JsxOpeningLikeElement>parent).tagName === node;
             case ts.SyntaxKind.ParenthesizedExpression:
                 node = <ts.ParenthesizedExpression>parent;
                 break;
