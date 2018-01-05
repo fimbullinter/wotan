@@ -61,6 +61,7 @@ This one tries to avoid design decisions of other linters that turned out to be 
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
 `await-promise` | Finds uses of `await` on non-Promise values. Also checks `for await` loops. *requires type information* | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
+`deprecation` | Finds uses of deprecated variables, classes, properties, functions, signatures, ... *requires type information* | This rule checks element accesses (`foo[bar]`), JSX elements, chained function calls (`getFn()()`) in addition to what the TSLint rule does and has more useful error reporting.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 `no-unused-label` | Warns about labels that are never used or at the wrong position. | TSLint only has `label-position` which doesn't check for unused labels.
