@@ -51,7 +51,9 @@ export class Rule extends TypedRule {
     }
 
     private checkDeprecation(node: ts.Expression, kind: Kind) {
-        const symbol = this.checker.getSymbolAtLocation(node);
+        let symbol = this.checker.getSymbolAtLocation(node);
+        if (symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias)
+            symbol = this.checker.getAliasedSymbol(symbol);
         if (symbol === undefined || (symbol.flags & functionLikeSymbol) && isPartOfCall(node))
             return;
         return this.checkForDeprecation(symbol, node, kind);
@@ -81,12 +83,9 @@ export class Rule extends TypedRule {
     }
 
     private checkForDeprecation(s: ts.Signature | ts.Symbol, node: ts.Node, kind: Kind) {
-        for (const tag of s.getJsDocTags()) {
-            if (tag.name === 'deprecated') {
+        for (const tag of s.getJsDocTags())
+            if (tag.name === 'deprecated')
                 this.addFailureAtNode(node, `This ${kind} is deprecated${tag.text ? ': ' + tag.text : '.'}`);
-                return;
-            }
-        }
     }
 }
 
