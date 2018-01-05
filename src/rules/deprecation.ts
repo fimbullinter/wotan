@@ -67,7 +67,7 @@ export class Rule extends TypedRule {
     private checkObjectDestructuring(node: ts.Identifier) {
         const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
         if (symbol !== undefined)
-            this.checkForDeprecation(symbol, node, Kind.Property);
+            return this.checkForDeprecation(symbol, node, Kind.Property);
     }
 
     private checkDeprecation(node: ts.Node, kind: Kind) {
@@ -81,7 +81,8 @@ export class Rule extends TypedRule {
 
     private checkSignature(node: ts.CallLikeExpression) {
         const signature = this.checker.getResolvedSignature(node);
-        return this.checkForDeprecation(signature, node, Kind.Signature);
+        if (signature !== undefined) // for compatibility with typescript@<2.6.0
+            return this.checkForDeprecation(signature, node, Kind.Signature);
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {

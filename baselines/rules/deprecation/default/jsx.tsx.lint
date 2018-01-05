@@ -8,11 +8,7 @@ declare namespace JSX {
 
 /** @deprecated */
 function FooComponent(props: {foo: string}): false;
-function FooComponent(props: {
-    /** @deprecated Don't use 'foo' anymore. */
-    foo?: string;
-    bar: number;
-}): false;
+function FooComponent(props: {bar: number}): false;
 function FooComponent() {
     return false;
 }
@@ -29,7 +25,6 @@ class BazComponent extends BarComponent {}
 let foo = <FooComponent foo="a"/>;
           ~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
 let foo2 = <FooComponent bar="1"></FooComponent>;
-let foo2 = <FooComponent bar="1" foo="b"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
            ~~~~~~~~~~~~                  [error deprecation: This variable is deprecated.]
