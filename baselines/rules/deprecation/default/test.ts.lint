@@ -341,12 +341,14 @@ class Decorated {}
 }
 
 {
+    /** @deprecated */
     const enum Indizes {
         Zero,
         One,
         Two,
     }
     const enum StringIndizes {
+        /** @deprecated */
         Zero = '0',
         One = '1',
         Two = '2',
@@ -362,17 +364,27 @@ class Decorated {}
     ~~~~~~~~  [error deprecation: Property '1' is deprecated.]
     tuple[2];
     tuple[Indizes.Zero];
+          ~~~~~~~        [error deprecation: Enum 'Indizes' is deprecated.]
     tuple[Indizes.One];
     ~~~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+          ~~~~~~~       [error deprecation: Enum 'Indizes' is deprecated.]
     tuple[Indizes.Two];
+          ~~~~~~~       [error deprecation: Enum 'Indizes' is deprecated.]
     tuple[StringIndizes.Zero];
+          ~~~~~~~~~~~~~~~~~~   [error deprecation: EnumMember 'Zero' is deprecated.]
     tuple[StringIndizes.One];
     ~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
     tuple[StringIndizes.Two];
     const key: Indizes = null as any;
+               ~~~~~~~                [error deprecation: Enum 'Indizes' is deprecated.]
     tuple[key];
     ~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
     const stringKey: StringIndizes = null as any;
     tuple[stringKey];
     ~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+
+    /** @deprecated */
+    type MyAlias = StringIndizes;
+    let myVar: MyAlias;
+               ~~~~~~~  [error deprecation: TypeAlias 'MyAlias' is deprecated.]
 }

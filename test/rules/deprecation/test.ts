@@ -265,12 +265,14 @@ class Decorated {}
 }
 
 {
+    /** @deprecated */
     const enum Indizes {
         Zero,
         One,
         Two,
     }
     const enum StringIndizes {
+        /** @deprecated */
         Zero = '0',
         One = '1',
         Two = '2',
@@ -294,4 +296,8 @@ class Decorated {}
     tuple[key];
     const stringKey: StringIndizes = null as any;
     tuple[stringKey];
+
+    /** @deprecated */
+    type MyAlias = StringIndizes;
+    let myVar: MyAlias;
 }
