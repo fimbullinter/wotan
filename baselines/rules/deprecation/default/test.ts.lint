@@ -1,7 +1,42 @@
+import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import * as moduleNamespace from './es6-module';
+
+import MyImportedInterface = ns.I;
+                             ~~    [error deprecation: This variable is deprecated.]
+import MyOtherImportedInterface = ns.D;
+                                  ~~    [error deprecation: This variable is deprecated.]
+import myNamespaceAlias = moduleNamespace.ns;
+import MyDAlias = moduleNamespace.ns.D;
+                  ~~~~~~~~~~~~~~~~~~    [error deprecation: This property is deprecated.]
+
+def;
+~~~  [error deprecation: This variable is deprecated.]
+v;
+~  [error deprecation: This variable is deprecated.]
+somethingSomething;
+~~~~~~~~~~~~~~~~~~  [error deprecation: This variable is deprecated.]
+moduleNamespace.default;
+~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+moduleNamespace.v;
+~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+moduleNamespace.something;
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+let _v: ns.I,
+        ~~    [error deprecation: This variable is deprecated.]
+    _v2: ns.D,
+         ~~    [error deprecation: This variable is deprecated.]
+         ~~~~  [error deprecation: This property is deprecated.]
+    _v3: myNamespaceAlias.I;
+         ~~~~~~~~~~~~~~~~    [error deprecation: This variable is deprecated.]
+
 /** @deprecated */
-class Foo {}
-class Bar extends Foo {}
-                  ~~~    [error deprecation: This variable is deprecated.]
+class Foo implements ns.D, MyDAlias {}
+                     ~~                [error deprecation: This variable is deprecated.]
+                     ~~~~              [error deprecation: This property is deprecated.]
+                           ~~~~~~~~    [error deprecation: This variable is deprecated.]
+class Bar extends Foo implements ns.I {}
+                  ~~~                    [error deprecation: This variable is deprecated.]
+                                 ~~      [error deprecation: This variable is deprecated.]
 
 new Foo();
     ~~~    [error deprecation: This variable is deprecated.]

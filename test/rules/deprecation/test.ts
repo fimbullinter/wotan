@@ -1,6 +1,24 @@
+import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import * as moduleNamespace from './es6-module';
+
+import MyImportedInterface = ns.I;
+import MyOtherImportedInterface = ns.D;
+import myNamespaceAlias = moduleNamespace.ns;
+import MyDAlias = moduleNamespace.ns.D;
+
+def;
+v;
+somethingSomething;
+moduleNamespace.default;
+moduleNamespace.v;
+moduleNamespace.something;
+let _v: ns.I,
+    _v2: ns.D,
+    _v3: myNamespaceAlias.I;
+
 /** @deprecated */
-class Foo {}
-class Bar extends Foo {}
+class Foo implements ns.D, MyDAlias {}
+class Bar extends Foo implements ns.I {}
 
 new Foo();
 new Bar();
