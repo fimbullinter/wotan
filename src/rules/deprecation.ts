@@ -10,6 +10,7 @@ import {
     isTaggedTemplateExpression,
     isJsxOpeningLikeElement,
     isUnionType,
+    isQualifiedName,
 } from 'tsutils';
 import * as ts from 'typescript';
 
@@ -18,6 +19,8 @@ const enum Kind {
     Variable = 'variable',
     Signature = 'signature',
 }
+
+const functionLikeSymbol = ts.SymbolFlags.Constructor | ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 
 @injectable()
 export class Rule extends TypedRule {
@@ -41,13 +44,15 @@ export class Rule extends TypedRule {
                 isJsxOpeningLikeElement(node)
             ) {
                 this.checkSignature(node);
+            } else if (isQualifiedName(node)) {
+
             }
         }
     }
 
-    private checkDeprecation(node: ts.Node, kind: Kind) {
+    private checkDeprecation(node: ts.Expression, kind: Kind) {
         const symbol = this.checker.getSymbolAtLocation(node);
-        if (symbol === undefined)
+        if (symbol === undefined || (symbol.flags & functionLikeSymbol) && isPartOfCall(node))
             return;
         return this.checkForDeprecation(symbol, node, kind);
     }
@@ -70,7 +75,7 @@ export class Rule extends TypedRule {
                 symbol = type.getProperty(String((<ts.NumberLiteralType>t).value));
             }
             // TODO enum, boolean literal, ...
-            if (symbol !== undefined)
+            if (symbol !== undefined && ((symbol.flags & functionLikeSymbol) === 0 || !isPartOfCall(node)))
                 this.checkForDeprecation(symbol, node, Kind.Property);
         }
     }
@@ -81,6 +86,28 @@ export class Rule extends TypedRule {
                 this.addFailureAtNode(node, `This ${kind} is deprecated${tag.text ? ': ' + tag.text : '.'}`);
                 return;
             }
+        }
+    }
+}
+
+function isPartOfCall(node: ts.Expression) {
+    while (true) {
+        const parent = node.parent!;
+        switch (parent.kind) {
+            case ts.SyntaxKind.TaggedTemplateExpression:
+            case ts.SyntaxKind.Decorator:
+                return true;
+            case ts.SyntaxKind.NewExpression:
+            case ts.SyntaxKind.CallExpression:
+                return (<ts.NewExpression | ts.CallExpression>parent).expression === node;
+            case ts.SyntaxKind.JsxOpeningElement:
+            case ts.SyntaxKind.JsxSelfClosingElement:
+                return (<ts.JsxSelfClosingElement>parent).tagName === node;
+            case ts.SyntaxKind.ParenthesizedExpression:
+                node = <ts.ParenthesizedExpression>parent;
+                break;
+            default:
+                return false;
         }
     }
 }

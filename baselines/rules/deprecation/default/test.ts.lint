@@ -15,10 +15,8 @@ function baz(...args: string[]) {return args[0];}
 baz;
 ~~~  [error deprecation: This variable is deprecated: Use the other overload instead. ]
 baz();
-~~~    [error deprecation: This variable is deprecated: Use the other overload instead. ]
 ~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
 baz('');
-~~~      [error deprecation: This variable is deprecated: Use the other overload instead. ]
 
 declare const bas: {
     /** @deprecated Use the other overload instead. */
