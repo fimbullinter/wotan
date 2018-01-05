@@ -215,7 +215,10 @@ class Decorated {}
     let b: string;
     /** @deprecated */
     let c: {};
-    ({a, c: b, ...c} = {a: 'a', b: 'b', c: 'c'});
+    let d: string;
+    ({a, c: b, d, ...c} = {a: 'a', b: 'b', c: 'c'});
+    // unfortunately we don't get the Symbol of `a` to show the deprecation of the variable
+    // https://github.com/Microsoft/TypeScript/issues/21033
 }
 
 {
@@ -258,7 +261,7 @@ class Decorated {}
     let k: keyof typeof obj = null as any;
     let {[k]: prop} = obj;
     let v: string;
-    ({[k]: v} = obj);
+    ({[k]: v} = obj); // TODO this would be possible with some effort
 }
 
 {
