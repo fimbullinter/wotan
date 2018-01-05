@@ -12,6 +12,9 @@ import {
     isUnionType,
     isObjectBindingPattern,
     getPropertyName,
+    isPropertyAssignment,
+    isReassignmentTarget,
+    isShorthandPropertyAssignment,
 } from 'tsutils';
 import * as ts from 'typescript';
 
@@ -31,12 +34,14 @@ export class Rule extends TypedRule {
 
     public apply() {
         for (const node of this.flatAst) {
+            // TODO maybe check Type["property"]
             if (isPropertyAccessExpression(node)) {
                 this.checkDeprecation(node, Kind.Property);
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
-            } else if (isIdentifier(node) && shouldCheckIdentifier(node)) {
-                this.checkDeprecation(node, Kind.Variable);
+            } else if (isIdentifier(node)) {
+                if (shouldCheckIdentifier(node))
+                    this.checkDeprecation(node, Kind.Variable);
             } else if (
                 isCallExpression(node) ||
                 isNewExpression(node) ||
@@ -45,12 +50,24 @@ export class Rule extends TypedRule {
                 isJsxOpeningLikeElement(node)
             ) {
                 this.checkSignature(node);
-            } else if (node.kind === ts.SyntaxKind.QualifiedName && shouldCheckQualifiedName(node)) {
-                this.checkDeprecation(node, Kind.Property);
+            } else if (node.kind === ts.SyntaxKind.QualifiedName) {
+                if (shouldCheckQualifiedName(node))
+                    this.checkDeprecation(node, Kind.Property);
             } else if (isObjectBindingPattern(node)) {
                 this.checkObjectBindingPattern(node);
+            } else if (isPropertyAssignment(node)) {
+                if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node.name);
+            } else if (isShorthandPropertyAssignment(node) && isReassignmentTarget(node.parent)) {
+                this.checkObjectDestructuring(node.name);
             }
         }
+    }
+
+    private checkObjectDestructuring(node: ts.Identifier) {
+        const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
+        if (symbol !== undefined)
+            this.checkForDeprecation(symbol, node, Kind.Property);
     }
 
     private checkDeprecation(node: ts.Node, kind: Kind) {
