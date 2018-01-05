@@ -142,6 +142,7 @@ function shouldCheckIdentifier(node: ts.Identifier): boolean {
         case ts.SyntaxKind.ImportEqualsDeclaration:
         case ts.SyntaxKind.ExportAssignment:
         case ts.SyntaxKind.ExportSpecifier:
+        case ts.SyntaxKind.JsxClosingElement:
             return false;
         default:
             return getUsageDomain(node) !== undefined;

@@ -310,9 +310,9 @@ class Decorated {}
         /** @deprecated c */
         c: 'c',
     };
-    let {a, c: b, ...c} = obj;
-         ~                     [error deprecation: This property is deprecated: a ]
-            ~                  [error deprecation: This property is deprecated: c ]
+    let {a, c: b, d, 'foo': e, ...c} = obj;
+         ~                                  [error deprecation: This property is deprecated: a ]
+            ~                               [error deprecation: This property is deprecated: c ]
     c.b;
     ~~~  [error deprecation: This property is deprecated: b ]
 }
