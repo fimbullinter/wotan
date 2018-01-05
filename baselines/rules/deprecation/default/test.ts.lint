@@ -17,6 +17,11 @@ baz;
 baz();
 ~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
 baz('');
+(((baz)));
+   ~~~     [error deprecation: This variable is deprecated: Use the other overload instead. ]
+((baz))();
+~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+((baz))('');
 
 declare const bas: {
     /** @deprecated Use the other overload instead. */
@@ -38,6 +43,11 @@ fn();
 ~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
 fn('');
 ~~      [error deprecation: This variable is deprecated: Variable is deprecated. ]
+
+declare function getFn(): typeof bas;
+getFn()();
+~~~~~~~~~  [error deprecation: This signature is deprecated: Use the other overload instead. ]
+getFn()('');
 
 declare let key: 'foo';
 declare let key2: string;
@@ -83,6 +93,7 @@ obj[key2];
 obj[k];
 ~~~~~~  [error deprecation: This property is deprecated: a]
 ~~~~~~  [error deprecation: This property is deprecated: foo]
+obj[];
 
 declare let obj2: {
     /** @deprecated */
@@ -190,3 +201,35 @@ class HasDeprecatedMethods {
     ~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
     v['prop'];
 }
+
+{
+    /* @deprecated */
+    let noJsdoc: string;
+    noJsdoc = 'foo';
+
+    // @deprecated
+    let alsoNoJsdoc: string;
+    alsoNoJsdoc = 'bar';
+}
+
+declare function tag(parts: TemplateStringsArray, ...values: string[]): string;
+declare function tag(parts: TemplateStringsArray, ...values: number[]): string;
+/** @deprecated */
+declare function tag(parts: TemplateStringsArray, ...values: any[]): string;
+
+tag`a`;
+tag`${''}`;
+tag`${1}`;
+tag`${''}${1}`;
+~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
+
+declare function decorator<T extends Function>(clazz: T): T;
+/** @deprecated Options should be provided. */
+declare function decorator(): ClassDecorator;
+declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
+
+@decorator
+@decorator()
+ ~~~~~~~~~~~ [error deprecation: This signature is deprecated: Options should be provided. ]
+@decorator({foo: '', bar: ''})
+class Decorated {}

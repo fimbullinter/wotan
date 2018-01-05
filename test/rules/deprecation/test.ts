@@ -13,6 +13,9 @@ function baz(...args: string[]) {return args[0];}
 baz;
 baz();
 baz('');
+(((baz)));
+((baz))();
+((baz))('');
 
 declare const bas: {
     /** @deprecated Use the other overload instead. */
@@ -29,6 +32,10 @@ declare const fn: typeof bas;
 fn;
 fn();
 fn('');
+
+declare function getFn(): typeof bas;
+getFn()();
+getFn()('');
 
 declare let key: 'foo';
 declare let key2: string;
@@ -63,6 +70,7 @@ obj.somethingElse;
 obj['somethingElse'];
 obj[key2];
 obj[k];
+obj[];
 
 declare let obj2: {
     /** @deprecated */
@@ -148,3 +156,33 @@ class HasDeprecatedMethods {
     v['method']();
     v['prop'];
 }
+
+{
+    /* @deprecated */
+    let noJsdoc: string;
+    noJsdoc = 'foo';
+
+    // @deprecated
+    let alsoNoJsdoc: string;
+    alsoNoJsdoc = 'bar';
+}
+
+declare function tag(parts: TemplateStringsArray, ...values: string[]): string;
+declare function tag(parts: TemplateStringsArray, ...values: number[]): string;
+/** @deprecated */
+declare function tag(parts: TemplateStringsArray, ...values: any[]): string;
+
+tag`a`;
+tag`${''}`;
+tag`${1}`;
+tag`${''}${1}`;
+
+declare function decorator<T extends Function>(clazz: T): T;
+/** @deprecated Options should be provided. */
+declare function decorator(): ClassDecorator;
+declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
+
+@decorator
+@decorator()
+@decorator({foo: '', bar: ''})
+class Decorated {}
