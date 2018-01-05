@@ -10,7 +10,6 @@ import {
     isTaggedTemplateExpression,
     isJsxOpeningLikeElement,
     isUnionType,
-    isQualifiedName,
 } from 'tsutils';
 import * as ts from 'typescript';
 
@@ -34,7 +33,7 @@ export class Rule extends TypedRule {
                 this.checkDeprecation(node, Kind.Property);
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
-            } else if (isIdentifier(node) && getUsageDomain(node) !== undefined) {
+            } else if (isIdentifier(node) && shouldCheckIdentifier(node)) {
                 this.checkDeprecation(node, Kind.Variable);
             } else if (
                 isCallExpression(node) ||
@@ -44,13 +43,13 @@ export class Rule extends TypedRule {
                 isJsxOpeningLikeElement(node)
             ) {
                 this.checkSignature(node);
-            } else if (isQualifiedName(node)) {
-
+            } else if (node.kind === ts.SyntaxKind.QualifiedName && shouldCheckQualifiedName(node)) {
+                this.checkDeprecation(node, Kind.Property);
             }
         }
     }
 
-    private checkDeprecation(node: ts.Expression, kind: Kind) {
+    private checkDeprecation(node: ts.Node, kind: Kind) {
         let symbol = this.checker.getSymbolAtLocation(node);
         if (symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias)
             symbol = this.checker.getAliasedSymbol(symbol);
@@ -89,24 +88,42 @@ export class Rule extends TypedRule {
     }
 }
 
-function isPartOfCall(node: ts.Expression) {
+function isPartOfCall(node: ts.Node) {
     while (true) {
         const parent = node.parent!;
         switch (parent.kind) {
             case ts.SyntaxKind.TaggedTemplateExpression:
             case ts.SyntaxKind.Decorator:
                 return true;
-            case ts.SyntaxKind.NewExpression:
             case ts.SyntaxKind.CallExpression:
-                return (<ts.NewExpression | ts.CallExpression>parent).expression === node;
+                // note: NewExpression will never get here, because if the class is deprecated, we show an error all the time
+                return (<ts.CallExpression>parent).expression === node;
             case ts.SyntaxKind.JsxOpeningElement:
             case ts.SyntaxKind.JsxSelfClosingElement:
                 return (<ts.JsxOpeningLikeElement>parent).tagName === node;
             case ts.SyntaxKind.ParenthesizedExpression:
-                node = <ts.ParenthesizedExpression>parent;
+                node = parent;
                 break;
             default:
                 return false;
         }
     }
+}
+
+function shouldCheckIdentifier(node: ts.Identifier): boolean {
+    switch (node.parent!.kind) {
+        case ts.SyntaxKind.ImportEqualsDeclaration:
+        case ts.SyntaxKind.ExportAssignment:
+        case ts.SyntaxKind.ExportSpecifier:
+            return false;
+        default:
+            return getUsageDomain(node) !== undefined;
+    }
+}
+
+function shouldCheckQualifiedName(node: ts.Node): boolean {
+    // if parent is a QualifiedName, it is the my.ns part of my.ns.Something -> we definitely want to check that
+    // if the parent is an ImportEqualsDeclaration -> we don't want to check the rightmost identifier, because importing is not that bad
+    // everything else is a TypeReference -> we want to check that
+    return node.parent!.kind !== ts.SyntaxKind.ImportEqualsDeclaration;
 }
