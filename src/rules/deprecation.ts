@@ -10,6 +10,8 @@ import {
     isTaggedTemplateExpression,
     isJsxOpeningLikeElement,
     isUnionType,
+    isObjectBindingPattern,
+    getPropertyName,
 } from 'tsutils';
 import * as ts from 'typescript';
 
@@ -45,6 +47,8 @@ export class Rule extends TypedRule {
                 this.checkSignature(node);
             } else if (node.kind === ts.SyntaxKind.QualifiedName && shouldCheckQualifiedName(node)) {
                 this.checkDeprecation(node, Kind.Property);
+            } else if (isObjectBindingPattern(node)) {
+                this.checkObjectBindingPattern(node);
             }
         }
     }
@@ -63,11 +67,38 @@ export class Rule extends TypedRule {
         return this.checkForDeprecation(signature, node, Kind.Signature);
     }
 
+    private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
+        const type = this.checker.getTypeAtLocation(node);
+        for (const element of node.elements) {
+            if (element.dotDotDotToken !== undefined)
+                continue;
+            if (element.propertyName === undefined) {
+                const symbol = type.getProperty((<ts.Identifier>element.name).text);
+                if (symbol !== undefined)
+                    this.checkForDeprecation(symbol, element.name, Kind.Property);
+            } else {
+                const name = getPropertyName(element.propertyName);
+                if (name !== undefined) {
+                    const symbol = type.getProperty(name);
+                    if (symbol !== undefined)
+                        this.checkForDeprecation(symbol, element.propertyName, Kind.Property);
+                } else {
+                    const propType = this.checker.getTypeAtLocation((<ts.ComputedPropertyName>element.propertyName).expression);
+                    this.checkDynamicPropertyAccess(type, propType, element.propertyName);
+                }
+            }
+        }
+    }
+
     private checkElementAccess(node: ts.ElementAccessExpression) {
         if (node.argumentExpression === undefined)
             return;
         const type = this.checker.getTypeAtLocation(node.expression);
         const keyType = this.checker.getTypeAtLocation(node.argumentExpression);
+        this.checkDynamicPropertyAccess(type, keyType, node);
+    }
+
+    private checkDynamicPropertyAccess(type: ts.Type, keyType: ts.Type, node: ts.Node) {
         for (const t of isUnionType(keyType) ? keyType.types : [keyType]) {
             let symbol: ts.Symbol | undefined;
             if (t.flags & ts.TypeFlags.StringLiteral) {
