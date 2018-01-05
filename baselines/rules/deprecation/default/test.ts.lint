@@ -334,3 +334,40 @@ class Decorated {}
     let v: string;
     ({[k]: v} = obj);
 }
+
+{
+    const enum Indizes {
+        Zero,
+        One,
+        Two,
+    }
+    const enum StringIndizes {
+        Zero = '0',
+        One = '1',
+        Two = '2',
+    }
+    let tuple: {
+        0: string;
+        /** @deprecated */
+        1: number;
+        2: boolean;
+    } = null as any;
+    tuple[0];
+    tuple[1];
+    ~~~~~~~~  [error deprecation: This property is deprecated.]
+    tuple[2];
+    tuple[Indizes.Zero];
+    tuple[Indizes.One];
+    ~~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    tuple[Indizes.Two];
+    tuple[StringIndizes.Zero];
+    tuple[StringIndizes.One];
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    tuple[StringIndizes.Two];
+    const key: Indizes = null as any;
+    tuple[key];
+    ~~~~~~~~~~  [error deprecation: This property is deprecated.]
+    const stringKey: StringIndizes = null as any;
+    tuple[stringKey];
+    ~~~~~~~~~~~~~~~~  [error deprecation: This property is deprecated.]
+}

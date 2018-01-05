@@ -260,3 +260,35 @@ class Decorated {}
     let v: string;
     ({[k]: v} = obj);
 }
+
+{
+    const enum Indizes {
+        Zero,
+        One,
+        Two,
+    }
+    const enum StringIndizes {
+        Zero = '0',
+        One = '1',
+        Two = '2',
+    }
+    let tuple: {
+        0: string;
+        /** @deprecated */
+        1: number;
+        2: boolean;
+    } = null as any;
+    tuple[0];
+    tuple[1];
+    tuple[2];
+    tuple[Indizes.Zero];
+    tuple[Indizes.One];
+    tuple[Indizes.Two];
+    tuple[StringIndizes.Zero];
+    tuple[StringIndizes.One];
+    tuple[StringIndizes.Two];
+    const key: Indizes = null as any;
+    tuple[key];
+    const stringKey: StringIndizes = null as any;
+    tuple[stringKey];
+}
