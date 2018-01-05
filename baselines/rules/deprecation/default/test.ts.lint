@@ -1,5 +1,6 @@
 import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
+import * as namespaceImport from './export-assignment';
 
 import MyImportedInterface = ns.I;
                              ~~    [error deprecation: This variable is deprecated.]
@@ -9,6 +10,10 @@ import myNamespaceAlias = moduleNamespace.ns;
 import MyDAlias = moduleNamespace.ns.D;
                   ~~~~~~~~~~~~~~~~~~    [error deprecation: This property is deprecated.]
 
+namespaceImport;
+~~~~~~~~~~~~~~~  [error deprecation: This variable is deprecated.]
+namespaceImport();
+~~~~~~~~~~~~~~~~~  [error deprecation: This signature is deprecated.]
 def;
 ~~~  [error deprecation: This variable is deprecated.]
 v;
@@ -268,3 +273,64 @@ declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
  ~~~~~~~~~~~ [error deprecation: This signature is deprecated: Options should be provided. ]
 @decorator({foo: '', bar: ''})
 class Decorated {}
+
+{
+    /** @deprecated */
+    let a: string;
+    /** @deprecated */
+    let b: string;
+    /** @deprecated */
+    let c: {};
+    ({a, c: b, ...c} = {a: 'a', b: 'b', c: 'c'});
+            ~                                     [error deprecation: This variable is deprecated.]
+                  ~                               [error deprecation: This variable is deprecated.]
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let a: string;
+    let b: string;
+    let c: {};
+    ({a, c: b, ...c} = obj);
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let {a, c: b, ...c} = obj;
+         ~                     [error deprecation: This property is deprecated: a ]
+            ~                  [error deprecation: This property is deprecated: c ]
+    c.b;
+    ~~~  [error deprecation: This property is deprecated: b ]
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let k: keyof typeof obj = null as any;
+    let {[k]: prop} = obj;
+         ~~~               [error deprecation: This property is deprecated: a ]
+         ~~~               [error deprecation: This property is deprecated: b ]
+         ~~~               [error deprecation: This property is deprecated: c ]
+    let v: string;
+    ({[k]: v} = obj);
+}

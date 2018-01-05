@@ -1,11 +1,14 @@
 import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
+import * as namespaceImport from './export-assignment';
 
 import MyImportedInterface = ns.I;
 import MyOtherImportedInterface = ns.D;
 import myNamespaceAlias = moduleNamespace.ns;
 import MyDAlias = moduleNamespace.ns.D;
 
+namespaceImport;
+namespaceImport();
 def;
 v;
 somethingSomething;
@@ -204,3 +207,56 @@ declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
 @decorator()
 @decorator({foo: '', bar: ''})
 class Decorated {}
+
+{
+    /** @deprecated */
+    let a: string;
+    /** @deprecated */
+    let b: string;
+    /** @deprecated */
+    let c: {};
+    ({a, c: b, ...c} = {a: 'a', b: 'b', c: 'c'});
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let a: string;
+    let b: string;
+    let c: {};
+    ({a, c: b, ...c} = obj);
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let {a, c: b, ...c} = obj;
+    c.b;
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let k: keyof typeof obj = null as any;
+    let {[k]: prop} = obj;
+    let v: string;
+    ({[k]: v} = obj);
+}
