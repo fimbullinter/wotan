@@ -100,15 +100,11 @@ export class Rule extends TypedRule {
 
     private checkDynamicPropertyAccess(type: ts.Type, keyType: ts.Type, node: ts.Node) {
         for (const t of isUnionType(keyType) ? keyType.types : [keyType]) {
-            let symbol: ts.Symbol | undefined;
-            if (t.flags & ts.TypeFlags.StringLiteral) {
-                symbol = type.getProperty((<ts.StringLiteralType>t).value);
-            } else if (t.flags & ts.TypeFlags.NumberLiteral) {
-                symbol = type.getProperty(String((<ts.NumberLiteralType>t).value));
+            if (t.flags & ts.TypeFlags.StringOrNumberLiteral) {
+                const symbol = type.getProperty(String((<ts.StringLiteralType | ts.NumberLiteralType>t).value));
+                if (symbol !== undefined && ((symbol.flags & functionLikeSymbol) === 0 || !isPartOfCall(node)))
+                    this.checkForDeprecation(symbol, node, Kind.Property);
             }
-            // TODO enum, boolean literal, ...
-            if (symbol !== undefined && ((symbol.flags & functionLikeSymbol) === 0 || !isPartOfCall(node)))
-                this.checkForDeprecation(symbol, node, Kind.Property);
         }
     }
 
