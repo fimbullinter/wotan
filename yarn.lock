@@ -63,6 +63,10 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/is-negated-glob@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/is-negated-glob/-/is-negated-glob-1.0.0.tgz#ffa7a2d5200609b6fb28dba41896d70071176e8b"
+
 "@types/js-yaml@^3.10.1":
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.10.1.tgz#a4ddaf67fec34151e620cdbdd22e40b64217f577"
@@ -87,13 +91,13 @@
   dependencies:
     "@types/events" "*"
 
-"@types/node@^8.5.5":
-  version "8.5.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.5.tgz#6f9e8164ae1a55a9beb1d2571cfb7acf9d720c61"
+"@types/node@^8.5.7":
+  version "8.5.7"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.7.tgz#9c498c35af354dcfbca3790fb2e81129e93cf0e2"
 
-"@types/resolve@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-0.0.4.tgz#9b586d65a947dea88c4bc24da0b905fe9520a0d5"
+"@types/resolve@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-0.0.5.tgz#1e326115f8b99b337201da699d4e9bfaa284d242"
   dependencies:
     "@types/node" "*"
 
