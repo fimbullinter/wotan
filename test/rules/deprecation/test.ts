@@ -242,7 +242,7 @@ class Decorated {}
         /** @deprecated c */
         c: 'c',
     };
-    let {a, c: b, ...c} = obj;
+    let {a, c: b, d, 'foo': e, ...c} = obj;
     c.b;
 }
 
