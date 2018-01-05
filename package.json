@@ -48,7 +48,7 @@
     "@types/minimatch": "^3.0.1",
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^8.5.5",
-    "@types/resolve": "0.0.4",
+    "@types/resolve": "0.0.5",
     "@types/semver": "^5.4.0",
     "@types/to-absolute-glob": "^2.0.0",
     "ava": "^0.24.0",
