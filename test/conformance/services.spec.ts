@@ -122,7 +122,11 @@ test('Resolver', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     const resolver = container.resolve(NodeResolver);
-    t.is(resolver.resolve('tsutils', process.cwd(), ['.js']), require.resolve('tsutils'));
-    t.is(resolver.resolve('tsutils', '/', ['.js'], module.paths), require.resolve('tsutils'));
+    t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
+    t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
     t.is(resolver.resolve('./no-debugger', path.resolve('src/rules'), ['.ts']), path.resolve('src/rules/no-debugger.ts'));
+
+    const tslib = require('tslib'); // tslint:disable-line
+    t.is(resolver.require(require.resolve('tslib')), tslib);
+    t.not(resolver.require(require.resolve('tslib'), {cache: false}), tslib);
 });
