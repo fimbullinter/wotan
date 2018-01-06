@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { test } from 'ava';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
-import { CacheIdentifier, WeakCacheIdentifier, FileSystem, CacheManager } from '../../src/types';
+import { CacheIdentifier, WeakCacheIdentifier, FileSystem, CacheManager, Resolver } from '../../src/types';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import * as os from 'os';
 import { NodeRuleLoader } from '../../src/services/default/rule-loader-host';
@@ -13,6 +13,8 @@ import { Container } from 'inversify';
 import { NodeResolver } from '../../src/services/default/resolver';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
+import { NodeFormatterLoader } from '../../src/services/default/formatter-loader-host';
+import { Formatter } from '../../src/formatters/json';
 
 test('CacheManager', (t) => {
     const cm = new DefaultCacheManager();
@@ -129,4 +131,24 @@ test('Resolver', (t) => {
     const tslib = require('tslib'); // tslint:disable-line
     t.is(resolver.require(require.resolve('tslib')), tslib);
     t.not(resolver.require(require.resolve('tslib'), {cache: false}), tslib);
+});
+
+test('FormatterLoaderHost', (t) => {
+    const container = new Container();
+    container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    const loader = container.resolve(NodeFormatterLoader);
+    t.is(loader.loadCoreFormatter('json'), Formatter);
+    t.is(loader.loadCoreFormatter('fooBarBaz'), undefined);
+    t.throws(() => loader.loadCoreFormatter('../../test/fixtures/invalid'));
+
+    t.is(loader.loadCustomFormatter('./src/formatters/json', process.cwd()), Formatter);
+    t.is(loader.loadCustomFormatter('fooBarBaz', process.cwd()), undefined);
+    t.is(
+        loader.loadCustomFormatter('custom-formatter', path.resolve('test/fixtures')),
+        require('../fixtures/node_modules/custom-formatter').Formatter, // tslint:disable-line
+    );
+    t.throws(() => loader.loadCustomFormatter('./test/fixtures/invalid', process.cwd()));
 });
