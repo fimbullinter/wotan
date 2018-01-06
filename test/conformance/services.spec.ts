@@ -83,7 +83,7 @@ test('MessageHandler', (t) => {
     console.warn = (message: string) => {
         warnOutput.push(message);
     };
-    console.error = (message: any) => {
+    console.error = (message) => {
         errorOutput.push(message);
     };
 
