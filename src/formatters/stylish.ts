@@ -37,7 +37,7 @@ export class Formatter extends AbstractFormatter {
                 if (failure.fix !== undefined)
                     ++fixable;
                 const position = `${failure.start.line + 1}:${failure.start.character + 1}`;
-                let positionColor: typeof chalk = failure.severity === 'warning' ? chalk.yellow : chalk.red;
+                let positionColor: typeof chalk;
                 if (failure.severity === 'error') {
                     positionColor = chalk.red;
                     ++errors;
