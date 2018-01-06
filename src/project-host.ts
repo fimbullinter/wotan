@@ -47,7 +47,7 @@ export class ProjectHost implements ts.CompilerHost {
                 ? undefined // don't use processors in node_modules
                 : this.config || 'initial';
             for (const entry of entries) {
-                const fileName = path.join(dir, entry);
+                const fileName = `${dir}/${entry}`;
                 switch (this.fs.getKind(fileName)) {
                     case FileKind.File:
                         if (c === 'initial')
