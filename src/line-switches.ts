@@ -1,13 +1,13 @@
 import * as ts from 'typescript';
 import { getCommentAtPosition } from 'tsutils';
 
-export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)?[\w-]+\s*,\s*)*(?:[\w-]+\/)?[\w-]+)?\s*$/;
+export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*$/;
 
 export type DisableMap = Map<string, ts.TextRange[]>;
 
 export function getDisabledRanges(enabledRules: string[], sourceFile: ts.SourceFile): DisableMap {
     const commentRegex =
-        /\/[/*]\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)?[\w-]+\s*,\s*)*(?:[\w-]+\/)?[\w-]+)?\s*(?:$|\*\/)/mg;
+        /\/[/*]\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*?(?:$|\*\/)/mg;
     const result: DisableMap = new Map();
 
     for (let match = commentRegex.exec(sourceFile.text); match !== null; match = commentRegex.exec(sourceFile.text)) {

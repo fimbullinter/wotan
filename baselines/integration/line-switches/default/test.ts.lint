@@ -43,3 +43,17 @@ bas:;
 /* wotan-enable-next-line */ foo:;
 bar:;
 ~~~   [error no-unused-label: Unused label 'bar'.]
+
+// wotan-enable
+
+// wotan-disable-next-line my/cool/alias
+foo:;
+~~~   [error no-unused-label: Unused label 'foo'.]
+debugger;
+~~~~~~~~~ [error my/cool/alias: 'debugger' statements are forbidden.]
+// wotan-disable-next-line my/cool/alias
+foo:; debugger;
+~~~             [error no-unused-label: Unused label 'foo'.]
+// wotan-disable-next-line no-unused-label
+foo:; debugger;
+      ~~~~~~~~~ [error my/cool/alias: 'debugger' statements are forbidden.]

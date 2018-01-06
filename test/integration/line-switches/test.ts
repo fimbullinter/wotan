@@ -32,3 +32,13 @@ bas:;
 
 /* wotan-enable-next-line */ foo:;
 bar:;
+
+// wotan-enable
+
+// wotan-disable-next-line my/cool/alias
+foo:;
+debugger;
+// wotan-disable-next-line my/cool/alias
+foo:; debugger;
+// wotan-disable-next-line no-unused-label
+foo:; debugger;

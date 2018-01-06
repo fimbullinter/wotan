@@ -1,2 +1,7 @@
 rules:
   no-unused-label: error
+  my/cool/alias: 'error'
+aliases:
+  my/cool:
+    alias:
+      rule: no-debugger
