@@ -4,6 +4,9 @@ import * as path from 'path';
 
 export class Formatter extends AbstractFormatter {
     public format(result: LintResult) {
+        let errors = 0;
+        let warnings = 0;
+        let fixable = 0;
         const lines: string[] = [];
         let fixed = 0;
         const fileNames: string[] = [];
@@ -24,14 +27,27 @@ export class Formatter extends AbstractFormatter {
             const failures = result.get(fileName)!.failures.slice().sort(Failure.compare);
             lines.push(
                 '',
-                `${path.normalize(fileName)}${chalk.hidden(`:${failures[0].start.line + 1}:${failures[0].start.character + 1}`)}`,
+                `${
+                    chalk.underline(path.normalize(fileName))
+                }${
+                    chalk.hidden(`:${failures[0].start.line + 1}:${failures[0].start.character + 1}`)
+                }`,
             );
             for (const failure of failures) {
+                if (failure.fix !== undefined)
+                    ++fixable;
                 const position = `${failure.start.line + 1}:${failure.start.character + 1}`;
-                const positionColor = failure.severity === 'warning' ? chalk.blue : chalk.red;
+                let positionColor: typeof chalk = failure.severity === 'warning' ? chalk.yellow : chalk.red;
+                if (failure.severity === 'error') {
+                    positionColor = chalk.red;
+                    ++errors;
+                } else {
+                    positionColor = chalk.yellow;
+                    ++warnings;
+                }
                 lines.push(
-                    positionColor(`${pad(failure.severity.toUpperCase() + ':', maxSeverityWidth)} ${pad(position, maxPositionWidth)}`) +
-                    `  ${chalk.grey(pad(failure.ruleName, maxNameWidth))}  ${chalk.yellow(failure.message)}`,
+                    positionColor(`${pad(failure.severity.toUpperCase(), maxSeverityWidth)} ${pad(position, maxPositionWidth)}`) +
+                        `  ${chalk.grey(pad(failure.ruleName, maxNameWidth))}  ${chalk.blue(failure.message)}`,
                 );
             }
         }
@@ -39,6 +55,16 @@ export class Formatter extends AbstractFormatter {
             lines.push(
                 '', `Automatically fixed ${fixed} failure${fixed === 1 ? '' : 's'}.`,
             );
+        if (fileNames.length !== 0) {
+            const summaryLine = [];
+            if (errors !== 0)
+                summaryLine.push(chalk.red.bold(`✖ ${errors} error${errors === 1 ? '' : 's'}`));
+            if (warnings !== 0)
+                summaryLine.push(chalk.yellow.bold(`⚠ ${warnings} warning${warnings === 1 ? '' : 's'}`));
+            lines.push('', summaryLine.join('  '));
+            if (fixable !== 0)
+                lines.push(chalk.grey(`${fixable} failure${fixable === 1 ? '' : 's'} are potentially fixable with the '--fix' option.`));
+        }
         return lines
             .slice(1) // remove first line, because it's always empty
             .join('\n');
@@ -50,7 +76,7 @@ function pad(str: string, width: number) {
 }
 
 function ruleSeverityWidth(failure: Failure) {
-    return failure.severity.length + 1;
+    return failure.severity.length;
 }
 
 function ruleNameWidth(failure: Failure) {
