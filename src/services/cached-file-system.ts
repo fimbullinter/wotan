@@ -97,7 +97,7 @@ export class CachedFileSystem {
 
     public remove(file: string) {
         file = this.fs.normalizePath(file);
-        this.fs.remove(file);
+        this.fs.deleteFile(file);
         this.fileContentCache.set(file, undefined);
         this.fileKindCache.set(file, FileKind.NonExistent);
         const dirname = path.posix.dirname(file);

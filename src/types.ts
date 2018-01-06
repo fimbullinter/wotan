@@ -297,8 +297,8 @@ export interface FileSystem {
     realpath?(path: string): string;
     /** Writes content to the file, overwriting the existing content. Creates the file if necessary. */
     writeFile(file: string, content: string): void;
-    /** Removes a given file or directory. Is not supposed to clear a directory. */
-    remove(path: string): void;
+    /** Deletes a given file. Is not supposed to delete or clear a directory. */
+    deleteFile(path: string): void;
     /** Creates a single directory and fails on error. Is not supposed to create multiple directories. */
     createDirectory(dir: string): void;
 }

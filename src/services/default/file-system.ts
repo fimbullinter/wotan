@@ -34,7 +34,7 @@ export class NodeFileSystem implements FileSystem {
     public writeFile(file: string, content: string) {
         return fs.writeFileSync(file, content);
     }
-    public remove(path: string) {
+    public deleteFile(path: string) {
         return fs.unlinkSync(path);
     }
     public createDirectory(dir: string): void {

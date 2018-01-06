@@ -15,6 +15,9 @@ import { NodeFileSystem } from '../../src/services/default/file-system';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
 import { NodeFormatterLoader } from '../../src/services/default/formatter-loader-host';
 import { Formatter } from '../../src/formatters/json';
+import * as fs from 'fs';
+import * as rimraf from 'rimraf';
+import * as ts from 'typescript';
 
 test('CacheManager', (t) => {
     const cm = new DefaultCacheManager();
@@ -151,4 +154,61 @@ test('FormatterLoaderHost', (t) => {
         require('../fixtures/node_modules/custom-formatter').Formatter, // tslint:disable-line
     );
     t.throws(() => loader.loadCustomFormatter('./test/fixtures/invalid', process.cwd()));
+});
+
+let tmpDir: string;
+test.before(() => {
+    tmpDir = fs.mkdtempSync('fs-test');
+});
+
+test('FileSystem', (t) => {
+    const fileSystem = new NodeFileSystem();
+    t.is(fileSystem.normalizePath('C:\\foo\\bar/baz'), getCanonicalFileName('C:/foo/bar/baz'));
+    t.is(fileSystem.normalizePath('/foo/bar/baz'), getCanonicalFileName('/foo/bar/baz'));
+    t.is(fileSystem.normalizePath('/Foo/Bar/Baz'), getCanonicalFileName('/Foo/Bar/Baz'));
+
+    const dir = path.posix.join(tmpDir, 'sub');
+    const deepDir = path.posix.join(dir, 'dir');
+    t.throws(() => fileSystem.createDirectory(deepDir));
+    t.throws(() => fileSystem.createDirectory(tmpDir));
+    fileSystem.createDirectory(dir);
+    fileSystem.createDirectory(deepDir);
+    t.true(fs.existsSync(dir));
+    t.true(fs.existsSync(deepDir));
+
+    const f = path.posix.join(dir, 'somefile');
+    t.throws(() => fileSystem.writeFile(dir, ''));
+    t.false(fs.existsSync(f));
+    fileSystem.writeFile(f, 'some content');
+    t.true(fs.existsSync(f));
+    t.is(fs.readFileSync(f, 'utf8'), 'some content');
+    t.is(fileSystem.readFile(f), 'some content');
+    t.throws(() => fileSystem.readFile(path.posix.join(dir, 'non-existent')));
+    t.throws(() => fileSystem.readFile(dir));
+
+    fs.writeFileSync(f, new Buffer([0xFF, 0xFE, 0x68, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x3F, 0x00]));
+    t.is(fileSystem.readFile(f), 'hallo?');
+    fs.writeFileSync(f, '\uFEFFhallo?');
+    t.is(fileSystem.readFile(f), '\uFEFFhallo?');
+    fs.writeFileSync(f, new Buffer([0xFE, 0xFF, 0x00, 0x68, 0x00, 0x61, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x3F]));
+    t.is(fileSystem.readFile(f), 'hallo?');
+
+    let stats = fileSystem.stat(dir);
+    t.true(stats.isDirectory());
+    t.false(stats.isFile());
+    stats = fileSystem.stat(f);
+    t.false(stats.isDirectory());
+    t.true(stats.isFile());
+
+    fileSystem.deleteFile(f);
+    t.false(fs.existsSync(f));
+    t.throws(() => fileSystem.stat(f));
+
+    function getCanonicalFileName(file: string) {
+        return ts.sys.useCaseSensitiveFileNames ? file : file.toLowerCase();
+    }
+});
+
+test.after.always(() => {
+    rimraf.sync(tmpDir);
 });
