@@ -1,0 +1,2 @@
+rules:
+  try-catch-return-await: error
