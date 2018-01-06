@@ -29,13 +29,20 @@ export class Rule extends TypedRule {
     public apply() {
         for (const node of this.flatAst) {
             // TODO maybe check Type["property"]
-            if (isPropertyAccessExpression(node)) {
+            if (isIdentifier(node)) {
+                if (shouldCheckIdentifier(node))
+                    this.checkDeprecation(node, node.text);
+            } else if (isPropertyAccessExpression(node)) {
                 this.checkDeprecation(node, node.name.text);
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
-            } else if (isIdentifier(node)) {
-                if (shouldCheckIdentifier(node))
-                    this.checkDeprecation(node, node.text);
+            } else if (isPropertyAssignment(node)) {
+                if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node.name);
+            } else if (isShorthandPropertyAssignment(node)) {
+                this.checkShorthandProperty(node.name);
+                if (isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node.name);
             } else if (
                 isCallExpression(node) ||
                 isNewExpression(node) ||
@@ -44,18 +51,10 @@ export class Rule extends TypedRule {
                 isJsxOpeningLikeElement(node)
             ) {
                 this.checkSignature(node);
-            } else if (node.kind === ts.SyntaxKind.QualifiedName) {
-                if (shouldCheckQualifiedName(node))
-                    this.checkDeprecation(node, node.right.text);
             } else if (isObjectBindingPattern(node)) {
                 this.checkObjectBindingPattern(node);
-            } else if (isPropertyAssignment(node)) {
-                if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
-            } else if (isShorthandPropertyAssignment(node)) {
-                this.checkShorthandProperty(node.name);
-                if (isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
+            } else if (node.kind === ts.SyntaxKind.QualifiedName && shouldCheckQualifiedName(node)) {
+                this.checkDeprecation(node, node.right.text);
             }
         }
     }
