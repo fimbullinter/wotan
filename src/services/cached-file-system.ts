@@ -1,8 +1,9 @@
 import { injectable } from 'inversify';
 import { FileSystemReader, CacheManager, CacheIdentifier, Cache, FileSystemWriter } from '../types';
 import bind from 'bind-decorator';
-import { resolveCachedResult } from '../utils';
+import { resolveCachedResult, unixifyPath } from '../utils';
 import * as path from 'path';
+import * as ts from 'typescript';
 
 export const enum FileKind {
     NonExistent,
@@ -30,15 +31,19 @@ export class CachedFileSystem {
     }
 
     public isFile(file: string): boolean {
-        return resolveCachedResult(this.fileKindCache, file, this.getKind) === FileKind.File;
+        return resolveCachedResult(this.fileKindCache, normalizePath(file), this.doGetKind) === FileKind.File;
     }
 
     public isDirectory(dir: string): boolean {
-        return resolveCachedResult(this.fileKindCache, dir, this.getKind) === FileKind.Directory;
+        return resolveCachedResult(this.fileKindCache, normalizePath(dir), this.doGetKind) === FileKind.Directory;
+    }
+
+    public getKind(file: string): FileKind {
+        return resolveCachedResult(this.fileKindCache, normalizePath(file), this.doGetKind);
     }
 
     @bind
-    public getKind(file: string): FileKind {
+    private doGetKind(file: string): FileKind {
         try {
             const stat = this.reader.stat(file);
             return stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Other;
@@ -48,7 +53,7 @@ export class CachedFileSystem {
     }
 
     public readDirectory(dir: string): string[] {
-        return resolveCachedResult(this.directoryEntryCache, dir, this.doReadDirectory);
+        return resolveCachedResult(this.directoryEntryCache, normalizePath(dir), this.doReadDirectory);
     }
 
     @bind
@@ -61,7 +66,7 @@ export class CachedFileSystem {
     }
 
     public readFile(file: string): string | undefined {
-        return resolveCachedResult(this.fileContentCache, file, this.doReadFile);
+        return resolveCachedResult(this.fileContentCache, normalizePath(file), this.doReadFile);
     }
 
     @bind
@@ -74,14 +79,15 @@ export class CachedFileSystem {
     }
 
     public realpath = this.reader.realpath === undefined ? undefined : (file: string) => {
-        return resolveCachedResult(this.realpathCache, file, () => this.reader.realpath!(file));
+        return resolveCachedResult(this.realpathCache, normalizePath(file), () => this.reader.realpath!(file));
     };
 
     public writeFile(file: string, content: string) {
+        file = normalizePath(file);
         this.writer.writeFile(file, content);
         this.fileContentCache.set(file, content);
         this.fileKindCache.set(file, FileKind.File);
-        const dirname = path.dirname(file);
+        const dirname = path.posix.dirname(file);
         const entries = this.directoryEntryCache.get(dirname);
         if (entries !== undefined) {
             const basename = path.basename(file);
@@ -91,10 +97,11 @@ export class CachedFileSystem {
     }
 
     public remove(file: string) {
+        file = normalizePath(file);
         this.writer.remove(file);
         this.fileContentCache.set(file, undefined);
         this.fileKindCache.set(file, FileKind.NonExistent);
-        const dirname = path.dirname(file);
+        const dirname = path.posix.dirname(file);
         const entries = this.directoryEntryCache.get(dirname);
         if (entries !== undefined) {
             const basename = path.basename(file);
@@ -105,15 +112,10 @@ export class CachedFileSystem {
     }
 
     public createDirectory(dir: string) {
-        switch (this.fileKindCache.get(dir)) {
-            case FileKind.Directory:
-                return;
-            case undefined:
-            case FileKind.NonExistent:
-                return this.doCreateDirectory(dir);
-            default:
-                throw new Error(`File already exists: '${dir}'.`);
-        }
+        dir = normalizePath(dir);
+        if (this.fileKindCache.get(dir) === FileKind.Directory)
+            return;
+        return this.doCreateDirectory(dir);
     }
 
     private doCreateDirectory(dir: string): void {
@@ -125,7 +127,7 @@ export class CachedFileSystem {
                 if (!stat.isDirectory())
                     throw e;
             } catch {
-                const parent = path.dirname(dir);
+                const parent = path.posix.dirname(dir);
                 if (parent === dir)
                     throw e;
                 this.doCreateDirectory(parent);
@@ -141,4 +143,8 @@ export class CachedFileSystem {
                 entries.push(basename);
         }
     }
+}
+
+function normalizePath(file: string): string {
+    return unixifyPath(ts.sys.useCaseSensitiveFileNames ? file : file.toLowerCase());
 }
