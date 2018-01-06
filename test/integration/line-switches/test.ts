@@ -1,3 +1,4 @@
+// wotan-enable my/cool/alias
 foo:;
 bar:; // wotan-disable-line
 baz:; /* wotan-disable-line */
@@ -42,3 +43,13 @@ debugger;
 foo:; debugger;
 // wotan-disable-next-line no-unused-label
 foo:; debugger;
+// wotan-disable-next-line something-else
+foo:; debugger;
+
+"/* wotan-disable */";
+debugger;
+` // wotan-disable
+`; debugger;
+/**
+ * // wotan-disable
+ /* wotan-disable */ debugger;
