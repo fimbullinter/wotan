@@ -399,3 +399,49 @@ namespace MyClass {
     let myVar: MyAlias;
                ~~~~~~~  [error deprecation: TypeAlias 'MyAlias' is deprecated.]
 }
+
+{
+    interface A {
+        /** @deprecated */
+        a: string;
+        b: string;
+        d: string;
+        e: string;
+        /** @deprecated reason 1 */
+        f: string;
+        /** @deprecated */
+        fnA(): void;
+        fnB(): void;
+    }
+    interface B {
+        a: string;
+        /** @deprecated */
+        b: string;
+        c: string;
+        e: string;
+        /** @deprecated reason 2 */
+        f: string;
+        fnA(): void;
+        /** @deprecated */
+        fnB(): void;
+    }
+    let myObj: A | B = null  as any;
+    myObj.a;
+    ~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    myObj.b;
+    ~~~~~~~  [error deprecation: Property 'b' is deprecated.]
+    myObj.e;
+    myObj.f;
+    ~~~~~~~  [error deprecation: Property 'f' is deprecated: reason 1 ]
+    ~~~~~~~  [error deprecation: Property 'f' is deprecated: reason 2 ]
+    myObj[Boolean() ? 'a' : 'b'];
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'b' is deprecated.]
+    myObj[Boolean() ? 'a' : 'e'];
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    myObj.fnA();
+    ~~~~~~~~~    [error deprecation: Property 'fnA' is deprecated.]
+    ~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    myObj.fnB();
+    ~~~~~~~~~    [error deprecation: Property 'fnB' is deprecated.]
+}

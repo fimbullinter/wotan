@@ -310,3 +310,39 @@ namespace MyClass {
     type MyAlias = StringIndizes;
     let myVar: MyAlias;
 }
+
+{
+    interface A {
+        /** @deprecated */
+        a: string;
+        b: string;
+        d: string;
+        e: string;
+        /** @deprecated reason 1 */
+        f: string;
+        /** @deprecated */
+        fnA(): void;
+        fnB(): void;
+    }
+    interface B {
+        a: string;
+        /** @deprecated */
+        b: string;
+        c: string;
+        e: string;
+        /** @deprecated reason 2 */
+        f: string;
+        fnA(): void;
+        /** @deprecated */
+        fnB(): void;
+    }
+    let myObj: A | B = null  as any;
+    myObj.a;
+    myObj.b;
+    myObj.e;
+    myObj.f;
+    myObj[Boolean() ? 'a' : 'b'];
+    myObj[Boolean() ? 'a' : 'e'];
+    myObj.fnA();
+    myObj.fnB();
+}
