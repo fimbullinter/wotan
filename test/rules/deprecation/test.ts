@@ -208,6 +208,15 @@ declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
 @decorator({foo: '', bar: ''})
 class Decorated {}
 
+/** @deprecated */
+class MyClass {}
+namespace MyClass {
+    export function something() {
+        let MyDAlias = '';
+        let myObj = {MyClass, v, MyDAlias, nonExistent};
+    }
+}
+
 {
     /** @deprecated */
     let a: string;
@@ -217,8 +226,8 @@ class Decorated {}
     let c: {};
     let d: string;
     ({a, c: b, d, ...c} = {a: 'a', b: 'b', c: 'c'});
-    // unfortunately we don't get the Symbol of `a` to show the deprecation of the variable
-    // https://github.com/Microsoft/TypeScript/issues/21033
+    let myObj = {a, c: b, ...c};
+    ({d = a} = {d: 'd'}); // TODO show error on `a`: https://github.com/Microsoft/TypeScript/issues/21046
 }
 
 {

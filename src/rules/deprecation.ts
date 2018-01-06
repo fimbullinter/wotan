@@ -52,10 +52,23 @@ export class Rule extends TypedRule {
             } else if (isPropertyAssignment(node)) {
                 if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
                     this.checkObjectDestructuring(node.name);
-            } else if (isShorthandPropertyAssignment(node) && isReassignmentTarget(node.parent)) {
-                this.checkObjectDestructuring(node.name);
+            } else if (isShorthandPropertyAssignment(node)) {
+                this.checkShorthandProperty(node.name);
+                if (isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node.name);
             }
         }
+    }
+
+    private checkShorthandProperty(node: ts.Identifier) {
+        const name = node.text;
+        const symbols = this.checker.getSymbolsInScope(node, ts.SymbolFlags.Value | ts.SymbolFlags.Alias).filter((s) => s.name === name);
+        if (symbols.length !== 1)
+            return;
+        let symbol = symbols[0];
+        if (symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias)
+            symbol = this.checker.getAliasedSymbol(symbol);
+        this.checkForDeprecation(symbol, node, name, describeWithName);
     }
 
     private checkObjectDestructuring(node: ts.Identifier) {
@@ -200,6 +213,8 @@ function shouldCheckIdentifier(node: ts.Identifier): boolean {
         case ts.SyntaxKind.ExportSpecifier:
         case ts.SyntaxKind.JsxClosingElement:
             return false;
+        case ts.SyntaxKind.ShorthandPropertyAssignment: // checked separately, due to https://github.com/Microsoft/TypeScript/issues/21033
+            return (<ts.ShorthandPropertyAssignment>node.parent).name !== node;
         default:
             return getUsageDomain(node) !== undefined;
     }
