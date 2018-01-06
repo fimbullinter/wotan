@@ -26,7 +26,7 @@ export class NodeRuleLoader implements RuleLoaderHost {
         try {
             name = path.join(directory, name);
             const rule = require(name).Rule;
-            console.log('Found %s', name);
+            log('Found %s', name);
             return rule;
         } catch (e) {
             if (e != undefined && e.code === 'MODULE_NOT_FOUND')
