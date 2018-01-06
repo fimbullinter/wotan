@@ -281,25 +281,33 @@ export interface MessageHandler {
 }
 export abstract class MessageHandler {}
 
-export interface FileSystemReader {
+/**
+ * Low level file system access. All methods are supposed to throw an error on failure.
+ */
+export interface FileSystem {
+    /** Normalizes the path to enable reliable caching in consuming services. */
+    normalizePath(path: string): string;
+    /** Reads the given file. Tries to infer and convert encoding. */
     readFile(file: string): string;
+    /** Reads directory entries. Returns only the basenames. */
     readDirectory(dir: string): string[];
+    /** Gets the status of a file or directory. */
     stat(path: string): Stats;
+    /** Gets the realpath of a given file or directory. */
     realpath?(path: string): string;
+    /** Writes content to the file, overwriting the existing content. Creates the file if necessary. */
+    writeFile(file: string, content: string): void;
+    /** Removes a given file or directory. Is not supposed to clear a directory. */
+    remove(path: string): void;
+    /** Creates a single directory and fails on error. Is not supposed to create multiple directories. */
+    createDirectory(dir: string): void;
 }
-export abstract class FileSystemReader {}
+export abstract class FileSystem {}
 
 export interface Stats {
     isDirectory(): boolean;
     isFile(): boolean;
 }
-
-export interface FileSystemWriter {
-    writeFile(file: string, content: string): void;
-    remove(path: string): void;
-    createDirectory(dir: string): void;
-}
-export abstract class FileSystemWriter {}
 
 export interface RuleLoaderHost {
     loadCoreRule(name: string): RuleConstructor | undefined;

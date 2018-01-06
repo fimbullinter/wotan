@@ -4,9 +4,8 @@ import {
     RuleLoaderHost,
     Resolver,
     CacheManager,
-    FileSystemReader,
+    FileSystem,
     MessageHandler,
-    FileSystemWriter,
     DirectoryService,
 } from '../types';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
@@ -26,10 +25,8 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
         bind(Resolver).to(NodeResolver);
     if (!isBound(CacheManager))
         bind(CacheManager).to(DefaultCacheManager);
-    if (!isBound(FileSystemReader))
-        bind(FileSystemReader).to(NodeFileSystem);
-    if (!isBound(FileSystemWriter))
-        bind(FileSystemWriter).to(NodeFileSystem);
+    if (!isBound(FileSystem))
+        bind(FileSystem).to(NodeFileSystem);
     if (!isBound(MessageHandler))
         bind(MessageHandler).to(ConsoleMessageHandler);
     if (!isBound(DirectoryService))

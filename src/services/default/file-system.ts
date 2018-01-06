@@ -1,9 +1,14 @@
-import { FileSystemReader, FileSystemWriter } from '../../types';
+import { FileSystem } from '../../types';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
+import { unixifyPath } from '../../utils';
+import * as ts from 'typescript';
 
 @injectable()
-export class NodeFileSystem implements FileSystemReader, FileSystemWriter {
+export class NodeFileSystem implements FileSystem {
+    public normalizePath(path: string) {
+        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+    }
     public readFile(file: string) {
         const buf = fs.readFileSync(file);
         const len = buf.length;
