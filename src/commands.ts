@@ -3,7 +3,7 @@ import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format, MessageHandler, Failure, DirectoryService } from './types';
-import { format, assertNever } from './utils';
+import { format, assertNever, unixifyPath } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
 import { FormatterLoader } from './services/formatter-loader';
@@ -200,7 +200,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 const actual = createBaseline(summary);
                 const baselineFile = `${path.resolve(baselineDir, relative)}${kind === BaselineKind.Lint ? '.lint' : ''}`;
                 const end = (pass: boolean, text: string, diff?: string) => {
-                    this.logger.log(`  ${chalk.grey.dim(baselineFile)} ${chalk[pass ? 'green' : 'red'](text)}`);
+                    this.logger.log(`  ${chalk.grey.dim(path.relative(basedir, baselineFile))} ${chalk[pass ? 'green' : 'red'](text)}`);
                     if (pass)
                         return true;
                     if (diff !== undefined)
@@ -215,10 +215,10 @@ class TestCommandRunner extends AbstractCommandRunner {
                         this.fs.remove(baselineFile);
                         return end(true, 'REMOVED');
                     }
-                    baselinesSeen.push(baselineFile);
+                    baselinesSeen.push(unixifyPath(baselineFile));
                     return end(false, 'EXISTS');
                 }
-                baselinesSeen.push(baselineFile);
+                baselinesSeen.push(unixifyPath(baselineFile));
                 const expected = this.fs.readFile(baselineFile);
                 if (expected === undefined) {
                     if (!options.updateBaselines)
@@ -252,12 +252,14 @@ class TestCommandRunner extends AbstractCommandRunner {
                 }
                 const {typescriptVersion, ...testConfig} = <TestOptions>require(testcase);
                 if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {
-                    this.logger.log(`${testcase} ${chalk.yellow(`SKIPPED, requires TypeScript ${typescriptVersion}`)}`);
+                    this.logger.log(
+                        `${path.relative(basedir, testcase)} ${chalk.yellow(`SKIPPED, requires TypeScript ${typescriptVersion}`)}`,
+                    );
                     continue;
                 }
                 root = path.dirname(testcase);
                 baselineDir = buildBaselineDirectoryName(basedir, 'baselines', testcase);
-                this.logger.log(testcase);
+                this.logger.log(path.relative(basedir, testcase));
                 this.directoryService.cwd = root;
                 baselinesSeen = [];
                 if (!this.container.get(RuleTester).test(testConfig))
@@ -267,9 +269,9 @@ class TestCommandRunner extends AbstractCommandRunner {
                     for (const unchecked of glob.sync('**', remainingGlobOptions)) {
                         if (options.updateBaselines) {
                             this.fs.remove(unchecked);
-                            this.logger.log(`  ${chalk.grey.dim(unchecked)} ${chalk.green('REMOVED')}`);
+                            this.logger.log(`  ${chalk.grey.dim(path.relative(basedir, unchecked))} ${chalk.green('REMOVED')}`);
                         } else {
-                            this.logger.log(`  ${chalk.grey.dim(unchecked)} ${chalk.red('UNCHECKED')}`);
+                            this.logger.log(`  ${chalk.grey.dim(path.relative(basedir, unchecked))} ${chalk.red('UNCHECKED')}`);
                             if (options.bail)
                                 return false;
                             success = false;
