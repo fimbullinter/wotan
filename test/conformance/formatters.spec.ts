@@ -3,10 +3,11 @@ import test, { TestContext } from 'ava';
 import { LintResult, Failure, Severity, Replacement, AbstractFormatter } from '../../src/types';
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
-import chalk from 'chalk';
+import chalk, { Level } from 'chalk';
 
 test.before(() => {
     chalk.enabled = true;
+    chalk.level = Level.TrueColor;
 });
 
 function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Failure {
