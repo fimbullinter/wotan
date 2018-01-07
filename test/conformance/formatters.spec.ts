@@ -4,10 +4,12 @@ import { LintResult, Failure, Severity, Replacement, AbstractFormatter } from '.
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
 import chalk, { Level } from 'chalk';
+import * as path from 'path';
+import { unixifyPath } from '../../src/utils';
 
 test.before(() => {
     chalk.enabled = true;
-    chalk.level = Level.TrueColor;
+    chalk.level = Level.Ansi256;
 });
 
 function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Failure {
@@ -72,18 +74,23 @@ const warningSummary: LintResult = new Map([
         {content: 'a', failures: [createFailure('a', 'warning', 'a', 0, 0)], fixes: 0},
     ],
     [
-        '/dir/warnings2.ts',
+        'C:/dir/warnings2.ts',
         {content: 'b', failures: [createFailure('b', 'warning', 'b', 0, 0)], fixes: 0},
     ],
 ]);
 
-function testFormatter(formatter: AbstractFormatter, t: TestContext) {
-    t.snapshot(formatter.format(emptySummary), <any>{id: `${t.title} empty`});
-    t.snapshot(formatter.format(noFailureSummary), <any>{id: `${t.title} success`});
-    t.snapshot(formatter.format(fixedSummary), <any>{id: `${t.title} fixed`});
-    t.snapshot(formatter.format(fixableSummary), <any>{id: `${t.title} fixable`});
-    t.snapshot(formatter.format(warningSummary), <any>{id: `${t.title} warnings`});
-    t.snapshot(formatter.format(summary), <any>{id: `${t.title} mixed`});
+function testFormatter(formatter: AbstractFormatter, t: TestContext, transform?: (s: string) => string) {
+    testOutput(emptySummary, 'empty');
+    testOutput(noFailureSummary, 'success');
+    testOutput(fixedSummary, 'fixed');
+    testOutput(fixableSummary, 'fixable');
+    testOutput(warningSummary, 'warnings');
+    testOutput(summary, 'mixed');
+
+    function testOutput(lintResult: LintResult, name: string) {
+        const output = formatter.format(lintResult);
+        t.snapshot(transform === undefined ? output : transform(output), <any>{id: `${t.title} ${name}`});
+    }
 }
 
 test('JSON', (t) => {
@@ -91,5 +98,14 @@ test('JSON', (t) => {
 });
 
 test('Stylish', (t) => {
-    testFormatter(new StylishFormatter(), t);
+    const formatter = new StylishFormatter();
+    const lines = formatter.format(warningSummary).split('\n');
+    t.true(lines[0].startsWith(`\u001b[4m${path.normalize('/dir/warnings.ts')}\u001b[24m`));
+    t.true(lines[3].startsWith(`\u001b[4m${path.normalize('C:/dir/warnings2.ts')}\u001b[24m`));
+    testFormatter(new StylishFormatter(), t, (output) => {
+        return output
+            .split('\n')
+            .map((line) => line.startsWith('\u001b[4m') ? unixifyPath(line) : line)
+            .join('\n');
+    });
 });
