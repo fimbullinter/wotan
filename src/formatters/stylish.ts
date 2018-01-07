@@ -47,7 +47,7 @@ export class Formatter extends AbstractFormatter {
                 }
                 lines.push(
                     positionColor(`${pad(failure.severity.toUpperCase(), maxSeverityWidth)} ${pad(position, maxPositionWidth)}`) +
-                        `  ${chalk.grey(pad(failure.ruleName, maxNameWidth))}  ${chalk.blue.bold(failure.message)}`,
+                        `  ${chalk.grey(pad(failure.ruleName, maxNameWidth))}  ${chalk.blueBright(failure.message)}`,
                 );
             }
         }
