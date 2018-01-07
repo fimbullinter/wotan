@@ -9,7 +9,7 @@ import { unixifyPath } from '../../src/utils';
 
 test.before(() => {
     chalk.enabled = true;
-    chalk.level = Level.Ansi256;
+    chalk.level = Level.Basic;
 });
 
 function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Failure {

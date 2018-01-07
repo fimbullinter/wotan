@@ -63,7 +63,11 @@ export class Formatter extends AbstractFormatter {
                 summaryLine.push(chalk.yellow.bold(`⚠ ${addCount(warnings, 'warning')}`));
             lines.push('', summaryLine.join('  '));
             if (fixable !== 0)
-                lines.push(chalk.grey(`${addCount(fixable, 'failure')} are potentially fixable with the '--fix' option.`));
+                lines.push(
+                    chalk.grey(
+                        `${addCount(fixable, 'failure')} ${fixable === 1 ? 'is' : 'are'} potentially fixable with the '--fix' option.`,
+                    ),
+                );
         }
         return lines
             .slice(1) // remove first line, because it's always empty
