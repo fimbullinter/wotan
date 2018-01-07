@@ -5,10 +5,7 @@ import {
     isIdentifier,
     isPropertyAccessExpression,
     getUsageDomain,
-    isCallExpression,
-    isNewExpression,
-    isTaggedTemplateExpression,
-    isJsxOpeningLikeElement,
+    isCallLikeExpression,
     isUnionType,
     isObjectBindingPattern,
     getPropertyName,
@@ -43,13 +40,7 @@ export class Rule extends TypedRule {
                 this.checkSymbol(this.checker.getShorthandAssignmentValueSymbol(node), node, node.name.text);
                 if (isReassignmentTarget(node.parent))
                     this.checkObjectDestructuring(node.name);
-            } else if (
-                isCallExpression(node) ||
-                isNewExpression(node) ||
-                isTaggedTemplateExpression(node) ||
-                ts.isDecorator(node) ||
-                isJsxOpeningLikeElement(node)
-            ) {
+            } else if (isCallLikeExpression(node)) {
                 this.checkSignature(node);
             } else if (isObjectBindingPattern(node)) {
                 this.checkObjectBindingPattern(node);
