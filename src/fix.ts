@@ -22,7 +22,7 @@ export function applyFixes(source: string, fixes: Fix[]): FixResult {
     const replacements = [];
     for (const fix of fixes) {
         const state: FixWithState = {replacements: combineReplacements(fix.replacements), skip: false, state: undefined};
-        for (const replacement of fix.replacements)
+        for (const replacement of state.replacements)
             replacements.push({fix: state, ...replacement});
     }
     const range: ts.TextChangeRange = {
@@ -37,22 +37,32 @@ export function applyFixes(source: string, fixes: Fix[]): FixResult {
     replacements.sort(compareReplacements);
     for (let i = 0; i < replacements.length; ++i) {
         const replacement = replacements[i];
-        if (replacement.fix.skip)
+        const {fix} = replacement;
+        if (fix.skip)
             continue; // there was a conflict, don't use replacements of this fix
         if (replacement.start <= position) {
             // ranges overlap (or have touching boundaries) -> don't fix to prevent unspecified behavior
-            if (replacement.fix.state !== undefined) {
+            if (fix.state !== undefined) {
                 // rollback to state before the first replacement of the fix was applied
-                output = output.substring(0, replacement.fix.state.length);
-                ({position, index: i} = replacement.fix.state);
+                const rollbackToIndex = fix.state.index;
+                for (let j = rollbackToIndex + 1; j < i; ++j) {
+                    const f = replacements[j].fix;
+                    // we need to reset all states of fixes that applied their first replacement after
+                    // the first replacement of the just rolled back fix
+                    if (f.state !== undefined && f.state.index === j)
+                        f.state = undefined;
+                }
+                output = output.substring(0, fix.state.length);
+                position = fix.state.position;
+                i = rollbackToIndex;
             }
-            replacement.fix.skip = true;
+            fix.skip = true;
             --fixed;
             continue;
         }
-        // only save the current state if the fix contains more replacements and there isn't already a state
-        if (replacement.fix.replacements.length !== 1 && replacement.fix.state === undefined)
-            replacement.fix.state = {position, index: i, length: output.length};
+        // save the current state to jump back if necessary
+        if (fix.state === undefined && fix.replacements.length !== 1)
+            fix.state = {position, index: i, length: output.length};
         if (position === -1) {
             // we are about to apply the first fix
             range.span.start = replacement.start;
