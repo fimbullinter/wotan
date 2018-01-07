@@ -53,22 +53,26 @@ export class Formatter extends AbstractFormatter {
         }
         if (fixed !== 0)
             lines.push(
-                '', `Automatically fixed ${fixed} failure${fixed === 1 ? '' : 's'}.`,
+                '', chalk.green(`Automatically fixed ${addCount(fixed, 'failure')}.`),
             );
         if (fileNames.length !== 0) {
             const summaryLine = [];
             if (errors !== 0)
-                summaryLine.push(chalk.red.bold(`✖ ${errors} error${errors === 1 ? '' : 's'}`));
+                summaryLine.push(chalk.red.bold(`✖ ${addCount(errors, 'error')}`));
             if (warnings !== 0)
-                summaryLine.push(chalk.yellow.bold(`⚠ ${warnings} warning${warnings === 1 ? '' : 's'}`));
+                summaryLine.push(chalk.yellow.bold(`⚠ ${addCount(warnings, 'warning')}`));
             lines.push('', summaryLine.join('  '));
             if (fixable !== 0)
-                lines.push(chalk.grey(`${fixable} failure${fixable === 1 ? '' : 's'} are potentially fixable with the '--fix' option.`));
+                lines.push(chalk.grey(`${addCount(fixable, 'failure')} are potentially fixable with the '--fix' option.`));
         }
         return lines
             .slice(1) // remove first line, because it's always empty
             .join('\n');
     }
+}
+
+function addCount(count: number, word: string) {
+    return `${count} ${word}${count === 1 ? '' : 's'}`;
 }
 
 function pad(str: string, width: number) {
