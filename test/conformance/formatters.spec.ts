@@ -3,6 +3,11 @@ import test, { TestContext } from 'ava';
 import { LintResult, Failure, Severity, Replacement, AbstractFormatter } from '../../src/types';
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
+import chalk from 'chalk';
+
+test.before(() => {
+    chalk.enabled = true;
+});
 
 function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Failure {
     return {
@@ -32,8 +37,8 @@ summary.set('/some/directory/a.ts', {
 summary.set('/some/other/directory/b.ts', {
     content: 'foo = bar',
     failures: [
-        createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
-        createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.deleteAt(6, 3)]),
+        createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.deleteAt(0, 3)]),
+        createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.replaceAt(6, 3, 'baz')]),
         createFailure('equals', 'error', 'no equals', 4, 5),
     ],
     fixes: 1,

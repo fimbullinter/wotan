@@ -21,13 +21,13 @@ export interface Replacement {
 
 export abstract class Replacement {
     public static append(pos: number, text: string): Replacement {
-        return {text, start: pos, end: pos};
+        return {start: pos, end: pos, text}; // tslint:disable-line:object-shorthand-properties-first
     }
     public static delete(start: number, end: number): Replacement {
         return {start, end, text: ''};
     }
     public static replaceAt(start: number, length: number, text: string): Replacement {
-        return {start, text, end: start + length};
+        return {start, end: start + length, text}; // tslint:disable-line:object-shorthand-properties-first
     }
     public static deleteAt(start: number, length: number): Replacement {
         return {start, end: start + length, text: ''};
