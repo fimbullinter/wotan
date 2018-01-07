@@ -31,16 +31,16 @@ export class Rule extends TypedRule {
             // TODO maybe check Type["property"]
             if (isIdentifier(node)) {
                 if (shouldCheckIdentifier(node))
-                    this.checkDeprecation(node, node.text);
+                    this.checkSymbol(this.checker.getSymbolAtLocation(node), node, node.text);
             } else if (isPropertyAccessExpression(node)) {
-                this.checkDeprecation(node, node.name.text);
+                this.checkSymbol(this.checker.getSymbolAtLocation(node), node, node.name.text);
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
             } else if (isPropertyAssignment(node)) {
                 if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
                     this.checkObjectDestructuring(node.name);
             } else if (isShorthandPropertyAssignment(node)) {
-                this.checkShorthandProperty(node.name);
+                this.checkSymbol(this.checker.getShorthandAssignmentValueSymbol(node), node, node.name.text);
                 if (isReassignmentTarget(node.parent))
                     this.checkObjectDestructuring(node.name);
             } else if (
@@ -54,35 +54,15 @@ export class Rule extends TypedRule {
             } else if (isObjectBindingPattern(node)) {
                 this.checkObjectBindingPattern(node);
             } else if (node.kind === ts.SyntaxKind.QualifiedName && shouldCheckQualifiedName(node)) {
-                this.checkDeprecation(node, node.right.text);
+                this.checkSymbol(this.checker.getSymbolAtLocation(node), node, node.right.text);
             }
         }
-    }
-
-    private checkShorthandProperty(node: ts.Identifier) {
-        const name = node.text;
-        const symbols = this.checker.getSymbolsInScope(node, ts.SymbolFlags.Value | ts.SymbolFlags.Alias).filter((s) => s.name === name);
-        if (symbols.length !== 1)
-            return;
-        let symbol = symbols[0];
-        if (symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias)
-            symbol = this.checker.getAliasedSymbol(symbol);
-        this.checkForDeprecation(symbol, node, name, describeWithName);
     }
 
     private checkObjectDestructuring(node: ts.Identifier) {
         const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
         if (symbol !== undefined)
             return this.checkForDeprecation(symbol, node, node.text, describeWithName);
-    }
-
-    private checkDeprecation(node: ts.Node, name: string) {
-        let symbol = this.checker.getSymbolAtLocation(node);
-        if (symbol !== undefined && symbol.flags & ts.SymbolFlags.Alias)
-            symbol = this.checker.getAliasedSymbol(symbol);
-        if (symbol === undefined || (symbol.flags & functionLikeSymbol) && isPartOfCall(node))
-            return;
-        return this.checkForDeprecation(symbol, node, name, describeWithName);
     }
 
     private checkSignature(node: ts.CallLikeExpression) {
@@ -127,11 +107,19 @@ export class Rule extends TypedRule {
         for (const t of isUnionType(keyType) ? keyType.types : [keyType]) {
             if (t.flags & ts.TypeFlags.StringOrNumberLiteral) {
                 const name = String((<ts.StringLiteralType | ts.NumberLiteralType>t).value);
-                const symbol = type.getProperty(name);
-                if (symbol !== undefined && ((symbol.flags & functionLikeSymbol) === 0 || !isPartOfCall(node)))
-                    this.checkForDeprecation(symbol, node, name, describeWithName);
+                this.checkSymbol(type.getProperty(name), node, name);
             }
         }
+    }
+
+    private checkSymbol(symbol: ts.Symbol | undefined, node: ts.Node, name: string) {
+        if (symbol === undefined)
+            return;
+        if (symbol.flags & ts.SymbolFlags.Alias)
+            symbol = this.checker.getAliasedSymbol(symbol);
+        if ((symbol.flags & functionLikeSymbol) && isPartOfCall(node))
+            return;
+        return this.checkForDeprecation(symbol, node, name, describeWithName);
     }
 
     private checkForDeprecation<T extends ts.Signature | ts.Symbol, U extends ts.Node, V>(
@@ -212,7 +200,7 @@ function shouldCheckIdentifier(node: ts.Identifier): boolean {
         case ts.SyntaxKind.ExportSpecifier:
         case ts.SyntaxKind.JsxClosingElement:
             return false;
-        case ts.SyntaxKind.ShorthandPropertyAssignment: // checked separately, due to https://github.com/Microsoft/TypeScript/issues/21033
+        case ts.SyntaxKind.ShorthandPropertyAssignment: // checked separately
             return (<ts.ShorthandPropertyAssignment>node.parent).name !== node;
         default:
             return getUsageDomain(node) !== undefined;
