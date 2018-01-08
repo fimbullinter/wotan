@@ -62,9 +62,7 @@ export class Linter {
             }
             log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
             const fixed = applyFixes(content, fixes);
-            log('Applied %d fixes', fixes.length);
-            if (fixed.fixed === 0)
-                break;
+            log('Applied %d fixes', fixed.fixed);
             totalFixes += fixed.fixed;
             content = fixed.result;
             let newSource: string;
