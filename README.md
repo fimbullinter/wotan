@@ -35,7 +35,7 @@ This one tries to avoid design decisions of other linters that turned out to be 
 - [x] Caching of file system access and configuration. As the Cache is a DI service, API users can clear the cache when needed.
 - [x] Support for processors from the beginning. Enabling linting of *.vue files and many more.
 - [x] Aliases for rules with configuration. Can be used to treat rules like ESLint's `no-resticted-syntax` as distinct named rules for each config option.
-- [x] The whole API is powered by a DI container. That makes it easy to inject a different serivce. Rules have access to a limited set of DI bindings.
+- [x] The whole API is powered by a DI container. That makes it easy to inject a different service. Rules have access to a limited set of DI bindings.
 
 ### Differences to TSLint
 
@@ -167,9 +167,9 @@ wotan -p . 'src/**' # lint all files in src directory that are included in the p
 
 ## Supported Environments
 
-This module runs on all actively supported versions of node.js starting from 6.12.3. Since node.js v4.x will be dumped in the first half of 2018 I didn't bother to support it.
+This module runs on all actively supported versions of node.js starting from v6.12.3. Since node.js v4.x will be dumped in the first half of 2018 I didn't bother to support it.
 
 This package officially supports the latest stable version of TypeScript. We try to make it compatible all the way back to v2.4.1 although some rules might behave differently due to changes in the type system.
 We try to support TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
 
-Custom rules should at least use ES6 to use native classes. Otherwise you run into problems when trying to extend classes exported from this module.
+Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from this module.
