@@ -1,6 +1,12 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { isCodeLine, createBaselineDiff } from '../../src/test';
+import chalk, { Level } from 'chalk';
+
+test.before(() => {
+    chalk.enabled = true;
+    chalk.level = Level.Basic;
+});
 
 test('isCodeLine', (t) => {
     t.true(isCodeLine(''));
