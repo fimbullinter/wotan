@@ -1,0 +1,4 @@
+import {foo as fn} from './other';
+        ~~~                        [error local/foo: 'foo' is not allowed.]
+fn();
+~~~~  [error deprecation: CallSignature '(): void' is deprecated: foo ]
