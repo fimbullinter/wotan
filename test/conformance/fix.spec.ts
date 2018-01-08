@@ -137,4 +137,29 @@ test('Fixer', (t) => {
         },
         'rolls back all replacements of conflicting fixes',
     );
+
+    t.deepEqual(
+        applyFixes('abcdefghij', [
+            // applies the first and second replacement, is rolled back at the third
+            {replacements: [Replacement.delete(0, 1), Replacement.delete(3, 4), Replacement.delete(9, 10)]},
+            // conflicts with the preceding fix, is reapplied after the first fix is rolled back
+            {replacements: [Replacement.delete(1, 2)]},
+            // conflicts with the first fix, is reapplied after the first fix is rolled back
+            {replacements: [Replacement.append(4, 'x'), Replacement.append(6, 'y')]},
+            // causes the first fix to be rolled back
+            {replacements: [Replacement.append(9, 'z')]},
+        ]),
+        {
+            result: 'acdxefyghizj',
+            fixed: 3,
+            range: {
+                span: {
+                    start: 1,
+                    length: 8,
+                },
+                newLength: 10,
+            },
+        },
+        'retries rolled back fixes if prerequisites change',
+    );
 });

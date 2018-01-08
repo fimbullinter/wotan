@@ -45,16 +45,21 @@ export function applyFixes(source: string, fixes: Fix[]): FixResult {
             if (fix.state !== undefined) {
                 // rollback to state before the first replacement of the fix was applied
                 const rollbackToIndex = fix.state.index;
-                for (let j = rollbackToIndex + 1; j < i; ++j) {
-                    const f = replacements[j].fix;
+                for (--i; i !== rollbackToIndex; --i) { // this automatically resets `i` to the correct position
+                    const f = replacements[i].fix;
                     // we need to reset all states of fixes that applied their first replacement after
                     // the first replacement of the just rolled back fix
-                    if (f.state !== undefined && f.state.index === j)
+                    if (f.state !== undefined && f.state.index === i)
                         f.state = undefined;
+                    // retry all rolled back fixes, that applied their first replacement after the just rolled back fix
+                    // unfortunately this doesn't take conflicting fixes into account, so we may roll it back later
+                    if (f.state === undefined && f.skip) {
+                        ++fixed;
+                        f.skip = false;
+                    }
                 }
                 output = output.substring(0, fix.state.length);
                 position = fix.state.position;
-                i = rollbackToIndex;
             }
             fix.skip = true;
             --fixed;
@@ -101,10 +106,9 @@ function combineReplacements(replacements: Replacement[]): Replacement[] {
         if (current.end > replacement.start)
             throw new Error('Replacements of fix overlap.');
         const isInsertion = replacement.start === replacement.end;
-        if (isInsertion && wasInsertion)
-            throw new Error('Multiple insertion replacements at the same position.');
-        wasInsertion = isInsertion;
         if (current.end === replacement.start) {
+            if (isInsertion && wasInsertion)
+                throw new Error('Multiple insertion replacements at the same position.');
             current = {
                 start: current.start,
                 end: replacement.end,
@@ -114,6 +118,7 @@ function combineReplacements(replacements: Replacement[]): Replacement[] {
             result.push(current);
             current = replacement;
         }
+        wasInsertion = isInsertion;
     }
     result.push(current);
     return result;
