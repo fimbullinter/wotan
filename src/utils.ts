@@ -19,7 +19,7 @@ export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean 
 
 export const memoizeGetter: MethodDecorator = (_target, property, descriptor) => {
     if (descriptor.get === undefined)
-        throw new Error('@memoizeGetter can only be used with get accessors');
+        throw new Error('@memoizeGetter can only be used with get accessors.');
     const originalGetter = descriptor.get;
     descriptor.get = function() {
         const value = originalGetter.call(this);
