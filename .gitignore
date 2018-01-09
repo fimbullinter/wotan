@@ -59,7 +59,7 @@ typings/
 
 # compiled files
 *.js
-!/bin/cli.js
+!/bin/*.js
 *.js.map
 *.d.ts
 !/custom-typings/*.d.ts
