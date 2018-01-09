@@ -606,7 +606,6 @@ test('overrides, excludes, globs', (t) => {
 
     t.is(getProcessorForFile(empty, '/foo.ts', '/'), 'test');
 
-
     function check(c: Configuration, file: string, expected: EffectiveConfiguration) {
         t.deepEqual(reduceConfigurationForFile(c, file, '/'), expected);
         t.deepEqual(getSettingsForFile(c, file, '/'), expected.settings);
