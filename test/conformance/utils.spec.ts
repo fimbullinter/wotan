@@ -1,5 +1,5 @@
 import test from 'ava';
-import { calculateChangeRange, memoizeGetter } from '../../src/utils';
+import { calculateChangeRange, memoizeGetter, assertNever, resolveCachedResult } from '../../src/utils';
 
 test('calculateChangeRange', (t) => {
     assertRange('', 'a', 0, 0, 1);
@@ -105,4 +105,38 @@ test('memoizeGetter', (t) => {
         },
         '@memoizeGetter can only be used with get accessors.',
     );
+});
+
+test('assertNever', (t) => {
+    t.throws(() => assertNever(<never>'a'));
+});
+
+test('resolveCachedResult', (t) => {
+    const cache = new Map<string, string | undefined>();
+    t.is(
+        resolveCachedResult(cache, 'a', (key) => {
+            t.is(key, 'a');
+            return undefined; // tslint:disable-line
+        }),
+        undefined,
+    );
+    t.is(cache.size, 1);
+    t.true(cache.has('a'));
+    t.is(cache.get('a'), undefined);
+    t.is(resolveCachedResult(cache, 'a', () => t.fail('should not be called') || undefined), undefined);
+
+    t.is(
+        resolveCachedResult(cache, 'b', (key) => {
+            t.is(key, 'b');
+            return 'foo';
+        }),
+        'foo',
+    );
+    t.is(cache.size, 2);
+    t.true(cache.has('b'));
+    t.is(cache.get('b'), 'foo');
+    t.is(resolveCachedResult(cache, 'b', () => t.fail('should not be called') || undefined), 'foo');
+
+    cache.set('c', 'bar');
+    t.is(resolveCachedResult(cache, 'c', () => t.fail('should not be called') || undefined), 'bar');
 });
