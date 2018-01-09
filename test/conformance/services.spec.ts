@@ -30,6 +30,7 @@ import * as rimraf from 'rimraf';
 import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
 import { FormatterLoader } from '../../src/services/formatter-loader';
+import { ProcessorLoader } from '../../src/services/processor-loader';
 
 test('CacheManager', (t) => {
     const cm = new DefaultCacheManager();
@@ -347,4 +348,35 @@ test('FileSystem', (t) => {
 
 test.after.always(() => {
     rimraf.sync(tmpDir);
+});
+
+test('ProcessorLoader', (t) => {
+    let r: (id: string) => any;
+    const resolver: Resolver = {
+        resolve(): never {
+            throw new Error('should not be called');
+        },
+        require(id) {
+            return r(id);
+        },
+    };
+    const container = new Container();
+    container.bind(Resolver).toConstantValue(resolver);
+    container.bind(CacheManager).to(DefaultCacheManager);
+    const loader = container.resolve(ProcessorLoader);
+    t.throws(() => loader.loadProcessor('foo'), TypeError);
+    class Processor {}
+    r = (id) => {
+        t.is(id, 'test');
+        return {Processor};
+    };
+    t.is<any>(loader.loadProcessor('test'), Processor);
+    r = () => t.fail('should be cached');
+    t.is<any>(loader.loadProcessor('test'), Processor);
+    r = () => ({});
+    t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
+    r = require;
+    t.throws(() => loader.loadProcessor('fooBarBaz'), (err) => {
+        return (err instanceof ConfigurationError) && /Cannot find module 'fooBarBaz'/.test(err.message);
+    });
 });
