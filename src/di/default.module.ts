@@ -7,6 +7,7 @@ import {
     FileSystem,
     MessageHandler,
     DirectoryService,
+    DeprecationHandler,
 } from '../types';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
@@ -15,6 +16,7 @@ import { DefaultCacheManager } from '../services/default/cache-manager';
 import { NodeFileSystem } from '../services/default/file-system';
 import { ConsoleMessageHandler } from '../services/default/message-handler';
 import { NodeDirectoryService } from '../services/default/directory-service';
+import { DefaultDeprecationHandler } from '../services/default/deprecation-handler';
 
 export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
     if (!isBound(FormatterLoaderHost))
@@ -29,6 +31,8 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
         bind(FileSystem).to(NodeFileSystem);
     if (!isBound(MessageHandler))
         bind(MessageHandler).to(ConsoleMessageHandler);
+    if (!isBound(DeprecationHandler))
+        bind(DeprecationHandler).to(DefaultDeprecationHandler);
     if (!isBound(DirectoryService))
         bind(DirectoryService).to(NodeDirectoryService);
 });

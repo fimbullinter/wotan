@@ -1,7 +1,15 @@
 import 'reflect-metadata';
 import { test } from 'ava';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
-import { CacheIdentifier, WeakCacheIdentifier, FileSystem, CacheManager, Resolver } from '../../src/types';
+import {
+    CacheIdentifier,
+    WeakCacheIdentifier,
+    FileSystem,
+    CacheManager,
+    Resolver,
+    MessageHandler,
+    DeprecationTarget,
+} from '../../src/types';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import * as os from 'os';
 import { NodeRuleLoader } from '../../src/services/default/rule-loader-host';
@@ -9,7 +17,7 @@ import { Rule } from '../../src/rules/no-debugger';
 import * as path from 'path';
 import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
 import { ConfigurationError } from '../../src/error';
-import { Container } from 'inversify';
+import { Container, injectable } from 'inversify';
 import { NodeResolver } from '../../src/services/default/resolver';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
@@ -18,6 +26,7 @@ import { Formatter } from '../../src/formatters/json';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as ts from 'typescript';
+import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
 
 test('CacheManager', (t) => {
     const cm = new DefaultCacheManager();
@@ -119,6 +128,33 @@ test('MessageHandler', (t) => {
     t.is(errorOutput.length, 2);
     t.is(errorOutput[0], 'hello?');
     t.is(errorOutput[1], someError);
+});
+
+test('DeprecationHandler', (t) => {
+    let lastMessage: string | undefined;
+    @injectable()
+    class MockLogger implements MessageHandler {
+        public log(): void {
+            throw new Error('Should not be called.');
+        }
+        public warn(message: string): void {
+            lastMessage = message;
+        }
+        public error(): void {
+            throw new Error('Should not be called.');
+        }
+    }
+
+    const container = new Container();
+    container.bind(MessageHandler).to(MockLogger);
+    const deprecationHandler = container.resolve(DefaultDeprecationHandler);
+    deprecationHandler.handle(DeprecationTarget.Rule, 'my/foo');
+    t.is(lastMessage, "Rule 'my/foo' is deprecated.");
+    lastMessage = undefined;
+    deprecationHandler.handle(DeprecationTarget.Rule, 'my/foo');
+    t.is(lastMessage, "Rule 'my/foo' is deprecated.", 'calls through every time. does not deduplicate.');
+    deprecationHandler.handle(DeprecationTarget.Processor, '/some/cool/processor.js', 'Use that other processor instead.');
+    t.is(lastMessage, "Processor '/some/cool/processor.js' is deprecated: Use that other processor instead.");
 });
 
 test('Resolver', (t) => {

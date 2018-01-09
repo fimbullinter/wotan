@@ -281,6 +281,17 @@ export interface MessageHandler {
 }
 export abstract class MessageHandler {}
 
+export interface DeprecationHandler {
+    handle(target: DeprecationTarget, name: string, text?: string): void;
+}
+export abstract class DeprecationHandler {}
+
+export const enum DeprecationTarget {
+    Rule = 'rule',
+    Processor = 'processor',
+    Formatter = 'formatter',
+}
+
 /**
  * Low level file system access. All methods are supposed to throw an error on failure.
  */

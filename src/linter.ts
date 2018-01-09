@@ -111,7 +111,7 @@ export class Linter {
             if (ctor === undefined)
                 continue;
             if (program === undefined && ctor.requiresTypeInformation) {
-                this.logger.warn(`'${ruleName}' requires type information.`);
+                this.logger.warn(`Rule '${ruleName}' requires type information.`);
                 continue;
             }
             if (ctor.supports !== undefined && !ctor.supports(sourceFile, options, config.settings)) {
