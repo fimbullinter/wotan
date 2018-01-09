@@ -1,5 +1,5 @@
 import test from 'ava';
-import { reduceConfigurationForFile } from '../../src/configuration';
+import { reduceConfigurationForFile, getSettingsForFile, getProcessorForFile } from '../../src/configuration';
 import { Configuration, EffectiveConfiguration } from '../../src/types';
 
 test.skip('findConfigurationPath returns closest .wotanrc', (_t) => {
@@ -320,4 +320,296 @@ test('Aliases shadow rules until cleared', (t) => {
             ],
         ]),
     }, 'c/ should not pick up additional rulesDirectories'); // tslint:disable-line:align
+});
+
+test('overrides, excludes, globs', (t) => {
+    const config: Configuration = {
+        filename: '/project/.wotanrc.yaml',
+        extends: [],
+        processor: '/default',
+        rules: {
+            foo: { severity: 'error' },
+            bar: { severity: 'warning' },
+            baz: {
+                severity: 'error',
+                options: 1,
+            },
+            bas: {
+                severity: 'warning',
+                options: false,
+            },
+        },
+        settings: {
+            one: true,
+            two: 'hello?',
+        },
+        overrides: [
+            {
+                files: ['*.js'],
+                rules: {
+                    bas: {severity: 'error'},
+                },
+                processor: '/node_modules/js-processor',
+            },
+            {
+                files: ['*.spec.*', '!./*.spec.*'],
+                rules: {
+                    foo: {
+                        severity: 'off',
+                    },
+                    bas: {
+                        options: 'check-stuff',
+                    },
+                    other: {
+                        severity: 'warning',
+                    },
+                },
+                settings: {
+                    three: 'three',
+                    one: false,
+                },
+                processor: '',
+            },
+            {
+                files: ['./*.ts'],
+                processor: false,
+            },
+        ],
+    };
+
+    check(
+        config,
+        '/project/a.spec.js',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'error', options: false, rulesDirectories: undefined, rule: 'bas'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+            ]),
+            processor: '/node_modules/js-processor',
+        },
+    );
+
+    check(
+        config,
+        '/a.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+            ]),
+            processor: '/default',
+        },
+    );
+
+    check(
+        config,
+        '/project/a.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    check(
+        config,
+        '/project/a.spec.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    check(
+        config,
+        '/a.spec.js',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'off', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'error', options: 'check-stuff', rulesDirectories: undefined, rule: 'bas'}],
+                ['other', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'other'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', false],
+                ['two', 'hello?'],
+                ['three', 'three'],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    check(
+        config,
+        '/project/subdir/a.spec.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'off', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: 'check-stuff', rulesDirectories: undefined, rule: 'bas'}],
+                ['other', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'other'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', false],
+                ['two', 'hello?'],
+                ['three', 'three'],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    const extended: Configuration = {
+        filename: '/project/test/.wotanrc.json',
+        exclude: ['*.js', './foobar.ts'],
+        extends: [config],
+        rules: {
+            special: {
+                severity: 'warning',
+            },
+        },
+        settings: {
+            special: true,
+        },
+    };
+
+    t.is(reduceConfigurationForFile(extended, '/foo.js', '/'), undefined);
+    t.is(reduceConfigurationForFile(extended, '/project/foo.js', '/'), undefined);
+    t.is(reduceConfigurationForFile(extended, '/project/test/foo.js', '/'), undefined);
+    t.is(reduceConfigurationForFile(extended, '/project/test/subdir/foo.js', '/'), undefined);
+    t.is(reduceConfigurationForFile(extended, '/project/test/foobar.ts', '/'), undefined);
+
+    check(
+        extended,
+        '/project/test/subdir/foobar.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+                ['special', true],
+            ]),
+            processor: '/default',
+        },
+    );
+
+    check(
+        extended,
+        '/project/foobar.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+                ['special', true],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    const extended2: Configuration = {
+        extends: [extended],
+        filename: '/project/test/subdir/.wotanrc.json5',
+        processor: false,
+    };
+
+    t.is(reduceConfigurationForFile(extended2, '/foo.js', '/'), undefined);
+
+    check(
+        extended2,
+        '/project/test/subdir/foobar.ts',
+        {
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
+                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
+                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
+                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
+                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
+            ]),
+            settings: new Map<string, any>([
+                ['one', true],
+                ['two', 'hello?'],
+                ['special', true],
+            ]),
+            processor: undefined,
+        },
+    );
+
+    t.is(getProcessorForFile(extended2, '/foo.js', '/'), undefined);
+    t.is(getProcessorForFile(extended, '/foo.js', '/'), '/node_modules/js-processor');
+    t.is(getProcessorForFile(extended, '/foo.spec.js', '/'), undefined);
+    t.is(getProcessorForFile(extended, '/project/foo.js', '/'), '/node_modules/js-processor');
+    t.is(getProcessorForFile(extended, '/project/foo.spec.js', '/'), '/node_modules/js-processor');
+
+    t.deepEqual(getSettingsForFile(extended2, '/project/test/subdir/foo.js', '/'), new Map<string, any>([
+        ['one', true],
+        ['two', 'hello?'],
+        ['special', true],
+    ]));
+
+    const empty: Configuration = {
+        filename: '/.wotanrc.yaml',
+        extends: [
+            {
+                filename: '/base1.yaml',
+                extends: [],
+                processor: 'test',
+            },
+            {
+                filename: '/base2.yaml',
+                extends: [],
+            },
+        ],
+    };
+
+    t.is(getProcessorForFile(empty, '/foo.ts', '/'), 'test');
+
+
+    function check(c: Configuration, file: string, expected: EffectiveConfiguration) {
+        t.deepEqual(reduceConfigurationForFile(c, file, '/'), expected);
+        t.deepEqual(getSettingsForFile(c, file, '/'), expected.settings);
+        t.deepEqual(getProcessorForFile(c, file, '/'), expected.processor);
+    }
 });

@@ -168,7 +168,7 @@ export interface RawConfiguration {
     overrides?: RawConfiguration.Override[];
     rulesDirectories?: {[prefix: string]: string};
     exclude?: string | string[];
-    processor?: string;
+    processor?: string | null | false;
 }
 
 export namespace RawConfiguration {
@@ -182,7 +182,7 @@ export namespace RawConfiguration {
         files: string | string[];
         rules?: {[key: string]: RawConfiguration.RuleConfigValue};
         settings?: {[key: string]: any};
-        processor?: string;
+        processor?: string | null | false;
     }
     export interface Alias {
         rule: string;
@@ -198,7 +198,7 @@ export interface Configuration {
     overrides?: Configuration.Override[];
     extends: Configuration[];
     rulesDirectories?: Map<string, string>;
-    processor?: string;
+    processor?: string | null | false;
     exclude?: string[];
 }
 
@@ -212,7 +212,7 @@ export namespace Configuration {
         rules?: {[key: string]: RuleConfig};
         settings?: {[key: string]: any};
         files: string[];
-        processor?: string;
+        processor?: string | null | false;
     }
     export interface Alias {
         rule: string;

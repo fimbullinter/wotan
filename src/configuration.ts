@@ -110,7 +110,7 @@ function extendConfig(
     aliases: AliasMap,
 ) {
     if (processor !== undefined)
-        receiver.processor = processor;
+        receiver.processor = processor || undefined;
     if (rules) {
         for (const key of Object.keys(rules)) {
             const prev = receiver.rules.get(key);
@@ -169,7 +169,7 @@ export function getProcessorForFile(config: Configuration, fileName: string, cwd
     return findProcessorInConfig(config, path.resolve(cwd, fileName)) || undefined;
 }
 
-function findProcessorInConfig(config: Configuration, fileName: string): string | undefined {
+function findProcessorInConfig(config: Configuration, fileName: string): string | undefined | null | false {
     if (config.overrides) {
         const relative = path.relative(path.dirname(config.filename), fileName);
         for (let i = config.overrides.length - 1; i >= 0; --i) {

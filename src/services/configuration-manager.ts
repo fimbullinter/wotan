@@ -174,7 +174,7 @@ export class ConfigurationManager {
         };
     }
 
-    private mapProcessor(processor: string | undefined, basedir: string): string | undefined {
+    private mapProcessor(processor: RawConfiguration['processor'], basedir: string): Configuration['processor'] {
         return processor && this.resolver.resolve(
             processor,
             basedir,
