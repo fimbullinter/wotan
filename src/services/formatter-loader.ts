@@ -7,7 +7,7 @@ export class FormatterLoader {
     constructor(private host: FormatterLoaderHost, private directories: DirectoryService) {}
     public loadFormatter(name: string): FormatterConstructor {
         let formatter: FormatterConstructor | undefined;
-        if (/^[a-zA-Z]+$/.test(name))
+        if (/^[a-zA-Z-]+$/.test(name))
             formatter = this.host.loadCoreFormatter(name);
         if (formatter === undefined)
             formatter = this.host.loadCustomFormatter(name, this.directories.getCurrentDirectory());

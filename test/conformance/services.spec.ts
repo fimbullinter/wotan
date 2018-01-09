@@ -9,6 +9,8 @@ import {
     Resolver,
     MessageHandler,
     DeprecationTarget,
+    FormatterLoaderHost,
+    DirectoryService,
 } from '../../src/types';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import * as os from 'os';
@@ -27,6 +29,7 @@ import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
+import { FormatterLoader } from '../../src/services/formatter-loader';
 
 test('CacheManager', (t) => {
     const cm = new DefaultCacheManager();
@@ -190,6 +193,103 @@ test('FormatterLoaderHost', (t) => {
         require('../fixtures/node_modules/custom-formatter').Formatter, // tslint:disable-line
     );
     t.throws(() => loader.loadCustomFormatter('./test/fixtures/invalid', process.cwd()));
+});
+
+test('FormatterLoader', (t) => {
+    (() => {
+        let cwd = '/';
+        let coreRequested = 0;
+        let customRequested = 0;
+        const directoryService: DirectoryService = {
+            getCurrentDirectory() {
+                return cwd;
+            },
+        };
+        const host: FormatterLoaderHost = {
+            loadCoreFormatter(): undefined {
+                ++coreRequested;
+                return;
+            },
+            loadCustomFormatter(_name, dir): undefined {
+                t.is(dir, cwd, 'does not cache current directory');
+                ++customRequested;
+                return;
+            },
+        };
+
+        const container = new Container();
+        container.bind(DirectoryService).toConstantValue(directoryService);
+        container.bind(FormatterLoaderHost).toConstantValue(host);
+        const loader = container.resolve(FormatterLoader);
+        t.throws(() => loader.loadFormatter('foo'), "Could not find formatter 'foo' relative to '/'.");
+        t.is(coreRequested, 1);
+        t.is(customRequested, 1);
+        cwd = '/foo';
+        t.throws(() => loader.loadFormatter('./foo'), "Could not find formatter './foo' relative to '/foo'.");
+        t.is(coreRequested, 1);
+        t.is(customRequested, 2);
+        t.throws(() => loader.loadFormatter('foo-bar'), "Could not find formatter 'foo-bar' relative to '/foo'.");
+        t.is(coreRequested, 2);
+        t.is(customRequested, 3);
+    })();
+
+    (() => {
+        let customRequested = 0;
+        const directoryService: DirectoryService = {
+            getCurrentDirectory() {
+                return '/';
+            },
+        };
+        const host: FormatterLoaderHost = {
+            loadCoreFormatter() {
+                return Formatter;
+            },
+            loadCustomFormatter(): undefined {
+                ++customRequested;
+                return;
+            },
+        };
+
+        const container = new Container();
+        container.bind(DirectoryService).toConstantValue(directoryService);
+        container.bind(FormatterLoaderHost).toConstantValue(host);
+        const loader = container.resolve(FormatterLoader);
+        t.is(loader.loadFormatter('foo'), Formatter);
+        t.is(customRequested, 0);
+        t.is(loader.loadFormatter('foo-bar'), Formatter);
+        t.is(customRequested, 0);
+        t.throws(() => loader.loadFormatter('/foo/bar'), "Could not find formatter '/foo/bar' relative to '/'.");
+        t.is(customRequested, 1);
+    })();
+
+    (() => {
+        let coreRequested = 0;
+        const directoryService: DirectoryService = {
+            getCurrentDirectory() {
+                return '/';
+            },
+        };
+        const host: FormatterLoaderHost = {
+            loadCustomFormatter() {
+                return Formatter;
+            },
+            loadCoreFormatter(): undefined {
+                ++coreRequested;
+                return;
+            },
+        };
+
+        const container = new Container();
+        container.bind(DirectoryService).toConstantValue(directoryService);
+        container.bind(FormatterLoaderHost).toConstantValue(host);
+        const loader = container.resolve(FormatterLoader);
+        t.is(loader.loadFormatter('foo'), Formatter);
+        t.is(coreRequested, 1);
+        t.is(loader.loadFormatter('foo-bar'), Formatter);
+        t.is(coreRequested, 2);
+        t.is(loader.loadFormatter('/foo/bar'), Formatter);
+        t.is(coreRequested, 2);
+    })();
 });
 
 let tmpDir: string;
