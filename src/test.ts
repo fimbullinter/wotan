@@ -111,8 +111,9 @@ export function createBaseline(summary: FileSummary): string {
 
 function formatFailure(failure: Failure, lineStart: number, lineLength: number, nextLineStart: number, remaining: Failure[]): string {
     const lineEnd = lineStart + lineLength;
-    let errorLine = ' '.repeat(failure.start.position - lineStart);
-    const failureLength = Math.min(lineEnd, failure.end.position) - Math.max(failure.start.position, lineStart);
+    const failureStart = Math.max(failure.start.position, lineStart);
+    let errorLine = ' '.repeat(failureStart - lineStart);
+    const failureLength = Math.min(lineEnd, failure.end.position) - failureStart;
     errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
     if (failure.end.position <= nextLineStart)
         return errorLine + ' '.repeat(Math.max(1, lineLength - errorLine.length + 1)) +
