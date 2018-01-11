@@ -376,7 +376,7 @@ test('ProcessorLoader', (t) => {
     r = () => ({});
     t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
     r = require;
-    t.throws(() => loader.loadProcessor('fooBarBaz'), (err) => {
-        return (err instanceof ConfigurationError) && /Cannot find module 'fooBarBaz'/.test(err.message);
+    t.throws(() => loader.loadProcessor('./fooBarBaz'), (err) => {
+        return (err instanceof ConfigurationError) && /Cannot find module '\.\/fooBarBaz'/.test(err.message);
     });
 });

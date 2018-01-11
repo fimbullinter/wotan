@@ -1,24 +1,129 @@
+import 'reflect-metadata';
 import test from 'ava';
 import { reduceConfigurationForFile, getSettingsForFile, getProcessorForFile } from '../../src/configuration';
-import { Configuration, EffectiveConfiguration } from '../../src/types';
+import { Configuration, EffectiveConfiguration, CacheManager, Resolver, DirectoryService, FileSystem, Stats } from '../../src/types';
+import { Container, injectable } from 'inversify';
+import { CachedFileSystem } from '../../src/services/cached-file-system';
+import { DefaultCacheManager } from '../../src/services/default/cache-manager';
+import { NodeResolver } from '../../src/services/default/resolver';
+import { NodeDirectoryService } from '../../src/services/default/directory-service';
+import { unixifyPath } from '../../src/utils';
+import * as path from 'path';
+import { ConfigurationManager } from '../../src/services/configuration-manager';
+import * as os from 'os';
 
-test.skip('findConfigurationPath returns closest .wotanrc', (_t) => {
-    /*t.is(
-        findConfigurationPath('test/fixtures/configuration/config-findup/foo.ts'),
-        path.resolve('test/fixtures/configuration/config-findup/.wotanrc.yaml'),
+test('findConfigurationPath returns closest .wotanrc and falls back to homedir if available', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService).inSingletonScope();
+    @injectable()
+    class MockFileSystem implements FileSystem {
+        private files: string[];
+        constructor() {
+            const files = [
+                'test/configuration/.wotanrc.yaml',
+                'test/configuration/prefer-yaml/.wotanrc.yml',
+                'test/configuration/prefer-yaml/.wotanrc.yaml',
+                'test/configuration/prefer-yml/.wotanrc.json5',
+                'test/configuration/prefer-yml/.wotanrc.yml',
+                'test/configuration/prefer-json5/.wotanrc.json5',
+                'test/configuration/prefer-json5/.wotanrc.json',
+                'test/configuration/prefer-json/.wotanrc.json',
+                'test/configuration/prefer-json/.wotanrc.js',
+                'test/configuration/js/.wotanrc.js',
+                '../.wotanrc.yaml',
+            ];
+            this.files = files.map((f) => path.posix.resolve(f));
+            this.files.push(path.posix.resolve(os.homedir(), '.wotanrc.json'));
+        }
+        public normalizePath(file: string): string {
+            return unixifyPath(file);
+        }
+        public readFile(): string {
+            throw new Error('Method not implemented.');
+        }
+        public readDirectory(): string[] {
+            throw new Error('Method not implemented.');
+        }
+        public stat(file: string): Stats {
+            if (this.files.includes(file))
+                return {
+                    isDirectory() { return false; },
+                    isFile() { return true; },
+                };
+            if (file === path.posix.resolve('configuration/.wotanrc.json'))
+                return {
+                    isDirectory() { return true; },
+                    isFile() { return false; },
+                };
+            throw new Error();
+        }
+        public writeFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public deleteFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public createDirectory(): void {
+            throw new Error('Method not implemented.');
+        }
+    }
+    container.bind(FileSystem).to(MockFileSystem);
+    const cm = container.resolve(ConfigurationManager);
+    t.is(
+        cm.findConfigurationPath('test/configuration/config-findup/foo.ts'),
+        path.resolve('test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        findConfigurationPath('test/fixtures/configuration/config-findup/a/foo.ts'),
-        path.resolve('test/fixtures/configuration/config-findup/a/.wotanrc.json'),
+        cm.findConfigurationPath('test/configuration/foo.ts'),
+        path.resolve('test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        findConfigurationPath('test/fixtures/configuration/config-findup/a/aa/foo.ts'),
-        path.resolve('test/fixtures/configuration/config-findup/a/.wotanrc.json'),
+        cm.findConfigurationPath('test/configuration/prefer-yaml/foo.ts'),
+        path.resolve('test/configuration/prefer-yaml/.wotanrc.yaml'),
     );
     t.is(
-        findConfigurationPath('test/fixtures/configuration/config-findup/b/foo.ts'),
-        path.resolve('test/fixtures/configuration/config-findup/.wotanrc.yaml'),
-    );*/
+        cm.findConfigurationPath('test/configuration/prefer-yml/foo.ts'),
+        path.resolve('test/configuration/prefer-yml/.wotanrc.yml'),
+    );
+    t.is(
+        cm.findConfigurationPath('test/configuration/prefer-json5/subdir/foo.ts'),
+        path.resolve('test/configuration/prefer-json5/.wotanrc.json5'),
+    );
+    t.is(
+        cm.findConfigurationPath('test/configuration/prefer-json/foo.ts'),
+        path.resolve('test/configuration/prefer-json/.wotanrc.json'),
+    );
+    t.is(
+        cm.findConfigurationPath('test/configuration/js/foo.ts'),
+        path.resolve('test/configuration/js/.wotanrc.js'),
+    );
+    t.is(
+        cm.findConfigurationPath('test/foo.ts'),
+        path.resolve('../.wotanrc.yaml'),
+    );
+    t.is(
+        cm.findConfigurationPath('/foo.ts'),
+        path.resolve(os.homedir(), '.wotanrc.json'),
+    );
+
+    const directories = container.get(DirectoryService);
+    directories.getHomeDirectory = () => '/non-existent';
+    t.is(
+        cm.findConfigurationPath('/bar.ts'),
+        undefined,
+    );
+    directories.getHomeDirectory = undefined;
+    t.is(
+        cm.findConfigurationPath('/baz.ts'),
+        undefined,
+    );
+    t.is(
+        cm.findConfigurationPath('test/bas.ts'),
+        path.resolve('../.wotanrc.yaml'),
+    );
 });
 
 test('Circular aliases throw an exception', (t) => {

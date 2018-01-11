@@ -333,7 +333,9 @@ export interface FormatterLoaderHost {
 export abstract class FormatterLoaderHost {}
 
 export interface CacheManager {
+    /** Returns the existing cache if one exists for the given id. */
     get<K, V>(id: CacheIdentifier<K, V>): Cache<K, V> | undefined;
+    /** Returns the existing cache or creates a new one for the given id. */
     create<K, V>(id: CacheIdentifier<K, V>): Cache<K, V>;
 }
 export abstract class CacheManager {}

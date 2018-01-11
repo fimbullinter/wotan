@@ -39,8 +39,8 @@ export class ConfigurationManager {
 
     public findConfigurationPath(file: string): string | undefined {
         let result = this.findupConfig(path.resolve(this.directories.getCurrentDirectory(), file));
-        if (result === undefined)
-            result = this.findConfigurationInHomeDirectory();
+        if (result === undefined && this.directories.getHomeDirectory !== undefined)
+            result = this.findConfigFileInDirectory(this.directories.getHomeDirectory());
         return result;
     }
 
@@ -222,31 +222,24 @@ export class ConfigurationManager {
         }
     }
 
-    private findConfigurationInHomeDirectory(): string | undefined {
-        if (this.directories.getHomeDirectory === undefined)
-            return;
-        const homeDir = this.directories.getHomeDirectory();
-        const result = this.findConfigFileInDirectory(homeDir);
-        return result === undefined ? undefined : path.join(homeDir, result);
-    }
-
     private findupConfig(current: string): string | undefined {
         let next = path.dirname(current);
         while (next !== current) {
             current = next;
             const config = this.findConfigFileInDirectory(current);
             if (config !== undefined)
-                return path.join(current, config);
+                return config;
             next = path.dirname(next);
         }
         return;
     }
 
     private findConfigFileInDirectory(dir: string): string | undefined {
-        const entries = this.fs.readDirectory(dir);
-        for (const name of CONFIG_FILENAMES)
-            if (entries.includes(name))
+        for (let name of CONFIG_FILENAMES) {
+            name = path.join(dir, name);
+            if (this.fs.isFile(name))
                 return name;
+        }
         return;
     }
 }
