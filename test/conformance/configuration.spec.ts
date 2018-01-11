@@ -6,18 +6,22 @@ import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
 import { NodeResolver } from '../../src/services/default/resolver';
-import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { ConfigurationManager } from '../../src/services/configuration-manager';
-import * as os from 'os';
 
 test('findConfigurationPath returns closest .wotanrc and falls back to homedir if available', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(Resolver).to(NodeResolver);
-    container.bind(DirectoryService).to(NodeDirectoryService).inSingletonScope();
+
+    const directories: DirectoryService = {
+        getCurrentDirectory: () => '/some/project/directory',
+        getHomeDirectory: () => '/.homedir',
+    };
+    container.bind(DirectoryService).toConstantValue(directories);
+
     @injectable()
     class MockFileSystem implements FileSystem {
         private files: string[];
@@ -35,8 +39,8 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
                 'test/configuration/js/.wotanrc.js',
                 '../.wotanrc.yaml',
             ];
-            this.files = files.map((f) => path.posix.resolve(f));
-            this.files.push(path.posix.resolve(os.homedir(), '.wotanrc.json'));
+            this.files = files.map((f) => path.posix.resolve('/some/project/directory', f));
+            this.files.push(path.posix.resolve('/.homedir', '.wotanrc.json'));
         }
         public normalizePath(file: string): string {
             return unixifyPath(file);
@@ -53,7 +57,7 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
                     isDirectory() { return false; },
                     isFile() { return true; },
                 };
-            if (file === path.posix.resolve('configuration/.wotanrc.json'))
+            if (file === path.posix.resolve('/some/project/directory', 'configuration/.wotanrc.json'))
                 return {
                     isDirectory() { return true; },
                     isFile() { return false; },
@@ -74,42 +78,41 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     const cm = container.resolve(ConfigurationManager);
     t.is(
         cm.findConfigurationPath('test/configuration/config-findup/foo.ts'),
-        path.resolve('test/configuration/.wotanrc.yaml'),
+        path.resolve('/some/project/directory/test/configuration/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/foo.ts'),
-        path.resolve('test/configuration/.wotanrc.yaml'),
+        path.resolve('/some/project/directory/test/configuration/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-yaml/foo.ts'),
-        path.resolve('test/configuration/prefer-yaml/.wotanrc.yaml'),
+        path.resolve('/some/project/directory/test/configuration/prefer-yaml/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-yml/foo.ts'),
-        path.resolve('test/configuration/prefer-yml/.wotanrc.yml'),
+        path.resolve('/some/project/directory/test/configuration/prefer-yml/.wotanrc.yml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-json5/subdir/foo.ts'),
-        path.resolve('test/configuration/prefer-json5/.wotanrc.json5'),
+        path.resolve('/some/project/directory/test/configuration/prefer-json5/.wotanrc.json5'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-json/foo.ts'),
-        path.resolve('test/configuration/prefer-json/.wotanrc.json'),
+        path.resolve('/some/project/directory/test/configuration/prefer-json/.wotanrc.json'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/js/foo.ts'),
-        path.resolve('test/configuration/js/.wotanrc.js'),
+        path.resolve('/some/project/directory/test/configuration/js/.wotanrc.js'),
     );
     t.is(
         cm.findConfigurationPath('test/foo.ts'),
-        path.resolve('../.wotanrc.yaml'),
+        path.resolve('/some/project/directory/../.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('/foo.ts'),
-        path.resolve(os.homedir(), '.wotanrc.json'),
+        path.resolve('/.homedir/.wotanrc.json'),
     );
 
-    const directories = container.get(DirectoryService);
     directories.getHomeDirectory = () => '/non-existent';
     t.is(
         cm.findConfigurationPath('/bar.ts'),
@@ -122,7 +125,7 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     );
     t.is(
         cm.findConfigurationPath('test/bas.ts'),
-        path.resolve('../.wotanrc.yaml'),
+        path.resolve('/some/project/directory/../.wotanrc.yaml'),
     );
 });
 
