@@ -173,3 +173,46 @@ This package officially supports the latest stable version of TypeScript. We try
 We try to support TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
 
 Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from this module.
+
+## Semantic Versioning (SemVer policy)
+
+In theory every change to a rule can break users and could be considered a breaking change. To avoid releasing a new major version for every bug fix, we have slightly different guidelines as outlined below.
+
+### Prereleases (nightly builds)
+
+* are not guaranteed to be stable
+* contains the latest changes intended for the next release
+  * `x.0.0-dev*` contains all changes including breaking ones for the next major version
+  * `x.y.0-dev*` contains all changes for the next minor version
+  * there are no prereleases for patch versions
+
+### Patch Releases
+
+* fixes crashes
+* fixes regressions
+* refactorings of internal functionality that don't change user facing behavior
+
+### Minor Releases
+
+* adds new rules, rule options, formatters, processors, APIs
+* rules can add new checks that may lead to new failures
+* new rules and options are enabled in `wotan:latest`
+* rules can change their failure messages
+* formatters intended for human consumtion (e.g. `stylish`) can change their output
+* rules, rule options, formatters, processors and APIs can be deprecated
+* new configuration options can be added to configuration files
+
+### Major Releases
+
+* contains breaking API changes
+* removes previously deprecated rules, options, formatters, etc.
+* formatters intended for machine consumption (e.g. `json` or `tap`) can change their output
+* `wotan:recommended` is updated to the content of `wotan:latest`
+
+## Release Schedule
+
+Currently there is no fixed release schedule.
+Nightly builds are published every night if there are changes on master.
+Patch releases are published as soon as bugs are identified and fixed.
+Minor releases are published every week or two if there changes on master.
+Major releases are published once enough breaking changes have piled up.
