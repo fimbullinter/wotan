@@ -16,8 +16,9 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(Resolver).to(NodeResolver);
 
+    const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
     const directories: DirectoryService = {
-        getCurrentDirectory: () => '/some/project/directory',
+        getCurrentDirectory: () => cwd,
         getHomeDirectory: () => '/.homedir',
     };
     container.bind(DirectoryService).toConstantValue(directories);
@@ -39,7 +40,7 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
                 'test/configuration/js/.wotanrc.js',
                 '../.wotanrc.yaml',
             ];
-            this.files = files.map((f) => path.posix.resolve('/some/project/directory', f));
+            this.files = files.map((f) => unixifyPath(path.resolve('/some/project/directory', f)));
             this.files.push(path.posix.resolve('/.homedir', '.wotanrc.json'));
         }
         public normalizePath(file: string): string {
@@ -57,7 +58,7 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
                     isDirectory() { return false; },
                     isFile() { return true; },
                 };
-            if (file === path.posix.resolve('/some/project/directory', 'configuration/.wotanrc.json'))
+            if (file === unixifyPath(path.resolve(cwd, 'configuration/.wotanrc.json')))
                 return {
                     isDirectory() { return true; },
                     isFile() { return false; },
@@ -78,39 +79,39 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     const cm = container.resolve(ConfigurationManager);
     t.is(
         cm.findConfigurationPath('test/configuration/config-findup/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/.wotanrc.yaml'),
+        path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/.wotanrc.yaml'),
+        path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-yaml/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/prefer-yaml/.wotanrc.yaml'),
+        path.resolve(cwd, 'test/configuration/prefer-yaml/.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-yml/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/prefer-yml/.wotanrc.yml'),
+        path.resolve(cwd, 'test/configuration/prefer-yml/.wotanrc.yml'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-json5/subdir/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/prefer-json5/.wotanrc.json5'),
+        path.resolve(cwd, 'test/configuration/prefer-json5/.wotanrc.json5'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/prefer-json/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/prefer-json/.wotanrc.json'),
+        path.resolve(cwd, 'test/configuration/prefer-json/.wotanrc.json'),
     );
     t.is(
         cm.findConfigurationPath('test/configuration/js/foo.ts'),
-        path.resolve('/some/project/directory/test/configuration/js/.wotanrc.js'),
+        path.resolve(cwd, 'test/configuration/js/.wotanrc.js'),
     );
     t.is(
         cm.findConfigurationPath('test/foo.ts'),
-        path.resolve('/some/project/directory/../.wotanrc.yaml'),
+        path.resolve(cwd, '../.wotanrc.yaml'),
     );
     t.is(
         cm.findConfigurationPath('/foo.ts'),
-        path.resolve('/.homedir/.wotanrc.json'),
+        path.normalize('/.homedir/.wotanrc.json'),
     );
 
     directories.getHomeDirectory = () => '/non-existent';
@@ -125,7 +126,7 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     );
     t.is(
         cm.findConfigurationPath('test/bas.ts'),
-        path.resolve('/some/project/directory/../.wotanrc.yaml'),
+        path.resolve(cwd, '../.wotanrc.yaml'),
     );
 });
 
