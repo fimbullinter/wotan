@@ -20,12 +20,14 @@ import {
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
 import * as debug from 'debug';
-import { Container, injectable } from 'inversify';
+import { Container, injectable, interfaces } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange } from './utils';
 import { ConvertedAst, convertAst } from 'tsutils';
 
 const log = debug('wotan:linter');
+
+const convertedAst = Symbol('ConvertedAst');
 
 export interface UpdateFileResult {
     file: ts.SourceFile;
@@ -145,21 +147,13 @@ export class Linter {
             sourceFile,
         };
 
-        let convertedAst: ConvertedAst | undefined;
         const container = new Container();
-        container.bind<RuleContext>(RuleContext).toConstantValue(context);
-        container.bind(RuleOptions).toDynamicValue(() => options);
+        container.bind(RuleContext).toConstantValue(context);
+        container.bind<any>(RuleOptions).toDynamicValue(() => options);
         container.bind(GlobalSettings).toConstantValue(settings);
-        container.bind(WrappedAst).toDynamicValue(() => {
-            if (convertedAst === undefined)
-                convertedAst = convertAst(sourceFile);
-            return convertedAst.wrapped;
-        }).inSingletonScope();
-        container.bind(FlattenedAst).toDynamicValue(() => {
-            if (convertedAst === undefined)
-                convertedAst = convertAst(sourceFile);
-            return convertedAst.flat;
-        }).inSingletonScope();
+        container.bind<ConvertedAst>(convertedAst).toDynamicValue(convertSourceFile).inSingletonScope();
+        container.bind(WrappedAst).toDynamicValue(getWrappedAst).inSingletonScope();
+        container.bind(FlattenedAst).toDynamicValue(getFlattenedAst).inSingletonScope();
         if (program !== undefined)
             container.bind<RuleContext>(TypedRuleContext).toService(RuleContext);
 
@@ -207,6 +201,16 @@ export class Linter {
             return false;
         }
     }
+}
+
+function convertSourceFile(context: interfaces.Context) {
+    return convertAst(context.container.get(RuleContext).sourceFile);
+}
+function getFlattenedAst(context: interfaces.Context) {
+    return context.container.get<ConvertedAst>(convertedAst).flat;
+}
+function getWrappedAst(context: interfaces.Context) {
+    return context.container.get<ConvertedAst>(convertedAst).wrapped;
 }
 
 interface PreparedRule {

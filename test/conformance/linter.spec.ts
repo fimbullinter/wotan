@@ -11,6 +11,7 @@ import {
     DeprecationHandler,
     EffectiveConfiguration,
     Failure,
+    Replacement,
 } from '../../src/types';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
 import { RuleLoader } from '../../src/services/rule-loader';
@@ -29,8 +30,11 @@ class MyDeprecatedRule extends AbstractRule {
         this.addFailure(0, 0, 'message', []);
     }
 }
-class MyCustomDeprecatedRule extends MyDeprecatedRule {
+class MyCustomDeprecatedRule extends AbstractRule {
     public static deprecated = 'Use that other rule instead.';
+    public apply() {
+        this.addFailure(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
+    }
 }
 
 test('Linter', (t) => {
@@ -126,7 +130,9 @@ test('Linter', (t) => {
         }),
         [{
             ruleName: 'my/other/alias',
-            fix: undefined,
+            fix: {
+                replacements: [{start: 0, end: 0, text: '\uFEFF'}],
+            },
             message: 'message',
             severity: 'error',
             start: {position: 0, line: 0, character: 0},
