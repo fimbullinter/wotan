@@ -14,6 +14,8 @@ import {
     AbstractProcessor,
     FlattenedAst,
     WrappedAst,
+    DeprecationHandler,
+    DeprecationTarget,
 } from './types';
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
@@ -35,7 +37,7 @@ export type PostprocessCallback = (failures: Failure[]) => Failure[];
 
 @injectable()
 export class Linter {
-    constructor(private ruleLoader: RuleLoader, private logger: MessageHandler) {}
+    constructor(private ruleLoader: RuleLoader, private logger: MessageHandler, private deprecationHandler: DeprecationHandler) {}
 
     public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
         return this.getFailures(file, config, program, undefined);
@@ -110,6 +112,12 @@ export class Linter {
             const ctor = this.ruleLoader.loadRule(rule, rulesDirectories);
             if (ctor === undefined)
                 continue;
+            if (ctor.deprecated)
+                this.deprecationHandler.handle(
+                    DeprecationTarget.Rule,
+                    ruleName,
+                    typeof ctor.deprecated === 'string' ? ctor.deprecated : undefined,
+                );
             if (program === undefined && ctor.requiresTypeInformation) {
                 this.logger.warn(`Rule '${ruleName}' requires type information.`);
                 continue;

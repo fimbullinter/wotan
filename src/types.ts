@@ -72,6 +72,7 @@ export type Severity = 'error' | 'warning';
 // @internal
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
+    deprecated?: boolean | string;
     supports?(sourceFile: ts.SourceFile, options: any, settings: ReadonlyMap<string, any>): boolean;
     new(context: RuleContext): AbstractRule;
 }
@@ -104,6 +105,7 @@ export abstract class GlobalSettings {}
 @injectable()
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
+    public static deprecated?: boolean | string;
     public static supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
     public static validateConfig?(config: any): string[] | string | undefined;
 
