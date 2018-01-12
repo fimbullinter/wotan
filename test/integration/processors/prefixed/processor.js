@@ -1,4 +1,4 @@
-const {AbstractProcessor} = require('../../../src/types');
+const {AbstractProcessor} = require('../../../../src/types');
 
 class Processor extends AbstractProcessor {
     static transformName(name) {
