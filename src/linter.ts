@@ -135,12 +135,6 @@ export class Linter {
             isDisabled,
             program,
             sourceFile,
-            addFailureAt(start, length, message, fix) {
-                addFailure(start, start + length, message, fix);
-            },
-            addFailureAtNode(node, message, fix) {
-                addFailure(node.getStart(sourceFile), node.end, message, fix);
-            },
         };
 
         let convertedAst: ConvertedAst | undefined;

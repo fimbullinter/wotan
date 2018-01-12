@@ -62,7 +62,7 @@ test('Fixer', (t) => {
 
     t.deepEqual(
         applyFixes('abc', [
-            {replacements: [Replacement.delete(0, 1), Replacement.deleteAt(2, 1), Replacement.append(2, 'd')]},
+            {replacements: [Replacement.delete(0, 1), Replacement.delete(2, 3), Replacement.append(2, 'd')]},
         ]),
         {
             result: 'bd',
@@ -83,11 +83,11 @@ test('Fixer', (t) => {
         'Multiple insertion replacements at the same position.',
     );
     t.throws(
-        () => applyFixes('', [{replacements: [Replacement.deleteAt(1, 3), Replacement.replaceAt(1, 3, 'b')]}]),
+        () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replace(1, 4, 'b')]}]),
         'Replacements of fix overlap.',
     );
     t.throws(
-        () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replaceAt(2, 3, 'b')]}]),
+        () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replace(2, 5, 'b')]}]),
         'Replacements of fix overlap.',
     );
     t.throws(

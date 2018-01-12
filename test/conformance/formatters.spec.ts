@@ -40,8 +40,8 @@ summary.set('/some/directory/a.ts', {
 summary.set('/some/other/directory/b.ts', {
     content: 'foo = bar',
     failures: [
-        createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.deleteAt(0, 3)]),
-        createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.replaceAt(6, 3, 'baz')]),
+        createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
+        createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.replace(6, 9, 'baz')]),
         createFailure('equals', 'error', 'no equals', 4, 5),
     ],
     fixes: 1,

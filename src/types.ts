@@ -20,17 +20,14 @@ export interface Replacement {
 }
 
 export abstract class Replacement {
+    public static replace(start: number, end: number, text: string): Replacement {
+        return {start, end, text};
+    }
     public static append(pos: number, text: string): Replacement {
         return {start: pos, end: pos, text}; // tslint:disable-line:object-shorthand-properties-first
     }
     public static delete(start: number, end: number): Replacement {
         return {start, end, text: ''};
-    }
-    public static replaceAt(start: number, length: number, text: string): Replacement {
-        return {start, end: start + length, text}; // tslint:disable-line:object-shorthand-properties-first
-    }
-    public static deleteAt(start: number, length: number): Replacement {
-        return {start, end: start + length, text: ''};
     }
 }
 
@@ -83,8 +80,6 @@ export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
     addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
-    addFailureAt(this: void, start: number, length: number, message: string, fix?: Replacement | Replacement[]): void;
-    addFailureAtNode(this: void, node: ts.Node, message: string, fix?: Replacement | Replacement[]): void;
     /**
      * Detect if the rule is disabled somewhere in the given range.
      * A rule is considered disabled if the given range contains or overlaps a range disabled by line switches.
@@ -123,15 +118,11 @@ export abstract class AbstractRule {
     public abstract apply(): void;
 
     public addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]) {
-        this.context.addFailure(start, end, message, fix);
-    }
-
-    public addFailureAt(start: number, length: number, message: string, fix?: Replacement | Replacement[]) {
-        this.addFailure(start, start + length, message, fix);
+        return this.context.addFailure(start, end, message, fix);
     }
 
     public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | Replacement[]) {
-        this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
+        return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
     }
 }
 
