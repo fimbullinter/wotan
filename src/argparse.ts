@@ -88,6 +88,7 @@ function parseTestCommand(args: string[]): TestCommand {
             case '--bail':
                 ({index: i, argument: result.bail} = parseOptionalBoolean(args, i));
                 break;
+            case '-u':
             case '--update':
                 ({index: i, argument: result.updateBaselines} = parseOptionalBoolean(args, i));
                 break;

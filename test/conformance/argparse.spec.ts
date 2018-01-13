@@ -217,3 +217,41 @@ test('parses show command', (t) => {
 
     t.throws(() => parseArguments(['show', '--foobar']), "Unknown option '--foobar'.");
 });
+
+test('parses test command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(['test', '-u', 'foo', '--exact', '--bail']),
+        {
+            command: CommandName.Test,
+            files: ['foo'],
+            updateBaselines: true,
+            bail: true,
+            exact: true,
+        },
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['test', '-u', '--update', 'false', 'bar']),
+        {
+            command: CommandName.Test,
+            files: ['bar'],
+            updateBaselines: false,
+            bail: false,
+            exact: false,
+        },
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['test', 'foo', 'bar', '--', '-u']),
+        {
+            command: CommandName.Test,
+            files: ['foo', 'bar', '-u'],
+            updateBaselines: false,
+            bail: false,
+            exact: false,
+        },
+    );
+
+    t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), 'filename expected.');
+    t.throws(() => parseArguments(['test', '--option']), "Unknown option '--option'.");
+});
