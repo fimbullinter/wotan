@@ -1,11 +1,25 @@
-async function test() {
+interface MyWeirdPromise<V> {
+    then<T extends (p: V) => void>(cb: T): void;
+}
+interface MyEvenWeirderPromise<T> {
+    then(cb: T): void;
+}
+async function test<T extends PromiseLike<string>, U extends {then(cb: () => void): void}>(p1: T, p2: U) {
     try {
+        return p1;
+        return p2;
         return get<Promise<void>>();
         return get<PromiseLike<void>>();
+        return get<MyWeirdPromise<string>>();
+        return get<MyEvenWeirderPromise<(v: string) => void>>();
+        return get<Record<'then', (cb: (v: string) => void) => void>>();
+        return get<Pick<PromiseLike<string>, 'then'>>();
         return get<PromiseLike<void> | Promise<void>>();
         return get<PromiseLike<string> | PromiseLike<number>>();
         return get<Promise<string> | PromiseLike<number>>();
         return get<(Promise<string> | PromiseLike<number>) & {foo: any}>();
+        return get<{then(): void, then(cb: (v: string) => void): void}>();
+        return get<{then: {(): void, (cb: (v: string) => void): void}}>();
         return get<{then(...args: Array<() => void>): void}>();
         return get<{then(cb: () => void): void}>();
         return get<{then(cb: (v: string) => void): void}>();

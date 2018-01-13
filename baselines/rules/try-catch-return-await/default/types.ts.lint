@@ -1,9 +1,27 @@
-async function test() {
+interface MyWeirdPromise<V> {
+    then<T extends (p: V) => void>(cb: T): void;
+}
+interface MyEvenWeirderPromise<T> {
+    then(cb: T): void;
+}
+async function test<T extends PromiseLike<string>, U extends {then(cb: () => void): void}>(p1: T, p2: U) {
     try {
+        return p1;
+        ~~~~~~     [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return p2;
+        ~~~~~~     [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<Promise<void>>();
         ~~~~~~                       [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<PromiseLike<void>>();
         ~~~~~~                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<MyWeirdPromise<string>>();
+        ~~~~~~                                [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<MyEvenWeirderPromise<(v: string) => void>>();
+        ~~~~~~                                                   [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<Record<'then', (cb: (v: string) => void) => void>>();
+        ~~~~~~                                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<Pick<PromiseLike<string>, 'then'>>();
+        ~~~~~~                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<PromiseLike<void> | Promise<void>>();
         ~~~~~~                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<PromiseLike<string> | PromiseLike<number>>();
@@ -12,6 +30,10 @@ async function test() {
         ~~~~~~                                               [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<(Promise<string> | PromiseLike<number>) & {foo: any}>();
         ~~~~~~                                                              [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<{then(): void, then(cb: (v: string) => void): void}>();
+        ~~~~~~                                                             [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<{then: {(): void, (cb: (v: string) => void): void}}>();
+        ~~~~~~                                                             [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<{then(...args: Array<() => void>): void}>();
         ~~~~~~                                                  [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<{then(cb: () => void): void}>();
