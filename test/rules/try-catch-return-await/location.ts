@@ -59,7 +59,25 @@ async function test() {
     }
     try {
         return x;
+        try {
+            return x;
+        } catch {
+            return x;
+        }
+        return x;
+        try {
+            return x;
+        } finally {
+            return x;
+        }
+        return x;
     } catch {
+        return x;
+        try {
+            return x;
+        } catch {
+            return x;
+        }
         return x;
     }
     function nested() {
