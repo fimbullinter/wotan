@@ -77,20 +77,27 @@ export class Rule extends TypedRule {
                 pos - 'return'.length,
                 pos,
                 "Missing 'await' of Promise returned inside try-catch.",
-                Replacement.append(pos, ' await'),
+                needsParens(node)
+                    ? [
+                        Replacement.append(pos, ' await'),
+                        Replacement.append(node.getStart(this.sourceFile), '('),
+                        Replacement.append(node.end, ')'),
+                    ]
+                    : Replacement.append(pos, ' await'),
             );
     }
 
     private isPromiseLike(node: ts.Expression): boolean {
-        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
-        const then = type.getProperty('then');
-        if (then === undefined)
-            return false;
-        const thenType = this.checker.getTypeOfSymbolAtLocation(then, node);
-        for (const t of unionTypeParts(thenType))
-            for (const signature of t.getCallSignatures())
-                if (signature.parameters.length !== 0 && this.isCallback(signature.parameters[0], node))
-                    return true;
+        for (const type of unionTypeParts(this.checker.getApparentType(this.checker.getTypeAtLocation(node)))) {
+            const then = type.getProperty('then');
+            if (then === undefined)
+                continue;
+            const thenType = this.checker.getTypeOfSymbolAtLocation(then, node);
+            for (const t of unionTypeParts(thenType))
+                for (const signature of t.getCallSignatures())
+                    if (signature.parameters.length !== 0 && this.isCallback(signature.parameters[0], node))
+                        return true;
+        }
         return false;
     }
 
@@ -106,5 +113,15 @@ export class Rule extends TypedRule {
             if (t.getCallSignatures().length !== 0)
                 return true;
         return false;
+    }
+}
+
+function needsParens(node: ts.Expression) {
+    switch (node.kind) {
+        case ts.SyntaxKind.ConditionalExpression:
+        case ts.SyntaxKind.BinaryExpression:
+            return node.parent!.kind !== ts.SyntaxKind.ParenthesizedExpression;
+        default:
+            return false;
     }
 }

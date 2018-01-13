@@ -1,3 +1,5 @@
+export {};
+declare function get<T>(): T;
 interface MyWeirdPromise<V> {
     then<T extends (p: V) => void>(cb: T): void;
 }
@@ -6,6 +8,9 @@ interface MyEvenWeirderPromise<T> {
 }
 async function test<T extends PromiseLike<string>, U extends {then(cb: () => void): void}>(p1: T, p2: U) {
     try {
+        let x: T | U | boolean = null as any;
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return p1;
         ~~~~~~     [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return p2;
@@ -22,6 +27,10 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         ~~~~~~                                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<Pick<PromiseLike<string>, 'then'>>();
         ~~~~~~                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<Promise<string> | string>();
+        ~~~~~~                                  [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return get<{} | Promise<string> | string>();
+        ~~~~~~                                       [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<PromiseLike<void> | Promise<void>>();
         ~~~~~~                                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
         return get<PromiseLike<string> | PromiseLike<number>>();
@@ -62,6 +71,7 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         ~~~~~~                                                            [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
 
         // not valid Promises
+        return get<{then: any}>();
         return get<{then(): void}>();
         return get<{}>();
         return get<any>();
@@ -69,6 +79,7 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         return get<{[key: string]: (cb: (v: any) => void) => void}>();
         return get<{then(fulfill: string): void}>();
         return get<{then(...args: () => void): void}>();
+        return get<string | number>();
     } catch {
     }
 }

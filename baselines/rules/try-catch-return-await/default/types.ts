@@ -1,3 +1,5 @@
+export {};
+declare function get<T>(): T;
 interface MyWeirdPromise<V> {
     then<T extends (p: V) => void>(cb: T): void;
 }
@@ -6,6 +8,8 @@ interface MyEvenWeirderPromise<T> {
 }
 async function test<T extends PromiseLike<string>, U extends {then(cb: () => void): void}>(p1: T, p2: U) {
     try {
+        let x: T | U | boolean = null as any;
+        return await x;
         return await p1;
         return await p2;
         return await get<Promise<void>>();
@@ -14,6 +18,8 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         return await get<MyEvenWeirderPromise<(v: string) => void>>();
         return await get<Record<'then', (cb: (v: string) => void) => void>>();
         return await get<Pick<PromiseLike<string>, 'then'>>();
+        return await get<Promise<string> | string>();
+        return await get<{} | Promise<string> | string>();
         return await get<PromiseLike<void> | Promise<void>>();
         return await get<PromiseLike<string> | PromiseLike<number>>();
         return await get<Promise<string> | PromiseLike<number>>();
@@ -36,6 +42,7 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         return await get<PromiseLike<number> & {then(cb: () => void): void}>();
 
         // not valid Promises
+        return get<{then: any}>();
         return get<{then(): void}>();
         return get<{}>();
         return get<any>();
@@ -43,6 +50,7 @@ async function test<T extends PromiseLike<string>, U extends {then(cb: () => voi
         return get<{[key: string]: (cb: (v: any) => void) => void}>();
         return get<{then(fulfill: string): void}>();
         return get<{then(...args: () => void): void}>();
+        return get<string | number>();
     } catch {
     }
 }
