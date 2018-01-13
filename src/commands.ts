@@ -161,7 +161,8 @@ class ShowCommandRunner extends AbstractCommandRunner {
         const config = this.configManager.findConfiguration(options.file);
         if (config === undefined)
             throw new ConfigurationError(`Could not find configuration for '${options.file}'.`);
-        this.logger.log(format(this.configManager.reduceConfigurationForFile(config, options.file), options.format));
+        const reduced = this.configManager.reduceConfigurationForFile(config, options.file);
+        this.logger.log(`${config.filename}\n${reduced === undefined ? 'File is excluded.' : format(reduced, options.format)}`);
         return true;
     }
 }

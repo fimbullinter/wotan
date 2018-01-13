@@ -1,0 +1,9 @@
+rulesDirectories:
+  custom: ./rules
+rules:
+  custom/foo: error
+  custom/bar: warning
+  deprecation: warning
+settings:
+  foo: true
+  bar: something

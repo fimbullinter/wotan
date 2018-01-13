@@ -1,0 +1,11 @@
+extends: ./base.yaml
+exclude: '*.js'
+rulesDirectories:
+  custom: ./custom-rules
+  local: .
+rules:
+  custom/foo: warning
+  await-promise: error
+  local/baz: off
+settings:
+  local/setting: moar
