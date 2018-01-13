@@ -6,6 +6,7 @@ import { runCommand, CommandName, ShowCommand } from '../../src/commands';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import * as path from 'path';
 import { unixifyPath } from '../../src/utils';
+import * as escapeRegex from 'escape-string-regexp';
 
 test('ShowCommand', async (t) => {
     const container = new Container();
@@ -78,7 +79,7 @@ test('ShowCommand', async (t) => {
     }
     function normalizePaths(str: string): string {
         // replace `cwd` with / and all backslashes with forward slash
-        const re = new RegExp(`${cwd.replace(/./g, '\\$&')}(.*?)$`, 'gm');
+        const re = new RegExp(`${escapeRegex(cwd)}(.*?)$`, 'gm');
         return str.replace(re, (_, p) => unixifyPath(p));
     }
 });
