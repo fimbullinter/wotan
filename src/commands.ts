@@ -122,15 +122,16 @@ function isError(failure: Failure) {
 
 @injectable()
 class InitCommandRunner extends AbstractCommandRunner {
-    constructor(private logger: MessageHandler, private fs: CachedFileSystem) {
+    constructor(private logger: MessageHandler, private fs: CachedFileSystem, private directories: DirectoryService) {
         super();
     }
     public run(options: InitCommand) {
+        const cwd = this.directories.getCurrentDirectory();
         const filename = `.wotanrc.${options.format === undefined ? 'yaml' : options.format}`;
-        const dirs = options.directories.length === 0 ? [process.cwd()] : options.directories;
+        const dirs = options.directories.length === 0 ? ['.'] : options.directories;
         let success = true;
         for (const dir of dirs) {
-            const fullPath = path.join(dir, filename);
+            const fullPath = path.resolve(cwd, dir, filename);
             if (this.fs.isFile(fullPath)) {
                 this.logger.warn(`'${fullPath}' already exists.`);
                 success = false;
