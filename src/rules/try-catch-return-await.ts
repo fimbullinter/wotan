@@ -8,9 +8,9 @@ import {
     isFunctionScopeBoundary,
     isReturnStatement,
     isParenthesizedExpression,
-    isUnionType,
 } from 'tsutils';
 import * as ts from 'typescript';
+import { unionTypeParts } from '../utils';
 
 @injectable()
 export class Rule extends TypedRule {
@@ -87,7 +87,7 @@ export class Rule extends TypedRule {
         if (then === undefined)
             return false;
         const thenType = this.checker.getTypeOfSymbolAtLocation(then, node);
-        for (const t of isUnionType(thenType) ? thenType.types : [thenType])
+        for (const t of unionTypeParts(thenType))
             for (const signature of t.getCallSignatures())
                 if (signature.parameters.length !== 0 && this.isCallback(signature.parameters[0], node))
                     return true;
@@ -95,8 +95,14 @@ export class Rule extends TypedRule {
     }
 
     private isCallback(param: ts.Symbol, node: ts.Expression): boolean {
-        const type = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(param, node));
-        for (const t of isUnionType(type) ? type.types : [type])
+        let type: ts.Type | undefined = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(param, node));
+        if ((<ts.ParameterDeclaration>param.valueDeclaration).dotDotDotToken) {
+            // unwrap array type of rest parameter
+            type = type.getNumberIndexType();
+            if (type === undefined)
+                return false;
+        }
+        for (const t of unionTypeParts(type))
             if (t.getCallSignatures().length !== 0)
                 return true;
         return false;
