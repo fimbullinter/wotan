@@ -15,12 +15,12 @@ async function test() {
     return x;
     try {
         return;
-        return x;
+        return await x;
         function nested() {
             return x;
         }
         return await x;
-        return (x);
+        return await (x);
         return (
             await x
         );
@@ -35,30 +35,30 @@ async function test() {
                 return x;
             },
         };
-        return await x || x;
-        return x || await x;
-        return (x || await x);
+        return await (await x || x);
+        return await (x || await x);
+        return await (x || await x);
         return x && await x;
-        return Boolean() ? x : x;
-        return(Boolean() ? await x : x);
-        return Boolean() ? x : await x;
+        return await (Boolean() ? x : x);
+        return await(Boolean() ? await x : x);
+        return await (Boolean() ? x : await x);
         {
             for (;;) {
-                return x;
+                return await x;
             }
         }
     } catch {
-        return x;
+        return await x;
     } finally {
         return x;
     }
     try {
-        return x;
+        return await x;
     } finally {
         return x;
     }
     try {
-        return x;
+        return await x;
     } catch {
         return x;
     }
