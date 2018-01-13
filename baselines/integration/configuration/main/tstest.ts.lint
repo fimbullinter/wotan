@@ -1,0 +1,8 @@
+export async function foo() {
+    foo: let bar = '1';
+    ~~~                 [error no-unused-label: Unused label 'foo'.]
+    debugger;
+    ~~~~~~~~~ [warning no-debugger: 'debugger' statements are forbidden.]
+    return await bar;
+           ~~~~~      [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+}

@@ -1,0 +1,5 @@
+{
+  "config": "my-config/index",
+  "files": ["{j,t}stest.{j,t}s"],
+  "fix": false
+}
