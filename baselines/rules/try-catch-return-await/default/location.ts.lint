@@ -71,7 +71,32 @@ async function test() {
     try {
         return x;
         ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } catch {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } finally {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
     } catch {
+        return x;
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } catch {
+            return x;
+        }
         return x;
     }
     function nested() {
