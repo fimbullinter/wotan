@@ -216,3 +216,7 @@ Nightly builds are published every night if there are changes on master.
 Patch releases are published as soon as bugs are identified and fixed.
 Minor releases are published every week or two if there changes on master.
 Major releases are published once enough breaking changes have piled up.
+
+## License
+
+Apache-2.0 © [Klaus Meinhardt](https://github.com/ajafff)
