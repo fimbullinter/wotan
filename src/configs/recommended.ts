@@ -7,5 +7,6 @@ export = {
         'no-unused-label': 'error',
         'no-useless-assertion': 'error',
         'trailing-newline': 'error',
+        'try-catch-return-await': 'error',
     },
 };
