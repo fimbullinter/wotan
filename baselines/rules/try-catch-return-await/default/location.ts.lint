@@ -56,6 +56,15 @@ async function test() {
                 ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
             }
         }
+        return (async () => {
+        ~~~~~~                [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+            try {
+                return x;
+                ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+            } catch {
+                return x;
+            }
+        })();
     } catch {
         return x;
         ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
