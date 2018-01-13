@@ -255,3 +255,34 @@ test('parses test command', (t) => {
     t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), 'filename expected.');
     t.throws(() => parseArguments(['test', '--option']), "Unknown option '--option'.");
 });
+
+test('parses init command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(['init']),
+        {
+            command: CommandName.Init,
+            format: undefined,
+            directories: [],
+        },
+    );
+    t.deepEqual<Command>(
+        parseArguments(['init', '--format', 'JSON', '.', 'subdir']),
+        {
+            command: CommandName.Init,
+            format: Format.Json,
+            directories: ['.', 'subdir'],
+        },
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['init', '--', '--format', 'JSON', '.', 'subdir']),
+        {
+            command: CommandName.Init,
+            format: undefined,
+            directories: ['--format', 'JSON', '.', 'subdir'],
+        },
+    );
+
+    t.throws(() => parseArguments(['init', '-f']), "Option '-f' expects an argument.");
+    t.throws(() => parseArguments(['init', '-f', 'ymal']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
+});
