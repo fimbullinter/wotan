@@ -7,7 +7,7 @@ import {
     CacheManager,
     CacheIdentifier,
     Cache,
-    EffectiveConfiguration,
+    ReducedConfiguration,
     GlobalSettings,
     DirectoryService,
 } from '../types';
@@ -97,7 +97,7 @@ export class ConfigurationManager {
         }
     }
 
-    public reduceConfigurationForFile(config: Configuration, file: string): EffectiveConfiguration | undefined {
+    public reduceConfigurationForFile(config: Configuration, file: string): ReducedConfiguration | undefined {
         return reduceConfigurationForFile(config, file, this.directories.getCurrentDirectory());
     }
 

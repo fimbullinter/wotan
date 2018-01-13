@@ -1,7 +1,7 @@
 ﻿import * as path from 'path';
 import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
-import { Configuration, EffectiveConfiguration, GlobalSettings } from './types';
+import { Configuration, EffectiveConfiguration, GlobalSettings, ReducedConfiguration } from './types';
 import * as isNegated from 'is-negated-glob';
 
 // @internal
@@ -27,8 +27,8 @@ function reduceConfig(
     filename: string,
     rulesDirectories: RulesDirectoryMap,
     aliases: AliasMap,
-    receiver: EffectiveConfiguration,
-): EffectiveConfiguration | undefined {
+    receiver: ReducedConfiguration,
+): ReducedConfiguration | undefined {
     const relativeFilename = path.relative(path.dirname(config.filename), filename);
     if (config.exclude && matchesGlobs(relativeFilename, config.exclude))
             return;
@@ -104,7 +104,7 @@ function extendRulesDirectories<T extends string | string[]>(
 }
 
 function extendConfig(
-    receiver: EffectiveConfiguration,
+    receiver: ReducedConfiguration,
     {processor, rules, settings}: Partial<Configuration | Configuration.Override>,
     rulesDirectoryMap: RulesDirectoryMap,
     aliases: AliasMap,

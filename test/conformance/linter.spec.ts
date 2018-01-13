@@ -79,7 +79,6 @@ test('Linter', (t) => {
     t.deepEqual(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/alias', {severity: 'warning', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
             ]),
@@ -91,7 +90,6 @@ test('Linter', (t) => {
     t.deepEqual(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/alias', {severity: 'off', rulesDirectories: undefined, options: undefined, rule: 'deprecated'}],
             ]),
@@ -103,7 +101,6 @@ test('Linter', (t) => {
     t.deepEqual<Failure[]>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/alias', {severity: 'warning', rulesDirectories: undefined, options: undefined, rule: 'deprecated'}],
             ]),
@@ -123,7 +120,6 @@ test('Linter', (t) => {
     t.deepEqual<Failure[]>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/other/alias', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'deprecation-message'}],
             ]),
@@ -145,7 +141,6 @@ test('Linter', (t) => {
     t.deepEqual<Failure[]>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/other/alias', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'non-existent'}],
             ]),
@@ -158,7 +153,6 @@ test('Linter', (t) => {
     t.deepEqual<Failure[]>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/other/alias', {severity: 'error', rulesDirectories: ['/foo'], options: undefined, rule: 'my/non-existent'}],
             ]),
@@ -171,7 +165,6 @@ test('Linter', (t) => {
     t.throws(
         () => linter.lintFile(sourceFile, {
             settings: new Map(),
-            processor: undefined,
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
                 ['my/other/alias', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'my/non-existent'}],
             ]),

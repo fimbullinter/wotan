@@ -216,7 +216,6 @@ export namespace Configuration {
 export interface EffectiveConfiguration {
     rules: Map<string, EffectiveConfiguration.RuleConfig>;
     settings: Map<string, any>;
-    processor: string | undefined;
 }
 
 export namespace EffectiveConfiguration {
@@ -226,6 +225,10 @@ export namespace EffectiveConfiguration {
         rulesDirectories: string[] | undefined;
         rule: string;
     }
+}
+
+export interface ReducedConfiguration extends EffectiveConfiguration {
+    processor: string | undefined;
 }
 
 export const enum Format {

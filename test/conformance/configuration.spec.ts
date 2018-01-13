@@ -1,7 +1,16 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { reduceConfigurationForFile, getSettingsForFile, getProcessorForFile } from '../../src/configuration';
-import { Configuration, EffectiveConfiguration, CacheManager, Resolver, DirectoryService, FileSystem, Stats } from '../../src/types';
+import {
+    Configuration,
+    EffectiveConfiguration,
+    CacheManager,
+    Resolver,
+    DirectoryService,
+    FileSystem,
+    Stats,
+    ReducedConfiguration,
+} from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
@@ -159,7 +168,7 @@ test('Circular aliases throw an exception', (t) => {
             },
         ],
     };
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([['my/ok', {
@@ -209,7 +218,7 @@ test('Aliases refer to rules or aliases in the scope they are declared', (t) => 
         }],
         rulesDirectories: new Map([['my', '/extendingRules']]),
     };
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([['my/foo', {
@@ -269,7 +278,7 @@ test("Aliases don't alter options unless explicitly specified", (t) => {
         filename: '/extending1.yaml',
     };
 
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(extending1, '/a', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending1, '/a', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -323,7 +332,7 @@ test('Aliases shadow rules until cleared', (t) => {
             },
         },
     };
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(base, '/a.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(base, '/a.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -359,7 +368,7 @@ test('Aliases shadow rules until cleared', (t) => {
             },
         }],
     };
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(extending, '/a.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending, '/a.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -377,7 +386,7 @@ test('Aliases shadow rules until cleared', (t) => {
             ],
         ]),
     }, 'Only clearing alias does not invalidate the reference'); // tslint:disable-line:align
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(extending, '/b.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending, '/b.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -407,7 +416,7 @@ test('Aliases shadow rules until cleared', (t) => {
             'c/ban-delete-expression': {},
         },
     };
-    t.deepEqual<EffectiveConfiguration | undefined>(reduceConfigurationForFile(extending2, '/a.ts', '/'), {
+    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending2, '/a.ts', '/'), {
         processor: undefined,
         settings: new Map(),
         rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -715,7 +724,7 @@ test('overrides, excludes, globs', (t) => {
 
     t.is(getProcessorForFile(empty, '/foo.ts', '/'), 'test');
 
-    function check(c: Configuration, file: string, expected: EffectiveConfiguration) {
+    function check(c: Configuration, file: string, expected: ReducedConfiguration) {
         t.deepEqual(reduceConfigurationForFile(c, file, '/'), expected);
         t.deepEqual(getSettingsForFile(c, file, '/'), expected.settings);
         t.deepEqual(getProcessorForFile(c, file, '/'), expected.processor);
