@@ -79,7 +79,7 @@ test('ShowCommand', async (t) => {
     }
     function normalizePaths(str: string): string {
         // replace `cwd` with / and all backslashes with forward slash
-        const re = new RegExp(`'?${escapeRegex(cwd)}(.*?)'?$`, 'gm');
+        const re = new RegExp(`'?${escapeRegex(cwd).replace(/\\\\/g, '\\\\\\\\?')}(.*?)'?$`, 'gm');
         return str.replace(re, (_, p) => unixifyPath(p));
     }
 });
