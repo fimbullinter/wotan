@@ -1,7 +1,8 @@
 import { injectable } from 'inversify';
 import { TypedRule, FlattenedAst, TypedRuleContext, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isAwaitExpression, isUnionType, isForOfStatement } from 'tsutils';
+import { isAwaitExpression, isForOfStatement } from 'tsutils';
+import { unionTypeParts } from '../utils';
 
 @injectable()
 export class Rule extends TypedRule {
@@ -38,9 +39,7 @@ export class Rule extends TypedRule {
         const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
         if (type.flags & ts.TypeFlags.Any)
             return true;
-        if (!isUnionType(type))
-            return this.isThenable(type, node);
-        for (const t of type.types)
+        for (const t of unionTypeParts(type))
             if (this.isThenable(t, node))
                 return true;
         return false;
@@ -59,9 +58,7 @@ export class Rule extends TypedRule {
         const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
         if (type.flags & ts.TypeFlags.Any)
             return true;
-        if (!isUnionType(type))
-            return this.hasSymbolAsyncIterator(type);
-        for (const t of type.types)
+        for (const t of unionTypeParts(type))
             if (this.hasSymbolAsyncIterator(t))
                 return true;
         return false;

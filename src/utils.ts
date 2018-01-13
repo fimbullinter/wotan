@@ -128,3 +128,7 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
         newLength: length + diff,
     };
 }
+
+export function unionTypeParts(type: ts.Type): ts.Type[] {
+    return type.flags & ts.TypeFlags.Union ? (<ts.UnionType>type).types : [type];
+}

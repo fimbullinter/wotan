@@ -6,7 +6,6 @@ import {
     isPropertyAccessExpression,
     getUsageDomain,
     isCallLikeExpression,
-    isUnionType,
     isObjectBindingPattern,
     getPropertyName,
     isPropertyAssignment,
@@ -14,6 +13,7 @@ import {
     isShorthandPropertyAssignment,
 } from 'tsutils';
 import * as ts from 'typescript';
+import { unionTypeParts } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 
@@ -95,7 +95,7 @@ export class Rule extends TypedRule {
     }
 
     private checkDynamicPropertyAccess(type: ts.Type, keyType: ts.Type, node: ts.Node) {
-        for (const t of isUnionType(keyType) ? keyType.types : [keyType]) {
+        for (const t of unionTypeParts(keyType)) {
             if (t.flags & ts.TypeFlags.StringOrNumberLiteral) {
                 const name = String((<ts.StringLiteralType | ts.NumberLiteralType>t).value);
                 this.checkSymbol(type.getProperty(name), node, name);

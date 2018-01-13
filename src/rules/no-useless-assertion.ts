@@ -1,12 +1,11 @@
 import { TypedRule, Replacement, TypedRuleContext, FlattenedAst } from '../types';
 import * as ts from 'typescript';
-import { isStrictNullChecksEnabled } from '../utils';
+import { isStrictNullChecksEnabled, unionTypeParts } from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
     isFunctionScopeBoundary,
     isObjectType,
-    isUnionType,
     isNewExpression,
     isCallExpression,
 } from 'tsutils';
@@ -112,7 +111,7 @@ export class Rule extends TypedRule {
 
 function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
     let flags = 0;
-    for (const t of isUnionType(type) ? type.types : [type])
+    for (const t of unionTypeParts(type))
         flags |= t.flags;
     return ((receiver && flags & ts.TypeFlags.Any) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
 }
