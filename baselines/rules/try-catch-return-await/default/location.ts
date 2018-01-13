@@ -47,6 +47,13 @@ async function test() {
                 return await x;
             }
         }
+        return await (async () => {
+            try {
+                return await x;
+            } catch {
+                return x;
+            }
+        })();
     } catch {
         return await x;
     } finally {

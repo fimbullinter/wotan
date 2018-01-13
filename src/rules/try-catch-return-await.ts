@@ -47,7 +47,7 @@ export class Rule extends TypedRule {
                 if (wrap.node.expression === undefined)
                     return;
                 this.checkReturnExpression(wrap.node.expression);
-                this.iterate(wrap.next!, wrap.skip, true);
+                return this.iterate(wrap.next!, wrap.skip, true);
             }
         } else if (isTryStatement(wrap.node)) {
             this.inTryCatch = true;
