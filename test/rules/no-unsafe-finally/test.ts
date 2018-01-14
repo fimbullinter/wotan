@@ -4,6 +4,11 @@ function test(x: any) {
         return;
     } catch {
         return;
+    }
+    try {
+        return;
+    } catch {
+        return;
     } finally {
     }
     try {
