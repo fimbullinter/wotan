@@ -5,6 +5,7 @@ export = {
         'no-debugger': 'error',
         'no-fallthrough': 'error',
         'no-return-await': 'error',
+        'no-unsafe-finally': 'error',
         'no-unused-label': 'error',
         'no-useless-assertion': 'error',
         'trailing-newline': 'error',
