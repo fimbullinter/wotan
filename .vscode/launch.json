@@ -10,7 +10,6 @@
             "name": "Launch Program",
             "program": "${workspaceFolder}/src/cli.js",
             "args": [
-              "test", "test/rules/trailing-newline/test.json"
             ],
             "outputCapture": "std",
             "outFiles": [

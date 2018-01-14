@@ -159,7 +159,7 @@ export class Linter {
 
         for ({ruleName, severity, options, ctor} of rules) {
             log('Executing rule %s', ruleName);
-            container.resolve(ctor).apply();
+            (Reflect.hasOwnMetadata('design:paramtypes', ctor) ? container.resolve(ctor) : new ctor(context)).apply();
         }
 
         log('Found %d failures', result.length);
