@@ -1,0 +1,88 @@
+export {};
+function test(x: any) {
+    try {
+        return;
+    } catch {
+        return;
+    }
+    try {
+        return;
+    } catch {
+        return;
+    } finally {
+    }
+    try {
+    } catch {
+        return;
+    } finally {
+        return;
+        ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+    }
+    try {
+    } finally {
+        throw 'foo';
+        ~~~~~        [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+    }
+    for (;;) {
+        try {
+        } finally {
+            break;
+            ~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+        }
+        try {
+        } finally {
+            continue;
+            ~~~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+        }
+    }
+    outer: for (;;) {
+        try {
+        } catch {
+            return;
+        } finally {
+            function foo() {
+                if (x)
+                    return x;
+                throw 'foo';
+            }
+            inner: for (;;) {
+                switch (x) {
+                    case 'foo':
+                        break;
+                    case 'bar':
+                        continue;
+                    case 'baz':
+                        break inner;
+                    case 'bas':
+                        continue inner;
+                    case 'foobar':
+                        break outer;
+                        ~~~~~        [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                    case 'foobaz':
+                        continue outer;
+                        ~~~~~~~~        [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                    case 'foobas':
+                        return;
+                        ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                    default:
+                        throw 'foobarbaz';
+                        ~~~~~              [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                }
+            }
+            try {
+                if (x)
+                    return;
+                    ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+            } catch {
+                return;
+                ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+            } finally {
+                if (x)
+                    // duplicate error on the next line, because it's inside two finally blocks. should be a very rare case not worth fixing
+                    return;
+                    ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                    ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+            }
+        }
+    }
+}
