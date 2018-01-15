@@ -27,7 +27,7 @@ export class Rule extends AbstractRule {
 
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined) {
         do { // iterate as linked list until we find the first labeled statement
-            if (wrap.node.kind === ts.SyntaxKind.LabeledStatement) {
+            if (wrap.kind === ts.SyntaxKind.LabeledStatement) {
                 this.visitNode(wrap); // to handle this label we need to recursively call visitNode
                 wrap = wrap.skip!; // continue right after the labeled statement
             } else {

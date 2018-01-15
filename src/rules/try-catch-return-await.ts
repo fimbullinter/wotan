@@ -2,7 +2,6 @@ import { injectable } from 'inversify';
 import { TypedRule, TypedRuleContext, WrappedAst, Replacement } from '../types';
 import {
     NodeWrap,
-    isFunctionWithBody,
     hasModifier,
     isTryStatement,
     isFunctionScopeBoundary,
@@ -29,15 +28,24 @@ export class Rule extends TypedRule {
     }
 
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined, inTryCatch: boolean) {
-        do { // iterate as linked list until we find the first labeled statement
-            if (isFunctionWithBody(wrap.node) && hasModifier(wrap.node.modifiers, ts.SyntaxKind.AsyncKeyword)) {
-                this.inTryCatch = false;
-                wrap.children.forEach(this.visitNode, this); // visit children recursively
-                this.inTryCatch = inTryCatch;
-                wrap = wrap.skip!; // continue right after the function
-            } else {
-                wrap = wrap.next!;
+        do { // iterate as linked list until we find an async function / method
+            switch (wrap.kind) {
+                case ts.SyntaxKind.FunctionDeclaration:
+                case ts.SyntaxKind.MethodDeclaration:
+                    if ((<ts.FunctionLikeDeclaration>wrap.node).body === undefined)
+                        break;
+                    // falls through
+                case ts.SyntaxKind.ArrowFunction:
+                case ts.SyntaxKind.FunctionExpression:
+                    if (hasModifier(wrap.node.modifiers, ts.SyntaxKind.AsyncKeyword)) {
+                        this.inTryCatch = false;
+                        wrap.children.forEach(this.visitNode, this); // visit children recursively
+                        this.inTryCatch = inTryCatch;
+                        wrap = wrap.skip!; // continue right after the function
+                        continue;
+                    }
             }
+            wrap = wrap.next!;
         } while (wrap !== end);
     }
 
