@@ -73,6 +73,7 @@ function test(x: any) {
                 if (x)
                     return;
                     ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]
+                throw x;
             } catch {
                 return;
                 ~~~~~~  [error no-unsafe-finally: Unsafe use of control flow statement inside 'finally'.]

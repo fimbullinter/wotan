@@ -64,6 +64,7 @@ function test(x: any) {
             try {
                 if (x)
                     return;
+                throw x;
             } catch {
                 return;
             } finally {
