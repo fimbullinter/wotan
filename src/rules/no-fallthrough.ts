@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { AbstractRule, RuleContext, FlattenedAst } from '../types';
 import * as ts from 'typescript';
-import { isSwitchStatement, endsControlFlow } from 'tsutils';
+import { endsControlFlow } from 'tsutils';
 
 @injectable()
 export class Rule extends AbstractRule {
@@ -15,8 +15,8 @@ export class Rule extends AbstractRule {
 
     public apply() {
         for (const node of this.flatAst)
-            if (isSwitchStatement(node))
-                this.checkSwitch(node);
+            if (node.kind === ts.SyntaxKind.SwitchStatement)
+                this.checkSwitch(<ts.SwitchStatement>node);
     }
 
     private checkSwitch({caseBlock: {clauses}}: ts.SwitchStatement) {
