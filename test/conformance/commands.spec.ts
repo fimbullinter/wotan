@@ -30,7 +30,7 @@ test('ShowCommand', async (t) => {
         }
         public stat(file: string) {
             // everything above cwd does not exist
-            if (path.relative(process.cwd(), file).startsWith('..' + path.sep))
+            if (path.relative(super.normalizePath(process.cwd()), file).startsWith('..' + path.sep))
                 throw new Error();
             return super.stat(file);
         }
