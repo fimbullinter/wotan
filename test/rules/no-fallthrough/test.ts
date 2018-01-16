@@ -67,6 +67,7 @@ if (x) {
 } switch (x) {case 1: 'foo'; case 2: 'bar'} "foo"; switch (x) {case 1: 'foo'; case 2: 'bar'} /*
  switch (x)
 */ switch (x) {case 1: 'foo'; case 2: 'bar'}
+label: switch (x) {case 1: 'foo'; case 2: 'bar'}
 
 switch
 (x) {case 1: 'foo'; case 2: 'bar'}

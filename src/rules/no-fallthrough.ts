@@ -8,12 +8,11 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        const re = /((?:^|\*\/|[;{})])\s*)switch\s*?(?:$|[(/])/gm;
+        const re = /\bswitch\s*?[\r\n(/]/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const start = match.index + match[1].length;
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), start)!;
-            if (isSwitchStatement(node) && node.getStart(this.sourceFile) === start)
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (isSwitchStatement(node) && node.getStart(this.sourceFile) === match.index)
                 this.checkFallthrough(node.caseBlock.clauses);
         }
     }

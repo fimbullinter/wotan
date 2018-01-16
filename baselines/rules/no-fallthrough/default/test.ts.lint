@@ -76,6 +76,8 @@ if (x) {
  switch (x)
 */ switch (x) {case 1: 'foo'; case 2: 'bar'}
                               ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+label: switch (x) {case 1: 'foo'; case 2: 'bar'}
+                                  ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
 
 switch
 (x) {case 1: 'foo'; case 2: 'bar'}
