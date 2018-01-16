@@ -1,6 +1,6 @@
 import { AbstractRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { getTokenAtPosition, isIterationStatement } from 'tsutils';
+import { isIterationStatement, getWrappedNodeAtPosition, WrappedAst } from 'tsutils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -8,24 +8,27 @@ export class Rule extends AbstractRule {
     }
     public apply() {
         const re = /\bdebugger\s*(?:[/;]|$)/mg;
+        let wrappedAst: WrappedAst | undefined;
         const text = this.sourceFile.text;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const token = getTokenAtPosition(this.sourceFile, match.index)!;
-            if (token.kind === ts.SyntaxKind.DebuggerKeyword && token.end === match.index + 'debugger'.length) {
-                const statement = <ts.DebuggerStatement>token.parent;
-                this.addFailureAtNode(
-                    statement,
-                    "'debugger' statements are forbidden.",
-                    canSafelyRemoveStatement(statement)
-                        ? Replacement.delete(token.pos, statement.end)
-                        : {start: token.end - 'debugger'.length, end: statement.end, text: ';'},
-                );
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (node.kind === ts.SyntaxKind.DebuggerStatement) {
+                const start = node.getStart(this.sourceFile);
+                if (start === match.index)
+                    this.addFailure(
+                        start,
+                        node.end,
+                        "'debugger' statements are forbidden.",
+                        canSafelyRemoveStatement(node)
+                            ? Replacement.delete(node.pos, node.end)
+                            : {start, end: node.end, text: ';'},
+                    );
             }
         }
     }
 }
 
-function canSafelyRemoveStatement(statement: ts.Statement): boolean {
+function canSafelyRemoveStatement(statement: ts.Node): boolean {
     switch (statement.parent!.kind) {
         case ts.SyntaxKind.IfStatement:
         case ts.SyntaxKind.WithStatement:

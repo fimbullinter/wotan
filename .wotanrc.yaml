@@ -1,3 +1,7 @@
 ---
 extends:
   - wotan:latest
+overrides:
+  - files: "test/**"
+    rules:
+      deprecation: off

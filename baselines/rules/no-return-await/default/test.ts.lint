@@ -6,6 +6,14 @@ async function foo() {
 (async () => await x);
              ~~~~~     [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
 
+async function avoidDuplicateErrorsCausedByComments() {
+    return ( // return await
+        await x
+        ~~~~~   [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+    );
+    return /* => await */ await x;
+                          ~~~~~    [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+}
 async function allowTypeAssertion() {
     return (await x)!;
     return (await x as number);

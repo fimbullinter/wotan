@@ -1,6 +1,6 @@
 import { AbstractRule } from '../types';
 import * as ts from 'typescript';
-import { getControlFlowEnd, getTokenAtPosition } from 'tsutils';
+import { getControlFlowEnd, WrappedAst, getWrappedNodeAtPosition, isTryStatement } from 'tsutils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -9,10 +9,11 @@ export class Rule extends AbstractRule {
 
     public apply() {
         const re = /\bfinally\s*[/{]/g;
+        let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const token = getTokenAtPosition(this.sourceFile, match.index)!;
-            if (token.kind === ts.SyntaxKind.FinallyKeyword && token.end === match.index + 'finally'.length)
-                for (const statement of getControlFlowEnd((<ts.TryStatement>token.parent).finallyBlock!).statements)
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (isTryStatement(node) && node.finallyBlock !== undefined && node.finallyBlock.pos === match.index + 'finally'.length)
+                for (const statement of getControlFlowEnd(node.finallyBlock).statements)
                     this.addFailureAtNode(
                         statement.getChildAt(0, this.sourceFile),
                         "Unsafe use of control flow statement inside 'finally'.",

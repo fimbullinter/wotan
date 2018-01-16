@@ -3510,9 +3510,9 @@ tsutils@^2.12.1, tsutils@^2.12.2:
   dependencies:
     tslib "^1.7.1"
 
-tsutils@^2.18.0:
-  version "2.18.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.18.0.tgz#f97385709d348169002c12f6f5fd42c1df13b250"
+tsutils@^2.19.0:
+  version "2.19.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.19.0.tgz#170a267c1df5ae046e902568ca3444a1a4dfcb3a"
   dependencies:
     tslib "^1.8.1"
 

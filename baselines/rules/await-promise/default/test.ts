@@ -3,6 +3,7 @@ declare function get<T>(): T;
 interface ExtendsPromise<T> extends Promise<T> {}
 
 async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2: U) {
+    let foo: {await: boolean} = {await: true};
     await p;
     await p2; // as of typescript@2.7.0 the compiler doesn't infer the result of this one correctly, but it's still a promise so we allow it
     await get<Promise<string>>();
@@ -32,6 +33,7 @@ async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2
     get<undefined>();
     get<{[key: string]: (v: string) => void}>(); // no implicit `then` property
     get<number | boolean>();
+    /** await */ get<number>();
 }
 
 declare function hasThen(v: {}): v is {then: {}};

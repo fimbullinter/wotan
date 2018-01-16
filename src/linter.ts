@@ -11,7 +11,6 @@ import {
     AbstractProcessor,
     DeprecationHandler,
     DeprecationTarget,
-    WrappedAst,
 } from './types';
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
@@ -192,7 +191,7 @@ export class Linter {
             return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
         }
         function getWrappedAst() {
-            return <WrappedAst>(convertedAst || (convertedAst = convertAst(sourceFile))).wrapped;
+            return (convertedAst || (convertedAst = convertAst(sourceFile))).wrapped;
         }
     }
 }

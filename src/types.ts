@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
-import { NodeWrap } from 'tsutils';
+import { WrappedAst } from 'tsutils';
 
 export type LintResult = Map<string, FileSummary>;
 
@@ -74,12 +74,6 @@ export interface RuleConstructor {
     deprecated?: boolean | string;
     supports?(sourceFile: ts.SourceFile, options: any, settings: ReadonlyMap<string, any>): boolean;
     new(context: RuleContext): AbstractRule;
-}
-
-export interface WrappedAst extends NodeWrap {
-    next: NodeWrap;
-    skip: undefined;
-    parent: undefined;
 }
 
 export interface RuleContext {

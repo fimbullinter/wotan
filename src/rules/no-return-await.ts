@@ -1,6 +1,6 @@
 import { AbstractRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isFunctionScopeBoundary, isTryStatement } from 'tsutils';
+import { isFunctionScopeBoundary, isTryStatement, WrappedAst, getWrappedNodeAtPosition, isAwaitExpression } from 'tsutils';
 
 const FAIL_MESSAGE = 'Awaiting the returned value is redundant as it is wrapped in a Promise anyway.';
 
@@ -10,8 +10,11 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst()) {
-            if (node.kind === ts.SyntaxKind.AwaitExpression && isUnnecessaryAwait(node)) {
+        const re = /(?:^|\|\||&&|return|=>|\*\/|[,(?:])\s*await\b/mg;
+        let wrappedAst: WrappedAst | undefined;
+        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
+            if (isAwaitExpression(node) && re.lastIndex === node.expression.pos && isUnnecessaryAwait(node)) {
                 const keywordStart = node.expression.pos - 'await'.length;
                 this.addFailure(
                     keywordStart,
@@ -24,7 +27,7 @@ export class Rule extends AbstractRule {
     }
 }
 
-function isUnnecessaryAwait(node: ts.Node): node is ts.AwaitExpression {
+function isUnnecessaryAwait(node: ts.Node): boolean {
     while (true) {
         const parent = node.parent!;
         outer: switch (parent.kind) {

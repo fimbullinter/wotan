@@ -4,6 +4,12 @@ async function foo() {
 }
 (async () => await x);
 
+async function avoidDuplicateErrorsCausedByComments() {
+    return ( // return await
+        await x
+    );
+    return /* => await */ await x;
+}
 async function allowTypeAssertion() {
     return (await x)!;
     return (await x as number);

@@ -1,6 +1,6 @@
 import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isAwaitExpression, isForOfStatement } from 'tsutils';
+import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 import { unionTypeParts } from '../utils';
 
 export class Rule extends TypedRule {
@@ -9,22 +9,31 @@ export class Rule extends TypedRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst()) {
+        const re = /\bawait\b/g;
+        let wrappedAst: WrappedAst | undefined;
+        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (match.index !== node.getStart(this.sourceFile))
+                continue;
             if (isAwaitExpression(node)) {
                 if (!this.isPromiseLike(node.expression))
                     this.addFailure(
-                        node.expression.pos - 'await'.length,
+                        match.index,
                         node.end,
                         "Unnecessary 'await' of a non-Promise value.",
-                        Replacement.delete(node.expression.pos - 'await'.length, node.expression.getStart(this.sourceFile)),
+                        Replacement.delete(match.index, node.expression.getStart(this.sourceFile)),
                     );
-            } else if (isForOfStatement(node) && node.awaitModifier !== undefined && !this.isAsyncIterable(node.expression)) {
-                this.addFailure(
-                    node.getStart(this.sourceFile),
-                    node.statement.pos,
-                    "Unnecessary 'for await' of a non-AsyncIterable value.",
-                    Replacement.delete(node.awaitModifier.pos, node.awaitModifier.end),
-                );
+            } else if (node.kind === ts.SyntaxKind.AwaitKeyword) {
+                const parent = node.parent!;
+                if (isForOfStatement(parent) && !this.isAsyncIterable(parent.expression)) {
+                    const start = parent.getStart(this.sourceFile);
+                    this.addFailure(
+                        start,
+                        parent.statement.pos,
+                        "Unnecessary 'for await' of a non-AsyncIterable value.",
+                        Replacement.delete(start + 'for'.length, re.lastIndex),
+                    );
+                }
             }
         }
     }

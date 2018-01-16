@@ -30,4 +30,6 @@ async function testForAwait<T extends AsyncIterable<string>>(param?: T) {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<AsyncIterator<string>>()) {}
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    for /* await */ await (const _ of get<string>()) {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
 }

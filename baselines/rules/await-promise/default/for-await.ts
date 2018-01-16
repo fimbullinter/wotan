@@ -23,4 +23,5 @@ async function testForAwait<T extends AsyncIterable<string>>(param?: T) {
     for (const _ of get<string>()) {}
     for (const _ of get<string | Array<string>>()) {}
     for (const _ of get<AsyncIterator<string>>()) {}
+    for (const _ of get<string>()) {}
 }
