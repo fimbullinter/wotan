@@ -1,5 +1,4 @@
 import * as ts from 'typescript';
-import { injectable, inject } from 'inversify';
 import { memoizeGetter } from './utils';
 import { NodeWrap } from 'tsutils';
 
@@ -77,9 +76,17 @@ export interface RuleConstructor {
     new(context: RuleContext): AbstractRule;
 }
 
+export interface WrappedAst extends NodeWrap {
+    next: NodeWrap;
+    skip: undefined;
+    parent: undefined;
+}
+
 export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
+    readonly settings: GlobalSettings;
+    readonly options: {} | null | undefined;
     addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     /**
      * Detect if the rule is disabled somewhere in the given range.
@@ -89,6 +96,8 @@ export interface RuleContext {
      * @param range The range to check for disables. If you only care about a single position, set `pos` and `end` to the same value.
      */
     isDisabled(this: void, range: ts.TextRange): boolean;
+    getFlatAst(): ReadonlyArray<ts.Node>;
+    getWrappedAst(): WrappedAst;
 }
 export abstract class RuleContext {}
 
@@ -97,12 +106,17 @@ export interface TypedRuleContext extends RuleContext {
 }
 export abstract class TypedRuleContext {}
 
-export const RuleOptions = Symbol('RuleOptions');
+export interface GlobalSettings extends ReadonlyMap<string, {} | null | undefined> {}
 
-export interface GlobalSettings extends ReadonlyMap<string, any> {}
-export abstract class GlobalSettings {}
+export interface ConfigurableRule<T> {
+    options: T;
+    parseOptions(options: {} | null | undefined): T;
+}
 
-@injectable()
+function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
+    return typeof rule.parseOptions === 'function';
+}
+
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated?: boolean | string;
@@ -112,9 +126,11 @@ export abstract class AbstractRule {
     public readonly sourceFile: ts.SourceFile;
     public readonly program: ts.Program | undefined;
 
-    constructor(@inject(RuleContext) public readonly context: RuleContext) {
+    constructor(public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
         this.program = context.program;
+        if (isConfigurableRule(this))
+            this.options = this.parseOptions(context.options);
     }
 
     public abstract apply(): void;
@@ -365,8 +381,3 @@ export interface DirectoryService {
     getHomeDirectory?(): string;
 }
 export abstract class DirectoryService {}
-
-export interface WrappedAst extends NodeWrap {} // tslint:disable-line:no-empty-interface
-export abstract class WrappedAst {}
-export interface FlattenedAst extends ReadonlyArray<ts.Node> {}
-export abstract class FlattenedAst {}

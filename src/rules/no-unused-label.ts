@@ -1,7 +1,6 @@
 import * as ts from 'typescript';
 import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
-import { AbstractRule, Replacement, RuleContext, WrappedAst } from '../types';
-import { injectable } from 'inversify';
+import { AbstractRule, Replacement } from '../types';
 
 interface Label {
     node: ts.LabeledStatement;
@@ -9,7 +8,6 @@ interface Label {
     used: boolean;
 }
 
-@injectable()
 export class Rule extends AbstractRule {
     private labels: Label[] = [];
 
@@ -17,12 +15,8 @@ export class Rule extends AbstractRule {
         return !sourceFile.isDeclarationFile;
     }
 
-    constructor(context: RuleContext, private ast: WrappedAst) {
-        super(context);
-    }
-
     public apply() {
-        return this.iterate(this.ast.next!, undefined);
+        return this.iterate(this.context.getWrappedAst().next, undefined);
     }
 
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined) {

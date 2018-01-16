@@ -1,5 +1,4 @@
-import { injectable } from 'inversify';
-import { TypedRule, TypedRuleContext, FlattenedAst } from '../types';
+import { TypedRule } from '../types';
 import {
     isElementAccessExpression,
     isIdentifier,
@@ -17,14 +16,9 @@ import { unionTypeParts } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 
-@injectable()
 export class Rule extends TypedRule {
-    constructor(context: TypedRuleContext, private flatAst: FlattenedAst) {
-        super(context);
-    }
-
     public apply() {
-        for (const node of this.flatAst) {
+        for (const node of this.context.getFlatAst()) {
             // TODO maybe check Type["property"]
             if (isIdentifier(node)) {
                 if (shouldCheckIdentifier(node))

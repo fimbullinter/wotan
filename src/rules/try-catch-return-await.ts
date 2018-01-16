@@ -1,5 +1,4 @@
-import { injectable } from 'inversify';
-import { TypedRule, TypedRuleContext, WrappedAst, Replacement } from '../types';
+import { TypedRule, Replacement } from '../types';
 import {
     NodeWrap,
     hasModifier,
@@ -11,7 +10,6 @@ import {
 import * as ts from 'typescript';
 import { unionTypeParts } from '../utils';
 
-@injectable()
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
@@ -19,12 +17,8 @@ export class Rule extends TypedRule {
 
     private inTryCatch = false;
 
-    constructor(context: TypedRuleContext, private ast: WrappedAst) {
-        super(context);
-    }
-
     public apply() {
-        return this.iterate(this.ast.next!, undefined, false);
+        return this.iterate(this.context.getWrappedAst().next, undefined, false);
     }
 
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined, inTryCatch: boolean) {

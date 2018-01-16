@@ -1,21 +1,15 @@
-import { injectable } from 'inversify';
-import { TypedRule, FlattenedAst, TypedRuleContext, Replacement } from '../types';
+import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
 import { isAwaitExpression, isForOfStatement } from 'tsutils';
 import { unionTypeParts } from '../utils';
 
-@injectable()
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
     }
 
-    constructor(context: TypedRuleContext, private flatAst: FlattenedAst) {
-        super(context);
-    }
-
     public apply() {
-        for (const node of this.flatAst) {
+        for (const node of this.context.getFlatAst()) {
             if (isAwaitExpression(node)) {
                 if (!this.isPromiseLike(node.expression))
                     this.addFailure(

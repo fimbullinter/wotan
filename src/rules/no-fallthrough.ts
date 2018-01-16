@@ -1,20 +1,14 @@
-import { injectable } from 'inversify';
-import { AbstractRule, RuleContext, FlattenedAst } from '../types';
+import { AbstractRule } from '../types';
 import * as ts from 'typescript';
 import { endsControlFlow } from 'tsutils';
 
-@injectable()
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
     }
 
-    constructor(context: RuleContext, private flatAst: FlattenedAst) {
-        super(context);
-    }
-
     public apply() {
-        for (const node of this.flatAst)
+        for (const node of this.context.getFlatAst())
             if (node.kind === ts.SyntaxKind.SwitchStatement)
                 this.checkSwitch(<ts.SwitchStatement>node);
     }

@@ -1,4 +1,4 @@
-import { TypedRule, Replacement, TypedRuleContext, FlattenedAst } from '../types';
+import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
 import { isStrictNullChecksEnabled, unionTypeParts } from '../utils';
 import {
@@ -10,13 +10,11 @@ import {
     isCallExpression,
 } from 'tsutils';
 import * as debug from 'debug';
-import { injectable } from 'inversify';
 
 const log = debug('wotan:rule:no-useless-assertion');
 
 const FAIL_MESSAGE = `This assertion is unnecesary as it doesn't change the type of the expression.`;
 
-@injectable()
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
@@ -24,12 +22,8 @@ export class Rule extends TypedRule {
 
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
 
-    constructor(context: TypedRuleContext, private flatAst: FlattenedAst) {
-        super(context);
-    }
-
     public apply(): void {
-        for (const node of this.flatAst) {
+        for (const node of this.context.getFlatAst()) {
             switch (node.kind) {
                 case ts.SyntaxKind.NonNullExpression:
                     this.checkNonNullAssertion(<ts.NonNullExpression>node);

@@ -1,22 +1,16 @@
-import { injectable } from 'inversify';
-import { AbstractRule, RuleContext, FlattenedAst, Replacement } from '../types';
+import { AbstractRule, Replacement } from '../types';
 import * as ts from 'typescript';
 import { isFunctionScopeBoundary, isTryStatement } from 'tsutils';
 
 const FAIL_MESSAGE = 'Awaiting the returned value is redundant as it is wrapped in a Promise anyway.';
 
-@injectable()
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
     }
 
-    constructor(context: RuleContext, private flatAst: FlattenedAst) {
-        super(context);
-    }
-
     public apply() {
-        for (const node of this.flatAst) {
+        for (const node of this.context.getFlatAst()) {
             if (node.kind === ts.SyntaxKind.AwaitExpression && isUnnecessaryAwait(node)) {
                 const keywordStart = node.expression.pos - 'await'.length;
                 this.addFailure(

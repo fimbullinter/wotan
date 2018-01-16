@@ -7,27 +7,21 @@ import {
     RuleContext,
     Severity,
     RuleConstructor,
-    TypedRuleContext,
-    RuleOptions,
-    GlobalSettings,
     MessageHandler,
     AbstractProcessor,
-    FlattenedAst,
-    WrappedAst,
     DeprecationHandler,
     DeprecationTarget,
+    WrappedAst,
 } from './types';
 import { applyFixes } from './fix';
 import { getDisabledRanges, DisableMap } from './line-switches';
 import * as debug from 'debug';
-import { Container, injectable, interfaces } from 'inversify';
+import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange } from './utils';
 import { ConvertedAst, convertAst } from 'tsutils';
 
 const log = debug('wotan:linter');
-
-const convertedAst = Symbol('ConvertedAst');
 
 export interface UpdateFileResult {
     file: ts.SourceFile;
@@ -138,28 +132,22 @@ export class Linter {
         let disables: DisableMap | undefined;
         let ruleName: string;
         let severity: Severity;
-        let options: any;
         let ctor: RuleConstructor;
+        let convertedAst: ConvertedAst | undefined;
         const context: RuleContext = {
             addFailure,
             isDisabled,
+            getFlatAst,
+            getWrappedAst,
             program,
             sourceFile,
+            settings,
+            options: undefined,
         };
 
-        const container = new Container();
-        container.bind(RuleContext).toConstantValue(context);
-        container.bind<any>(RuleOptions).toDynamicValue(() => options);
-        container.bind(GlobalSettings).toConstantValue(settings);
-        container.bind<ConvertedAst>(convertedAst).toDynamicValue(convertSourceFile).inSingletonScope();
-        container.bind(WrappedAst).toDynamicValue(getWrappedAst).inSingletonScope();
-        container.bind(FlattenedAst).toDynamicValue(getFlattenedAst).inSingletonScope();
-        if (program !== undefined)
-            container.bind<RuleContext>(TypedRuleContext).toService(RuleContext);
-
-        for ({ruleName, severity, options, ctor} of rules) {
+        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
             log('Executing rule %s', ruleName);
-            (Reflect.hasOwnMetadata('design:paramtypes', ctor) ? container.resolve(ctor) : new ctor(context)).apply();
+            new ctor(context).apply();
         }
 
         log('Found %d failures', result.length);
@@ -200,17 +188,13 @@ export class Linter {
                     return true;
             return false;
         }
+        function getFlatAst() {
+            return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
+        }
+        function getWrappedAst() {
+            return <WrappedAst>(convertedAst || (convertedAst = convertAst(sourceFile))).wrapped;
+        }
     }
-}
-
-function convertSourceFile(context: interfaces.Context) {
-    return convertAst(context.container.get(RuleContext).sourceFile);
-}
-function getFlattenedAst(context: interfaces.Context) {
-    return context.container.get<ConvertedAst>(convertedAst).flat;
-}
-function getWrappedAst(context: interfaces.Context) {
-    return context.container.get<ConvertedAst>(convertedAst).wrapped;
 }
 
 interface PreparedRule {
