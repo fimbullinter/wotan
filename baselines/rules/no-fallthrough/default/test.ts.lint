@@ -64,3 +64,30 @@ switch (x) {
         /* fallsthrough */
     default:
 }
+
+if (x) switch (x) {case 1: 'foo'; case 2: 'bar'}
+                                  ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+if (x) {
+    switch (x) {case 1: 'foo'; case 2: 'bar'}
+                               ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+} switch (x) {case 1: 'foo'; case 2: 'bar'} "foo"; switch (x) {case 1: 'foo'; case 2: 'bar'} /*
+                             ~~~~                                                               [error no-fallthrough: Missing 'break' before 'case'.]
+                                                                              ~~~~              [error no-fallthrough: Missing 'break' before 'case'.]
+ switch (x)
+*/ switch (x) {case 1: 'foo'; case 2: 'bar'}
+                              ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+
+switch
+(x) {case 1: 'foo'; case 2: 'bar'}
+                    ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+switch /* foo */ (x) {case 1: 'foo'; case 2: 'bar'}
+                                     ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+switch // foo
+(x) {case 1: 'foo'; case 2: 'bar'}
+                    ~~~~           [error no-fallthrough: Missing 'break' before 'case'.]
+
+x./* comment */switch
+
+let foo: {
+    switch(x): void;
+} = { switch(x) {}};

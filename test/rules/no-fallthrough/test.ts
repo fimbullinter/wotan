@@ -60,3 +60,22 @@ switch (x) {
         /* fallsthrough */
     default:
 }
+
+if (x) switch (x) {case 1: 'foo'; case 2: 'bar'}
+if (x) {
+    switch (x) {case 1: 'foo'; case 2: 'bar'}
+} switch (x) {case 1: 'foo'; case 2: 'bar'} "foo"; switch (x) {case 1: 'foo'; case 2: 'bar'} /*
+ switch (x)
+*/ switch (x) {case 1: 'foo'; case 2: 'bar'}
+
+switch
+(x) {case 1: 'foo'; case 2: 'bar'}
+switch /* foo */ (x) {case 1: 'foo'; case 2: 'bar'}
+switch // foo
+(x) {case 1: 'foo'; case 2: 'bar'}
+
+x./* comment */switch
+
+let foo: {
+    switch(x): void;
+} = { switch(x) {}};
