@@ -18,7 +18,7 @@ function test(x: any) {
     try {
     } catch {
         return;
-    } /* finally */ finally {
+    } /* finally {} */ finally {
         return;
     }
     try {

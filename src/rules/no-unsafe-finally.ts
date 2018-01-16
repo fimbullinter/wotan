@@ -8,10 +8,10 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        const re = /\bfinally\b/g;
+        const re = /\bfinally\s*[/{]/g;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             const token = getTokenAtPosition(this.sourceFile, match.index)!;
-            if (token.kind === ts.SyntaxKind.FinallyKeyword && token.end === re.lastIndex)
+            if (token.kind === ts.SyntaxKind.FinallyKeyword && token.end === match.index + 'finally'.length)
                 for (const statement of getControlFlowEnd((<ts.TryStatement>token.parent).finallyBlock!).statements)
                     this.addFailureAtNode(
                         statement.getChildAt(0, this.sourceFile),
