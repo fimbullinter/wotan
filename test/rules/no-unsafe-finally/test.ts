@@ -1,5 +1,9 @@
 export {};
 function test(x: any) {
+    let foo: {finally: boolean} = { finally: true };
+    if (foo.finally) {
+        return;
+    }
     try {
         return;
     } catch {
@@ -14,11 +18,11 @@ function test(x: any) {
     try {
     } catch {
         return;
-    } finally {
+    } /* finally */ finally {
         return;
     }
     try {
-    } finally {
+    } finally /* some comment */ {
         throw 'foo';
     }
     for (;;) {
