@@ -31,3 +31,8 @@ class Foo {
 // debugger;
 debugger;
 ~~~~~~~~~ [error no-debugger: 'debugger' statements are forbidden.]
+debugger // end of line comment
+~~~~~~~~                        [error no-debugger: 'debugger' statements are forbidden.]
+debugger /* multiline
+~~~~~~~~              [error no-debugger: 'debugger' statements are forbidden.]
+            comment */

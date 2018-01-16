@@ -20,4 +20,5 @@ while (true)
 class Foo {
     debugger;
     static debugger;
-}
+} /* multiline
+            comment */

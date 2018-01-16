@@ -7,7 +7,7 @@ export class Rule extends AbstractRule {
         return !sourceFile.isDeclarationFile;
     }
     public apply() {
-        const re = /\bdebugger\s*(?:;|$)/mg;
+        const re = /\bdebugger\s*(?:[/;]|$)/mg;
         const text = this.sourceFile.text;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
             const token = getTokenAtPosition(this.sourceFile, match.index)!;

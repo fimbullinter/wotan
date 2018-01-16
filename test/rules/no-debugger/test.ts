@@ -24,3 +24,6 @@ class Foo {
 }
 // debugger;
 debugger;
+debugger // end of line comment
+debugger /* multiline
+            comment */
