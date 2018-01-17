@@ -62,7 +62,7 @@ export class Runner {
             const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
-            let sourceFile = program.getSourceFile(file);
+            let sourceFile = program.getSourceFile(file)!;
             const mapped = processorHost.getProcessedFileInfo(file);
             const originalName = mapped === undefined ? file : mapped.originalName;
             const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
@@ -277,7 +277,7 @@ declare module 'typescript' {
     export function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
         includes: ReadonlyArray<string>,
         useCaseSensitiveFileNames: boolean,
         currentDirectory: string,
@@ -286,7 +286,7 @@ declare module 'typescript' {
     export function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
         includes: ReadonlyArray<string>,
         useCaseSensitiveFileNames: boolean,
         currentDirectory: string,
