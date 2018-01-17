@@ -1,5 +1,12 @@
 import test from 'ava';
-import { calculateChangeRange, memoizeGetter, assertNever, resolveCachedResult, isStrictNullChecksEnabled } from '../../src/utils';
+import {
+    calculateChangeRange,
+    memoizeGetter,
+    assertNever,
+    resolveCachedResult,
+    isStrictNullChecksEnabled,
+    isStrictPropertyInitializationEnabled,
+} from '../../src/utils';
 
 test('calculateChangeRange', (t) => {
     assertRange('', 'a', 0, 0, 1);
@@ -148,4 +155,13 @@ test('isStrictNullChecksEnabled', (t) => {
     t.false(isStrictNullChecksEnabled({strict: false}));
     t.false(isStrictNullChecksEnabled({strict: true, strictNullChecks: false}));
     t.false(isStrictNullChecksEnabled({strict: false, strictNullChecks: false}));
+});
+
+test('isStrictPropertyInitializationEnabled', (t) => {
+    t.true(isStrictPropertyInitializationEnabled({strict: true}));
+    t.true(isStrictPropertyInitializationEnabled({strictPropertyInitialization: true}));
+    t.true(isStrictPropertyInitializationEnabled({strict: false, strictPropertyInitialization: true}));
+    t.false(isStrictPropertyInitializationEnabled({strict: false}));
+    t.false(isStrictPropertyInitializationEnabled({strict: true, strictPropertyInitialization: false}));
+    t.false(isStrictPropertyInitializationEnabled({strict: false, strictPropertyInitialization: false}));
 });
