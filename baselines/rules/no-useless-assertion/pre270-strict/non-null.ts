@@ -109,9 +109,15 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     foo(three);
     takeUndefined(one);
     let uninitialized: T;
-    uninitialized!; // TODO this one could change in typescript@2.7.0
+    uninitialized!;
     let uninitialized2: U;
     uninitialized2!;
     let uninitialized3: V;
     uninitialized3!;
+    let uninitialized4: T | undefined;
+    uninitialized4!;
+    let uninitialized5: U | undefined;
+    uninitialized5!;
+    foo(uninitialized5!);
+    takeUndefined(uninitialized5);
 }
