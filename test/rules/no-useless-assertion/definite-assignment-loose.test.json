@@ -1,5 +1,5 @@
 {
   "project": "tsconfig-loose.json",
-  "exclude": ["global2.ts"],
+  "files": ["definite-assignment.ts"],
   "typescriptVersion": ">= 2.7.0"
 }
