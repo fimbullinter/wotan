@@ -43,7 +43,9 @@ export class Rule extends TypedRule {
     }
 
     private checkDefiniteAssignmentAssertion(node: ts.VariableDeclaration) {
-        if (node.exclamationToken !== undefined && (
+        // compiler already emits an error for definite assignment assertions on ambient or initialized variables
+        if (node.exclamationToken !== undefined &&
+            node.initializer === undefined && (
                 !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
                 getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
@@ -56,12 +58,14 @@ export class Rule extends TypedRule {
     }
 
     private checkDefiniteAssignmentAssertionPropery(node: ts.PropertyDeclaration) {
-        // compiler emits an error for definite assignment assertions on ambient declarations, initialized or abstract properties
-        if (node.exclamationToken !== undefined && (
+        // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
+        if (node.exclamationToken !== undefined &&
+            node.initializer === undefined &&
+            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind === ts.SyntaxKind.StringLiteral || // properties with string key are not checked
                 !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
                 !isStrictPropertyInitializationEnabled(this.program.getCompilerOptions()) || // strictPropertyInitialization must be enabled
-                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFailure(
                 node.exclamationToken.end - 1,

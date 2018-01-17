@@ -1,0 +1,152 @@
+export {};
+
+1!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+(1 + 2)!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+null!;
+undefined!;
+NaN!;
+   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+Infinity!;
+        ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+something!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+const a = 1;
+a!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let b: string | undefined;
+b = "b";
+b!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+b = undefined;
+b!;
+
+const c = !b ? "foo" : undefined;
+c!;
+
+const obj = {
+    prop: c,
+};
+obj!.prop!;
+   ~        [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let d: string;
+d!;
+d = "foo";
+d!;
+
+let e: string | number;
+e!;
+e = 1;
+e!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+const f = c ? c : null;
+f!;
+f!!;
+  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let g: string;
+g!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let {h} = {h: ''};
+h!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let i: string;
+i!;
+{
+    i!;
+}
+function foo(j: string) {
+    j!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    i!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+let k = b || c!; // this line should not be an error in strict mode
+k!; // but this line should
+ ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let l: string | null;
+
+let m: any;
+m!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+foobar!;
+      ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let possiblyNull: string | null;
+declare let possiblyUndefined: string | undefined;
+declare let possiblyBoth: string | null | undefined;
+
+function takeAny(arg: any) {}
+function takeNull(arg: string | null) {}
+function takeUndefined(arg: string | undefined) {}
+function takeBoth(arg: string | null | undefined) {}
+function takeStringNumberUndefined(arg: string | number | undefined) {}
+
+takeAny(possiblyNull!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeAny(possiblyUndefined!);
+                         ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeAny(possiblyBoth!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+takeAny(l!);
+
+takeNull(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeNull(possiblyUndefined!);
+takeNull(possiblyBoth!);
+takeNull(l!);
+
+takeUndefined(possiblyNull!);
+takeUndefined(possiblyUndefined!);
+                               ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeUndefined(possiblyBoth!);
+
+takeBoth(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeBoth(possiblyUndefined!);
+                          ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeBoth(possiblyBoth!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+
+takeStringNumberUndefined(possiblyNull!);
+takeStringNumberUndefined(possiblyUndefined!);
+                                           ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeStringNumberUndefined(possiblyBoth!);
+
+declare let functionOrAny: (() => void) | undefined;
+functionOrAny!();
+
+function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
+    one!;
+       ~  [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    two!;
+       ~  [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    fn(one!, two!);
+          ~         [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+                ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    foo(one!);
+           ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    fn(two!, one!);
+          ~         [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+                ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    foo(three!);
+             ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    takeUndefined(one!);
+                     ~   [error no-useless-assertion: Non-null assertions don't work with type parameters.]
+    let uninitialized: T;
+    uninitialized!; // TODO this one could change in typescript@2.7.0
+    let uninitialized2: U;
+    uninitialized2!;
+    let uninitialized3: V;
+    uninitialized3!;
+}
