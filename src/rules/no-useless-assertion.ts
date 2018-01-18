@@ -63,7 +63,6 @@ export class Rule extends TypedRule {
             node.initializer === undefined &&
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind === ts.SyntaxKind.StringLiteral || // properties with string key are not checked
-                !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
                 !isStrictPropertyInitializationEnabled(this.program.getCompilerOptions()) || // strictPropertyInitialization must be enabled
                 getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))

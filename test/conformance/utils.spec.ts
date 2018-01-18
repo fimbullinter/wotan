@@ -159,9 +159,14 @@ test('isStrictNullChecksEnabled', (t) => {
 
 test('isStrictPropertyInitializationEnabled', (t) => {
     t.true(isStrictPropertyInitializationEnabled({strict: true}));
-    t.true(isStrictPropertyInitializationEnabled({strictPropertyInitialization: true}));
-    t.true(isStrictPropertyInitializationEnabled({strict: false, strictPropertyInitialization: true}));
+    t.true(isStrictPropertyInitializationEnabled({strict: false, strictNullChecks: true, strictPropertyInitialization: true}));
+    t.true(isStrictPropertyInitializationEnabled({strict: true, strictPropertyInitialization: true}));
+    t.false(isStrictPropertyInitializationEnabled({strictPropertyInitialization: true}));
+    t.false(isStrictPropertyInitializationEnabled({strictNullChecks: true}));
+    t.false(isStrictPropertyInitializationEnabled({strict: false, strictPropertyInitialization: true}));
+    t.false(isStrictPropertyInitializationEnabled({strict: false, strictNullChecks: true}));
     t.false(isStrictPropertyInitializationEnabled({strict: false}));
     t.false(isStrictPropertyInitializationEnabled({strict: true, strictPropertyInitialization: false}));
     t.false(isStrictPropertyInitializationEnabled({strict: false, strictPropertyInitialization: false}));
+    t.false(isStrictPropertyInitializationEnabled({strict: true, strictNullChecks: false}));
 });
