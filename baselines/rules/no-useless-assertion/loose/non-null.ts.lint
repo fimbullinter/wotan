@@ -166,12 +166,22 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     takeUndefined(one!);
                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     let uninitialized: T;
-    uninitialized!; // TODO this one could change in typescript@2.7.0
-                 ~                                                    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    uninitialized!;
+                 ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     let uninitialized2: U;
     uninitialized2!;
                   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     let uninitialized3: V;
     uninitialized3!;
                   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    let uninitialized4: T | undefined;
+    uninitialized4!;
+                  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    let uninitialized5: U | undefined;
+    uninitialized5!;
+                  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(uninitialized5!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(uninitialized5!);
+                                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }

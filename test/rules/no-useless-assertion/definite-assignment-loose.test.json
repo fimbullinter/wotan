@@ -1,0 +1,5 @@
+{
+  "project": "tsconfig-loose.json",
+  "files": ["definite-assignment.ts"],
+  "typescriptVersion": ">= 2.7.0"
+}

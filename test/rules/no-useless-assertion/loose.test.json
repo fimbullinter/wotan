@@ -1,4 +1,4 @@
 {
   "project": "tsconfig-loose.json",
-  "exclude": ["global2.ts"]
+  "exclude": ["global2.ts", "definite-assignment.ts"]
 }

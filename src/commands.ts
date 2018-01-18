@@ -170,7 +170,7 @@ class ShowCommandRunner extends AbstractCommandRunner {
 
 @injectable()
 class FakeDirectoryService implements DirectoryService {
-    public cwd: string;
+    public cwd!: string;
     public getCurrentDirectory() {
         return this.cwd;
     }

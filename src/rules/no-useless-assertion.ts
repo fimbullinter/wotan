@@ -1,6 +1,6 @@
 import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isStrictNullChecksEnabled, unionTypeParts } from '../utils';
+import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled, unionTypeParts } from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -13,7 +13,8 @@ import * as debug from 'debug';
 
 const log = debug('wotan:rule:no-useless-assertion');
 
-const FAIL_MESSAGE = `This assertion is unnecesary as it doesn't change the type of the expression.`;
+const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
+const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -31,8 +32,47 @@ export class Rule extends TypedRule {
                 case ts.SyntaxKind.AsExpression:
                 case ts.SyntaxKind.TypeAssertionExpression:
                     this.checkTypeAssertion(<ts.AssertionExpression>node);
+                    break;
+                case ts.SyntaxKind.VariableDeclaration:
+                    this.checkDefiniteAssignmentAssertion(<ts.VariableDeclaration>node);
+                    break;
+                case ts.SyntaxKind.PropertyDeclaration:
+                    this.checkDefiniteAssignmentAssertionPropery(<ts.PropertyDeclaration>node);
             }
         }
+    }
+
+    private checkDefiniteAssignmentAssertion(node: ts.VariableDeclaration) {
+        // compiler already emits an error for definite assignment assertions on ambient or initialized variables
+        if (node.exclamationToken !== undefined &&
+            node.initializer === undefined && (
+                !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
+                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
+            ))
+            this.addFailure(
+                node.exclamationToken.end - 1,
+                node.exclamationToken.end,
+                FAIL_DEFINITE_ASSIGNMENT,
+                Replacement.delete(node.exclamationToken.pos, node.exclamationToken.end),
+            );
+    }
+
+    private checkDefiniteAssignmentAssertionPropery(node: ts.PropertyDeclaration) {
+        // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
+        if (node.exclamationToken !== undefined &&
+            node.initializer === undefined &&
+            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
+                node.name.kind === ts.SyntaxKind.StringLiteral || // properties with string key are not checked
+                !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
+                !isStrictPropertyInitializationEnabled(this.program.getCompilerOptions()) || // strictPropertyInitialization must be enabled
+                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
+            ))
+            this.addFailure(
+                node.exclamationToken.end - 1,
+                node.exclamationToken.end,
+                FAIL_DEFINITE_ASSIGNMENT,
+                Replacement.delete(node.exclamationToken.pos, node.exclamationToken.end),
+            );
     }
 
     private checkNonNullAssertion(node: ts.NonNullExpression) {
@@ -128,18 +168,22 @@ function formatNullableFlags(flags: ts.TypeFlags) {
  * * identifier is a mutable variable
  * * no destructuring, parameters, catch binding, ambient declarations
  * * variable is not initialized
+ * * variable has no definite assignment assertion (exclamation mark)
  * * variable has a type annotation
  * * declared type is equal to the type at the assertion
  * * declaration and assertion are in the same function scope
+ *
+ * We don't need to worry about strictPropertyInitialization errors, because they cannot be suppressed with a non-null assertion
  */
 function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeChecker): node is ts.Identifier {
     if (node.kind !== ts.SyntaxKind.Identifier)
         return false;
-    const symbol = checker.getSymbolAtLocation(node);
-    const declaration = symbol!.declarations![0];
+    const symbol = checker.getSymbolAtLocation(node)!;
+    const declaration = symbol.declarations![0];
     if (!isVariableDeclaration(declaration) ||
         declaration.parent!.kind !== ts.SyntaxKind.VariableDeclarationList ||
         declaration.initializer !== undefined ||
+        declaration.exclamationToken !== undefined ||
         declaration.type === undefined ||
         declaration.parent!.parent!.kind === ts.SyntaxKind.VariableStatement &&
             hasModifier(declaration.parent!.parent!.modifiers, ts.SyntaxKind.DeclareKeyword))

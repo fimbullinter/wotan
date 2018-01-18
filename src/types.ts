@@ -140,8 +140,8 @@ export abstract class AbstractRule {
 
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
-    public readonly context: TypedRuleContext;
-    public readonly program: ts.Program;
+    public readonly context!: TypedRuleContext;
+    public readonly program!: ts.Program;
 
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
     @memoizeGetter
@@ -356,8 +356,8 @@ export interface Cache<K, V> {
 
 export class CacheIdentifier<K, V> {
     public readonly weak: boolean = false;
-    protected key: K;
-    protected value: V;
+    protected key!: K;
+    protected value!: V;
     constructor(public description: string) {}
 }
 export class WeakCacheIdentifier<K extends object, V> extends CacheIdentifier<K, V> {
