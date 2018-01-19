@@ -39,7 +39,7 @@ export class Runner {
         return this.lintProject(options, config);
     }
 
-    private lintProject(options: LintOptions, config: Configuration | undefined) {
+    private *lintProject(options: LintOptions, config: Configuration | undefined): LintResult {
         const processorHost = new ProjectHost(
             this.directories.getCurrentDirectory(),
             config,
@@ -48,7 +48,6 @@ export class Runner {
             this.processorLoader,
         );
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
-        const result: LintResult = new Map();
         let dir: string | undefined;
 
         for (const file of files) {
@@ -92,13 +91,11 @@ export class Runner {
                     content: originalContent,
                 };
             }
-            result.set(originalName, summary);
+            yield [originalName, summary];
         }
-        return result;
     }
 
-    private lintFiles(options: LintOptions, config: Configuration | undefined) {
-        const result: LintResult = new Map();
+    private *lintFiles(options: LintOptions, config: Configuration | undefined): LintResult {
         let dir: string | undefined;
         let processor: AbstractProcessor | undefined;
         for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
@@ -153,9 +150,8 @@ export class Runner {
                     content: originalContent,
                 };
             }
-            result.set(file, summary);
+            yield [file, summary];
         }
-        return result;
     }
 
     private resolveConfig(pathOrName: string): Configuration {

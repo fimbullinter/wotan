@@ -1,4 +1,4 @@
-import { Failure, FileSummary, LintResult } from './types';
+import { Failure, FileSummary } from './types';
 import chalk from 'chalk';
 import * as diff from 'diff';
 import { Runner, LintOptions } from './runner';
@@ -26,13 +26,16 @@ export class RuleTester {
             fix: false,
         };
         const lintResult = this.runner.lintCollection(lintOptions);
-        for (const [fileName, summary] of lintResult)
+        let containsFixes = false;
+        for (const [fileName, summary] of lintResult) {
             if (!this.host.checkResult(fileName, BaselineKind.Lint, summary))
                 return false;
+            containsFixes = containsFixes || summary.failures.some(isFixable);
+        }
 
         if (!('fix' in config) || config.fix) {
             lintOptions.fix = config.fix || true; // fix defaults to true if not specified
-            const fixResult = containsFixes(lintResult) ? this.runner.lintCollection(lintOptions) : lintResult;
+            const fixResult = containsFixes ? this.runner.lintCollection(lintOptions) : lintResult;
             for (const [fileName, summary] of fixResult)
                 if (!this.host.checkResult(fileName, BaselineKind.Fix, summary))
                     return false;
@@ -41,12 +44,8 @@ export class RuleTester {
     }
 }
 
-function containsFixes(result: LintResult): boolean {
-    for (const {failures} of result.values())
-        for (const failure of failures)
-            if (failure.fix !== undefined)
-                return true;
-    return false;
+function isFixable(failure: Failure): boolean {
+    return failure.fix !== undefined;
 }
 
 export function createBaselineDiff(actual: string, expected: string) {

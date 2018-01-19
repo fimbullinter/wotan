@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import test, { TestContext } from 'ava';
-import { LintResult, Failure, Severity, Replacement, AbstractFormatter } from '../../src/types';
+import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '../../src/types';
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
 import chalk, { Level } from 'chalk';
@@ -31,7 +31,7 @@ function createFailure(name: string, severity: Severity, message: string, start:
     };
 }
 
-const summary: LintResult = new Map();
+const summary = new Map<string, FileSummary>();
 summary.set('/some/directory/a.ts', {
     content: '',
     failures: [],
@@ -79,7 +79,7 @@ const warningSummary: LintResult = new Map([
     ],
 ]);
 
-function testFormatter(formatter: AbstractFormatter, t: TestContext, transform?: (s: string) => string) {
+function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, transform?: (s: string) => string) {
     testOutput(emptySummary, 'empty');
     testOutput(noFailureSummary, 'success');
     testOutput(fixedSummary, 'fixed');
@@ -88,21 +88,35 @@ function testFormatter(formatter: AbstractFormatter, t: TestContext, transform?:
     testOutput(summary, 'mixed');
 
     function testOutput(lintResult: LintResult, name: string) {
-        const output = formatter.format(lintResult);
+        const output = format(lintResult, new formatterCtor());
         t.snapshot(transform === undefined ? output : transform(output), <any>{id: `${t.title} ${name}`});
     }
 }
 
+function format(lintResult: LintResult, formatter: AbstractFormatter): string {
+    let result = formatter.prefix !== undefined ? formatter.prefix + '\n' : '';
+    for (const [fileName, fileResult] of lintResult) {
+        const formatted = formatter.format(fileName, fileResult);
+        if (formatted !== undefined)
+            result += formatted + '\n';
+    }
+    if (formatter.flush !== undefined) {
+        const formatted = formatter.flush();
+        if (formatted !== undefined)
+            result += formatted + '\n';
+    }
+    return result;
+}
+
 test('JSON', (t) => {
-    testFormatter(new JsonFormatter(), t);
+    testFormatter(JsonFormatter, t);
 });
 
 test('Stylish', (t) => {
-    const formatter = new StylishFormatter();
-    const lines = formatter.format(warningSummary).split('\n');
+    const lines = format(warningSummary, new StylishFormatter()).split('\n');
     t.true(lines[0].startsWith(`\u001b[4m${path.normalize('/dir/warnings.ts')}\u001b[24m`));
     t.true(lines[3].startsWith(`\u001b[4m${path.normalize('C:/dir/warnings2.ts')}\u001b[24m`));
-    testFormatter(new StylishFormatter(), t, (output) => {
+    testFormatter(StylishFormatter, t, (output) => {
         return output
             .split('\n')
             .map((line) => line.startsWith('\u001b[4m') ? unixifyPath(line) : line)

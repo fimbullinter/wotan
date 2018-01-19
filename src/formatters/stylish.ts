@@ -1,42 +1,61 @@
-import { Failure, AbstractFormatter, LintResult } from '../types';
+import { Failure, AbstractFormatter, FileSummary, Severity } from '../types';
 import chalk from 'chalk';
 import * as path from 'path';
 
+interface FailureInfo {
+    severity: Severity;
+    ruleName: string;
+    position: string;
+    message: string;
+}
+
 export class Formatter extends AbstractFormatter {
-    public format(result: LintResult) {
+    private fixed = 0;
+    private fixable = 0;
+
+    private maxSeverityWidth = 0;
+    private maxPositionWidth = 0;
+    private maxNameWidth = 0;
+
+    private files = new Map<string, FailureInfo[]>();
+
+    public format(fileName: string, summary: FileSummary): undefined {
+        this.fixed += summary.fixes;
+        if (summary.failures.length === 0)
+            return;
+        const mapped: FailureInfo[] = [];
+        for (const failure of summary.failures.slice().sort(Failure.compare)) {
+            if (failure.fix !== undefined)
+                ++this.fixable;
+            if (failure.severity.length > this.maxSeverityWidth)
+                this.maxSeverityWidth = failure.severity.length;
+            if (failure.ruleName.length > this.maxNameWidth)
+                this.maxNameWidth = failure.ruleName.length;
+            const position = `${failure.start.line + 1}:${failure.start.character + 1}`; // TODO handle BOM
+            if (position.length > this.maxPositionWidth)
+                this.maxPositionWidth = position.length;
+            mapped.push({
+                position,
+                severity: failure.severity,
+                ruleName: failure.ruleName,
+                message: failure.message,
+            });
+        }
+        this.files.set(fileName, mapped);
+        return;
+    }
+
+    public flush() {
         let errors = 0;
         let warnings = 0;
-        let fixable = 0;
         const lines: string[] = [];
-        let fixed = 0;
-        const fileNames: string[] = [];
-        const allFailures: Failure[] = [];
-        for (const [fileName, summary] of result) {
-            if (summary.failures.length !== 0) {
-                fileNames.push(fileName);
-                allFailures.push(...summary.failures);
-            }
-            fixed += summary.fixes;
-        }
 
-        const maxSeverityWidth = Math.max(...allFailures.map(ruleSeverityWidth));
-        const maxPositionWidth = Math.max(...allFailures.map(positionWidth));
-        const maxNameWidth = Math.max(...allFailures.map(ruleNameWidth));
-
-        for (const fileName of fileNames) {
-            const failures = result.get(fileName)!.failures.slice().sort(Failure.compare);
+        for (const [fileName, failures] of this.files) {
             lines.push(
                 '',
-                `${
-                    chalk.underline(path.normalize(fileName))
-                }${
-                    chalk.hidden(`:${failures[0].start.line + 1}:${failures[0].start.character + 1}`)
-                }`,
+                `${chalk.underline(path.normalize(fileName))}${chalk.hidden(':' + failures[0].position)}`,
             );
             for (const failure of failures) {
-                if (failure.fix !== undefined)
-                    ++fixable;
-                const position = `${failure.start.line + 1}:${failure.start.character + 1}`;
                 let positionColor: typeof chalk;
                 if (failure.severity === 'error') {
                     positionColor = chalk.red;
@@ -46,26 +65,28 @@ export class Formatter extends AbstractFormatter {
                     ++warnings;
                 }
                 lines.push(
-                    positionColor(`${pad(failure.severity.toUpperCase(), maxSeverityWidth)} ${pad(position, maxPositionWidth)}`) +
-                        `  ${chalk.grey(pad(failure.ruleName, maxNameWidth))}  ${chalk.blueBright(failure.message)}`,
+                    positionColor(
+                        pad(failure.severity.toUpperCase(), this.maxSeverityWidth) + ' ' + pad(failure.position, this.maxPositionWidth),
+                    ) + `  ${chalk.grey(pad(failure.ruleName, this.maxNameWidth))}  ${chalk.blueBright(failure.message)}`,
                 );
             }
         }
-        if (fixed !== 0)
+        if (this.fixed !== 0)
             lines.push(
-                '', chalk.green(`Automatically fixed ${addCount(fixed, 'failure')}.`),
+                '', chalk.green(`Automatically fixed ${addCount(this.fixed, 'failure')}.`),
             );
-        if (fileNames.length !== 0) {
+        if (this.files.size !== 0) {
             const summaryLine = [];
             if (errors !== 0)
                 summaryLine.push(chalk.red.bold(`✖ ${addCount(errors, 'error')}`));
             if (warnings !== 0)
                 summaryLine.push(chalk.yellow.bold(`⚠ ${addCount(warnings, 'warning')}`));
             lines.push('', summaryLine.join('  '));
-            if (fixable !== 0)
+            if (this.fixable !== 0)
                 lines.push(
                     chalk.grey(
-                        `${addCount(fixable, 'failure')} ${fixable === 1 ? 'is' : 'are'} potentially fixable with the '--fix' option.`,
+                        addCount(this.fixable, 'failure') + ' ' +
+                        (this.fixable === 1 ? 'is' : 'are') + " potentially fixable with the '--fix' option.",
                     ),
                 );
         }
@@ -81,16 +102,4 @@ function addCount(count: number, word: string) {
 
 function pad(str: string, width: number) {
     return str + ' '.repeat(width - str.length);
-}
-
-function ruleSeverityWidth(failure: Failure) {
-    return failure.severity.length;
-}
-
-function ruleNameWidth(failure: Failure) {
-    return failure.ruleName.length;
-}
-
-function positionWidth(failure: Failure) {
-    return `${failure.start.line + 1}${failure.start.character + 1}`.length + 1;
 }
