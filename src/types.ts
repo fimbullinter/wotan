@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
-export type LintResult = IterableIterator<[string, FileSummary]>;
+export type LintResult = Iterable<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
 

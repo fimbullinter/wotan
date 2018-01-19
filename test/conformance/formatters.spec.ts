@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import test, { TestContext } from 'ava';
-import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor } from '../../src/types';
+import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '../../src/types';
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
 import chalk, { Level } from 'chalk';
@@ -59,16 +59,16 @@ summary.set('/my/project/a.ts', {
     fixes: 0,
 });
 
-const emptySummary = new Map<string, FileSummary>();
-const noFailureSummary = new Map<string, FileSummary>([['/some/file.js', {content: '', failures: [], fixes: 0}]]);
-const fixedSummary = new Map<string, FileSummary>([['/project/fixed.js', {content: '', failures: [], fixes: 1}]]);
-const fixableSummary = new Map<string, FileSummary>([
+const emptySummary: LintResult = new Map();
+const noFailureSummary: LintResult = new Map([['/some/file.js', {content: '', failures: [], fixes: 0}]]);
+const fixedSummary: LintResult = new Map([['/project/fixed.js', {content: '', failures: [], fixes: 1}]]);
+const fixableSummary: LintResult = new Map([
     [
         '/dir/fixableError.ts',
         {content: 'debugger;', failures: [createFailure('no-debugger', 'error', 'debugger', 0, 9, [Replacement.delete(0, 9)])], fixes: 0},
     ],
 ]);
-const warningSummary = new Map<string, FileSummary>([
+const warningSummary: LintResult = new Map([
     [
         '/dir/warnings.ts',
         {content: 'a', failures: [createFailure('a', 'warning', 'a', 0, 0)], fixes: 0},
@@ -87,13 +87,13 @@ function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, tran
     testOutput(warningSummary, 'warnings');
     testOutput(summary, 'mixed');
 
-    function testOutput(lintResult: Iterable<[string, FileSummary]>, name: string) {
+    function testOutput(lintResult: LintResult, name: string) {
         const output = format(lintResult, new formatterCtor());
         t.snapshot(transform === undefined ? output : transform(output), <any>{id: `${t.title} ${name}`});
     }
 }
 
-function format(lintResult: Iterable<[string, FileSummary]>, formatter: AbstractFormatter): string {
+function format(lintResult: LintResult, formatter: AbstractFormatter): string {
     let result = '';
     if (formatter.prefix !== undefined) {
         const prefix = formatter.prefix();
