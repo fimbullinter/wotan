@@ -135,31 +135,14 @@ export class ConfigurationManager {
         return {
             filename,
             extends: base,
-            aliases: raw.aliases && this.mapAliases(raw.aliases),
+            aliases: raw.aliases && mapAliases(raw.aliases),
             overrides: raw.overrides && raw.overrides.map((o) => this.mapOverride(o, dirname)),
-            rules: raw.rules && this.mapRules(raw.rules),
+            rules: raw.rules && mapRules(raw.rules),
             rulesDirectories: raw.rulesDirectories && this.mapRulesDirectory(raw.rulesDirectories, dirname),
             processor: this.mapProcessor(raw.processor, dirname),
             exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude === undefined ? undefined : [raw.exclude],
-            settings: raw.settings,
+            settings: raw.settings && mapSettings(raw.settings),
         };
-    }
-
-    private mapAliases(aliases: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null }}) {
-        const result: Configuration['aliases'] = {};
-        for (const prefix of Object.keys(aliases)) {
-            const obj = aliases[prefix];
-            if (!obj)
-                continue;
-            for (const name of Object.keys(obj)) {
-                const config = obj[name];
-                const fullName = `${prefix}/${name}`;
-                if (config && !config.rule)
-                    throw new ConfigurationError(`Alias '${fullName}' does not specify a rule.`);
-                result[fullName] = config;
-            }
-        }
-        return result;
     }
 
     private mapOverride(raw: RawConfiguration.Override, basedir: string): Configuration.Override {
@@ -168,8 +151,8 @@ export class ConfigurationManager {
             throw new ConfigurationError(`Override does not specify files.`);
         return {
             files: arrayify(raw.files),
-            rules: raw.rules && this.mapRules(raw.rules),
-            settings: raw.settings,
+            rules: raw.rules && mapRules(raw.rules),
+            settings: raw.settings && mapSettings(raw.settings),
             processor: this.mapProcessor(raw.processor, basedir),
         };
     }
@@ -188,38 +171,6 @@ export class ConfigurationManager {
         for (const key of Object.keys(raw))
             result.set(key, path.resolve(dirname, raw[key]));
         return result;
-    }
-
-    private mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
-        const result: {[name: string]: Configuration.RuleConfig} = {};
-        for (const key of Object.keys(raw))
-            result[key] = this.mapRuleConfig(raw[key]);
-        return result;
-    }
-
-    private mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
-        if (typeof value === 'string')
-            return { severity: this.mapRuleSeverity(value) };
-        if (!value)
-            return {};
-        const result: Configuration.RuleConfig = {};
-        if ('options' in value)
-            result.options = value.options;
-        if ('severity' in value)
-            result.severity = this.mapRuleSeverity(value.severity!);
-        return result;
-    }
-
-    private mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration.RuleSeverity {
-        switch (severity) {
-            case 'off':
-                return 'off';
-            case 'warn':
-            case 'warning':
-                return 'warning';
-            default:
-                return 'error';
-        }
     }
 
     private findupConfig(current: string): string | undefined {
@@ -242,4 +193,60 @@ export class ConfigurationManager {
         }
         return;
     }
+}
+
+function mapAliases(aliases: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false }}) {
+    const result: Configuration['aliases'] = new Map();
+    for (const prefix of Object.keys(aliases)) {
+        const obj = aliases[prefix];
+        if (!obj)
+            continue;
+        for (const name of Object.keys(obj)) {
+            const config = obj[name];
+            const fullName = `${prefix}/${name}`;
+            if (config && !config.rule)
+                throw new ConfigurationError(`Alias '${fullName}' does not specify a rule.`);
+            result.set(fullName, config);
+        }
+    }
+    return result;
+}
+
+function mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
+    const result: Configuration['rules'] = new Map();
+    for (const key of Object.keys(raw))
+        result.set(key, mapRuleConfig(raw[key]));
+    return result;
+}
+
+function mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
+    if (typeof value === 'string')
+        return { severity: mapRuleSeverity(value) };
+    if (!value)
+        return {};
+    const result: Configuration.RuleConfig = {};
+    if ('options' in value)
+        result.options = value.options;
+    if ('severity' in value)
+        result.severity = mapRuleSeverity(value.severity!);
+    return result;
+}
+
+function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration.RuleSeverity {
+    switch (severity) {
+        case 'off':
+            return 'off';
+        case 'warn':
+        case 'warning':
+            return 'warning';
+        default:
+            return 'error';
+    }
+}
+
+function mapSettings(settings: {[key: string]: any}) {
+    const result: Configuration['settings'] = new Map();
+    for (const key of Object.keys(settings))
+        result.set(key, settings[key]);
+    return result;
 }

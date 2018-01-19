@@ -166,7 +166,7 @@ export interface FormatterConstructor {
 }
 
 export interface RawConfiguration {
-    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null}};
+    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false}};
     rules?: {[key: string]: RawConfiguration.RuleConfigValue};
     settings?: {[key: string]: any};
     extends?: string | string[];
@@ -196,9 +196,9 @@ export namespace RawConfiguration {
 }
 
 export interface Configuration {
-    aliases?: {[name: string]: Configuration.Alias | null};
-    rules?: {[key: string]: Configuration.RuleConfig};
-    settings?: {[key: string]: any};
+    aliases?: Map<string, Configuration.Alias | null | false>;
+    rules?: Map<string, Configuration.RuleConfig>;
+    settings?: Map<string, any>;
     filename: string;
     overrides?: Configuration.Override[];
     extends: Configuration[];
@@ -214,8 +214,8 @@ export namespace Configuration {
         options?: any;
     }
     export interface Override {
-        rules?: {[key: string]: RuleConfig};
-        settings?: {[key: string]: any};
+        rules?: Map<string, RuleConfig>;
+        settings?: Map<string, any>;
         files: string[];
         processor?: string | null | false;
     }

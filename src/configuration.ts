@@ -1,4 +1,4 @@
-﻿import * as path from 'path';
+import * as path from 'path';
 import { Minimatch } from 'minimatch';
 import { ConfigurationError } from './error';
 import { Configuration, EffectiveConfiguration, GlobalSettings, ReducedConfiguration } from './types';
@@ -19,7 +19,7 @@ interface ResolvedAlias extends Configuration.Alias {
 interface ReducedAlias extends ResolvedAlias {
     aliases: AliasMap;
 }
-type AliasMap = Map<string, ReducedAlias | null>;
+type AliasMap = Map<string, ReducedAlias | null | false>;
 
 interface ReduceResult {
     aliases: AliasMap | undefined;
@@ -79,14 +79,12 @@ function reduceConfig(config: Configuration, filename: string, receiver: Receive
 
     if (config.aliases) {
         aliases = aliases === undefined ? new Map() : new Map(aliases);
-        for (const name of Object.keys(config.aliases)) {
-            const options = config.aliases[name];
-            aliases.set(name, options && {
-                ...options,
+        for (const [name, alias] of config.aliases)
+            aliases.set(name, alias && {
+                ...alias,
                 aliases,
-                rulesDirectories: rulesDirectories && getRulesDirectoriesByName(options.rule, rulesDirectories),
+                rulesDirectories: rulesDirectories && getRulesDirectoriesByName(alias.rule, rulesDirectories),
             });
-        }
     }
 
     const result: ReduceResult = {
@@ -157,15 +155,15 @@ function extendConfig(
     if (processor !== undefined)
         r.processor = processor;
     if (rules) {
-        for (const key of Object.keys(rules)) {
-            const prev = receiver.rules.get(key);
-            receiver.rules.set(key, {
+        for (const [ruleName, config] of rules) {
+            const prev = receiver.rules.get(ruleName);
+            receiver.rules.set(ruleName, {
                 severity: 'error',
                 options: undefined,
                 ...prev,
-                rulesDirectories: r.rulesDirectories && getRulesDirectoriesByName(key, r.rulesDirectories),
-                ...resolveAlias(key, r.aliases),
-                ...rules[key],
+                rulesDirectories: r.rulesDirectories && getRulesDirectoriesByName(ruleName, r.rulesDirectories),
+                ...resolveAlias(ruleName, r.aliases),
+                ...config,
             });
         }
     }
@@ -173,9 +171,9 @@ function extendConfig(
         extendSettings(settings, receiver.settings);
 }
 
-function extendSettings(settings: {[key: string]: any}, receiver: EffectiveConfiguration['settings']) {
-    for (const key of Object.keys(settings))
-        receiver.set(key, settings[key]);
+function extendSettings(settings: Map<string, any>, receiver: EffectiveConfiguration['settings']) {
+    for (const [key, value] of settings)
+        receiver.set(key, value);
 }
 
 function resolveAlias(rule: string, aliases: AliasMap | undefined) {

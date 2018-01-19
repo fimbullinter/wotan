@@ -141,30 +141,30 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
 
 test('Circular aliases throw an exception', (t) => {
     const config: Configuration = {
-        aliases: {
-            'my/ok': { rule: 'no-debugger' },
-            'my/foo': { rule: 'my/foo' },
-            'my/bar': { rule: 'other/bar' },
-            'other/bar': { rule: 'my/bar' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['my/ok', { rule: 'no-debugger' }],
+            ['my/foo', { rule: 'my/foo' }],
+            ['my/bar', { rule: 'other/bar' }],
+            ['other/bar', { rule: 'my/bar' }],
+        ]),
         extends: [],
         filename: '/config.yaml',
         overrides: [
             {
                 files: ['a.ts'],
-                rules: { 'my/ok': { severity: 'error' } },
+                rules: new Map<string, Configuration.RuleConfig>([['my/ok', { severity: 'error' }]]),
             },
             {
                 files: ['b.ts'],
-                rules: { 'my/foo': { severity: 'error' } },
+                rules: new Map<string, Configuration.RuleConfig>([['my/foo', { severity: 'error' }]]),
             },
             {
                 files: ['c.ts'],
-                rules: { 'my/bar': { severity: 'error' } },
+                rules: new Map<string, Configuration.RuleConfig>([['my/bar', { severity: 'error' }]]),
             },
             {
                 files: ['d.ts'],
-                rules: { 'other/bar': { severity: 'error' } },
+                rules: new Map<string, Configuration.RuleConfig>([['other/bar', { severity: 'error' }]]),
             },
         ],
     };
@@ -185,36 +185,28 @@ test('Circular aliases throw an exception', (t) => {
 
 test('Aliases refer to rules or aliases in the scope they are declared', (t) => {
     const config: Configuration = {
-        aliases: {
-            'my/foo': { rule: 'other/foo' },
-            'my/circular': { rule: 'circular/circular' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['my/foo', { rule: 'other/foo' }],
+            ['my/circular', { rule: 'circular/circular' }],
+        ]),
         extends: [{
-            aliases: {
-                'other/foo': {
-                    rule: 'my/foo',
-                },
-                'circular/circular': {
-                    rule: 'circular/circular',
-                },
-            },
+            aliases: new Map<string, Configuration.Alias>([
+                ['other/foo', { rule: 'my/foo' }],
+                ['circular/circular', {rule: 'circular/circular'}],
+            ]),
             extends: [],
             filename: '/base.yaml',
             rulesDirectories: new Map([['my', '/baseRules']]),
         }],
         filename: '/config.yaml',
-        rules: {
-            'my/foo': {
-                severity: 'error',
-            },
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['my/foo', { severity: 'error' }],
+        ]),
         overrides: [{
             files: ['b.ts'],
-            rules: {
-                'my/circular': {
-                    severity: 'error',
-                },
-            },
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['my/circular', { severity: 'error' }],
+            ]),
         }],
         rulesDirectories: new Map([['my', '/extendingRules']]),
     };
@@ -237,44 +229,31 @@ test('Aliases refer to rules or aliases in the scope they are declared', (t) => 
 
 test("Aliases don't alter options unless explicitly specified", (t) => {
     const base: Configuration = {
-        aliases: {
-            'base/ban-with-statement': { rule: 'no-restricted-syntax', options: 'WithStatement' },
-            'base/ban-delete-expression': { rule: 'no-restricted-syntax', options: 'DeleteExpression' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['base/ban-with-statement', { rule: 'no-restricted-syntax', options: 'WithStatement' }],
+            ['base/ban-delete-expression', { rule: 'no-restricted-syntax', options: 'DeleteExpression' }],
+        ]),
         extends: [],
         filename: '/base.yaml',
-        rules: {
-            'base/ban-with-statement': {
-                severity: 'error',
-            },
-            'base/ban-delete-expression': {
-                severity: 'error',
-            },
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['base/ban-with-statement', { severity: 'error' }],
+            ['base/ban-delete-expression', { severity: 'error' }],
+        ]),
     };
     const extending1: Configuration = {
-        aliases: {
-            'my/ban-with-statement': { rule: 'base/ban-with-statement', options: 'SourceFile>WithStatement'},
-            'my/ban-delete-expression': { rule: 'base/ban-with-statement', options: undefined },
-            'my/foo': { rule: 'my/ban-with-statement' },
-            'my/bar': { rule: 'my/foo' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['my/ban-with-statement', { rule: 'base/ban-with-statement', options: 'SourceFile>WithStatement'}],
+            ['my/ban-delete-expression', { rule: 'base/ban-with-statement', options: undefined }],
+            ['my/foo', { rule: 'my/ban-with-statement' }],
+            ['my/bar', { rule: 'my/foo' }],
+        ]),
         extends: [base],
-        rules: {
-            'my/ban-with-statement': {
-                severity: 'error',
-            },
-            'my/ban-delete-expression': {
-                severity: 'error',
-            },
-            'my/foo': {
-                severity: 'error',
-            },
-            'my/bar': {
-                severity: 'error',
-                options: 'FooBar',
-            },
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['my/ban-with-statement', { severity: 'error' }],
+            ['my/ban-delete-expression', { severity: 'error' }],
+            ['my/foo', { severity: 'error' }],
+            ['my/bar', { severity: 'error', options: 'FooBar' }],
+        ]),
         filename: '/extending1.yaml',
     };
 
@@ -312,25 +291,18 @@ test("Aliases don't alter options unless explicitly specified", (t) => {
 
 test('Aliases shadow rules until cleared', (t) => {
     const base: Configuration = {
-        aliases: {
-            'a/ban-with-statement': { rule: 'b/no-restricted-syntax', options: 'WithStatement' },
-            'b/ban-delete-expression': { rule: 'b/no-restricted-syntax', options: 'DeleteExpression' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['a/ban-with-statement', { rule: 'b/no-restricted-syntax', options: 'WithStatement' }],
+            ['b/ban-delete-expression', { rule: 'b/no-restricted-syntax', options: 'DeleteExpression' }],
+        ]),
         rulesDirectories: new Map([['b', '/baseB']]),
         extends: [],
         filename: '/base.yaml',
-        rules: {
-            'a/ban-with-statement': {
-                severity: 'error',
-            },
-            'b/ban-delete-expression': {
-                severity: 'error',
-            },
-            'b/no-restricted-syntax': {
-                severity: 'error',
-                options: 'AnyKeyword',
-            },
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['a/ban-with-statement', { severity: 'error' }],
+            ['b/ban-delete-expression', { severity: 'error' }],
+            ['b/no-restricted-syntax', { severity: 'error', options: 'AnyKeyword' }],
+        ]),
     };
     t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(base, '/a.ts', '/'), {
         processor: undefined,
@@ -353,19 +325,19 @@ test('Aliases shadow rules until cleared', (t) => {
 
     const extending: Configuration = {
         extends: [base],
-        aliases: {
-            'a/ban-with-statement': null, // tslint:disable-line:no-null-keyword
-            'b/ban-delete-expression': null, // tslint:disable-line:no-null-keyword
-        },
+        aliases: new Map<string, Configuration.Alias | null>([
+            ['a/ban-with-statement', null], // tslint:disable-line:no-null-keyword
+            ['b/ban-delete-expression', null], // tslint:disable-line:no-null-keyword
+        ]),
         filename: '/extending.yaml',
         rulesDirectories: new Map([['b', '/extB'], ['a', '/extA']]),
         overrides: [{
             files: ['b.ts'],
-            rules: {
-                'a/ban-with-statement': {},
-                'b/ban-delete-expression': {},
-                'b/no-restricted-syntax': {},
-            },
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a/ban-with-statement', {}],
+                ['b/ban-delete-expression', {}],
+                ['b/no-restricted-syntax', {}],
+            ]),
         }],
     };
     t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending, '/a.ts', '/'), {
@@ -407,14 +379,14 @@ test('Aliases shadow rules until cleared', (t) => {
 
     const extending2: Configuration = {
         extends: [base],
-        aliases: {
-            'c/ban-delete-expression': { rule: 'b/ban-delete-expression' },
-        },
+        aliases: new Map<string, Configuration.Alias>([
+            ['c/ban-delete-expression', { rule: 'b/ban-delete-expression' }],
+        ]),
         filename: '/extending2.yaml',
         rulesDirectories: new Map([['b', '/extB'], ['c', '/extC']]),
-        rules: {
-            'c/ban-delete-expression': {},
-        },
+        rules: new Map([
+            ['c/ban-delete-expression', {}],
+        ]),
     };
     t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending2, '/a.ts', '/'), {
         processor: undefined,
@@ -445,47 +417,35 @@ test('overrides, excludes, globs', (t) => {
         filename: '/project/.wotanrc.yaml',
         extends: [],
         processor: '/default',
-        rules: {
-            foo: { severity: 'error' },
-            bar: { severity: 'warning' },
-            baz: {
-                severity: 'error',
-                options: 1,
-            },
-            bas: {
-                severity: 'warning',
-                options: false,
-            },
-        },
-        settings: {
-            one: true,
-            two: 'hello?',
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['foo', { severity: 'error' }],
+            ['bar', { severity: 'warning' }],
+            ['baz', { severity: 'error', options: 1 }],
+            ['bas', { severity: 'warning', options: false }],
+        ]),
+        settings: new Map<string, any>([
+            ['one', true],
+            ['two', 'hello?'],
+        ]),
         overrides: [
             {
                 files: ['*.js'],
-                rules: {
-                    bas: {severity: 'error'},
-                },
+                rules: new Map<string, Configuration.RuleConfig>([
+                    ['bas', {severity: 'error'}],
+                ]),
                 processor: '/node_modules/js-processor',
             },
             {
                 files: ['*.spec.*', '!./*.spec.*'],
-                rules: {
-                    foo: {
-                        severity: 'off',
-                    },
-                    bas: {
-                        options: 'check-stuff',
-                    },
-                    other: {
-                        severity: 'warning',
-                    },
-                },
-                settings: {
-                    three: 'three',
-                    one: false,
-                },
+                rules: new Map<string, Configuration.RuleConfig>([
+                    ['foo', { severity: 'off' }],
+                    ['bas', { options: 'check-stuff' }],
+                    ['other', { severity: 'warning' }],
+                ]),
+                settings: new Map<string, any>([
+                    ['three', 'three'],
+                    ['one', false],
+                ]),
                 processor: '',
             },
             {
@@ -611,14 +571,12 @@ test('overrides, excludes, globs', (t) => {
         filename: '/project/test/.wotanrc.json',
         exclude: ['*.js', './foobar.ts'],
         extends: [config],
-        rules: {
-            special: {
-                severity: 'warning',
-            },
-        },
-        settings: {
-            special: true,
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['special', { severity: 'warning' }],
+        ]),
+        settings: new Map([
+            ['special', true],
+        ]),
     };
 
     t.is(reduceConfigurationForFile(extended, '/foo.js', '/'), undefined);
@@ -734,11 +692,11 @@ test('overrides, excludes, globs', (t) => {
 test('extending multiple configs', (t) => {
     const config: Configuration = {
         filename: '/derived.yaml',
-        rules: {
-            'one/baz': {severity: 'error'},
-            'two/baz': {severity: 'error'},
-            'three/baz': {severity: 'error'},
-        },
+        rules: new Map<string, Configuration.RuleConfig>([
+            ['one/baz', {severity: 'error'}],
+            ['two/baz', {severity: 'error'}],
+            ['three/baz', {severity: 'error'}],
+        ]),
         extends: [
             {
                 filename: '/base-zero.yaml',
@@ -747,36 +705,36 @@ test('extending multiple configs', (t) => {
             {
                 filename: '/base-one.yaml',
                 extends: [],
-                aliases: {
-                    'one/alias': {rule: 'one/foo'},
-                },
+                aliases: new Map<string, Configuration.Alias>([
+                    ['one/alias', {rule: 'one/foo'}],
+                ]),
                 rulesDirectories: new Map([['one', '/one'], ['two', '/two']]),
-                rules: {
-                    'one/bar': {severity: 'error'},
-                    'one/alias': {severity: 'error'},
-                },
+                rules: new Map<string, Configuration.RuleConfig>([
+                    ['one/bar', {severity: 'error'}],
+                    ['one/alias', {severity: 'error'}],
+                ]),
             },
             {
                 filename: '/base-two.yaml',
                 extends: [],
-                aliases: {
-                    'three/alias': {rule: 'three/foo'},
-                    'one/alias': {rule: 'foobar'},
-                },
+                aliases: new Map<string, Configuration.Alias>([
+                    ['three/alias', {rule: 'three/foo'}],
+                    ['one/alias', {rule: 'foobar'}],
+                ]),
                 rulesDirectories: new Map([['one', '/other-one'], ['three', '/three']]),
-                rules: {
-                    'one/bas': {severity: 'error'},
-                    'three/bar': {severity: 'error'},
-                    'three/alias': {severity: 'error'},
-                },
+                rules: new Map<string, Configuration.RuleConfig>([
+                    ['one/bas', {severity: 'error'}],
+                    ['three/bar', {severity: 'error'}],
+                    ['three/alias', {severity: 'error'}],
+                ]),
             },
             {
                 filename: '/base-unused.yaml',
                 extends: [],
-                aliases: {
-                    'unused/alias': {rule: 'unused/foo'},
-                    'one/alias': {rule: 'foobaz'},
-                },
+                aliases: new Map<string, Configuration.Alias>([
+                    ['unused/alias', {rule: 'unused/foo'}],
+                    ['one/alias', {rule: 'foobaz'}],
+                ]),
                 rulesDirectories: new Map([['unused', '/unused'], ['three', '/other-three']]),
             },
         ],
