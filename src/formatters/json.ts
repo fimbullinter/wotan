@@ -1,14 +1,17 @@
-import { AbstractFormatter, LintResult } from '../types';
+import { AbstractFormatter, FileSummary } from '../types';
 
 export class Formatter extends AbstractFormatter {
-    public format(result: LintResult) {
-        const allFailures = [];
-        for (const [fileName, {failures}] of result)
-            for (const failure of failures)
-                allFailures.push({
-                    fileName,
-                    ...failure,
-                });
-        return JSON.stringify(allFailures);
+    public prefix() {
+        return '[';
+    }
+
+    public format(fileName: string, summary: FileSummary) {
+        if (summary.failures.length === 0)
+            return;
+        return summary.failures.map((f) => JSON.stringify({...f, fileName})).join();
+    }
+
+    public flush() {
+        return ']';
     }
 }

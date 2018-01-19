@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
-export type LintResult = Map<string, FileSummary>;
+export type LintResult = IterableIterator<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
 
@@ -155,7 +155,9 @@ export abstract class TypedRule extends AbstractRule {
 }
 
 export abstract class AbstractFormatter {
-    public abstract format(result: LintResult): string;
+    public prefix?(): string | undefined;
+    public abstract format(filename: string, summary: FileSummary): string | undefined;
+    public flush?(): string | undefined;
 }
 
 // @internal

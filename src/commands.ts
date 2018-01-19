@@ -105,13 +105,25 @@ class LintCommandRunner extends AbstractCommandRunner {
         const formatter = new (this.formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
         const result = this.runner.lintCollection(options);
         let success = true;
+        if (formatter.prefix !== undefined) {
+            const prefix = formatter.prefix();
+            if (prefix !== undefined)
+                this.logger.log(prefix);
+        }
         for (const [file, summary] of result) {
             if (summary.failures.some(isError))
                 success = false;
+            const formatted = formatter.format(file, summary);
+            if (formatted !== undefined)
+                this.logger.log(formatted);
             if (options.fix && summary.fixes)
                 this.fs.writeFile(file, summary.content);
         }
-        this.logger.log(formatter.format(result));
+        if (formatter.flush !== undefined) {
+            const formatted = formatter.flush();
+            if (formatted !== undefined)
+                this.logger.log(formatted);
+        }
         return success;
     }
 }
