@@ -730,3 +730,73 @@ test('overrides, excludes, globs', (t) => {
         t.deepEqual(getProcessorForFile(c, file, '/'), expected.processor);
     }
 });
+
+test('extending multiple configs', (t) => {
+    const config: Configuration = {
+        filename: '/derived.yaml',
+        rules: {
+            'one/baz': {severity: 'error'},
+            'two/baz': {severity: 'error'},
+            'three/baz': {severity: 'error'},
+        },
+        extends: [
+            {
+                filename: '/base-zero.yaml',
+                extends: [],
+            },
+            {
+                filename: '/base-one.yaml',
+                extends: [],
+                aliases: {
+                    'one/alias': {rule: 'one/foo'},
+                },
+                rulesDirectories: new Map([['one', '/one'], ['two', '/two']]),
+                rules: {
+                    'one/bar': {severity: 'error'},
+                    'one/alias': {severity: 'error'},
+                },
+            },
+            {
+                filename: '/base-two.yaml',
+                extends: [],
+                aliases: {
+                    'three/alias': {rule: 'three/foo'},
+                    'one/alias': {rule: 'foobar'},
+                },
+                rulesDirectories: new Map([['one', '/other-one'], ['three', '/three']]),
+                rules: {
+                    'one/bas': {severity: 'error'},
+                    'three/bar': {severity: 'error'},
+                    'three/alias': {severity: 'error'},
+                },
+            },
+            {
+                filename: '/base-unused.yaml',
+                extends: [],
+                aliases: {
+                    'unused/alias': {rule: 'unused/foo'},
+                    'one/alias': {rule: 'foobaz'},
+                },
+                rulesDirectories: new Map([['unused', '/unused'], ['three', '/other-three']]),
+            },
+        ],
+    };
+
+    t.deepEqual<ReducedConfiguration | undefined>(
+        reduceConfigurationForFile(config, '/file', '/'),
+        {
+            settings: new Map(),
+            processor: undefined,
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['one/bar', {severity: 'error', rule: 'one/bar', options: undefined, rulesDirectories: ['/one']}],
+                ['one/alias', {severity: 'error', rule: 'one/foo', options: undefined, rulesDirectories: ['/one']}],
+                ['one/bas', {severity: 'error', rule: 'one/bas', options: undefined, rulesDirectories: ['/other-one']}],
+                ['three/bar', {severity: 'error', rule: 'three/bar', options: undefined, rulesDirectories: ['/three']}],
+                ['three/alias', {severity: 'error', rule: 'three/foo', options: undefined, rulesDirectories: ['/three']}],
+                ['one/baz', {severity: 'error', rule: 'one/baz', options: undefined, rulesDirectories: ['/other-one', '/one']}],
+                ['two/baz', {severity: 'error', rule: 'two/baz', options: undefined, rulesDirectories: ['/two']}],
+                ['three/baz', {severity: 'error', rule: 'three/baz', options: undefined, rulesDirectories: ['/other-three', '/three']}],
+            ]),
+        },
+    );
+});
