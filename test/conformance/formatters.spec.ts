@@ -94,12 +94,7 @@ function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, tran
 }
 
 function format(lintResult: LintResult, formatter: AbstractFormatter): string {
-    let result = '';
-    if (formatter.prefix !== undefined) {
-        const prefix = formatter.prefix();
-        if (prefix !== undefined)
-            result = prefix + '\n';
-    }
+    let result = formatter.prefix !== undefined ? formatter.prefix + '\n' : '';
     for (const [fileName, fileResult] of lintResult) {
         const formatted = formatter.format(fileName, fileResult);
         if (formatted !== undefined)

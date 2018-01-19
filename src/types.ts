@@ -155,7 +155,7 @@ export abstract class TypedRule extends AbstractRule {
 }
 
 export abstract class AbstractFormatter {
-    public prefix?(): string | undefined;
+    public prefix?: string;
     public abstract format(filename: string, summary: FileSummary): string | undefined;
     public flush?(): string | undefined;
 }

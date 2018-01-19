@@ -105,11 +105,8 @@ class LintCommandRunner extends AbstractCommandRunner {
         const formatter = new (this.formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
         const result = this.runner.lintCollection(options);
         let success = true;
-        if (formatter.prefix !== undefined) {
-            const prefix = formatter.prefix();
-            if (prefix !== undefined)
-                this.logger.log(prefix);
-        }
+        if (formatter.prefix !== undefined)
+            this.logger.log(formatter.prefix);
         for (const [file, summary] of result) {
             if (summary.failures.some(isError))
                 success = false;

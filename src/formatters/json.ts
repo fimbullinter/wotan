@@ -1,9 +1,7 @@
 import { AbstractFormatter, FileSummary } from '../types';
 
 export class Formatter extends AbstractFormatter {
-    public prefix() {
-        return '[';
-    }
+    public prefix = '[';
 
     public format(fileName: string, summary: FileSummary) {
         if (summary.failures.length === 0)
