@@ -1,17 +1,21 @@
 import * as ts from 'typescript';
-import { getCommentAtPosition } from 'tsutils';
+import { getCommentAtPosition, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 
 export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*$/;
 
 export type DisableMap = Map<string, ts.TextRange[]>;
 
-export function getDisabledRanges(enabledRules: string[], sourceFile: ts.SourceFile): DisableMap {
+export function getDisabledRanges(enabledRules: string[], sourceFile: ts.SourceFile, wrappedAst?: WrappedAst): DisableMap {
     const commentRegex =
         /\/[/*]\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*?(?:$|\*\/)/mg;
     const result: DisableMap = new Map();
 
     for (let match = commentRegex.exec(sourceFile.text); match !== null; match = commentRegex.exec(sourceFile.text)) {
-        const comment = getCommentAtPosition(sourceFile, match.index);
+        const comment = getCommentAtPosition(
+            sourceFile,
+            match.index,
+            wrappedAst && getWrappedNodeAtPosition(wrappedAst, match.index)!.node,
+        );
         if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
             continue;
         const rules = match[3] === undefined ? undefined : Array.from(new Set(match[3].trim().split(/\s*,\s*/g)));

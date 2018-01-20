@@ -107,9 +107,9 @@
   version "9.3.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.3.0.tgz#3a129cda7c4e5df2409702626892cb4b96546dd5"
 
-"@types/resolve@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-0.0.5.tgz#1e326115f8b99b337201da699d4e9bfaa284d242"
+"@types/resolve@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-0.0.6.tgz#0bd2f236c2e1cebb98b79885df57edd71a8d770e"
   dependencies:
     "@types/node" "*"
 
@@ -3510,9 +3510,9 @@ tsutils@^2.12.1, tsutils@^2.12.2:
   dependencies:
     tslib "^1.7.1"
 
-tsutils@^2.19.0:
-  version "2.19.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.19.0.tgz#170a267c1df5ae046e902568ca3444a1a4dfcb3a"
+tsutils@^2.19.1:
+  version "2.19.1"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.19.1.tgz#76d7ebdea9d7a7bf4a05f50ead3701b0168708d7"
   dependencies:
     tslib "^1.8.1"
 

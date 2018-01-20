@@ -178,7 +178,7 @@ export class Linter {
         }
         function isDisabled(range: ts.TextRange): boolean {
             if (disables === undefined)
-                disables = getDisabledRanges(rules.map((r) => r.ruleName), sourceFile);
+                disables = getDisabledRanges(rules.map((r) => r.ruleName), sourceFile, getWrappedAst());
             const ruleDisables = disables.get(ruleName);
             if (ruleDisables === undefined)
                 return false;
