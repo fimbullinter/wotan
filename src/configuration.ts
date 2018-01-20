@@ -87,18 +87,30 @@ function reduceConfig(config: Configuration, filename: string, receiver: Receive
             });
     }
 
-    const result: ReduceResult = {
+    if (config.processor !== undefined)
+        processor = config.processor;
+    if (config.settings)
+        extendSettings(receiver.settings, config.settings);
+    if (config.rules)
+        extendRules(receiver.rules, config.rules, rulesDirectories, aliases);
+
+    if (config.overrides) {
+        for (const override of config.overrides) {
+            if (matchesGlobs(relativeFilename, override.files)) {
+                if (override.processor !== undefined)
+                    processor = override.processor;
+                if (override.settings)
+                    extendSettings(receiver.settings, override.settings);
+                if (override.rules)
+                    extendRules(receiver.rules, override.rules, rulesDirectories, aliases);
+            }
+        }
+    }
+    return {
         rulesDirectories,
         aliases,
         processor,
     };
-    extendConfig(receiver, config, result);
-
-    if (config.overrides)
-        for (const override of config.overrides)
-            if (matchesGlobs(relativeFilename, override.files))
-                extendConfig(receiver, override, result);
-    return result;
 }
 
 function matchesGlobs(file: string, patterns: string[]): boolean {
@@ -128,7 +140,7 @@ function arrayFn<T>(v: T): T[] {
 
 function extendRulesDirectories<T extends string | string[]>(
     receiver: Map<string, string[]>,
-    current: Map<string, T>,
+    current: ReadonlyMap<string, T>,
     mapFn: (v: T) => string[],
     copy: boolean,
 ) {
@@ -147,31 +159,26 @@ function extendRulesDirectories<T extends string | string[]>(
     return receiver;
 }
 
-function extendConfig(
-    receiver: Receiver,
-    {processor, rules, settings}: Partial<Configuration | Configuration.Override>,
-    r: ReduceResult,
+function extendRules(
+    receiver: EffectiveConfiguration['rules'],
+    rules: ReadonlyMap<string, Configuration.RuleConfig>,
+    rulesDirectories: ReduceResult['rulesDirectories'],
+    aliases: ReduceResult['aliases'],
 ) {
-    if (processor !== undefined)
-        r.processor = processor;
-    if (rules) {
-        for (const [ruleName, config] of rules) {
-            const prev = receiver.rules.get(ruleName);
-            receiver.rules.set(ruleName, {
-                severity: 'error',
-                options: undefined,
-                ...prev,
-                rulesDirectories: r.rulesDirectories && getRulesDirectoriesByName(ruleName, r.rulesDirectories),
-                ...resolveAlias(ruleName, r.aliases),
-                ...config,
-            });
-        }
+    for (const [ruleName, config] of rules) {
+        const prev = receiver.get(ruleName);
+        receiver.set(ruleName, {
+            severity: 'error',
+            options: undefined,
+            ...prev,
+            rulesDirectories: rulesDirectories && getRulesDirectoriesByName(ruleName, rulesDirectories),
+            ...resolveAlias(ruleName, aliases),
+            ...config,
+        });
     }
-    if (settings)
-        extendSettings(settings, receiver.settings);
 }
 
-function extendSettings(settings: Map<string, any>, receiver: EffectiveConfiguration['settings']) {
+function extendSettings(receiver: EffectiveConfiguration['settings'], settings: ReadonlyMap<string, any>) {
     for (const [key, value] of settings)
         receiver.set(key, value);
 }
@@ -242,11 +249,11 @@ function reduceSettings(config: Configuration, fileName: string, receiver: Map<s
     for (const base of config.extends)
         reduceSettings(base, fileName, receiver);
     if (config.settings)
-        extendSettings(config.settings, receiver);
+        extendSettings(receiver, config.settings);
     if (config.overrides) {
         const relative = path.relative(path.dirname(config.filename), fileName);
         for (const override of config.overrides)
             if (override.settings && matchesGlobs(relative, override.files))
-                extendSettings(override.settings, receiver);
+                extendSettings(receiver, override.settings);
     }
 }
