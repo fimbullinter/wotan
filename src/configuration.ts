@@ -195,6 +195,7 @@ function resolveAlias(rule: string, aliases: AliasMap | undefined) {
     };
     do {
         names.push(rule);
+        // TODO circle detection *could* be moved to parsing if overrides are not allowed to have their own aliases
         if (next.rule === rule)
             throw new ConfigurationError(`Circular alias: ${names.join(' => ')} => ${next.rule}.`);
         if (next.aliases !== aliases) {

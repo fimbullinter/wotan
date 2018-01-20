@@ -18,6 +18,10 @@ import { NodeResolver } from '../../src/services/default/resolver';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { ConfigurationManager } from '../../src/services/configuration-manager';
+import { CORE_DI_MODULE } from '../../src/di/core.module';
+import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
+
+// tslint:disable:no-null-keyword
 
 test('findConfigurationPath returns closest .wotanrc and falls back to homedir if available', (t) => {
     const container = new Container();
@@ -326,8 +330,8 @@ test('Aliases shadow rules until cleared', (t) => {
     const extending: Configuration = {
         extends: [base],
         aliases: new Map<string, Configuration.Alias | null>([
-            ['a/ban-with-statement', null], // tslint:disable-line:no-null-keyword
-            ['b/ban-delete-expression', null], // tslint:disable-line:no-null-keyword
+            ['a/ban-with-statement', null],
+            ['b/ban-delete-expression', null],
         ]),
         filename: '/extending.yaml',
         rulesDirectories: new Map([['b', '/extB'], ['a', '/extA']]),
@@ -756,5 +760,445 @@ test('extending multiple configs', (t) => {
                 ['three/baz', {severity: 'error', rule: 'three/baz', options: undefined, rulesDirectories: ['/other-three', '/three']}],
             ]),
         },
+    );
+});
+
+test('resolve, read, parse', (t) => {
+    const container = new Container();
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    const cm = container.get(ConfigurationManager);
+
+    t.throws(
+        () => cm.resolveConfigFile('wotan:non-existent-preset', ''),
+        "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
+    );
+    const {root} = path.parse(process.cwd());
+    t.throws(
+        () => cm.resolveConfigFile('fooBarBaz', root),
+        `Cannot find module 'fooBarBaz' from '${root}'`,
+    );
+
+    t.is(cm.resolveConfigFile('my-config', './test/fixtures'), path.resolve('./test/fixtures/node_modules/my-config.js'));
+    t.is(cm.resolveConfigFile('./invalid', './test/fixtures'), path.resolve('./test/fixtures/invalid.yaml'));
+
+    t.throws(() => cm.readConfigurationFile('./test/fixtures/invalid.js'));
+    t.throws(
+        () => cm.readConfigurationFile('./non-existent.yaml'),
+        `Error parsing '${path.resolve('./non-existent.yaml')}': file not found.`,
+    );
+    t.throws(
+        () => cm.readConfigurationFile('./non-existent.json'),
+        `Error parsing '${path.resolve('./non-existent.json')}': file not found.`,
+    );
+    t.throws(
+        () => cm.readConfigurationFile('./test/fixtures/invalid.json'),
+        (e) => e.message.includes(path.resolve('./test/fixtures/invalid.json')),
+    );
+    t.throws(
+        () => cm.readConfigurationFile('./test/fixtures/invalid.yaml'),
+        (e) => e.message.includes(path.resolve('./test/fixtures/invalid.yaml')),
+    );
+
+    t.deepEqual(
+        cm.readConfigurationFile('./test/fixtures/configuration/base.yaml'),
+        {
+            rulesDirectories: {custom: './rules'},
+            rules: {
+                'custom/foo': 'error',
+                'custom/bar': 'warning',
+                'deprecation': 'warning',
+            },
+            settings: {
+                foo: true,
+                bar: 'something',
+            },
+        },
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {},
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses empty config',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                aliases: {
+                    foo: {
+                        one: null,
+                    },
+                    bar: <any>null,
+                },
+            },
+            '../.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('../.wotanrc.yaml'),
+            aliases: new Map([['foo/one', null]]),
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses empty alias object',
+    );
+
+    // TODO this could change
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                aliases: {
+                    foo: {
+                        rule: {rule: 'foo/rule'},
+                    },
+                },
+            },
+            '../.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('../.wotanrc.yaml'),
+            aliases: new Map([['foo/rule', {rule: 'foo/rule'}]]),
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses circular alias',
+    );
+
+    t.throws(
+        () => cm.parseConfiguration(
+            {
+                aliases: {
+                    foo: {
+                        rule: <any>{},
+                    },
+                },
+            },
+            '../.wotanrc.yaml',
+        ),
+        "Alias 'foo/rule' does not specify a rule.",
+    );
+
+    t.throws(
+        () => cm.parseConfiguration(
+            {
+                overrides: [<any>{}],
+            },
+            '../.wotanrc.yaml',
+        ),
+        'Override does not specify files.',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                overrides: [
+                    {
+                        files: '*',
+                    },
+                    {
+                        files: ['*.js', '!*.spec.js'],
+                        rules: {foo: 'error', bar: {options: false}, baz: {severity: 'warn'}, bas: null},
+                        settings: {foo: true},
+                        processor: false,
+                    },
+                ],
+            },
+            '../.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('../.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: [
+                {
+                    files: ['*'],
+                    rules: undefined,
+                    settings: undefined,
+                    processor: undefined,
+                },
+                {
+                    files: ['*.js', '!*.spec.js'],
+                    rules: new Map<string, Configuration.RuleConfig>([
+                        ['foo', {severity: 'error'}],
+                        ['bar', {options: false}],
+                        ['baz', {severity: 'warning'}],
+                        ['bas', {}],
+                    ]),
+                    settings: new Map<string, any>([
+                        ['foo', true],
+                    ]),
+                    processor: false,
+                },
+            ],
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses overrides',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                overrides: [],
+            },
+            '../.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('../.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: [],
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses empty overrides array',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                rulesDirectories: {
+                    foo: './rules',
+                    bar: 'my-config',
+                },
+            },
+            './test/fixtures/.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: new Map([
+                ['foo', path.resolve('./test/fixtures/rules')],
+                ['bar', path.resolve('./test/fixtures/my-config')],
+            ]),
+            exclude: undefined,
+            processor: undefined,
+        },
+        'rulesDirectories are resolved relative to the config file',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                extends: [],
+            },
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'parses empty extends',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                extends: 'wotan:recommended',
+            },
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [
+                cm.loadConfigurationFromPath('./src/configs/recommended.js'),
+            ],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'extends builtin',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                extends: ['my-config', './node_modules/my-config', './configuration'],
+            },
+            './test/fixtures/.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [
+                {
+                    filename: path.resolve('./test/fixtures/node_modules/my-config.js'),
+                    aliases: undefined,
+                    extends: [],
+                    rules: undefined,
+                    settings: undefined,
+                    overrides: undefined,
+                    rulesDirectories: undefined,
+                    exclude: undefined,
+                    processor: undefined,
+                },
+                {
+                    filename: path.resolve('./test/fixtures/node_modules/my-config.js'),
+                    aliases: undefined,
+                    extends: [],
+                    rules: undefined,
+                    settings: undefined,
+                    overrides: undefined,
+                    rulesDirectories: undefined,
+                    exclude: undefined,
+                    processor: undefined,
+                },
+                cm.loadConfigurationFromPath('./test/fixtures/configuration/index.json5'),
+            ],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: undefined,
+        },
+        'extends are resolved as node modules',
+    );
+
+    t.throws(
+        () => cm.parseConfiguration(
+            {
+                extends: ['./configuration/circular'],
+            },
+            './test/fixtures/entry.yaml',
+        ), // tslint:disable-next-line
+        `Circular configuration dependency ${path.resolve('./test/fixtures/entry.yaml')} => ${path.resolve('./test/fixtures/configuration/circular.yaml')} => ${path.resolve('./test/fixtures/configuration/circular.yml')} => ${path.resolve('./test/fixtures/configuration/circular.yaml')}`,
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                exclude: [],
+            },
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: [],
+            processor: undefined,
+        },
+        'parses empty exclude array',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                exclude: '*.js',
+            },
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: ['*.js'],
+            processor: undefined,
+        },
+        'arrayifies excludes',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                exclude: ['*.js', '!*.spec.js'],
+            },
+            '.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: ['*.js', '!*.spec.js'],
+            processor: undefined,
+        },
+        'leaves excludes untouched',
+    );
+
+    t.deepEqual(
+        cm.parseConfiguration(
+            {
+                processor: 'custom-processor',
+            },
+            './test/fixtures/.wotanrc.yaml',
+        ),
+        {
+            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
+            aliases: undefined,
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            exclude: undefined,
+            processor: path.resolve('./test/fixtures/node_modules/custom-processor.js'),
+        },
+        'resolves processor',
+    );
+
+    t.throws(
+        () => cm.parseConfiguration(
+            {
+                processor: './non-existent',
+            },
+            '.wotanrc.yaml',
+        ),
+        `Cannot find module './non-existent' from '${process.cwd()}'`,
     );
 });
