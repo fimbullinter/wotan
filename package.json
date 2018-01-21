@@ -10,7 +10,7 @@
     "lint:tslint": "tslint -p .",
     "lint:wotan": "node src/cli lint",
     "test": "run-p test:api test:rules test:integration",
-    "test:api": "ava test/conformance --snapshot-dir baselines",
+    "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
     "coverage": "nyc run-s test",

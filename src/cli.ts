@@ -12,4 +12,8 @@ async function run() {
         process.exitCode = 1;
     }
 }
-run();
+if (process.argv.length === 3 && /^(?:-[vV]|(?:--)?version)$/.test(process.argv[2])) {
+    console.log(require('../package.json').version); // tslint:disable-line:no-require-imports
+} else {
+    run();
+}
