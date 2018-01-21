@@ -58,12 +58,12 @@ export class Runner {
                     dir = dirname;
                 }
             }
-            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
+            const mapped = processorHost.getProcessedFileInfo(file);
+            const originalName = mapped === undefined ? file : mapped.originalName;
+            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, originalName);
             if (effectiveConfig === undefined)
                 continue;
             let sourceFile = program.getSourceFile(file)!;
-            const mapped = processorHost.getProcessedFileInfo(file);
-            const originalName = mapped === undefined ? file : mapped.originalName;
             const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
             let summary: FileSummary;
             if (options.fix) {
