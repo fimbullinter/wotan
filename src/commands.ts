@@ -230,8 +230,10 @@ class TestCommandRunner extends AbstractCommandRunner {
                     return end(false, 'EXISTS');
                 }
                 baselinesSeen.push(unixifyPath(baselineFile));
-                const expected = this.fs.readFile(baselineFile);
-                if (expected === undefined) {
+                let expected: string;
+                try {
+                    expected = this.fs.readFile(baselineFile);
+                } catch {
                     if (!options.updateBaselines)
                         return end(false, 'MISSING');
                     this.fs.createDirectory(path.dirname(baselineFile));

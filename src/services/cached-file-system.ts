@@ -46,19 +46,11 @@ export class CachedFileSystem {
     }
 
     public readDirectory(dir: string): string[] {
-        try {
-            return this.fs.readDirectory(this.fs.normalizePath(dir));
-        } catch {
-            return [];
-        }
+        return this.fs.readDirectory(this.fs.normalizePath(dir));
     }
 
-    public readFile(file: string): string | undefined {
-        try {
-            return this.fs.readFile(this.fs.normalizePath(file));
-        } catch {
-            return;
-        }
+    public readFile(file: string): string {
+        return this.fs.readFile(this.fs.normalizePath(file));
     }
 
     public realpath = this.fs.realpath === undefined ? undefined : (file: string) => {
@@ -93,7 +85,7 @@ export class CachedFileSystem {
                 if (!stat.isDirectory())
                     throw e;
             } catch {
-                const parent = path.posix.dirname(dir);
+                const parent = this.fs.normalizePath(path.dirname(dir));
                 if (parent === dir)
                     throw e;
                 this.doCreateDirectory(parent);

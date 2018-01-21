@@ -41,8 +41,13 @@ export class ProjectHost implements ts.CompilerHost {
     private processDirectory(dir: string): ts.FileSystemEntries {
         const files: string[] = [];
         const directories: string[] = [];
-        const result = {files, directories};
-        const entries = this.fs.readDirectory(dir);
+        const result: ts.FileSystemEntries = {files, directories};
+        let entries: string[];
+        try {
+            entries = this.fs.readDirectory(dir);
+        } catch {
+            return result;
+        }
         if (entries.length !== 0) {
             let c: Configuration | undefined | 'initial' = /\/node_modules(\/|$)/.test(dir)
                 ? undefined // don't use processors in node_modules
@@ -109,12 +114,10 @@ export class ProjectHost implements ts.CompilerHost {
         return resolveCachedResult(this.fileContent, file, (f) => this.fs.readFile(f));
     }
 
-    private readProcessedFile(file: string): string | undefined {
-        const realFile = this.getFileSystemFile(file);
-        if (realFile === undefined)
-            return;
+    private readProcessedFile(file: string): string {
+        const realFile = this.getFileSystemFile(file)!;
         let content = this.fs.readFile(realFile);
-        if (file === realFile || content === undefined)
+        if (file === realFile)
             return content;
 
         const config = this.config || this.configManager.findConfiguration(realFile)!;
@@ -143,14 +146,19 @@ export class ProjectHost implements ts.CompilerHost {
         return this.cwd;
     }
     public getDirectories(dir: string) {
+        const cached = this.directoryEntries.get(dir);
+        if (cached !== undefined)
+            return cached.directories.map((d) => path.posix.basename(d));
         return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
     }
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
-        return resolveCachedResult(this.sourceFileCache, fileName, () => {
-            const content = this.readProcessedFile(fileName);
-            return content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
-        });
+        return resolveCachedResult(
+            this.sourceFileCache,
+            fileName,
+            () => ts.createSourceFile(fileName, this.readProcessedFile(fileName), languageVersion, true),
+        );
     }
+
     public updateSourceFile(
         sourceFile: ts.SourceFile,
         program: ts.Program,

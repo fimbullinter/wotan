@@ -51,34 +51,22 @@ export class ConfigurationManager {
 
     public readConfigurationFile(filename: string): RawConfiguration {
         filename = path.resolve(this.directories.getCurrentDirectory(), filename);
-        switch (path.extname(filename)) {
-            case '.json':
-            case '.json5': {
-                const content = this.fs.readFile(filename);
-                if (content === undefined)
-                    throw new ConfigurationError(`Error parsing '${filename}': file not found.`);
-                try {
-                    return json5.parse(content);
-                } catch (e) {
-                    throw new ConfigurationError(`Error parsing '${filename}': ${e.message}`);
-                }
-            }
-            case '.yaml':
-            case '.yml': {
-                const content = this.fs.readFile(filename);
-                if (content === undefined)
-                    throw new ConfigurationError(`Error parsing '${filename}': file not found.`);
-                try {
-                    return yaml.safeLoad(content, {
+        try {
+            switch (path.extname(filename)) {
+                case '.json':
+                case '.json5':
+                    return json5.parse(this.fs.readFile(filename));
+                case '.yaml':
+                case '.yml':
+                    return yaml.safeLoad(this.fs.readFile(filename), {
                         schema: yaml.JSON_SCHEMA,
                         strict: true,
                     });
-                } catch (e) {
-                    throw new ConfigurationError(`Error parsing '${filename}': ${e.message}`);
-                }
+                default:
+                    return this.resolver.require(filename, {cache: false});
             }
-            default:
-                return this.resolver.require(filename, {cache: false});
+        } catch (e) {
+            throw new ConfigurationError(`Error parsing '${filename}': ${e && e.message}`);
         }
     }
 

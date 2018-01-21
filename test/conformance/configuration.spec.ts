@@ -783,12 +783,12 @@ test('resolve, read, parse', (t) => {
 
     t.throws(() => cm.readConfigurationFile('./test/fixtures/invalid.js'));
     t.throws(
-        () => cm.readConfigurationFile('./non-existent.yaml'),
-        `Error parsing '${path.resolve('./non-existent.yaml')}': file not found.`,
+        () => cm.readConfigurationFile('./non-existent.yaml'), // tslint:disable-next-line
+        `Error parsing '${path.resolve('./non-existent.yaml')}': ENOENT: no such file or directory, open '${path.resolve('./non-existent.yaml')}'`,
     );
     t.throws(
-        () => cm.readConfigurationFile('./non-existent.json'),
-        `Error parsing '${path.resolve('./non-existent.json')}': file not found.`,
+        () => cm.readConfigurationFile('./non-existent.json'), // tslint:disable-next-line
+        `Error parsing '${path.resolve('./non-existent.json')}': ENOENT: no such file or directory, open '${path.resolve('./non-existent.json')}'`,
     );
     t.throws(
         () => cm.readConfigurationFile('./test/fixtures/invalid.json'),

@@ -13,7 +13,7 @@ export class NodeResolver implements Resolver {
             extensions,
             paths,
             isFile: (file) => this.fs.isFile(file),
-            readFileSync: (file) => this.fs.readFile(file)!,
+            readFileSync: (file) => this.fs.readFile(file),
         });
     }
 

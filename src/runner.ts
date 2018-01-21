@@ -109,7 +109,7 @@ export class Runner {
             const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
-            const originalContent = this.fs.readFile(file)!;
+            const originalContent = this.fs.readFile(file);
             let name: string;
             let content: string;
             if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
