@@ -6,6 +6,6 @@
     "test.ts",
     "types/*.ts",
     "non-existent",
-    "../non-existent",
+    "../non-existent"
   ]
 }
