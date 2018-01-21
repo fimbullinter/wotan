@@ -25,7 +25,7 @@ export class RuleTester {
             ...config,
             fix: false,
         };
-        const lintResult = this.runner.lintCollection(lintOptions);
+        const lintResult = Array.from(this.runner.lintCollection(lintOptions));
         let containsFixes = false;
         for (const [fileName, summary] of lintResult) {
             if (!this.host.checkResult(fileName, BaselineKind.Lint, summary))

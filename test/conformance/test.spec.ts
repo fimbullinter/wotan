@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import test from 'ava';
-import { isCodeLine, createBaselineDiff, createBaseline } from '../../src/test';
+import { isCodeLine, createBaselineDiff, createBaseline, RuleTestHost, RuleTester, BaselineKind } from '../../src/test';
 import chalk, { Level } from 'chalk';
-import { Failure, FileSummary } from '../../src/types';
+import { Failure, FileSummary, LintResult } from '../../src/types';
+import { Runner, LintOptions } from '../../src/runner';
 
 test.before(() => {
     chalk.enabled = true;
@@ -239,4 +240,76 @@ let bar = foo;
     function verify(name: string, summary: FileSummary) {
         t.snapshot(createBaseline(summary), <any>{id: `createBaseline ${name}`});
     }
+});
+
+test('RuleTester', (t) => {
+    class MockRunner {
+        public *lintCollection(options: LintOptions): LintResult {
+            switch (options.project) {
+                case 'third':
+                    yield [
+                        'third.ts',
+                        {
+                            content: options.fix ? 'fixed' : '', // tslint:disable-next-line
+                            failures: [{ruleName: '', message: '', severity: 'error', start: {position: 0, line: 0, character: 0}, end: {position: 0, line: 0, character: 0}, fix: {replacements: []}}],
+                            fixes: 0,
+                        },
+                    ];
+                    // falls through
+                case 'second':
+                    yield ['second.ts', {content: '', failures: [], fixes: 0}];
+                    // falls through
+                case 'first':
+                    yield ['first.ts', {content: '', failures: [], fixes: 0}];
+            }
+        }
+    }
+    let keepGoing = 0;
+    let checked: Array<[string, string]> = [];
+    const host: RuleTestHost = {
+        checkResult(file, kind, summary) {
+            if (file === 'third.ts')
+                t.is(summary.content, kind === BaselineKind.Fix ? 'fixed' : '', 'lints again with fix option');
+            checked.push([file, kind]);
+            return keepGoing-- > 0;
+        },
+    };
+    const tester = new RuleTester(<Runner><Partial<Runner>>new MockRunner(), host);
+    t.false(tester.test({project: 'first'}));
+    t.deepEqual(checked, [['first.ts', BaselineKind.Lint]]);
+    checked = [];
+
+    keepGoing = 1;
+    t.false(tester.test({project: 'first'}));
+    t.deepEqual(checked, [['first.ts', BaselineKind.Lint], ['first.ts', BaselineKind.Fix]]);
+    checked = [];
+
+    keepGoing = 1;
+    t.true(tester.test({project: 'first', fix: false}));
+    t.deepEqual(checked, [['first.ts', BaselineKind.Lint]]);
+    checked = [];
+
+    keepGoing = 1;
+    t.false(tester.test({project: 'second', fix: false}));
+    t.deepEqual(checked, [['second.ts', BaselineKind.Lint], ['first.ts', BaselineKind.Lint]]);
+    checked = [];
+
+    keepGoing = 3;
+    t.false(tester.test({project: 'second'}));
+    t.deepEqual(checked, [
+        ['second.ts', BaselineKind.Lint], ['first.ts', BaselineKind.Lint], ['second.ts', BaselineKind.Fix], ['first.ts', BaselineKind.Fix],
+    ]);
+    checked = [];
+
+    keepGoing = 3;
+    t.false(tester.test({project: 'third'}));
+    t.deepEqual(checked, [
+        ['third.ts', BaselineKind.Lint], ['second.ts', BaselineKind.Lint], ['first.ts', BaselineKind.Lint], ['third.ts', BaselineKind.Fix],
+    ]);
+    checked = [];
+
+    keepGoing = 1;
+    t.false(tester.test({project: 'third', fix: false}));
+    t.deepEqual(checked, [['third.ts', BaselineKind.Lint], ['second.ts', BaselineKind.Lint]]);
+    checked = [];
 });
