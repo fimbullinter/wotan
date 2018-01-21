@@ -168,26 +168,8 @@ function parseInitCommand(args: string[]): InitCommand {
     return result;
 }
 
-function parseValidateCommand(args: string[]): ValidateCommand {
-    const result: ValidateCommand = {
-        command: CommandName.Validate,
-        files: [],
-    };
-
-    outer: for (let i = 0; i < args.length; ++i) {
-        const arg = args[i];
-        switch (arg) {
-            case '--':
-                result.files.push(...args.slice(i + 1));
-                break outer;
-            default:
-                if (arg.startsWith('-'))
-                    throw new ConfigurationError(`Unknown option '${arg}'.`);
-                result.files.push(arg);
-        }
-    }
-
-    return result;
+function parseValidateCommand(_args: string[]): ValidateCommand {
+    throw new ConfigurationError("'validate' is not implemented yet.");
 }
 
 function parseOptionalBooleanOrNumber(args: string[], index: number): {index: number, argument: boolean | number} {

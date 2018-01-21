@@ -220,7 +220,7 @@ test('parses show command', (t) => {
 
 test('parses test command', (t) => {
     t.deepEqual<Command>(
-        parseArguments(['test', '-u', 'foo', '--exact', '--bail']),
+        parseArguments(['test', '-u', 'foo', '--exact', '--bail', 'true']),
         {
             command: CommandName.Test,
             files: ['foo'],
@@ -283,6 +283,11 @@ test('parses init command', (t) => {
         },
     );
 
+    t.throws(() => parseArguments(['init', '-d']), "Unknown option '-d'.");
     t.throws(() => parseArguments(['init', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['init', '-f', 'ymal']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
+});
+
+test('parses validate command', (t) => {
+    t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.")
 });
