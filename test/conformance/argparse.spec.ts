@@ -289,5 +289,5 @@ test('parses init command', (t) => {
 });
 
 test('parses validate command', (t) => {
-    t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.")
+    t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.");
 });
