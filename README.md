@@ -76,7 +76,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 
 ## Configuration
 
-Wotan is configured with a YAML, JSON5 or JSON file called `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closes parent folder is used to lint each file.
+Wotan is configured with a YAML, JSON5 or JSON file named `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closes parent folder is used to lint each file.
 
 You can use different configurations for different directories. Consider the following setup:
 
@@ -178,6 +178,8 @@ We try to support TypeScript's nightly builds (`typescript@next`), but there is 
 Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from this module.
 
 ## Semantic Versioning (SemVer policy)
+
+:warning: The following policy does only apply for the yet to come 1.x and following releases. Every release in the 0.x range is considered experimental. There can and will be breaking API changes without deprecation.
 
 In theory every change to a rule can break users and could be considered a breaking change. To avoid releasing a new major version for every bug fix, we have slightly different guidelines as outlined below.
 
