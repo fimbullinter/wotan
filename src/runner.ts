@@ -293,13 +293,9 @@ declare module 'typescript' {
 }
 
 function createProgram(configFile: string, host: ProjectHost): ts.Program {
-    const config = ts.readConfigFile(configFile, ts.sys.readFile);
+    const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
     if (config.error !== undefined)
-        throw new ConfigurationError(ts.formatDiagnostics([config.error], {
-            getCanonicalFileName: (f) => f,
-            getCurrentDirectory: () => host.cwd,
-            getNewLine: () => '\n',
-        }));
+        throw new ConfigurationError(ts.formatDiagnostics([config.error], host));
     const parsed = ts.parseJsonConfigFileContent(
         config.config,
         createParseConfigHost(host),
@@ -307,15 +303,11 @@ function createProgram(configFile: string, host: ProjectHost): ts.Program {
         {noEmit: true},
         configFile,
     );
-    if (parsed.errors !== undefined) {
+    if (parsed.errors.length !== 0) {
         // ignore 'TS18003: No inputs were found in config file ...'
         const errors = parsed.errors.filter((d) => d.code !== 18003);
         if (errors.length !== 0)
-            throw new ConfigurationError(ts.formatDiagnostics(errors, {
-                getCanonicalFileName: (f) => f,
-                getCurrentDirectory: () => host.cwd,
-                getNewLine: () => '\n',
-            }));
+            throw new ConfigurationError(ts.formatDiagnostics(errors, host));
     }
     return ts.createProgram(parsed.fileNames, parsed.options, host);
 }
@@ -325,12 +317,8 @@ function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
         useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
         readDirectory(rootDir, extensions, excludes, includes, depth) {
             if (/^2\.4\./.test(ts.version)) // workaround for missing parameter in typescript@2.4
-                return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, (dir) => {
-                    return host.getDirectoryEntries(dir);
-                });
-            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, (dir) => {
-                return host.getDirectoryEntries(dir);
-            });
+                return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, getEntries);
+            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, getEntries);
         },
         fileExists(f) {
             return host.fileExists(f);
@@ -339,4 +327,8 @@ function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
             return host.readFile(f);
         },
     };
+
+    function getEntries(dir: string) {
+        return host.getDirectoryEntries(dir);
+    }
 }

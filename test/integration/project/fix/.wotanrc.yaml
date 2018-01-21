@@ -3,3 +3,4 @@ rulesDirectories:
 rules:
   deprecation: error
   local/foo: error
+  no-unused-label: error

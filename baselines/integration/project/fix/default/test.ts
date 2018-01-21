@@ -1,3 +1,4 @@
 import {bar as fn} from './other';
-fn();
-~~~~  [error deprecation: CallSignature '(): void' is deprecated: bar ]
+bar: fn();
+~~~        [error no-unused-label: Unused label 'bar'.]
+     ~~~~  [error deprecation: CallSignature '(): void' is deprecated: bar ]

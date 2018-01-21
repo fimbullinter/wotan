@@ -100,3 +100,76 @@ test('throws if no tsconfig.json can be found', (t) => {
         `Cannot find tsconfig.json for directory '${process.cwd()}'.`,
     );
 });
+
+test('reports errors while parsing tsconfig.json', (t) => {
+    const container = new Container();
+    const files: {[name: string]: string | undefined} = {
+        'invalid-config.json': '{',
+        'invalid-base.json': '{"extends": "./invalid-config.json"}',
+        'invalid-files.json': '{"files": []}',
+        'no-match.json': '{"include": ["non-existent"], "compilerOptions": {"noLib": true}}',
+    };
+    @injectable()
+    class MockFileSystem extends NodeFileSystem {
+        public stat(file: string) {
+            return {
+                isFile() { return files[path.basename(file)] !== undefined; },
+                isDirectory() { return false; },
+            };
+        }
+        public readFile(file: string) {
+            const basename = path.basename(file);
+            const content = files[basename];
+            if (content !== undefined)
+                return content;
+            throw new Error('ENOENT');
+        }
+        public readDirectory(): string[] {
+            throw new Error('ENOENT');
+        }
+    }
+    container.bind(FileSystem).to(MockFileSystem);
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    const runner = container.get(Runner);
+
+    t.throws(
+        () => Array.from(runner.lintCollection({
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: 'invalid-config.json',
+            fix: false,
+        })),
+        "invalid-config.json(1,2): error TS1005: '}' expected.\n",
+    );
+
+    t.throws(
+        () => Array.from(runner.lintCollection({
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: 'invalid-base.json',
+            fix: false,
+        })),
+        "invalid-config.json(1,2): error TS1005: '}' expected.\n",
+    );
+
+    t.throws(
+        () => Array.from(runner.lintCollection({
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: 'invalid-files.json',
+            fix: false,
+        })),
+        `error TS18002: The 'files' list in config file '${unixifyPath(path.resolve('invalid-files.json'))}' is empty.\n`,
+    );
+
+    t.notThrows(() => Array.from(runner.lintCollection({
+        config: undefined,
+        files: [],
+        exclude: [],
+        project: 'no-match.json',
+        fix: false,
+    })));
+});
