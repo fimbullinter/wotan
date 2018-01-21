@@ -140,7 +140,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             project: 'invalid-config.json',
             fix: false,
         })),
-        "invalid-config.json(1,2): error TS1005: '}' expected.\n",
+        /invalid-config.json/,
     );
 
     t.throws(
@@ -151,7 +151,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             project: 'invalid-base.json',
             fix: false,
         })),
-        "invalid-config.json(1,2): error TS1005: '}' expected.\n",
+        /invalid-config.json/,
     );
 
     t.throws(
@@ -162,7 +162,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             project: 'invalid-files.json',
             fix: false,
         })),
-        `error TS18002: The 'files' list in config file '${unixifyPath(path.resolve('invalid-files.json'))}' is empty.\n`,
+        `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`,
     );
 
     t.notThrows(() => Array.from(runner.lintCollection({

@@ -1,5 +1,5 @@
 {
   "project": ".",
   "files": ["test.ts"],
-  "fix": 1
+  "fix": 2
 }
