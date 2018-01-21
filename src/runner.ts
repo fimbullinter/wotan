@@ -181,12 +181,7 @@ export class Runner {
         const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
         const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
         const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
-        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), {
-            getCurrentDirectory() { return cwd; },
-            directoryExists(dir) {
-                return host.directoryExists(dir);
-            },
-        });
+        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
         outer: for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
             if (path.relative(libDirectory, fileName) === path.basename(fileName))
@@ -215,11 +210,12 @@ export class Runner {
         switch (this.fs.getKind(fileOrDirName)) {
             case FileKind.NonExistent:
                 throw new ConfigurationError(`The specified path does not exist: '${fileOrDirName}'`);
-            case FileKind.Directory:
-                fileOrDirName = path.join(fileOrDirName, 'tsconfig.json');
-                if (!this.fs.isFile(fileOrDirName))
-                throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
-                // falls through
+            case FileKind.Directory: {
+                const file = path.join(fileOrDirName, 'tsconfig.json');
+                if (!this.fs.isFile(file))
+                    throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
+                return file;
+            }
             default:
                 return fileOrDirName;
         }
@@ -245,7 +241,7 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): string[] 
         } else if (!glob.hasMagic(pattern)) {
             const normalized = new Minimatch(pattern).set[0].join('/');
             if (!isExcluded(normalized, exclude.map((p) => new Minimatch(p, {dot: true}))))
-                throw new ConfigurationError(`'${pattern}' does not exist.`);
+                throw new ConfigurationError(`'${normalized}' does not exist.`);
         }
     }
     return Array.from(new Set(result.map(unixifyPath))); // deduplicate files

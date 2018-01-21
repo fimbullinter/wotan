@@ -1,4 +1,4 @@
-import { FileSystem } from '../../types';
+import { FileSystem, Stats } from '../../types';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 import { unixifyPath } from '../../utils';
@@ -25,7 +25,7 @@ export class NodeFileSystem implements FileSystem {
     public readDirectory(dir: string) {
         return fs.readdirSync(dir);
     }
-    public stat(path: string) {
+    public stat(path: string): Stats {
         return fs.statSync(path);
     }
     public realpath(path: string) {
