@@ -17,10 +17,11 @@ export interface ProcessedFileInfo {
 // @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
-    private map = new Map<string, string>();
+    private files = new Set<string>();
     private directoryEntries = new Map<string, ts.FileSystemEntries>();
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
+    private fileContent = new Map<string, string>();
 
     constructor(
         public cwd: string,
@@ -61,7 +62,7 @@ export class ProjectHost implements ts.CompilerHost {
                             newName = fileName;
                         }
                         files.push(newName);
-                        this.map.set(fileName, newName);
+                        this.files.add(fileName);
                         this.reverseMap.set(newName, fileName);
                         break;
                     case FileKind.Directory:
@@ -92,19 +93,23 @@ export class ProjectHost implements ts.CompilerHost {
     public getFileSystemFile(file: string): string | undefined {
         if (/\/node_modules\//.test(file))
             return this.fs.getKind(file) === FileKind.File ? file : undefined;
-        if (this.map.has(file))
+        if (this.files.has(file))
             return file;
         const reverse = this.reverseMap.get(file);
         if (reverse !== undefined)
             return reverse;
-        const dirname = path.dirname(file);
+        const dirname = path.posix.dirname(file);
         if (this.directoryEntries.has(dirname))
             return;
         this.directoryEntries.set(dirname, this.processDirectory(dirname));
         return this.getFileSystemFile(file);
     }
 
-    public readFile(file: string): string | undefined {
+    public readFile(file: string) {
+        return resolveCachedResult(this.fileContent, file, (f) => this.fs.readFile(f));
+    }
+
+    private readProcessedFile(file: string): string | undefined {
         const realFile = this.getFileSystemFile(file);
         if (realFile === undefined)
             return;
@@ -142,7 +147,7 @@ export class ProjectHost implements ts.CompilerHost {
     }
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(this.sourceFileCache, fileName, () => {
-            const content = this.readFile(fileName);
+            const content = this.readProcessedFile(fileName);
             return content === undefined ? undefined : ts.createSourceFile(fileName, content, languageVersion, true);
         });
     }

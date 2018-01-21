@@ -11,21 +11,15 @@ export const enum FileKind {
     Other,
 }
 
-const fileContent = new CacheIdentifier<string, string | undefined>('fileContent');
 const fileKind = new CacheIdentifier<string, FileKind>('fileKind');
-const directoryEntries = new CacheIdentifier<string, string[]>('directoryEntries');
 const realpathCache = new CacheIdentifier<string, string>('realpath');
 
 @injectable()
 export class CachedFileSystem {
     private fileKindCache: Cache<string, FileKind>;
-    private fileContentCache: Cache<string, string | undefined>;
-    private directoryEntryCache: Cache<string, string[]>;
     private realpathCache: Cache<string, string>;
     constructor(private fs: FileSystem, cache: CacheManager) {
         this.fileKindCache = cache.create(fileKind);
-        this.fileContentCache = cache.create(fileContent);
-        this.directoryEntryCache = cache.create(directoryEntries);
         this.realpathCache = cache.create(realpathCache);
     }
 
@@ -52,26 +46,16 @@ export class CachedFileSystem {
     }
 
     public readDirectory(dir: string): string[] {
-        return resolveCachedResult(this.directoryEntryCache, this.fs.normalizePath(dir), this.doReadDirectory);
-    }
-
-    @bind
-    private doReadDirectory(dir: string) {
         try {
-            return this.fs.readDirectory(dir);
+            return this.fs.readDirectory(this.fs.normalizePath(dir));
         } catch {
             return [];
         }
     }
 
     public readFile(file: string): string | undefined {
-        return resolveCachedResult(this.fileContentCache, this.fs.normalizePath(file), this.doReadFile);
-    }
-
-    @bind
-    private doReadFile(file: string) {
         try {
-            return this.fs.readFile(file);
+            return this.fs.readFile(this.fs.normalizePath(file));
         } catch {
             return;
         }
@@ -84,30 +68,13 @@ export class CachedFileSystem {
     public writeFile(file: string, content: string) {
         file = this.fs.normalizePath(file);
         this.fs.writeFile(file, content);
-        this.fileContentCache.set(file, content);
         this.fileKindCache.set(file, FileKind.File);
-        const dirname = path.posix.dirname(file);
-        const entries = this.directoryEntryCache.get(dirname);
-        if (entries !== undefined) {
-            const basename = path.basename(file);
-            if (!entries.includes(basename))
-                entries.push(basename);
-        }
     }
 
     public remove(file: string) {
         file = this.fs.normalizePath(file);
         this.fs.deleteFile(file);
-        this.fileContentCache.set(file, undefined);
         this.fileKindCache.set(file, FileKind.NonExistent);
-        const dirname = path.posix.dirname(file);
-        const entries = this.directoryEntryCache.get(dirname);
-        if (entries !== undefined) {
-            const basename = path.basename(file);
-            const index = entries.indexOf(basename);
-            if (index !== -1)
-                entries.splice(index, 1);
-        }
     }
 
     public createDirectory(dir: string) {
@@ -134,12 +101,5 @@ export class CachedFileSystem {
             }
         }
         this.fileKindCache.set(dir, FileKind.Directory);
-        const dirname = path.dirname(dir);
-        const entries = this.directoryEntryCache.get(dirname);
-        if (entries !== undefined) {
-            const basename = path.basename(dir);
-            if (!entries.includes(basename))
-                entries.push(basename);
-        }
     }
 }
