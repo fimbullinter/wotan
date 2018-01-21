@@ -20,7 +20,7 @@ test('throws error on non-existing file', (t) => {
                 'test/fixtures/invalid.js', // exists
                 'non-existent.js', // does not exist, but is excluded
                 'non-existent/*.ts', // does not match, but has magic
-                'non\\-existent.ts', // does not exist
+                'non-existent.ts', // does not exist
             ],
             exclude: ['*.js'],
             project: undefined,
@@ -40,7 +40,7 @@ test('throws error on file not included in project', (t) => {
             files: [
                 'non-existent.js', // does not exist, but is excluded
                 'non-existent/*.ts', // does not match, but has magic
-                'non\\-existent.ts', // does not exist
+                'non-existent.ts', // does not exist
             ],
             exclude: ['*.js'],
             project: 'test/integration/project/setup',
