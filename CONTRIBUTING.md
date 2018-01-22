@@ -125,6 +125,10 @@ Test coverage is also reported in the pull request. Please try to maintain a hig
 
 If the pull request changes existing behavior or adds new functionality, please update the documentation accordingly.
 
+Pull requests are [squashed while merging](https://help.github.com/articles/about-pull-request-merges/#squash-and-merge-your-pull-request-commits).
+That means you can push new commits as you improve your pull request. It even helps reviewers to review the changes of each iterations.
+All commits are combined into a single commit with a meaningful title (and description if necessary) during merging.
+
 ## Writing Documentation
 
 Documentation improvements are very welcome.
