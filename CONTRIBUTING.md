@@ -88,13 +88,13 @@ This section describes how to make changes and test them locally.
 
 You need at least Node 6.x and Yarn 1.2.1 or higher.
 
-`yarn compile` compiles the project.
-`yarn lint` lints the project with TSLint and the local build of wotan.
-`yarn test` Runs all tests.
-`yarn test:api` Runs only unit tests. Add option `-u` to update the unit test baselines.
-`yarn test:integration` Runs the integration tests. Add option `-u` to update the integration test baselines. Add option `--bail` to stop at the first failing test.
-`yarn test:rules` Runs the rule tests. Add option `-u` to update the rule test baselines. Add option `--bail` to stop at the first failing test.
-`yarn verify` compiles, lints and tests the whole project. Basically all of the above
+* `yarn compile` compiles the project.
+* `yarn lint` lints the project with TSLint and the local build of wotan.
+* `yarn test` Runs all tests.
+* `yarn test:api` Runs only unit tests. Add option `-u` to update the unit test baselines.
+* `yarn test:integration` Runs the integration tests. Add option `-u` to update the integration test baselines. Add option `--bail` to stop at the first failing test.
+* `yarn test:rules` Runs the rule tests. Add option `-u` to update the rule test baselines. Add option `--bail` to stop at the first failing test.
+* `yarn verify` compiles, lints and tests the whole project. Basically all of the above
 
 Updating baselines may be necessary after changing or adding some functionality like new rules or new checks in rules. It's also necessary after editing a test.
 Tests will fail if the output does not match the expected output in the corresponding baseline file.
