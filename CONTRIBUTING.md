@@ -144,7 +144,7 @@ Sometimes, an issue will stay open, even though the bug has been fixed. And some
 It can be helpful to go through older bug reports and make sure that they are still valid.
 Load up an older issue, double check that it's still true, and leave a comment letting us know if it is or is not.
 
-If you're looking for somewhere to start, check out the `good first issue` or `help wanted` tags.
+If you're looking for somewhere to start, check out the [good first issue][goodfirstissue] or [help wanted][helpwanted] tags.
 
 ## Out-of-tree Contributions
 
@@ -157,3 +157,5 @@ Contribute to existing community packages or create your own and publish it to n
 [gitter]: https://gitter.im/ajafff/wotan
 [so]: https://stackoverflow.com/
 [tsutils]: https://github.com/ajafff/tsutils
+[helpwanted]: https://github.com/ajafff/wotan/labels/help%20wanted
+[goodfirstissue]: https://github.com/ajafff/wotan/labels/good%20first%20issue
