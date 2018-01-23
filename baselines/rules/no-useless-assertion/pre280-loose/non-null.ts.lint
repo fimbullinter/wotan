@@ -185,3 +185,29 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     takeUndefined(uninitialized5!);
                                 ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }
+
+interface I {
+    foo?: string;
+    bar?: string;
+}
+
+function fn1<T extends I>(o: T, k: keyof I) {
+    foo(o[k]!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+function fn2<T extends I, K extends keyof T>(o: T, k: K) {
+    foo(o[k]!); // TODO https://github.com/Microsoft/TypeScript/issues/12991
+            ~                                                                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+function fn3<K extends keyof I>(o: I, k: K) {
+    foo(o[k]!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}

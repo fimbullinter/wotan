@@ -121,3 +121,23 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     foo(uninitialized5!);
     takeUndefined(uninitialized5!);
 }
+
+interface I {
+    foo?: string;
+    bar?: string;
+}
+
+function fn1<T extends I>(o: T, k: keyof I) {
+    foo(o[k]!);
+    takeUndefined(o[k]!);
+}
+
+function fn2<T extends I, K extends keyof T>(o: T, k: K) {
+    foo(o[k]!); // TODO https://github.com/Microsoft/TypeScript/issues/12991
+    takeUndefined(o[k]!);
+}
+
+function fn3<K extends keyof I>(o: I, k: K) {
+    foo(o[k]!);
+    takeUndefined(o[k]!);
+}
