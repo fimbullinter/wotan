@@ -115,7 +115,7 @@ export class Runner {
             if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
                 const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
                 name = ctor.transformName(file, effectiveConfig.settings);
-                if (!/^\.[jt]sx?$/.test(path.extname(name)))
+                if (!/^\.[jt]sx?$/i.test(path.extname(name)))
                     continue;
                 originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
@@ -123,7 +123,7 @@ export class Runner {
             } else {
                 processor = undefined;
                 name = file;
-                if (!/^\.[jt]sx?$/.test(path.extname(name)))
+                if (!/^\.[jt]sx?$/i.test(path.extname(name)))
                     continue;
                 content = originalContent = this.fs.readFile(file);
             }

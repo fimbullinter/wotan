@@ -1,0 +1,5 @@
+{
+  "files": ["*"],
+  "config": ".wotanrc.yaml",
+  "fix": false
+}
