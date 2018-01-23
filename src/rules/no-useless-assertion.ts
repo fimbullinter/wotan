@@ -79,19 +79,19 @@ export class Rule extends TypedRule {
     private checkNonNullAssertion(node: ts.NonNullExpression) {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            let originalType = this.checker.getTypeAtLocation(node.expression);
-            if (!typescriptPre280 && originalType.flags & ts.TypeFlags.TypeParameter)
-                originalType = this.checker.getApparentType(originalType);
-            const flags = getNullableFlags(originalType);
+            const originalType = this.checker.getTypeAtLocation(node.expression);
+            const flags = getNullableFlags(
+                typescriptPre280 || (originalType.flags & ts.TypeFlags.TypeParameter) === 0
+                    ? originalType
+                    : this.checker.getApparentType(originalType),
+            );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
             }
-            if ((originalType.flags & ts.TypeFlags.Any) === 0 &&
-                (flags & ts.TypeFlags.Undefined) === 0 &&
-                maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
+            if (maybeUsedBeforeBeingAssigned(node.expression, originalType, this.checker)) {
                 log('Identifier %s could be used before being assigned', node.expression.text);
                 return;
             }
@@ -110,9 +110,9 @@ export class Rule extends TypedRule {
             sourceType = this.checker.getApparentType(sourceType);
         }
         let message = FAIL_MESSAGE;
-        if (!this.typesAreEqual(sourceType, targetType)) {
+        if (!typesAreEqual(sourceType, targetType, this.checker)) {
             const contextualType = this.getSafeContextualType(node);
-            if (contextualType === undefined || !this.typesAreEqual(sourceType, contextualType))
+            if (contextualType === undefined || !typesAreEqual(sourceType, contextualType, this.checker))
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
@@ -138,10 +138,10 @@ export class Rule extends TypedRule {
             return;
         return this.checker.getContextualType(node);
     }
+}
 
-    private typesAreEqual(a: ts.Type, b: ts.Type) {
-        return a === b || this.checker.typeToString(a) === this.checker.typeToString(b);
-    }
+function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
+    return a === b || checker.typeToString(a) === checker.typeToString(b);
 }
 
 function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
@@ -176,8 +176,8 @@ function formatNullableFlags(flags: ts.TypeFlags) {
  *
  * We don't need to worry about strictPropertyInitialization errors, because they cannot be suppressed with a non-null assertion
  */
-function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeChecker): node is ts.Identifier {
-    if (node.kind !== ts.SyntaxKind.Identifier)
+function maybeUsedBeforeBeingAssigned(node: ts.Expression, type: ts.Type, checker: ts.TypeChecker): node is ts.Identifier {
+    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlags(type, true) & ts.TypeFlags.Undefined)
         return false;
     const symbol = checker.getSymbolAtLocation(node)!;
     const declaration = symbol.declarations![0];
@@ -189,7 +189,7 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeCheck
         declaration.parent!.parent!.kind === ts.SyntaxKind.VariableStatement &&
             hasModifier(declaration.parent!.parent!.modifiers, ts.SyntaxKind.DeclareKeyword))
         return false;
-    if (checker.getTypeAtLocation(node) !== checker.getTypeFromTypeNode(declaration.type))
+    if (!typesAreEqual(type, checker.getTypeFromTypeNode(declaration.type), checker))
         return false;
     return findupFunction(node.parent!.parent!.parent!) === findupFunction(declaration.parent!.parent!.parent!);
 }
