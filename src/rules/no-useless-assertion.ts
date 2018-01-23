@@ -81,10 +81,9 @@ export class Rule extends TypedRule {
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
             const flags = getNullableFlags(
-                (typescriptPre280 || (originalType.flags & ts.TypeFlags.TypeParameter) === 0) &&
-                (originalType.flags & ts.TypeFlags.IndexedAccess) === 0
-                    ? originalType
-                    : this.checker.getApparentType(originalType),
+                !typescriptPre280 || originalType.flags & ts.TypeFlags.IndexedAccess
+                    ? this.checker.getApparentType(originalType)
+                    : originalType,
             );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);

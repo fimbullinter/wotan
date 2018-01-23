@@ -99,11 +99,19 @@ declare let possiblyNull: string | null;
 declare let possiblyUndefined: string | undefined;
 declare let possiblyBoth: string | null | undefined;
 
+function take<T extends string | null | undefined>(arg: T, cb: (p: T) => void) {}
 function takeAny(arg: any) {}
 function takeNull(arg: string | null) {}
 function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
+
+take<string | null>(possiblyNull!, (p) => p);
+                                ~             [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+take(possiblyNull!, (p: string) => p);
+                 ~                     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+take(possiblyNull!, (p) => p.length);
+                 ~                    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 takeAny(possiblyNull!);
                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
@@ -210,4 +218,11 @@ function fn3<K extends keyof I>(o: I, k: K) {
             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(o[k]!);
                       ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
+    const v = Boolean() ? param1 : param2;
+    takeObject(v!); // should be valid
+                ~                      [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    function takeObject(o: {}) {}
 }

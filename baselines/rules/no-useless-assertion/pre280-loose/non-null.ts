@@ -69,11 +69,16 @@ declare let possiblyNull: string | null;
 declare let possiblyUndefined: string | undefined;
 declare let possiblyBoth: string | null | undefined;
 
+function take<T extends string | null | undefined>(arg: T, cb: (p: T) => void) {}
 function takeAny(arg: any) {}
 function takeNull(arg: string | null) {}
 function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
+
+take<string | null>(possiblyNull, (p) => p);
+take(possiblyNull, (p: string) => p);
+take(possiblyNull, (p) => p.length);
 
 takeAny(possiblyNull);
 takeAny(possiblyUndefined);
@@ -140,4 +145,10 @@ function fn2<T extends I, K extends keyof T>(o: T, k: K) {
 function fn3<K extends keyof I>(o: I, k: K) {
     foo(o[k]);
     takeUndefined(o[k]);
+}
+
+function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
+    const v = Boolean() ? param1 : param2;
+    takeObject(v); // should be valid
+    function takeObject(o: {}) {}
 }
