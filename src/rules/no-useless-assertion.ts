@@ -16,6 +16,8 @@ const log = debug('wotan:rule:no-useless-assertion');
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
+const typescriptPre280 = /^2\.[4-7]\./.test(ts.version);
+
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
@@ -37,7 +39,7 @@ export class Rule extends TypedRule {
                     this.checkDefiniteAssignmentAssertion(<ts.VariableDeclaration>node);
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
-                    this.checkDefiniteAssignmentAssertionPropery(<ts.PropertyDeclaration>node);
+                    this.checkDefiniteAssignmentAssertionProperty(<ts.PropertyDeclaration>node);
             }
         }
     }
@@ -57,7 +59,7 @@ export class Rule extends TypedRule {
             );
     }
 
-    private checkDefiniteAssignmentAssertionPropery(node: ts.PropertyDeclaration) {
+    private checkDefiniteAssignmentAssertionProperty(node: ts.PropertyDeclaration) {
         // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
@@ -77,15 +79,15 @@ export class Rule extends TypedRule {
     private checkNonNullAssertion(node: ts.NonNullExpression) {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            const originalType = this.checker.getTypeAtLocation(node.expression);
+            let originalType = this.checker.getTypeAtLocation(node.expression);
+            if (!typescriptPre280 && originalType.flags & ts.TypeFlags.TypeParameter)
+                originalType = this.checker.getApparentType(originalType);
             const flags = getNullableFlags(originalType);
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
-            } else if (originalType.flags & ts.TypeFlags.TypeParameter) {
-                message = "Non-null assertions don't work with type parameters.";
             }
             if ((originalType.flags & ts.TypeFlags.Any) === 0 &&
                 (flags & ts.TypeFlags.Undefined) === 0 &&
