@@ -109,18 +109,23 @@ export class Runner {
             const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
-            const originalContent = this.fs.readFile(file);
+            let originalContent: string;
             let name: string;
             let content: string;
             if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
                 const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
                 name = ctor.transformName(file, effectiveConfig.settings);
+                if (!/^\.[jt]sx?$/.test(path.extname(name)))
+                    continue;
+                originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();
             } else {
                 processor = undefined;
                 name = file;
-                content = originalContent;
+                if (!/^\.[jt]sx?$/.test(path.extname(name)))
+                    continue;
+                content = originalContent = this.fs.readFile(file);
             }
 
             let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
