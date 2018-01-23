@@ -16,7 +16,3 @@ exports.Processor = class Processor extends AbstractProcessor {
         return failures;
     }
 }
-
-exports.Processor.transformName = function(name) {
-    return name;
-}
