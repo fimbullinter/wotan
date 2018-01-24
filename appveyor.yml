@@ -15,5 +15,9 @@ build: off
 test_script:
   - yarn compile
   - yarn lint
-  - yarn coverage
-  - yarn report-coverage
+  - yarn coverage test:api
+  - yarn report-coverage -F unit
+  - yarn coverage test:integration
+  - yarn report-coverage -F integration
+  - yarn coverage test:rules
+  - yarn report-coverage -F rules
