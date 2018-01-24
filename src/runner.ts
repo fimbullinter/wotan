@@ -19,6 +19,7 @@ export interface LintOptions {
     exclude: string[];
     project: string | undefined;
     fix: boolean | number;
+    extensions: string[] | undefined;
 }
 
 @injectable()
@@ -114,17 +115,17 @@ export class Runner {
             let content: string;
             if (effectiveConfig.processor) {
                 const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
-                if (hasSupportedExtension(file)) {
+                if (hasSupportedExtension(file, options.extensions)) {
                     name = file;
                 } else {
                     name = file + ctor.getSuffixForFile(file, effectiveConfig.settings);
-                    if (!hasSupportedExtension(name))
+                    if (!hasSupportedExtension(name, options.extensions))
                         continue;
                 }
                 originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();
-            } else if (hasSupportedExtension(file)) {
+            } else if (hasSupportedExtension(file, options.extensions)) {
                 processor = undefined;
                 name = file;
                 content = originalContent = this.fs.readFile(file);

@@ -33,6 +33,7 @@ function parseLintCommand(args: string[]): LintCommand {
         project: undefined,
         format: undefined,
         fix: false,
+        extensions: undefined,
     };
 
     outer: for (let i = 0; i < args.length; ++i) {
@@ -57,6 +58,15 @@ function parseLintCommand(args: string[]): LintCommand {
             case '--fix':
                 ({index: i, argument: result.fix} = parseOptionalBooleanOrNumber(args, i));
                 break;
+            case '--ext': {
+                const extensions = expectStringArgument(args, ++i, arg).split(/,/g).map(sanitizeExtensionArgument);
+                if (result.extensions === undefined) {
+                    result.extensions = extensions;
+                } else {
+                    result.extensions.push(...extensions);
+                }
+                break;
+            }
             case '--':
                 result.files.push(...args.slice(i + 1));
                 break outer;
@@ -67,7 +77,15 @@ function parseLintCommand(args: string[]): LintCommand {
         }
     }
 
+    if (result.extensions !== undefined && (result.project !== undefined || result.files.length === 0))
+        throw new ConfigurationError("Options '--ext' and '--project' cannot be used together.");
+
     return result;
+}
+
+function sanitizeExtensionArgument(ext: string): string {
+    ext = ext.trim();
+    return ext.startsWith('.') ? ext : `.${ext}`;
 }
 
 function parseTestCommand(args: string[]): TestCommand {
