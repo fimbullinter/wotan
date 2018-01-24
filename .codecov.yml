@@ -1,6 +1,6 @@
 codecov:
-  ci:
-    - !test@next
+  notify:
+    require_ci_to_pass: false
 comment: false
 coverage:
   range: "75...100"
