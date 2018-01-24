@@ -1,0 +1,2 @@
+"jsx file";
+           ~nil [error trailing-newline: File must end with a newline.]
