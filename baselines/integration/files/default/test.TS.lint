@@ -1,2 +1,1 @@
 "this file has an UPPERCASE extension";
-                                       ~nil [error trailing-newline: File must end with a newline.]

@@ -1,8 +1,8 @@
 const {AbstractProcessor} = require('../../../../src/types');
 
 class Processor extends AbstractProcessor {
-    static transformName(name) {
-        return name + '.ts';
+    static getSuffixForFile() {
+        return '.ts';
     }
 
     constructor(...args) {

@@ -13,6 +13,6 @@ exports.Processor = class Processor extends AbstractProcessor {
     }
 
     postprocess(failures) {
-        return failures;
+        return failures.concat({ruleName: 'unicorn', message: 'rainbow', severity: 'warning', fix: undefined, start: {position: 0, line: 0, character: 0}, end: {position: 0, line: 0, character: 0}});
     }
 }

@@ -93,10 +93,10 @@ export class Linter {
         const rules = this.prepareRules(config, sourceFile, program);
         if (rules.length === 0) {
             log('No active rules');
-            return [];
+            return processor === undefined ? [] : processor.postprocess([]);
         }
         const failures = this.applyRules(sourceFile, program, rules, config.settings);
-        return processor === undefined || failures.length === 0 ? failures : processor.postprocess(failures);
+        return processor === undefined ? failures : processor.postprocess(failures);
     }
 
     private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {

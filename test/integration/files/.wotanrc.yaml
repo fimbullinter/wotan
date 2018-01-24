@@ -1,2 +1,4 @@
-rules:
-  trailing-newline: error
+overrides:
+  - files: "*.js"
+    rules:
+      trailing-newline: error

@@ -3,7 +3,7 @@ import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectorySer
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath } from './utils';
+import { unixifyPath, hasSupportedExtension } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
@@ -112,20 +112,24 @@ export class Runner {
             let originalContent: string;
             let name: string;
             let content: string;
-            if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
+            if (effectiveConfig.processor) {
                 const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
-                name = ctor.transformName(file, effectiveConfig.settings);
-                if (!/^\.[jt]sx?$/i.test(path.extname(name)))
-                    continue;
+                if (hasSupportedExtension(file)) {
+                    name = file;
+                } else {
+                    name = file + ctor.getSuffixForFile(file, effectiveConfig.settings);
+                    if (!hasSupportedExtension(name))
+                        continue;
+                }
                 originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();
-            } else {
+            } else if (hasSupportedExtension(file)) {
                 processor = undefined;
                 name = file;
-                if (!/^\.[jt]sx?$/i.test(path.extname(name)))
-                    continue;
                 content = originalContent = this.fs.readFile(file);
+            } else {
+                continue;
             }
 
             let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
