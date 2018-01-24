@@ -13,9 +13,10 @@
     "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
-    "coverage": "nyc run-s test",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan coverage",
+    "test:coverage": "nyc run-s test",
+    "coverage": "nyc --cache run-s",
+    "report-coverage": "codecov",
+    "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan test:coverage",
     "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
   },
   "repository": {
@@ -55,7 +56,7 @@
     "@types/semver": "^5.4.0",
     "@types/to-absolute-glob": "^2.0.0",
     "ava": "^0.24.0",
-    "coveralls": "^3.0.0",
+    "codecov": "^3.0.0",
     "dependency-cruiser": "^2.10.1",
     "escape-string-regexp": "^1.0.5",
     "npm-run-all": "^4.1.2",

@@ -5,7 +5,7 @@ Pluggable TypeScript and JavaScript linter
 [![Greenkeeper badge](https://badges.greenkeeper.io/ajafff/wotan.svg)](https://greenkeeper.io/)
 [![CircleCI](https://circleci.com/gh/ajafff/wotan/tree/master.svg?style=shield)](https://circleci.com/gh/ajafff/wotan/tree/master)
 [![Build status](https://ci.appveyor.com/api/projects/status/qjfv36mtmj6m55ya/branch/master?svg=true)](https://ci.appveyor.com/project/ajafff/wotan/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/ajafff/wotan/badge.svg?branch=master)](https://coveralls.io/github/ajafff/wotan?branch=master)
+[![codecov](https://codecov.io/gh/ajafff/wotan/branch/master/graph/badge.svg)](https://codecov.io/gh/ajafff/wotan)
 
 ## What is this all about?
 
