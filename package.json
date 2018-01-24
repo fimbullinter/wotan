@@ -14,7 +14,7 @@
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
     "test:coverage": "nyc run-s test",
-    "coverage": "nyc run-s",
+    "coverage": "nyc --cache run-s",
     "report-coverage": "codecov",
     "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan test:coverage",
     "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
