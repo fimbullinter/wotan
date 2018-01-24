@@ -2,6 +2,7 @@ import { Format, Cache } from './types';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import * as ts from 'typescript';
+import * as path from 'path';
 
 // @internal
 /**
@@ -51,8 +52,8 @@ export function resolveCachedResult<K, V>(cache: Cache<K, V>, key: K, cb: (key: 
     return result!;
 }
 
-export function unixifyPath(path: string): string {
-    return path.replace(/\\/g, '/');
+export function unixifyPath(p: string): string {
+    return p.replace(/\\/g, '/');
 }
 
 export function format<T = any>(value: T, fmt = Format.Yaml): string {
@@ -137,4 +138,9 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
 
 export function unionTypeParts(type: ts.Type): ts.Type[] {
     return type.flags & ts.TypeFlags.Union ? (<ts.UnionType>type).types : [type];
+}
+
+export function hasSupportedExtension(fileName: string, extensions?: ReadonlyArray<string>) {
+    const ext = path.extname(fileName).toLowerCase();
+    return /^\.[jt]sx?$/.test(ext) || extensions !== undefined && extensions.includes(ext);
 }

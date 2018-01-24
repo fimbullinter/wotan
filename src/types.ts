@@ -251,7 +251,7 @@ export const enum Format {
 
 // @internal
 export interface ProcessorConstructor {
-    transformName(fileName: string, settings: ReadonlyMap<string, any>): string;
+    getSuffixForFile(fileName: string, settings: ReadonlyMap<string, any>): string;
     new(source: string, sourceFileName: string, targetFileName: string, settings: ReadonlyMap<string, any>): AbstractProcessor;
 }
 
@@ -264,8 +264,8 @@ export abstract class AbstractProcessor {
     /**
      * Returns the resulting file name.
      */
-    public static transformName(fileName: string, _settings: ReadonlyMap<string, any>): string {
-        return fileName;
+    public static getSuffixForFile(_fileName: string, _settings: ReadonlyMap<string, any>): string {
+        return '';
     }
 
     constructor(

@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult } from './utils';
+import { resolveCachedResult, hasSupportedExtension } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -48,31 +48,32 @@ export class ProjectHost implements ts.CompilerHost {
         } catch {
             return result;
         }
-        if (entries.length !== 0) {
-            let c: Configuration | undefined | 'initial' = /\/node_modules(\/|$)/.test(dir)
-                ? undefined // don't use processors in node_modules
-                : this.config || 'initial';
-            for (const entry of entries) {
-                const fileName = `${dir}/${entry}`;
-                switch (this.fs.getKind(fileName)) {
-                    case FileKind.File:
+        let c: Configuration | undefined | 'initial' = this.config || 'initial';
+        for (const entry of entries) {
+            const fileName = `${dir}/${entry}`;
+            switch (this.fs.getKind(fileName)) {
+                case FileKind.File: {
+                    if (!hasSupportedExtension(fileName)) {
                         if (c === 'initial')
                             c = this.configManager.findConfiguration(fileName);
                         const processor = c && this.configManager.getProcessorForFile(c, fileName);
-                        let newName: string;
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
-                            newName = ctor.transformName(fileName, this.configManager.getSettingsForFile(c!, fileName));
-                        } else {
-                            newName = fileName;
+                            const newName = fileName +
+                                ctor.getSuffixForFile(fileName, this.configManager.getSettingsForFile(c!, fileName));
+                            if (hasSupportedExtension(newName)) {
+                                files.push(newName);
+                                this.reverseMap.set(newName, fileName);
+                                break;
+                            }
                         }
-                        files.push(newName);
-                        this.files.add(fileName);
-                        this.reverseMap.set(newName, fileName);
-                        break;
-                    case FileKind.Directory:
-                        directories.push(fileName);
+                    }
+                    files.push(fileName);
+                    this.files.add(fileName);
+                    break;
                 }
+                case FileKind.Directory:
+                    directories.push(fileName);
             }
         }
         return result;
@@ -85,9 +86,8 @@ export class ProjectHost implements ts.CompilerHost {
                 return false;
             case FileKind.File:
                 return true;
-            default: {
-                return this.getFileSystemFile(file) !== undefined;
-            }
+            default:
+                return hasSupportedExtension(file) && this.getFileSystemFile(file) !== undefined;
         }
     }
 
@@ -96,8 +96,6 @@ export class ProjectHost implements ts.CompilerHost {
     }
 
     public getFileSystemFile(file: string): string | undefined {
-        if (/\/node_modules\//.test(file))
-            return this.fs.getKind(file) === FileKind.File ? file : undefined;
         if (this.files.has(file))
             return file;
         const reverse = this.reverseMap.get(file);
@@ -106,6 +104,8 @@ export class ProjectHost implements ts.CompilerHost {
         const dirname = path.posix.dirname(file);
         if (this.directoryEntries.has(dirname))
             return;
+        if (this.fs.isFile(file))
+            return file;
         this.directoryEntries.set(dirname, this.processDirectory(dirname));
         return this.getFileSystemFile(file);
     }
@@ -117,12 +117,14 @@ export class ProjectHost implements ts.CompilerHost {
     private readProcessedFile(file: string): string {
         const realFile = this.getFileSystemFile(file)!;
         let content = this.fs.readFile(realFile);
-        if (file === realFile)
+        const config = this.config || this.configManager.findConfiguration(realFile);
+        if (config === undefined)
             return content;
-
-        const config = this.config || this.configManager.findConfiguration(realFile)!;
-        const ctor = this.processorLoader.loadProcessor(this.configManager.getProcessorForFile(config, realFile)!);
-        const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, file));
+        const processorPath = this.configManager.getProcessorForFile(config, realFile);
+        if (processorPath === undefined)
+            return content;
+        const ctor = this.processorLoader.loadProcessor(processorPath);
+        const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, realFile));
         this.processedFiles.set(file, {
             processor,
             originalContent: content,
