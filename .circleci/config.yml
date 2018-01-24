@@ -59,8 +59,11 @@ jobs:
           name: Install TypeScript@2.4
           command: yarn add typescript@2.4
       - run:
-          name: Test
-          command: yarn test
+          name: Test with Coverage
+          command: yarn coverage
+      - run:
+          name: Report code coverage
+          command: yarn report-coverage
   test@2.6:
     docker:
       - image: circleci/node:8
@@ -74,8 +77,11 @@ jobs:
           name: Install TypeScript@2.6
           command: yarn add typescript@2.6
       - run:
-          name: Test
-          command: yarn test
+          name: Test with Coverage
+          command: yarn coverage
+      - run:
+          name: Report code coverage
+          command: yarn report-coverage
   test@next:
     docker:
       - image: circleci/node:latest
@@ -89,8 +95,11 @@ jobs:
           name: Install TypeScript@next
           command: yarn add typescript@next
       - run:
-          name: Test
-          command: yarn test
+          name: Test with Coverage
+          command: yarn coverage
+      - run:
+          name: Report code coverage
+          command: yarn report-coverage
 
 workflows:
   version: 2
