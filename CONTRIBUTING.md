@@ -96,7 +96,8 @@ You need at least Node 6.x and Yarn 1.2.1 or higher.
   * `yarn test:api` runs only unit tests. Add option `-u` to update the unit test baselines.
   * `yarn test:integration` runs the integration tests. Add option `-u` to update the integration test baselines. Add option `--bail` to stop at the first failing test.
   * `yarn test:rules` runs the rule tests. Add option `-u` to update the rule test baselines. Add option `--bail` to stop at the first failing test.
-* `yarn coverage` executes all tests and collects test coverage.
+  * `yarn test:coverage` runs all of the above test with coverage reporting.
+* `yarn coverage` executes a given command with coverage reporting, e.g. `yarn coverage yarn test:rules`.
 * `yarn verify` compiles, lints and tests the whole project. Basically all of the above.
 
 Updating baselines may be necessary after changing or adding some functionality like new rules or new checks in rules. It's also necessary after editing a test.

@@ -9,10 +9,9 @@
     ".js"
   ],
   "reporter": [
-    "text-summary",
-    "html",
     "lcov"
   ],
   "sourceMap": true,
-  "all": true
+  "all": true,
+  "cache": true
 }

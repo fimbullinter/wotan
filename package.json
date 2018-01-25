@@ -13,8 +13,8 @@
     "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
-    "test:coverage": "nyc run-s test",
-    "coverage": "nyc --cache run-s",
+    "test:coverage": "nyc --reporter=text-summary --reporter=html run-s test",
+    "coverage": "nyc",
     "report-coverage": "codecov",
     "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan test:coverage",
     "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
