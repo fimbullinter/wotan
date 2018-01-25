@@ -1,8 +1,10 @@
 const {AbstractProcessor} = require('../../../../src/types');
 
 class Processor extends AbstractProcessor {
-    static getSuffixForFile() {
-        return '.ts';
+    static getSuffixForFile(_name, _settings, readFile) {
+        const content = readFile();
+        const match = /<script.*? +lang=(["'])(\w+)\1.*?>/.exec(content);
+        return match === null ? '.js' : '.' + match[2];
     }
 
     constructor(...args) {

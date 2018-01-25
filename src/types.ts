@@ -72,7 +72,7 @@ export type Severity = 'error' | 'warning';
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
     deprecated?: boolean | string;
-    supports?(sourceFile: ts.SourceFile, options: any, settings: ReadonlyMap<string, any>): boolean;
+    supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
     new(context: RuleContext): AbstractRule;
 }
 
@@ -251,8 +251,8 @@ export const enum Format {
 
 // @internal
 export interface ProcessorConstructor {
-    getSuffixForFile(fileName: string, settings: ReadonlyMap<string, any>): string;
-    new(source: string, sourceFileName: string, targetFileName: string, settings: ReadonlyMap<string, any>): AbstractProcessor;
+    getSuffixForFile(fileName: string, settings: GlobalSettings, readFile: () => string): string;
+    new(source: string, sourceFileName: string, targetFileName: string, settings: GlobalSettings): AbstractProcessor;
 }
 
 export interface ProcessorUpdateResult {
@@ -264,7 +264,7 @@ export abstract class AbstractProcessor {
     /**
      * Returns the resulting file name.
      */
-    public static getSuffixForFile(_fileName: string, _settings: ReadonlyMap<string, any>): string {
+    public static getSuffixForFile(_fileName: string, _settings: GlobalSettings, _readFile: () => string): string {
         return '';
     }
 
@@ -272,7 +272,7 @@ export abstract class AbstractProcessor {
         protected source: string,
         protected sourceFileName: string,
         protected targetFileName: string,
-        protected settings: ReadonlyMap<string, any>,
+        protected settings: GlobalSettings,
     ) {}
 
     public abstract preprocess(): string;

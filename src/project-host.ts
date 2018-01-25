@@ -60,7 +60,11 @@ export class ProjectHost implements ts.CompilerHost {
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
                             const newName = fileName +
-                                ctor.getSuffixForFile(fileName, this.configManager.getSettingsForFile(c!, fileName));
+                                ctor.getSuffixForFile(
+                                    fileName,
+                                    this.configManager.getSettingsForFile(c!, fileName),
+                                    () => this.fs.readFile(fileName),
+                                );
                             if (hasSupportedExtension(newName)) {
                                 files.push(newName);
                                 this.reverseMap.set(newName, fileName);

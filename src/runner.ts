@@ -110,7 +110,7 @@ export class Runner {
             const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
-            let originalContent: string;
+            let originalContent: string | undefined;
             let name: string;
             let content: string;
             if (effectiveConfig.processor) {
@@ -118,11 +118,12 @@ export class Runner {
                 if (hasSupportedExtension(file, options.extensions)) {
                     name = file;
                 } else {
-                    name = file + ctor.getSuffixForFile(file, effectiveConfig.settings);
+                    name = file + ctor.getSuffixForFile(file, effectiveConfig.settings, () => originalContent = this.fs.readFile(file));
                     if (!hasSupportedExtension(name, options.extensions))
                         continue;
                 }
-                originalContent = this.fs.readFile(file);
+                if (originalContent === undefined) // might be initialized by the processor requesting the file content
+                    originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();
             } else if (hasSupportedExtension(file, options.extensions)) {

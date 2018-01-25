@@ -9,6 +9,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+~nil                   [error local/extension: The extension of this file is: .ts]
 import {doStuff} from './utils'
 export default Vue.extend({
     props: ['name', 'initialEnthusiasm'],
@@ -25,6 +26,14 @@ export default Vue.extend({
             }
         },
         async doStuff() {
+            // JSDoc type annotations only work in JavaScript files
+            /** @type {PromiseLike<string>} */
+            let p = null;
+            let v = null;
+            await p;
+            ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            await v;
+            ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
             await doStuff();
             ~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
         }

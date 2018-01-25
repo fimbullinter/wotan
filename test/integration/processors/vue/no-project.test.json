@@ -1,0 +1,4 @@
+{
+  "config": ".wotanrc.yaml",
+  "files": ["hello.vue"]
+}

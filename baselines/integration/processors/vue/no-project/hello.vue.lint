@@ -30,9 +30,9 @@ export default Vue.extend({
             /** @type {PromiseLike<string>} */
             let p = null;
             let v = null;
-            p;
-            v;
-            doStuff();
+            await p;
+            await v;
+            await doStuff();
         }
     },
     computed: {
