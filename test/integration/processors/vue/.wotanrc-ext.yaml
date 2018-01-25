@@ -1,5 +1,7 @@
+rulesDirectories:
+  local: .
 rules:
-  await-promise: error
+  local/extension: error
 overrides:
   - files: "*.vue"
     processor: ./vue.js

@@ -4,7 +4,6 @@
 
 <script>
 import Vue from "vue";
-~nil                   [error local/extension: The extension of this file is: .js]
 import {doStuff} from './utils'
 export default Vue.extend({
     data() {

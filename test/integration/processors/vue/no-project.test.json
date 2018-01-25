@@ -1,4 +1,5 @@
 {
-  "config": ".wotanrc.yaml",
-  "files": ["hello.vue"]
+  "config": ".wotanrc-ext.yaml",
+  "files": ["*.vue"],
+  "fix": false
 }

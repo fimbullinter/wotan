@@ -1,3 +1,4 @@
 {
-  "config": ".wotanrc-exclude.yaml"
+  "config": ".wotanrc-exclude.yaml",
+  "fix": false
 }

@@ -9,7 +9,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-~nil                   [error local/extension: The extension of this file is: .ts]
 import {doStuff} from './utils'
 export default Vue.extend({
     props: ['name', 'initialEnthusiasm'],
