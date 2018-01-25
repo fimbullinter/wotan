@@ -16,6 +16,8 @@ const log = debug('wotan:rule:no-useless-assertion');
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
+const typescriptPre280 = /^2\.[4-7]\./.test(ts.version);
+
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
@@ -37,7 +39,7 @@ export class Rule extends TypedRule {
                     this.checkDefiniteAssignmentAssertion(<ts.VariableDeclaration>node);
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
-                    this.checkDefiniteAssignmentAssertionPropery(<ts.PropertyDeclaration>node);
+                    this.checkDefiniteAssignmentAssertionProperty(<ts.PropertyDeclaration>node);
             }
         }
     }
@@ -57,7 +59,7 @@ export class Rule extends TypedRule {
             );
     }
 
-    private checkDefiniteAssignmentAssertionPropery(node: ts.PropertyDeclaration) {
+    private checkDefiniteAssignmentAssertionProperty(node: ts.PropertyDeclaration) {
         // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
@@ -78,18 +80,18 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
-            const flags = getNullableFlags(originalType);
+            const flags = getNullableFlags(
+                !typescriptPre280 || originalType.flags & ts.TypeFlags.IndexedAccess
+                    ? this.checker.getApparentType(originalType)
+                    : originalType,
+            );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
-            } else if (originalType.flags & ts.TypeFlags.TypeParameter) {
-                message = "Non-null assertions don't work with type parameters.";
             }
-            if ((originalType.flags & ts.TypeFlags.Any) === 0 &&
-                (flags & ts.TypeFlags.Undefined) === 0 &&
-                maybeUsedBeforeBeingAssigned(node.expression, this.checker)) {
+            if (maybeUsedBeforeBeingAssigned(node.expression, originalType, this.checker)) {
                 log('Identifier %s could be used before being assigned', node.expression.text);
                 return;
             }
@@ -108,9 +110,9 @@ export class Rule extends TypedRule {
             sourceType = this.checker.getApparentType(sourceType);
         }
         let message = FAIL_MESSAGE;
-        if (!this.typesAreEqual(sourceType, targetType)) {
+        if (!typesAreEqual(sourceType, targetType, this.checker)) {
             const contextualType = this.getSafeContextualType(node);
-            if (contextualType === undefined || !this.typesAreEqual(sourceType, contextualType))
+            if (contextualType === undefined || !typesAreEqual(sourceType, contextualType, this.checker))
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
@@ -136,10 +138,10 @@ export class Rule extends TypedRule {
             return;
         return this.checker.getContextualType(node);
     }
+}
 
-    private typesAreEqual(a: ts.Type, b: ts.Type) {
-        return a === b || this.checker.typeToString(a) === this.checker.typeToString(b);
-    }
+function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
+    return a === b || checker.typeToString(a) === checker.typeToString(b);
 }
 
 function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
@@ -174,8 +176,8 @@ function formatNullableFlags(flags: ts.TypeFlags) {
  *
  * We don't need to worry about strictPropertyInitialization errors, because they cannot be suppressed with a non-null assertion
  */
-function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeChecker): node is ts.Identifier {
-    if (node.kind !== ts.SyntaxKind.Identifier)
+function maybeUsedBeforeBeingAssigned(node: ts.Expression, type: ts.Type, checker: ts.TypeChecker): node is ts.Identifier {
+    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlags(type, true) & ts.TypeFlags.Undefined)
         return false;
     const symbol = checker.getSymbolAtLocation(node)!;
     const declaration = symbol.declarations![0];
@@ -187,7 +189,7 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, checker: ts.TypeCheck
         declaration.parent!.parent!.kind === ts.SyntaxKind.VariableStatement &&
             hasModifier(declaration.parent!.parent!.modifiers, ts.SyntaxKind.DeclareKeyword))
         return false;
-    if (checker.getTypeAtLocation(node) !== checker.getTypeFromTypeNode(declaration.type))
+    if (!typesAreEqual(type, checker.getTypeFromTypeNode(declaration.type), checker))
         return false;
     return findupFunction(node.parent!.parent!.parent!) === findupFunction(declaration.parent!.parent!.parent!);
 }

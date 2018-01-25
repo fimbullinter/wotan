@@ -1,69 +1,69 @@
 export {};
 
-1!;
-(1 + 2)!;
-null!;
-undefined!;
-NaN!;
-Infinity!;
-something!;
+1;
+(1 + 2);
+null;
+undefined;
+NaN;
+Infinity;
+something;
 
 const a = 1;
-a!;
+a;
 
 let b: string | undefined;
 b = "b";
-b!;
+b;
 b = undefined;
-b!;
+b;
 
 const c = !b ? "foo" : undefined;
-c!;
+c;
 
 const obj = {
     prop: c,
 };
-obj!.prop!;
+obj.prop;
 
 let d: string;
-d!;
+d;
 d = "foo";
-d!;
+d;
 
 let e: string | number;
-e!;
+e;
 e = 1;
-e!;
+e;
 
 const f = c ? c : null;
-f!;
-f!!;
+f;
+f;
 
 declare let g: string;
-g!;
+g;
 
 let {h} = {h: ''};
-h!;
+h;
 
 let i: string;
-i!;
+i;
 {
-    i!;
+    i;
 }
 function foo(j: string) {
-    j!;
-    i!;
+    j;
+    i;
 }
 
-let k = b || c!; // this line should not be an error in strict mode
-k!; // but this line should
+let k = b || c; // this line should not be an error in strict mode
+k; // but this line should
 
 let l: string | null;
 
 let m: any;
-m!;
+m;
 
-foobar!;
+foobar;
 
 declare let possiblyNull: string | null;
 declare let possiblyUndefined: string | undefined;
@@ -76,55 +76,55 @@ function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
 
-take<string | null>(possiblyNull!, (p) => p);
-take(possiblyNull!, (p: string) => p);
-take(possiblyNull!, (p) => p.length);
+take<string | null>(possiblyNull, (p) => p);
+take(possiblyNull, (p: string) => p);
+take(possiblyNull, (p) => p.length);
 
-takeAny(possiblyNull!);
-takeAny(possiblyUndefined!);
-takeAny(possiblyBoth!);
-takeAny(l!);
+takeAny(possiblyNull);
+takeAny(possiblyUndefined);
+takeAny(possiblyBoth);
+takeAny(l);
 
-takeNull(possiblyNull!);
-takeNull(possiblyUndefined!);
-takeNull(possiblyBoth!);
-takeNull(l!);
+takeNull(possiblyNull);
+takeNull(possiblyUndefined);
+takeNull(possiblyBoth);
+takeNull(l);
 
-takeUndefined(possiblyNull!);
-takeUndefined(possiblyUndefined!);
-takeUndefined(possiblyBoth!);
+takeUndefined(possiblyNull);
+takeUndefined(possiblyUndefined);
+takeUndefined(possiblyBoth);
 
-takeBoth(possiblyNull!);
-takeBoth(possiblyUndefined!);
-takeBoth(possiblyBoth!);
+takeBoth(possiblyNull);
+takeBoth(possiblyUndefined);
+takeBoth(possiblyBoth);
 
-takeStringNumberUndefined(possiblyNull!);
-takeStringNumberUndefined(possiblyUndefined!);
-takeStringNumberUndefined(possiblyBoth!);
+takeStringNumberUndefined(possiblyNull);
+takeStringNumberUndefined(possiblyUndefined);
+takeStringNumberUndefined(possiblyBoth);
 
 declare let functionOrAny: (() => void) | undefined;
-functionOrAny!();
+functionOrAny();
 
 function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
-    one!;
-    two!;
-    fn(one!, two!);
-    foo(one!);
-    fn(two!, one!);
-    foo(three!);
-    takeUndefined(one!);
+    one;
+    two;
+    fn(one, two);
+    foo(one);
+    fn(two, one);
+    foo(three);
+    takeUndefined(one);
     let uninitialized: T;
-    uninitialized!;
+    uninitialized;
     let uninitialized2: U;
-    uninitialized2!;
+    uninitialized2;
     let uninitialized3: V;
-    uninitialized3!;
+    uninitialized3;
     let uninitialized4: T | undefined;
-    uninitialized4!;
+    uninitialized4;
     let uninitialized5: U | undefined;
-    uninitialized5!;
-    foo(uninitialized5!);
-    takeUndefined(uninitialized5!);
+    uninitialized5;
+    foo(uninitialized5);
+    takeUndefined(uninitialized5);
 }
 
 interface I {
@@ -133,22 +133,22 @@ interface I {
 }
 
 function fn1<T extends I>(o: T, k: keyof I) {
-    foo(o[k]!);
-    takeUndefined(o[k]!);
+    foo(o[k]);
+    takeUndefined(o[k]);
 }
 
 function fn2<T extends I, K extends keyof T>(o: T, k: K) {
-    foo(o[k]!); // TODO https://github.com/Microsoft/TypeScript/issues/12991
-    takeUndefined(o[k]!);
+    foo(o[k]); // TODO https://github.com/Microsoft/TypeScript/issues/12991
+    takeUndefined(o[k]);
 }
 
 function fn3<K extends keyof I>(o: I, k: K) {
-    foo(o[k]!);
-    takeUndefined(o[k]!);
+    foo(o[k]);
+    takeUndefined(o[k]);
 }
 
 function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
     const v = Boolean() ? param1 : param2;
-    takeObject(v!); // should be valid
+    takeObject(v); // should be valid
     function takeObject(o: {}) {}
 }
