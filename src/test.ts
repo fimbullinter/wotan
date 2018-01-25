@@ -22,6 +22,7 @@ export class RuleTester {
             exclude: [],
             files: [],
             project: undefined,
+            extensions: undefined,
             ...config,
             fix: false,
         };

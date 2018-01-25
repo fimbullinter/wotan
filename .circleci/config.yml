@@ -41,11 +41,20 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
-          name: Test with Coverage
-          command: yarn coverage
+          name: Unit Tests
+          command: |
+            yarn coverage test:api
+            yarn report-coverage -F unit
       - run:
-          name: Report code coverage
-          command: yarn report-coverage
+          name: Integration Tests
+          command: |
+            yarn coverage test:integration
+            yarn report-coverage -F integration
+      - run:
+          name: Rules Tests
+          command: |
+            yarn coverage test:rules
+            yarn report-coverage -F rules
   test@2.4:
     docker:
       - image: circleci/node:6
@@ -59,8 +68,20 @@ jobs:
           name: Install TypeScript@2.4
           command: yarn add typescript@2.4
       - run:
-          name: Test
-          command: yarn test
+          name: Unit Tests
+          command: |
+            yarn coverage test:api
+            yarn report-coverage -F unit
+      - run:
+          name: Integration Tests
+          command: |
+            yarn coverage test:integration
+            yarn report-coverage -F integration
+      - run:
+          name: Rules Tests
+          command: |
+            yarn coverage test:rules
+            yarn report-coverage -F rules
   test@2.6:
     docker:
       - image: circleci/node:8
@@ -74,8 +95,20 @@ jobs:
           name: Install TypeScript@2.6
           command: yarn add typescript@2.6
       - run:
-          name: Test
-          command: yarn test
+          name: Unit Tests
+          command: |
+            yarn coverage test:api
+            yarn report-coverage -F unit
+      - run:
+          name: Integration Tests
+          command: |
+            yarn coverage test:integration
+            yarn report-coverage -F integration
+      - run:
+          name: Rules Tests
+          command: |
+            yarn coverage test:rules
+            yarn report-coverage -F rules
   test@next:
     docker:
       - image: circleci/node:latest
@@ -89,8 +122,20 @@ jobs:
           name: Install TypeScript@next
           command: yarn add typescript@next
       - run:
-          name: Test
-          command: yarn test
+          name: Unit Tests
+          command: |
+            yarn coverage test:api
+            yarn report-coverage -F unit
+      - run:
+          name: Integration Tests
+          command: |
+            yarn coverage test:integration
+            yarn report-coverage -F integration
+      - run:
+          name: Rules Tests
+          command: |
+            yarn coverage test:rules
+            yarn report-coverage -F rules
 
 workflows:
   version: 2

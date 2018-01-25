@@ -14,6 +14,7 @@ test('defaults to lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
     );
     t.deepEqual<Command>(
@@ -26,6 +27,7 @@ test('defaults to lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
     );
 });
@@ -41,6 +43,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
         'treats all arguments after -- as files',
     );
@@ -55,6 +58,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: true,
+            extensions: undefined,
         },
         'trims single quotes',
     );
@@ -69,6 +73,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: '.',
             fix: true,
+            extensions: undefined,
         },
         '--fix argument is optional',
     );
@@ -83,6 +88,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: '.',
             fix: false,
+            extensions: undefined,
         },
         '--fix can be set to false',
     );
@@ -97,6 +103,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: true,
+            extensions: undefined,
         },
         '--fix can be set to true',
     );
@@ -111,6 +118,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: '.',
             fix: 10,
+            extensions: undefined,
         },
         '--fix can be set to any number',
     );
@@ -125,6 +133,7 @@ test('parses lint command', (t) => {
             format: 'json',
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
         '--exclude is accumulated',
     );
@@ -139,6 +148,7 @@ test('parses lint command', (t) => {
             format: 'stylish',
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
         'files can be interspersed, specifying an option multiple times overrides its value',
     );
@@ -153,6 +163,7 @@ test('parses lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
         '-c specifies config',
     );
@@ -167,8 +178,54 @@ test('parses lint command', (t) => {
             format: undefined,
             project: undefined,
             fix: false,
+            extensions: undefined,
         },
         '--config specifies config',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--ext', 'mjs, .es6, esm', 'foo']),
+        {
+            command: CommandName.Lint,
+            config: undefined,
+            files: ['foo'],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+            extensions: ['.mjs', '.es6', '.esm'],
+        },
+        '--ext can be comma separated, values are sanitized',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--ext', '.mjs', '--ext', 'es6', 'foo']),
+        {
+            command: CommandName.Lint,
+            config: undefined,
+            files: ['foo'],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+            extensions: ['.mjs', '.es6'],
+        },
+        '--ext can occur multiple times',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--ext', '.esm', '--ext', '.mjs,es6', 'foo']),
+        {
+            command: CommandName.Lint,
+            config: undefined,
+            files: ['foo'],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+            extensions: ['.esm', '.mjs', '.es6'],
+        },
+        '--ext merges arrays',
     );
 
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
@@ -177,6 +234,9 @@ test('parses lint command', (t) => {
     t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
     t.throws(() => parseArguments(['lint', '--config']), "Option '--config' expects an argument.");
+    t.throws(() => parseArguments(['lint', '--ext']), "Option '--ext' expects an argument.");
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs']), "Options '--ext' and '--project' cannot be used together.");
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), "Options '--ext' and '--project' cannot be used together.");
 });
 
 test('parses show command', (t) => {

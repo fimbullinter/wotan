@@ -25,6 +25,7 @@ test('throws error on non-existing file', (t) => {
             exclude: ['*.js'],
             project: undefined,
             fix: false,
+            extensions: undefined,
         })),
         "'non-existent.ts' does not exist.",
     );
@@ -45,6 +46,7 @@ test('throws error on file not included in project', (t) => {
             exclude: ['*.js'],
             project: 'test/integration/project/setup',
             fix: false,
+            extensions: undefined,
         })),
         `'${unixifyPath(path.resolve('non-existent.ts'))}' is not included in the project.`,
     );
@@ -73,6 +75,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             exclude: [],
             project: root,
             fix: false,
+            extensions: undefined,
         })),
         `Cannot find a tsconfig.json file at the specified directory: '${root}'`,
     );
@@ -85,6 +88,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             exclude: [],
             project: dir,
             fix: false,
+            extensions: undefined,
         })),
         `The specified path does not exist: '${dir}'`,
     );
@@ -96,6 +100,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             exclude: [],
             project: undefined,
             fix: false,
+            extensions: undefined,
         })),
         `Cannot find tsconfig.json for directory '${process.cwd()}'.`,
     );
@@ -139,6 +144,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             exclude: [],
             project: 'invalid-config.json',
             fix: false,
+            extensions: undefined,
         })),
         /invalid-config.json/,
     );
@@ -150,6 +156,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             exclude: [],
             project: 'invalid-base.json',
             fix: false,
+            extensions: undefined,
         })),
         /invalid-config.json/,
     );
@@ -161,6 +168,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
             exclude: [],
             project: 'invalid-files.json',
             fix: false,
+            extensions: undefined,
         })),
         `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`,
     );
@@ -171,5 +179,6 @@ test('reports errors while parsing tsconfig.json', (t) => {
         exclude: [],
         project: 'no-match.json',
         fix: false,
+        extensions: undefined,
     })));
 });

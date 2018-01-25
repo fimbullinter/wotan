@@ -3,7 +3,7 @@ import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectorySer
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath } from './utils';
+import { unixifyPath, hasSupportedExtension } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
@@ -19,6 +19,7 @@ export interface LintOptions {
     exclude: string[];
     project: string | undefined;
     fix: boolean | number;
+    extensions: string[] | undefined;
 }
 
 @injectable()
@@ -109,18 +110,27 @@ export class Runner {
             const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
             if (effectiveConfig === undefined)
                 continue;
-            const originalContent = this.fs.readFile(file);
+            let originalContent: string;
             let name: string;
             let content: string;
-            if (effectiveConfig.processor && !/\/node_modules\//.test(file)) {
+            if (effectiveConfig.processor) {
                 const ctor = this.processorLoader.loadProcessor(effectiveConfig.processor);
-                name = ctor.transformName(file, effectiveConfig.settings);
+                if (hasSupportedExtension(file, options.extensions)) {
+                    name = file;
+                } else {
+                    name = file + ctor.getSuffixForFile(file, effectiveConfig.settings);
+                    if (!hasSupportedExtension(name, options.extensions))
+                        continue;
+                }
+                originalContent = this.fs.readFile(file);
                 processor = new ctor(originalContent, file, name, effectiveConfig.settings);
                 content = processor.preprocess();
-            } else {
+            } else if (hasSupportedExtension(file, options.extensions)) {
                 processor = undefined;
                 name = file;
-                content = originalContent;
+                content = originalContent = this.fs.readFile(file);
+            } else {
+                continue;
             }
 
             let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
