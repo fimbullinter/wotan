@@ -15,7 +15,6 @@ import { CachedFileSystem } from './services/cached-file-system';
 import * as glob from 'glob';
 import { SemVer, satisfies } from 'semver';
 import * as ts from 'typescript';
-import { ConsoleMessageHandler } from './services/default/message-handler';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -78,7 +77,6 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
             container.bind(AbstractCommandRunner).to(TestCommandRunner);
             container.bind(FakeDirectoryService).to(FakeDirectoryService);
             container.bind(DirectoryService).toService(FakeDirectoryService);
-            container.bind(MessageHandler).to(MutedMessageHandler);
             break;
         default:
             return assertNever(command);
@@ -185,11 +183,6 @@ class FakeDirectoryService implements DirectoryService {
     public getCurrentDirectory() {
         return this.cwd;
     }
-}
-
-@injectable()
-class MutedMessageHandler extends ConsoleMessageHandler {
-    public warn() {}
 }
 
 @injectable()
