@@ -1,11 +1,9 @@
-import { parseArguments } from './argparse';
-import { runCommand } from './commands';
 import { ConfigurationError } from './error';
 
 async function run() {
     try {
-        const args = parseArguments(process.argv.slice(2));
-        if (!await runCommand(args))
+        const args = (await import('./argparse')).parseArguments(process.argv.slice(2));
+        if (!await (await import('./commands')).runCommand(args))
             process.exitCode = 2;
     } catch (e) {
         console.error(e instanceof ConfigurationError ? e.message : e);
