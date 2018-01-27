@@ -25,7 +25,7 @@ export class Rule extends AbstractRule {
         }
     }
 
-    private checkCondition(node: ts.Expression) {
+    private checkCondition(node: ts.Expression): void {
         switch (node.kind) {
             case ts.SyntaxKind.BinaryExpression:
                 switch ((<ts.BinaryExpression>node).operatorToken.kind) {
