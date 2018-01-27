@@ -1,0 +1,5 @@
+extends: ./.wotanrc.yaml
+rules:
+  no-unused-expression:
+    options:
+      allowShortCircuit: true
