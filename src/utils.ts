@@ -141,6 +141,6 @@ export function unionTypeParts(type: ts.Type): ts.Type[] {
 }
 
 export function hasSupportedExtension(fileName: string, extensions?: ReadonlyArray<string>) {
-    const ext = path.extname(fileName).toLowerCase();
+    const ext = path.extname(fileName);
     return /^\.[jt]sx?$/.test(ext) || extensions !== undefined && extensions.includes(ext);
 }
