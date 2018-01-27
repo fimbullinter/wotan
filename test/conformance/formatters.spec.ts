@@ -89,7 +89,7 @@ function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, tran
 
     function testOutput(lintResult: LintResult, name: string) {
         const output = format(lintResult, new formatterCtor());
-        t.snapshot(transform === undefined ? output : transform(output), <any>{id: `${t.title} ${name}`});
+        t.snapshot(transform === undefined ? output : transform(output), {id: `${t.title} ${name}`});
     }
 }
 

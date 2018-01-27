@@ -65,7 +65,7 @@ test('createBaselineDiff', (t) => {
     );
 
     function diff(a: string, b: string, name: string) {
-        t.snapshot(createBaselineDiff(a, b), <any>{id: `createBaselineDiff ${name}`});
+        t.snapshot(createBaselineDiff(a, b), {id: `createBaselineDiff ${name}`});
     }
 });
 
@@ -238,7 +238,7 @@ let bar = foo;
     }
 
     function verify(name: string, summary: FileSummary) {
-        t.snapshot(createBaseline(summary), <any>{id: `createBaseline ${name}`});
+        t.snapshot(createBaseline(summary), {id: `createBaseline ${name}`});
     }
 });
 
