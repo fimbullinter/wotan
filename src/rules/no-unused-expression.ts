@@ -12,7 +12,9 @@ import {
 
 export interface Options {
     allowNew: boolean;
+    allowShortCircuit: boolean;
     allowTaggedTemplate: boolean;
+    allowTernary: boolean;
 }
 
 const FAIL_MESSAGE = 'This expression is unused. Did you mean to assign a value or call a function?';
@@ -27,7 +29,9 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
     public parseOptions(input: {} | null | undefined): Options {
         return {
             allowNew: false,
+            allowShortCircuit: false,
             allowTaggedTemplate: false,
+            allowTernary: false,
             ...input,
         };
     }
@@ -78,6 +82,7 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
                 switch (tokenKind) {
                     case ts.SyntaxKind.AmpersandAmpersandToken:
                     case ts.SyntaxKind.BarBarToken:
+                        return this.options.allowShortCircuit && this.isUsed(right);
                     case ts.SyntaxKind.CommaToken:
                         return this.isUsed(right);
                     default:
@@ -85,13 +90,15 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
                 }
             }
             case ts.SyntaxKind.ConditionalExpression: {
+                if (!this.options.allowTernary)
+                    return false;
                 const {whenTrue, whenFalse} = <ts.ConditionalExpression>node;
                 const whenTrueUsed = this.isUsed(whenTrue);
                 const whenFalseUsed = this.isUsed(whenFalse);
                 if (whenTrueUsed === whenFalseUsed)
                     return whenTrueUsed;
                 this.addFailureAtNode(whenFalseUsed ? whenTrue : whenFalse, FAIL_MESSAGE);
-                return false;
+                return true;
             }
             default:
                 return false;

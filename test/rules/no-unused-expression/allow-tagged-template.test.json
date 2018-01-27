@@ -1,0 +1,4 @@
+{
+  "files": ["test.ts"],
+  "config": ".wotanrc-allow-tagged-template.yaml"
+}

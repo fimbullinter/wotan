@@ -1,0 +1,180 @@
+'use strict';
+export {};
+import 'foo';
+
+'use strict';
+~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+
+let foo = 'foo';
+foo = 'bar';
+foo;
+~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+(foo);
+~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+(foo && fn());
+~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+'bar';
+~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+let bar = (foo, 'bar');
+           ~~~          [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+
+function fn() {
+    'use strict';
+    ;
+    'use asm';
+    ~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+    if (foo)
+        return void(0);
+    if (bar)
+        return void bar;
+                    ~~~  [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+    if (!bar)
+        return void (bar = foo);
+    return void 0;
+    return void (foo === bar);
+                ~~~~~~~~~~~~~  [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}
+
+`foo`;
+~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+fn`foo`;
+
+namespace ns {
+    'use strict';
+    foo;
+    ~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}
+namespace ns {
+    foo;
+    ~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}
+
+for (let i = 0; i < 10; ++i) {
+    i++;
+    i--;
+    --i;
+    if (i)
+        continue;
+    break;
+}
+
+let f = Boolean() ? fn : undefined;
+f && f();
+~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+!f || f();
+~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+f!() && f;
+~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+!f();
+~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+
+foo as string;
+~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+
+switch (foo) {
+    case bar:
+        'use asm';
+        ~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        0, eval;
+        ~        [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        ~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        (0, eval);
+        ~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+         ~         [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        (1, eval)('foo');
+         ~                [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        (0, eval)(foo);
+        (0, 1, eval)(foo);
+         ~                 [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+         ~~~~              [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}
+
+(function() {
+~~~~~~~~~~~~~
+    `use strict`;
+~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+});
+~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+(function() {
+    ;
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+})();
+(function() {
+    'use strict';
+    ;
+    'use asm';
+    ~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}());
+(() => {
+    'use strict';
+})();
+{
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+}
+
+(async function() {
+    await foo;
+    await bar;
+    await foo && await bar;
+    ~~~~~~~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+})();
+(function*() {
+    yield 1;
+    yield yield;
+    yield yield foo;
+})();
+
+class C {
+    private _foo = this;
+    get foo() {
+        this._foo;
+        ~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        return new C(), this;
+               ~~~~~~~        [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+    }
+    set foo(v) {
+        'use strict';
+        v;
+        ~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        this._foo == v;
+        ~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+        i += 1;
+    }
+
+    method() {
+        'use strict';
+        'use asm';
+        delete this._foo;
+    }
+}
+
+new C();
+~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+new C;
+~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+new C().method();
+new C().foo;
+~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+
+let i;
+for (i; i < 10; i) {}
+     ~                [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+                ~     [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+for (; i < 10;) {}
+
+foo ? fn() : new C();
+~~~~~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+foo ? new C() : fn();
+~~~~~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+foo ? foo : bar;
+~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+foo = foo ? foo : bar;
+foo ? fn() : fn();
+~~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
