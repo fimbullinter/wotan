@@ -53,9 +53,9 @@ export class Rule extends  ConfigurableRule<Options> {
         }
     }
 
-    private checkNode(expr: ts.Expression, errorNode: ts.Node = expr) {
+    private checkNode(expr: ts.Expression, errorNode?: ts.Node) {
         if (!this.isUsed(expr))
-            this.addFailureAtNode(errorNode, FAIL_MESSAGE);
+            this.addFailureAtNode(errorNode === undefined ? expr : errorNode, FAIL_MESSAGE);
     }
 
     private isUsed(node: ts.Expression): boolean {
