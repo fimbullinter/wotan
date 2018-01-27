@@ -102,15 +102,6 @@ export abstract class TypedRuleContext {}
 
 export interface GlobalSettings extends ReadonlyMap<string, {} | null | undefined> {}
 
-export interface ConfigurableRule<T> {
-    options: T;
-    parseOptions(options: {} | null | undefined): T;
-}
-
-function isConfigurableRule(rule: any): rule is ConfigurableRule<any> {
-    return typeof rule.parseOptions === 'function';
-}
-
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated?: boolean | string;
@@ -123,8 +114,6 @@ export abstract class AbstractRule {
     constructor(public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
         this.program = context.program;
-        if (isConfigurableRule(this))
-            this.options = this.parseOptions(context.options);
     }
 
     public abstract apply(): void;
@@ -136,6 +125,17 @@ export abstract class AbstractRule {
     public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | Replacement[]) {
         return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
     }
+}
+
+export abstract class ConfigurableRule<T> extends AbstractRule {
+    public options: T;
+
+    constructor(context: RuleContext) {
+        super(context);
+        this.options = this.parseOptions(context.options);
+    }
+
+    protected abstract parseOptions(options: {} | null | undefined): T;
 }
 
 export abstract class TypedRule extends AbstractRule {
@@ -152,6 +152,17 @@ export abstract class TypedRule extends AbstractRule {
     constructor(context: TypedRuleContext) {
         super(context);
     }
+}
+
+export abstract class ConfigurableTypedRule<T> extends TypedRule {
+    public options: T;
+
+    constructor(context: TypedRuleContext) {
+        super(context);
+        this.options = this.parseOptions(context.options);
+    }
+
+    protected abstract parseOptions(options: {} | null | undefined): T;
 }
 
 export abstract class AbstractFormatter {

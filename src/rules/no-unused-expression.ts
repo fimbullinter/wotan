@@ -1,4 +1,4 @@
-import { AbstractRule, ConfigurableRule } from '../types';
+import { ConfigurableRule } from '../types';
 import * as ts from 'typescript';
 import {
     isNumericLiteral,
@@ -19,14 +19,12 @@ export interface Options {
 
 const FAIL_MESSAGE = 'This expression is unused. Did you mean to assign a value or call a function?';
 
-export class Rule extends AbstractRule implements ConfigurableRule<Options> {
+export class Rule extends  ConfigurableRule<Options> {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
     }
 
-    public options!: Options;
-
-    public parseOptions(input: {} | null | undefined): Options {
+    public parseOptions(input: Partial<Options> | {} | null | undefined): Options {
         return {
             allowNew: false,
             allowShortCircuit: false,
