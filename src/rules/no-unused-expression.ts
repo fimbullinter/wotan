@@ -1,11 +1,21 @@
 import { AbstractRule, ConfigurableRule } from '../types';
 import * as ts from 'typescript';
-import { NodeWrap, isParenthesizedExpression, isNumericLiteral, isBinaryExpression, isConditionalExpression, isExpressionStatement, isVoidExpression, isForStatement } from 'tsutils';
+import {
+    isNumericLiteral,
+    isBinaryExpression,
+    isExpressionStatement,
+    isVoidExpression,
+    isForStatement,
+    isIdentifier,
+    isAssignmentKind,
+} from 'tsutils';
 
 export interface Options {
     allowNew: boolean;
     allowTaggedTemplate: boolean;
 }
+
+const FAIL_MESSAGE = 'This expression is unused. Did you mean to assign a value or call a function?';
 
 export class Rule extends AbstractRule implements ConfigurableRule<Options> {
     public static supports(sourceFile: ts.SourceFile) {
@@ -24,7 +34,10 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
 
     public apply() {
         for (const node of this.context.getFlatAst()) {
-            if (isExpressionStatement(node)) {
+            if (isBinaryExpression(node)) {
+                if (node.operatorToken.kind === ts.SyntaxKind.CommaToken && !isIndirectEval(node))
+                    this.checkNode(node.left);
+            } else if (isExpressionStatement(node)) {
                 if (!isDirective(node))
                     this.checkNode(node.expression, node);
             } else if (isForStatement(node)) {
@@ -32,19 +45,15 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
                     this.checkNode(node.initializer);
                 if (node.incrementor !== undefined)
                     this.checkNode(node.incrementor);
-            } else if (isVoidExpression(node)) {
-                if (!isAllowedVoidExpression(node.expression))
-                    this.checkNode(node.expression);
-            } else if (isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.CommaToken) {
-                // TODO (0, eval)("foo");
-                this.checkNode(node.left);
+            } else if (isVoidExpression(node) && !isAllowedVoidExpression(node.expression)) {
+                this.checkNode(node.expression);
             }
         }
     }
 
     private checkNode(expr: ts.Expression, errorNode: ts.Node = expr) {
         if (!this.isUsed(expr))
-            this.addFailureAtNode(errorNode, 'This expression is unused. Did you mean to assign a value or call a function?');
+            this.addFailureAtNode(errorNode, FAIL_MESSAGE);
     }
 
     private isUsed(node: ts.Expression): boolean {
@@ -55,19 +64,38 @@ export class Rule extends AbstractRule implements ConfigurableRule<Options> {
             case ts.SyntaxKind.DeleteExpression:
             case ts.SyntaxKind.PostfixUnaryExpression: // i++, i--
                 return true;
+            case ts.SyntaxKind.PrefixUnaryExpression:
+                return (<ts.PrefixUnaryExpression>node).operator === ts.SyntaxKind.PlusPlusToken ||
+                    (<ts.PrefixUnaryExpression>node).operator === ts.SyntaxKind.MinusMinusToken;
             case ts.SyntaxKind.NewExpression:
                 return this.options.allowNew;
             case ts.SyntaxKind.TaggedTemplateExpression:
                 return this.options.allowTaggedTemplate;
             case ts.SyntaxKind.ParenthesizedExpression:
                 return this.isUsed((<ts.ParenthesizedExpression>node).expression);
+            case ts.SyntaxKind.BinaryExpression: {
+                const {operatorToken: {kind: tokenKind}, right} = <ts.BinaryExpression>node;
+                switch (tokenKind) {
+                    case ts.SyntaxKind.AmpersandAmpersandToken:
+                    case ts.SyntaxKind.BarBarToken:
+                    case ts.SyntaxKind.CommaToken:
+                        return this.isUsed(right);
+                    default:
+                        return isAssignmentKind(tokenKind);
+                }
+            }
+            case ts.SyntaxKind.ConditionalExpression: {
+                const {whenTrue, whenFalse} = <ts.ConditionalExpression>node;
+                const whenTrueUsed = this.isUsed(whenTrue);
+                const whenFalseUsed = this.isUsed(whenFalse);
+                if (whenTrueUsed === whenFalseUsed)
+                    return whenTrueUsed;
+                this.addFailureAtNode(whenFalseUsed ? whenTrue : whenFalse, FAIL_MESSAGE);
+                return false;
+            }
+            default:
+                return false;
         }
-        if (isBinaryExpression(node)) {
-
-        } else if (isConditionalExpression(node)) {
-
-        }
-        return false;
     }
 }
 
@@ -111,8 +139,17 @@ function canContainDirective(node: ts.Node): node is ts.BlockLike {
     }
 }
 
+/** `void 0` and `void(0)` are allowed to have no side effect. */
 function isAllowedVoidExpression(expr: ts.Expression): boolean {
     if (expr.kind === ts.SyntaxKind.ParenthesizedExpression)
         expr = (<ts.ParenthesizedExpression>expr).expression;
     return isNumericLiteral(expr) && expr.text === '0';
+}
+
+/** Allow `(0, eval)('foo')` */
+function isIndirectEval(node: ts.BinaryExpression): boolean {
+    return isIdentifier(node.right) && node.right.text === 'eval' &&
+        isNumericLiteral(node.left) && node.left.text === '0' &&
+        node.parent!.kind === ts.SyntaxKind.ParenthesizedExpression &&
+        node.parent!.parent!.kind === ts.SyntaxKind.CallExpression;
 }
