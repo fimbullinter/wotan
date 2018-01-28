@@ -15,6 +15,7 @@ import { CachedFileSystem } from './services/cached-file-system';
 import * as glob from 'glob';
 import { SemVer, satisfies } from 'semver';
 import * as ts from 'typescript';
+import { TSLINT_COMPAT_MODULE } from './di/tslint-compat.module';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -27,6 +28,7 @@ export const enum CommandName {
 export interface LintCommand extends LintOptions {
     command: CommandName.Lint;
     format: string | undefined;
+    tslintCompat?: boolean;
 }
 
 export interface TestCommand {
@@ -62,6 +64,8 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
         container.parent = diContainer;
     switch (command.command) {
         case CommandName.Lint:
+            if (command.tslintCompat)
+                container.load(TSLINT_COMPAT_MODULE);
             container.bind(AbstractCommandRunner).to(LintCommandRunner);
             break;
         case CommandName.Init:

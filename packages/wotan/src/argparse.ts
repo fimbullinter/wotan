@@ -67,6 +67,9 @@ function parseLintCommand(args: string[]): LintCommand {
                 }
                 break;
             }
+            case '--tslint-compat':
+                ({index: i, argument: result.tslintCompat} = parseOptionalBoolean(args, i));
+                break;
             case '--':
                 result.files.push(...args.slice(i + 1));
                 break outer;
