@@ -4,7 +4,7 @@
   "description": "Vue processor for wotan",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo testing"
   },
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",

@@ -1,4 +1,23 @@
 {
   "private": true,
-  "workspaces": ["packages/*"]
+  "scripts": {
+    "lerna": "lerna",
+    "compile": "lerna run --parallel compile",
+    "lint": "lerna run --parallel lint",
+    "check-dependencies": "lerna run --parallel check-dependencies",
+    "test": "lerna run test",
+    "report-coverage": "codecov",
+    "coverage": "nyc",
+    "test:coverage": "nyc --reporter=html yarn test",
+    "verify": "run-s compile check-dependencies lint test:coverage"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "codecov": "^3.0.0",
+    "lerna": "^2.8.0",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.4.1"
+  }
 }
