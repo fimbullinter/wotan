@@ -17,6 +17,7 @@ test('ShowCommand', async (t) => {
         warn() { throw new Error('not implemented'); },
         error() { throw new Error('not implemented'); },
     };
+    container.bind(CacheManager).to(DefaultCacheManager).inSingletonScope();
     container.bind(MessageHandler).toConstantValue(logger);
     const cwd = path.join(path.parse(process.cwd()).root, '.chroot');
     container.bind(DirectoryService).toConstantValue({

@@ -21,11 +21,7 @@ test.serial('exits with code 0 on success', async (t) => {
 test.serial('prints version', async (t) => {
     const version = require('../../package.json').version; // tslint:disable-line:no-require-imports
     t.deepEqual(await execCli(['-v']), {stdout: `${version}\n`, stderr: '', code: 0, err: null}); // tslint:disable-line:no-null-keyword
-    t.is((await execCli(['-V'])).stdout, `${version}\n`);
-    t.is((await execCli(['--version'])).stdout, `${version}\n`);
     t.is((await execCli(['version'])).stdout, `${version}\n`);
-    t.is((await execCli(['-version'])).code, 1);
-    t.is((await execCli(['--v'])).code, 1);
 });
 
 test.serial('exits with code 1 on configuration error', async (t) => {
