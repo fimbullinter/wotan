@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ajafff/wotan.git"
+    "url": "git+https://github.com/fimbullinter/wotan.git"
   },
   "keywords": [
     "lint",
@@ -37,9 +37,9 @@
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/ajafff/wotan/issues"
+    "url": "https://github.com/fimbullinter/wotan/issues"
   },
-  "homepage": "https://github.com/ajafff/wotan#readme",
+  "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
     "@types/debug": "^0.0.30",
     "@types/diff": "^3.2.2",

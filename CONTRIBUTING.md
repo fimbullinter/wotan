@@ -162,8 +162,8 @@ Answer questions on [Stack Overflow][so] or the [Gitter chat][gitter].
 
 Contribute to existing community packages or create your own and publish it to npm.
 
-[gitter]: https://gitter.im/ajafff/wotan
+[gitter]: https://gitter.im/fimbullinter/wotan
 [so]: https://stackoverflow.com/
 [tsutils]: https://github.com/ajafff/tsutils
-[helpwanted]: https://github.com/ajafff/wotan/labels/help%20wanted
-[goodfirstissue]: https://github.com/ajafff/wotan/labels/good%20first%20issue
+[helpwanted]: https://github.com/fimbullinter/wotan/labels/help%20wanted
+[goodfirstissue]: https://github.com/fimbullinter/wotan/labels/good%20first%20issue
