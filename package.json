@@ -1,5 +1,5 @@
 {
-  "name": "wotan",
+  "name": "@fimbul/wotan",
   "version": "0.0.0",
   "description": "Pluggable TypeScript and JavaScript linter",
   "main": "bin/main.js",
@@ -18,6 +18,9 @@
     "report-coverage": "codecov",
     "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan test:coverage",
     "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
