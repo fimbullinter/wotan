@@ -1041,7 +1041,7 @@ test('resolve, read, parse', (t) => {
             filename: path.resolve('.wotanrc.yaml'),
             aliases: undefined,
             extends: [
-                cm.loadConfigurationFromPath('./src/configs/recommended.js'),
+                cm.loadConfigurationFromPath('./src/configs/recommended.yaml'),
             ],
             rules: undefined,
             settings: undefined,

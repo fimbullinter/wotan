@@ -3,7 +3,6 @@
     "src/**/*.js"
   ],
   "exclude": [
-    "src/configs"
   ],
   "extension": [
     ".js"

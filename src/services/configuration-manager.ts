@@ -72,7 +72,7 @@ export class ConfigurationManager {
 
     public resolveConfigFile(name: string, basedir: string): string {
         if (name.startsWith('wotan:')) {
-            const fileName = path.join(__dirname, `../configs/${name.substr('wotan:'.length)}.js`);
+            const fileName = path.join(__dirname, `../configs/${name.substr('wotan:'.length)}.yaml`);
             if (!this.fs.isFile(fileName))
                 throw new ConfigurationError(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
             return fileName;
