@@ -2,6 +2,6 @@
 extends:
   - wotan:latest
 overrides:
-  - files: "test/**"
+  - files: "packages/*/test/**"
     rules:
       deprecation: off

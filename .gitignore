@@ -19,14 +19,3 @@ yarn-error.log*
 
 # Yarn Integrity file
 .yarn-integrity
-
-# compiled files
-*.js
-!/bin/*.js
-*.js.map
-*.d.ts
-!/custom-typings/*.d.ts
-!/test/rules/**
-!/test/integration/**
-!/test/fixtures/**
-!/baselines/**

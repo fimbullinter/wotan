@@ -1,0 +1,31 @@
+{
+  "name": "@fimbul/ve",
+  "version": "0.0.0",
+  "description": "Vue processor for wotan",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Klaus Meinhardt",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/fimbullinter/wotan/issues"
+  },
+  "homepage": "https://github.com/fimbullinter/wotan#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fimbullinter/wotan.git"
+  },
+  "devDependencies": {
+    "@fimbul/wotan": "^0.0.0"
+  },
+  "peerDependencies": {
+    "@fimbul/wotan": "^0.0.0"
+  },
+  "dependencies": {
+    "parse5": "^4.0.0"
+  }
+}
