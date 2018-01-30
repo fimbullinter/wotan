@@ -1,27 +1,9 @@
 {
+  "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "target": "es6",
-    "lib": ["es2016"],
-    "module": "commonjs",
     "declaration": true,
     "stripInternal": true,
-    "sourceMap": true,
-    "rootDir": ".",
-    "removeComments": true,
-    "importHelpers": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "strictFunctionTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "moduleResolution": "node",
-    "inlineSourceMap": false,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "rootDir": "."
   },
   "include": [
     "src",

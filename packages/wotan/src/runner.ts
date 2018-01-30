@@ -195,8 +195,9 @@ export class Runner {
         const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
         outer: for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
-            if (path.relative(libDirectory, fileName) === path.basename(fileName))
-                continue; // lib.xxx.d.ts
+            if (path.relative(libDirectory, fileName) === path.basename(fileName) || // lib.xxx.d.ts
+                fileName.endsWith('/node_modules/tslib/tslib.d.ts'))
+                continue;
             if (program.isSourceFileFromExternalLibrary(sourceFile))
                 continue;
             if (typeRoots !== undefined) {
