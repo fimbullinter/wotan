@@ -4,7 +4,7 @@
 
 <script>
 import Vue from "vue";
-import {doStuff} from './jsx'
+import {foo} from './jsx'
 export default Vue.extend({
     data() {
         return {
@@ -19,7 +19,7 @@ export default Vue.extend({
             let v = null;
             await p;
             await v;
-            await doStuff();
+            await foo();
             await Promise.resolve();
         }
     },

@@ -17,8 +17,10 @@ export default Vue.extend({
             /** @type {PromiseLike<string>} */
             let p = null;
             let v = null;
-            await p;
-            await v;
+            p;
+            ~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+            v;
+            ~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
             await foo();
             await Promise.resolve();
         }

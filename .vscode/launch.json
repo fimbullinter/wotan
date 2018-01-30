@@ -8,9 +8,9 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/packages/wotan/bin/main.js",
+      "program": "${workspaceFolder}/packages/wotan/src/cli.js",
       "args": [
-        "-p", "."
+        "test", "test/default.test.json"
       ],
       "cwd": "${workspaceFolder}/packages/ve",
       "outputCapture": "std",

@@ -1,3 +1,4 @@
 extends: ../src
 rules:
   await-promise: error
+  no-unused-expression: error

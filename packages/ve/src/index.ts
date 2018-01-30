@@ -27,7 +27,7 @@ export class Processor extends AbstractProcessor {
     private initRange() {
         const range = {
             start: 0,
-            end: 0,
+            end: Infinity,
             line: 0,
         };
         if (path.extname(this.sourceFileName) === '.vue') {

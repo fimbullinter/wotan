@@ -1,15 +1,15 @@
 <template>
-    <div>
-        <input type="text">
-    </div>
+    <p>Bye {{name}}</p>
 </template>
 
-<script lang="ts">
+<script>
 import Vue from "vue";
 import {foo} from './jsx'
 export default Vue.extend({
     data() {
-        return {}
+        return {
+            name: 'foobar',
+        }
     },
     methods: {
         async doStuff() {
@@ -18,7 +18,7 @@ export default Vue.extend({
             let p = null;
             let v = null;
             await p;
-            await v;
+            v;
             await foo();
             await Promise.resolve();
         }

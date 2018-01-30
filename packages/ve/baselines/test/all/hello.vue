@@ -17,8 +17,8 @@ export default Vue.extend({
             /** @type {PromiseLike<string>} */
             let p = null;
             let v = null;
-            await p;
-            await v;
+            p;
+            v;
             await foo();
             await Promise.resolve();
         }
