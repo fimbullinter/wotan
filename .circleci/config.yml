@@ -16,7 +16,6 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
-            - "packages/*/node_modules"
       - run:
           name: Compile
           command: yarn compile
@@ -41,6 +40,9 @@ jobs:
           at: '.'
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install dependencies
+          command: yarn
       - run:
           name: Run Tests
           command: |
