@@ -21,6 +21,7 @@
   ],
   "devDependencies": {
     "codecov": "^3.0.0",
+    "left-pad": "^1.2.0",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
     "tslint": "^5.9.1",

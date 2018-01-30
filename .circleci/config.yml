@@ -16,7 +16,7 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
-            - packages/*/node_modules
+            - "packages/*/node_modules"
       - run:
           name: Compile
           command: yarn compile
@@ -29,8 +29,8 @@ jobs:
       - persist_to_workspace:
           root: '.'
           paths:
-            - packages/*/src
-            - packages/*/test
+            - "packages/*/src"
+            - packages/wotan/test/conformance
             - yarn.lock
   test:
     docker:
