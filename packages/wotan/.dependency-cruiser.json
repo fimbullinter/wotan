@@ -142,7 +142,7 @@
     }
   ],
   "options": {
-    "doNotFollow": "^node_modules",
+    "doNotFollow": "^(../)*node_modules",
     "moduleSystems": ["cjs", "es6"]
   }
 }

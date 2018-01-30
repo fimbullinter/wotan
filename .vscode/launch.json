@@ -8,31 +8,28 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/src/cli.js",
+      "program": "${workspaceFolder}/packages/wotan/src/cli.js",
       "args": [
       ],
       "outputCapture": "std",
-      "outFiles": [
-        "${workspaceFolder}/src/**/*.js"
-      ],
       "sourceMaps": true,
       "skipFiles": [
         "<node_internals>/**/*.js",
-        "node_modules/tslib/**/*.js"
+        "**/node_modules/tslib/**/*.js"
       ]
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Run Testrunner",
-      "program": "${workspaceFolder}/src/cli.js",
+      "program": "${workspaceFolder}/packages/wotan/src/cli.js",
       "args": [
         "test", "${file}"
       ],
       "outputCapture": "std",
       "skipFiles": [
         "<node_internals>/**/*.js",
-        "node_modules/tslib/**/*.js"
+        "**/node_modules/tslib/**/*.js"
       ]
     },
     {
@@ -45,7 +42,7 @@
       ],
       "skipFiles": [
         "<node_internals>/**/*.js",
-        "node_modules/tslib/**/*.js"
+        "**/node_modules/tslib/**/*.js"
       ]
     }
   ]
