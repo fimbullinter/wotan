@@ -4,7 +4,11 @@
   "description": "Vue processor for wotan",
   "main": "index.js",
   "scripts": {
-    "test": "echo testing"
+    "compile": "tsc -p .",
+    "lint:tslint": "tslint -p .",
+    "lint:wotan": "wotan",
+    "lint": "run-p lint:tslint lint:wotan",
+    "test": "wotan test test/*.test.json"
   },
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
@@ -20,7 +24,9 @@
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
   "devDependencies": {
-    "@fimbul/wotan": "^0.0.0"
+    "@fimbul/wotan": "^0.0.0",
+    "npm-run-all": "^4.1.2",
+    "tslint": "^5.9.1"
   },
   "peerDependencies": {
     "@fimbul/wotan": "^0.0.0"

@@ -1,11 +1,16 @@
 {
   "private": true,
   "scripts": {
-    "lerna": "lerna",
-    "compile": "lerna run --parallel compile",
-    "lint": "lerna run --parallel lint",
-    "check-dependencies": "lerna run --parallel check-dependencies",
-    "test": "lerna run test",
+    "compile:wotan": "cd packages/wotan && yarn compile",
+    "compile:ve": "cd packages/ve && yarn compile",
+    "compile": "run-p compile:wotan #compile:ve",
+    "lint:wotan": "cd packages/wotan && yarn lint",
+    "lint:ve": "cd packages/ve && yarn lint",
+    "lint": "run-p lint:wotan #lint:ve",
+    "check-dependencies": "cd packages/wotan && yarn check-dependencies",
+    "test:wotan": "cd packages/wotan && yarn test",
+    "test:ve": "cd packages/ve && yarn test",
+    "test": "run-p test:wotan #test:ve",
     "report-coverage": "codecov",
     "coverage": "nyc",
     "test:coverage": "nyc --reporter=html yarn test",
@@ -16,8 +21,9 @@
   ],
   "devDependencies": {
     "codecov": "^3.0.0",
-    "lerna": "^2.8.0",
     "npm-run-all": "^4.1.2",
-    "nyc": "^11.4.1"
+    "nyc": "^11.4.1",
+    "tslint": "^5.9.1",
+    "tslint-consistent-codestyle": "^1.11.0"
   }
 }

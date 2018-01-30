@@ -16,6 +16,7 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+            - packages/*/node_modules
       - run:
           name: Compile
           command: yarn compile
@@ -28,8 +29,8 @@ jobs:
       - persist_to_workspace:
           root: '.'
           paths:
-            - src
-            - test
+            - packages/*/src
+            - packages/*/test
             - yarn.lock
   test:
     docker:
@@ -41,20 +42,10 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
-          name: Unit Tests
+          name: Run Tests
           command: |
-            yarn coverage yarn test:api
-            yarn report-coverage -F unit
-      - run:
-          name: Integration Tests
-          command: |
-            yarn coverage yarn test:integration
-            yarn report-coverage -F integration
-      - run:
-          name: Rules Tests
-          command: |
-            yarn coverage yarn test:rules
-            yarn report-coverage -F rules
+            yarn coverage yarn test
+            yarn report-coverage
   test@2.4:
     docker:
       - image: circleci/node:6
@@ -66,22 +57,18 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@2.4
-          command: yarn add typescript@2.4
-      - run:
-          name: Unit Tests
           command: |
-            yarn coverage yarn test:api
-            yarn report-coverage -F unit
+            for p in packages/*
+              do
+                cd $p
+                yarn add typescript@2.4
+                cd -
+              done
       - run:
-          name: Integration Tests
+          name: Run Tests
           command: |
-            yarn coverage yarn test:integration
-            yarn report-coverage -F integration
-      - run:
-          name: Rules Tests
-          command: |
-            yarn coverage yarn test:rules
-            yarn report-coverage -F rules
+            yarn coverage yarn test
+            yarn report-coverage
   test@2.6:
     docker:
       - image: circleci/node:8
@@ -93,22 +80,18 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@2.6
-          command: yarn add typescript@2.6
-      - run:
-          name: Unit Tests
           command: |
-            yarn coverage yarn test:api
-            yarn report-coverage -F unit
+            for p in packages/*
+              do
+                cd $p
+                yarn add typescript@2.6
+                cd -
+              done
       - run:
-          name: Integration Tests
+          name: Run Tests
           command: |
-            yarn coverage yarn test:integration
-            yarn report-coverage -F integration
-      - run:
-          name: Rules Tests
-          command: |
-            yarn coverage yarn test:rules
-            yarn report-coverage -F rules
+            yarn coverage yarn test
+            yarn report-coverage
   test@next:
     docker:
       - image: circleci/node:latest
@@ -120,22 +103,18 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@next
-          command: yarn add typescript@next
-      - run:
-          name: Unit Tests
           command: |
-            yarn coverage yarn test:api
-            yarn report-coverage -F unit
+            for p in packages/*
+              do
+                cd $p
+                yarn add typescript@next
+                cd -
+              done
       - run:
-          name: Integration Tests
+          name: Run Tests
           command: |
-            yarn coverage yarn test:integration
-            yarn report-coverage -F integration
-      - run:
-          name: Rules Tests
-          command: |
-            yarn coverage yarn test:rules
-            yarn report-coverage -F rules
+            yarn coverage yarn test
+            yarn report-coverage
 
 workflows:
   version: 2

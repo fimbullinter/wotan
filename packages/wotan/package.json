@@ -61,7 +61,6 @@
     "npm-run-all": "^4.1.2",
     "rimraf": "^2.6.2",
     "tslint": "^5.8.0",
-    "tslint-consistent-codestyle": "^1.10.1",
     "typescript": "^2.7.0-rc"
   },
   "dependencies": {

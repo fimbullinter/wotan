@@ -4,6 +4,7 @@ environment:
 
 cache:
   - node_modules
+  - "packages\\*\\node_modules"
   - "%LOCALAPPDATA%\\Yarn"
 
 install:
@@ -15,9 +16,5 @@ build: off
 test_script:
   - yarn compile
   - yarn lint
-  - yarn coverage yarn test:api
-  - yarn report-coverage -F unit
-  - yarn coverage yarn test:integration
-  - yarn report-coverage -F integration
-  - yarn coverage yarn test:rules
-  - yarn report-coverage -F rules
+  - yarn coverage yarn test
+  - yarn report-coverage
