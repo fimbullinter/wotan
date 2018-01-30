@@ -4,7 +4,6 @@ environment:
 
 cache:
   - node_modules
-  - "packages\\*\\node_modules"
   - "%LOCALAPPDATA%\\Yarn"
 
 install:
