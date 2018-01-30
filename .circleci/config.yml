@@ -63,7 +63,7 @@ jobs:
             for p in packages/*
               do
                 cd $p
-                yarn add typescript@2.4
+                yarn add -D typescript@2.4
                 cd -
               done
       - run:
@@ -86,7 +86,7 @@ jobs:
             for p in packages/*
               do
                 cd $p
-                yarn add typescript@2.6
+                yarn add -D typescript@2.6
                 cd -
               done
       - run:
@@ -109,7 +109,7 @@ jobs:
             for p in packages/*
               do
                 cd $p
-                yarn add typescript@next
+                yarn add -D typescript@next
                 cd -
               done
       - run:
