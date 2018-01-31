@@ -63,7 +63,7 @@ test('correctly wraps rule', (t) => {
 
 test('applies rules correctly', (t) => {
     let expectedOptions: any;
-    let fix: TSLint.Fix | undefined = undefined;
+    let fix: TSLint.Fix | undefined;
     let expectedReplacement: Replacement[] = [];
     class TestRule extends TSLint.Rules.AbstractRule {
         constructor(options: TSLint.IOptions) {
