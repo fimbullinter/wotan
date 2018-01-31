@@ -41,6 +41,7 @@ test('ShowCommand', async (t) => {
     t.throws(
         verify({
             command: CommandName.Show,
+            modules: [],
             file: '../foo.ts',
             format: undefined,
         }),
@@ -49,24 +50,28 @@ test('ShowCommand', async (t) => {
 
     await verify({
         command: CommandName.Show,
+        modules: [],
         file: 'test/fixtures/configuration/foo.ts',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
+        modules: [],
         file: 'test/fixtures/configuration/foo.js',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
+        modules: [],
         file: 'test/fixtures/configuration/foo.ts',
         format: Format.Json,
     });
 
     await verify({
         command: CommandName.Show,
+        modules: [],
         file: 'test/fixtures/configuration/foo.ts',
         format: Format.Json5,
     });
@@ -137,6 +142,7 @@ test('InitCommand', async (t) => {
     t.true(await runCommand(
         {
             command: CommandName.Init,
+            modules: [],
             format: undefined,
             directories: [],
         },
@@ -150,6 +156,7 @@ test('InitCommand', async (t) => {
     t.false(await runCommand(
         {
             command: CommandName.Init,
+            modules: [],
             format: Format.Json,
             directories: ['existing', 'other'],
         },

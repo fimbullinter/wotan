@@ -3,15 +3,21 @@
   "scripts": {
     "compile:wotan": "tsc -p packages/wotan",
     "compile:ve": "tsc -p packages/ve",
-    "compile": "run-p compile:wotan compile:ve",
+    "compile:bifrost": "tsc -p packages/bifrost",
+    "compile:heimdall": "tsc -p packages/heimdall",
+    "compile": "run-p compile:wotan compile:ve compile:bifrost compile:heimdall",
     "lint:wotan": "cd packages/wotan && yarn lint",
     "lint:ve": "cd packages/ve && yarn lint",
-    "lint": "run-p lint:wotan lint:ve",
+    "lint:bifrost": "cd packages/bifrost && yarn lint",
+    "lint:heimdall": "cd packages/heimdall && yarn lint",
+    "lint": "run-p lint:wotan lint:ve lint:bifrost lint:heimdall",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
     "test:wotan": "cd packages/wotan && yarn test",
     "test:ve": "cd packages/ve && yarn test",
-    "test": "run-p test:wotan test:ve",
-    "report-coverage": "codecov",
+    "test:bifrost": "cd packages/bifrost && yarn test",
+    "test:heimdall": "cd packages/heimdall && yarn test",
+    "test": "run-p test:wotan test:ve test:bifrost test:heimdall",
+    "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
     "test:coverage": "nyc --reporter=html yarn test",
     "verify": "run-s compile check-dependencies lint test:coverage"
@@ -25,6 +31,7 @@
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
     "tslint": "^5.9.1",
-    "tslint-consistent-codestyle": "^1.11.0"
+    "tslint-consistent-codestyle": "^1.11.0",
+    "typescript": "^2.7.0-rc"
   }
 }

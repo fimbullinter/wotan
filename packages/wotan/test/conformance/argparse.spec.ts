@@ -8,6 +8,7 @@ test('defaults to lint command', (t) => {
         parseArguments([]),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -21,6 +22,7 @@ test('defaults to lint command', (t) => {
         parseArguments(['foo']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['foo'],
             exclude: [],
@@ -34,9 +36,26 @@ test('defaults to lint command', (t) => {
 
 test('parses lint command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['lint', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Lint,
+            modules: ['foo', 'bar', 'baz'],
+            config: undefined,
+            files: [],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+            extensions: undefined,
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--format', '--project']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['-foo', '--bar', '--fix', '--exclude', '--format', '--project'],
             exclude: [],
@@ -52,6 +71,7 @@ test('parses lint command', (t) => {
         parseArguments(["'lint'", "'--fix'"]),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -67,6 +87,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', '-p', '.']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -82,6 +103,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', 'false', '-p', '.']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -97,6 +119,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', 'true']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -112,6 +135,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--fix', '10', '--project', '.']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: [],
@@ -127,6 +151,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '-e', '**/*.d.ts', '-f', 'json', '--exclude', 'node_modules/**']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: [],
             exclude: ['**/*.d.ts', 'node_modules/**'],
@@ -142,6 +167,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '-f', 'json', 'foo', '--format', 'stylish', 'bar']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['foo', 'bar'],
             exclude: [],
@@ -157,6 +183,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '-c', 'foo.json']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: 'foo.json',
             files: [],
             exclude: [],
@@ -172,6 +199,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--config', '../bar.yaml']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: '../bar.yaml',
             files: [],
             exclude: [],
@@ -187,6 +215,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--ext', 'mjs, .es6, esm', 'foo']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['foo'],
             exclude: [],
@@ -202,6 +231,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--ext', '.mjs', '--ext', 'es6', 'foo']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['foo'],
             exclude: [],
@@ -217,6 +247,7 @@ test('parses lint command', (t) => {
         parseArguments(['lint', '--ext', '.esm', '--ext', '.mjs,es6', 'foo']),
         {
             command: CommandName.Lint,
+            modules: [],
             config: undefined,
             files: ['foo'],
             exclude: [],
@@ -230,6 +261,7 @@ test('parses lint command', (t) => {
 
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
 
+    t.throws(() => parseArguments(['lint', '-m']), "Option '-m' expects an argument.");
     t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
     t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
@@ -241,9 +273,21 @@ test('parses lint command', (t) => {
 
 test('parses show command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['show', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Show,
+            modules: ['foo', 'bar', 'baz'],
+            file: 'foo',
+            format: undefined,
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['show', '-f', 'json', 'foo']),
         {
             command: CommandName.Show,
+            modules: [],
             file: 'foo',
             format: Format.Json,
         },
@@ -253,6 +297,7 @@ test('parses show command', (t) => {
         parseArguments(['show', 'foo']),
         {
             command: CommandName.Show,
+            modules: [],
             file: 'foo',
             format: undefined,
         },
@@ -263,6 +308,7 @@ test('parses show command', (t) => {
         parseArguments(['show', '--format', 'yaml', '--', '-f']),
         {
             command: CommandName.Show,
+            modules: [],
             file: '-f',
             format: Format.Yaml,
         },
@@ -280,9 +326,23 @@ test('parses show command', (t) => {
 
 test('parses test command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['test', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Test,
+            modules: ['foo', 'bar', 'baz'],
+            files: ['foo'],
+            updateBaselines: false,
+            bail: false,
+            exact: false,
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['test', '-u', 'foo', '--exact', '--bail', 'true']),
         {
             command: CommandName.Test,
+            modules: [],
             files: ['foo'],
             updateBaselines: true,
             bail: true,
@@ -294,6 +354,7 @@ test('parses test command', (t) => {
         parseArguments(['test', '-u', '--update', 'false', 'bar']),
         {
             command: CommandName.Test,
+            modules: [],
             files: ['bar'],
             updateBaselines: false,
             bail: false,
@@ -305,6 +366,7 @@ test('parses test command', (t) => {
         parseArguments(['test', 'foo', 'bar', '--', '-u']),
         {
             command: CommandName.Test,
+            modules: [],
             files: ['foo', 'bar', '-u'],
             updateBaselines: false,
             bail: false,
@@ -318,9 +380,21 @@ test('parses test command', (t) => {
 
 test('parses init command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['init', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Init,
+            modules: ['foo', 'bar', 'baz'],
+            format: undefined,
+            directories: [],
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['init']),
         {
             command: CommandName.Init,
+            modules: [],
             format: undefined,
             directories: [],
         },
@@ -329,6 +403,7 @@ test('parses init command', (t) => {
         parseArguments(['init', '--format', 'JSON', '.', 'subdir']),
         {
             command: CommandName.Init,
+            modules: [],
             format: Format.Json,
             directories: ['.', 'subdir'],
         },
@@ -338,6 +413,7 @@ test('parses init command', (t) => {
         parseArguments(['init', '--', '--format', 'JSON', '.', 'subdir']),
         {
             command: CommandName.Init,
+            modules: [],
             format: undefined,
             directories: ['--format', 'JSON', '.', 'subdir'],
         },

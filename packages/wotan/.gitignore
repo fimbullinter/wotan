@@ -1,16 +1,3 @@
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# compiled files
-*.js
-!/bin/*.js
-*.js.map
-*.d.ts
-!/custom-typings/*.d.ts
+# keep test files
 !/test/rules/**
 !/test/integration/**
-!/test/fixtures/**
-!/baselines/**

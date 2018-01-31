@@ -20,3 +20,14 @@ yarn-error.log*
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Compiled files
+/packages/*/src/**/*.js
+/packages/*/src/**/*.js.map
+/packages/*/src/**/*.d.ts
+/packages/*/test/**/*.js
+/packages/*/test/**/*.js.map
+/packages/*/test/**/*.d.ts
+
+!/packages/*/baselines/**
+!/packages/*/test/fixtures/**
