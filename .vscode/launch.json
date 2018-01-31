@@ -10,9 +10,7 @@
       "name": "Launch Program",
       "program": "${workspaceFolder}/packages/wotan/src/cli.js",
       "args": [
-        "test", "test/default.test.json"
       ],
-      "cwd": "${workspaceFolder}/packages/ve",
       "outputCapture": "std",
       "sourceMaps": true,
       "skipFiles": [
