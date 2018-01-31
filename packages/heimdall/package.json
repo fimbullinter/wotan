@@ -8,7 +8,7 @@
     "lint:tslint": "tslint -p .",
     "lint:wotan": "wotan",
     "lint": "run-p lint:tslint lint:wotan",
-    "test": ""
+    "test": "ava -v test/*.spec.js"
   },
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@fimbul/wotan": "^0.0.0",
+    "ava": "^0.25.0",
     "npm-run-all": "^4.1.2"
   },
   "peerDependencies": {

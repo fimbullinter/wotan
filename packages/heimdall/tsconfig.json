@@ -5,8 +5,11 @@
     "declaration": true
   },
   "include": [
-    "src"
+    "src",
+    "test",
   ],
   "exclude": [
+    "**/*.d.ts",
+    "test/fixtures"
   ]
 }

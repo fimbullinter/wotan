@@ -1,0 +1,6 @@
+rulesDirectories:
+  tslint: .
+rules:
+  tslint/semicolon:
+    options: always
+  tslint/no-unused-expression: warning

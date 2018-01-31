@@ -11,7 +11,7 @@
         "when": "$(basename).ts"
       },
       "packages/*/src/**/*.d.ts": true,
-      "packages/bifrost/test/**/*.d.ts": true,
+      "packages/{bifrost,heimdall}/test/**/*.d.ts": true,
       "packages/wotan/test/conformance/**/*.d.ts": true,
       "**/*.js.map": true,
     }
