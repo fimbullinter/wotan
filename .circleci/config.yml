@@ -59,13 +59,7 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@2.4
-          command: |
-            for p in packages/*
-              do
-                cd $p
-                yarn add -D typescript@2.4
-                cd -
-              done
+          command: yarn add -D -W typescript@2.4
       - run:
           name: Run Tests
           command: |
@@ -82,13 +76,7 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@2.6
-          command: |
-            for p in packages/*
-              do
-                cd $p
-                yarn add -D typescript@2.6
-                cd -
-              done
+          command: yarn add -D -W typescript@2.6
       - run:
           name: Run Tests
           command: |
@@ -105,13 +93,7 @@ jobs:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Install TypeScript@next
-          command: |
-            for p in packages/*
-              do
-                cd $p
-                yarn add -D typescript@next
-                cd -
-              done
+          command: yarn add -D -W typescript@next
       - run:
           name: Run Tests
           command: |
