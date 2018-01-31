@@ -189,7 +189,7 @@ export class Runner {
         }
         const program = createProgram(project, host);
         const files: string[] = [];
-        const libDirectory = path.posix.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions())) + '/';
+        const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
         const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
         const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
         const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
