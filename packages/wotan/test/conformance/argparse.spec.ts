@@ -36,6 +36,22 @@ test('defaults to lint command', (t) => {
 
 test('parses lint command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['lint', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Lint,
+            modules: ['foo', 'bar', 'baz'],
+            config: undefined,
+            files: [],
+            exclude: [],
+            format: undefined,
+            project: undefined,
+            fix: false,
+            extensions: undefined,
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--format', '--project']),
         {
             command: CommandName.Lint,
@@ -245,6 +261,7 @@ test('parses lint command', (t) => {
 
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
 
+    t.throws(() => parseArguments(['lint', '-m']), "Option '-m' expects an argument.");
     t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
     t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
@@ -255,6 +272,17 @@ test('parses lint command', (t) => {
 });
 
 test('parses show command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(['show', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Show,
+            modules: ['foo', 'bar', 'baz'],
+            file: 'foo',
+            format: undefined,
+        },
+        'parses modules',
+    );
+
     t.deepEqual<Command>(
         parseArguments(['show', '-f', 'json', 'foo']),
         {
@@ -298,6 +326,19 @@ test('parses show command', (t) => {
 
 test('parses test command', (t) => {
     t.deepEqual<Command>(
+        parseArguments(['test', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Test,
+            modules: ['foo', 'bar', 'baz'],
+            files: ['foo'],
+            updateBaselines: false,
+            bail: false,
+            exact: false,
+        },
+        'parses modules',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(['test', '-u', 'foo', '--exact', '--bail', 'true']),
         {
             command: CommandName.Test,
@@ -338,6 +379,17 @@ test('parses test command', (t) => {
 });
 
 test('parses init command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(['init', '-m', 'foo,bar', '--module', 'baz']),
+        {
+            command: CommandName.Init,
+            modules: ['foo', 'bar', 'baz'],
+            format: undefined,
+            directories: [],
+        },
+        'parses modules',
+    );
+
     t.deepEqual<Command>(
         parseArguments(['init']),
         {

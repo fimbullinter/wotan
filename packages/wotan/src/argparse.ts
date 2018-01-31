@@ -70,7 +70,7 @@ function parseLintCommand(args: string[]): LintCommand {
             }
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1));
@@ -118,7 +118,7 @@ function parseTestCommand(args: string[]): TestCommand {
                 break;
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1));
@@ -149,7 +149,7 @@ function parseShowCommand(args: string[]): ShowCommand {
                 break;
             case '-m':
             case '--module':
-                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
+                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
                 break;
             case '--':
                 files.push(...args.slice(i + 1));
@@ -192,7 +192,7 @@ function parseInitCommand(args: string[]): InitCommand {
                 break;
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
                 break;
             case '--':
                 result.directories.push(...args.slice(i + 1));
@@ -264,8 +264,4 @@ function trimSingleQuotes(str: string) {
 
 function assertNever(_: never, message: string): never {
     throw new ConfigurationError(message);
-}
-
-function trim(str: string) {
-    return str.trim();
 }
