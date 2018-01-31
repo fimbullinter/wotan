@@ -53,7 +53,7 @@
       "severity": "error",
       "from": {
         "path": "^src",
-        "pathNot": "^(src/di/default\\.module\\.(js|ts)$|src/services/tslint-compat)"
+        "pathNot": "^src/di/default\\.module\\.(js|ts)$"
       },
       "to": {
         "path": "^src/services/default"
@@ -124,14 +124,6 @@
           "npm-peer",
           "core"
         ]
-      }
-    },
-    {
-      "from": {
-        "path": "^src/services/tslint-compat"
-      },
-      "to": {
-        "path": "^node_modules/tslint/"
       }
     },
     {

@@ -10,7 +10,8 @@
       "**/*.js": {
         "when": "$(basename).ts"
       },
-      "packages/wotan/{src,test/conformance}/**/*.d.ts": true,
+      "packages/*/src/**/*.d.ts": true,
+      "packages/wotan/test/conformance/**/*.d.ts": true,
       "**/*.js.map": true,
     }
 }

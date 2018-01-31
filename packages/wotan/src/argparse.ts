@@ -27,6 +27,7 @@ type AssertNever<T extends never> = T;
 function parseLintCommand(args: string[]): LintCommand {
     const result: LintCommand = {
         command: CommandName.Lint,
+        modules: [],
         config: undefined,
         files: [],
         exclude: [],
@@ -67,8 +68,9 @@ function parseLintCommand(args: string[]): LintCommand {
                 }
                 break;
             }
-            case '--tslint-compat':
-                ({index: i, argument: result.tslintCompat} = parseOptionalBoolean(args, i));
+            case '-m':
+            case '--module':
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1));
@@ -93,8 +95,9 @@ function sanitizeExtensionArgument(ext: string): string {
 
 function parseTestCommand(args: string[]): TestCommand {
     const result: TestCommand = {
-        bail: false,
         command: CommandName.Test,
+        modules: [],
+        bail: false,
         files: [],
         updateBaselines: false,
         exact: false,
@@ -113,6 +116,10 @@ function parseTestCommand(args: string[]): TestCommand {
             case '--update':
                 ({index: i, argument: result.updateBaselines} = parseOptionalBoolean(args, i));
                 break;
+            case '-m':
+            case '--module':
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
+                break;
             case '--':
                 result.files.push(...args.slice(i + 1));
                 break outer;
@@ -130,6 +137,7 @@ function parseTestCommand(args: string[]): TestCommand {
 
 function parseShowCommand(args: string[]): ShowCommand {
     const files = [];
+    const modules = [];
     let format: Format | undefined;
 
     outer: for (let i = 0; i < args.length; ++i) {
@@ -138,6 +146,10 @@ function parseShowCommand(args: string[]): ShowCommand {
             case '-f':
             case '--format':
                 format = expectFormatArgument(args, ++i, arg);
+                break;
+            case '-m':
+            case '--module':
+                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
                 break;
             case '--':
                 files.push(...args.slice(i + 1));
@@ -154,6 +166,7 @@ function parseShowCommand(args: string[]): ShowCommand {
         case 1:
             return {
                 format,
+                modules,
                 command: CommandName.Show,
                 file: files[0],
             };
@@ -165,6 +178,7 @@ function parseShowCommand(args: string[]): ShowCommand {
 function parseInitCommand(args: string[]): InitCommand {
     const result: InitCommand = {
         command: CommandName.Init,
+        modules: [],
         directories: [],
         format: undefined,
     };
@@ -175,6 +189,10 @@ function parseInitCommand(args: string[]): InitCommand {
             case '-f':
             case '--format':
                 result.format = expectFormatArgument(args, ++i, arg);
+                break;
+            case '-m':
+            case '--module':
+                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(trim));
                 break;
             case '--':
                 result.directories.push(...args.slice(i + 1));
@@ -246,4 +264,8 @@ function trimSingleQuotes(str: string) {
 
 function assertNever(_: never, message: string): never {
     throw new ConfigurationError(message);
+}
+
+function trim(str: string) {
+    return str.trim();
 }

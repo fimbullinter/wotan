@@ -3,11 +3,11 @@ import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
 import { RawConfiguration, Format, MessageHandler, Failure, DirectoryService } from './types';
-import { format, assertNever, unixifyPath } from './utils';
+import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
 import { FormatterLoader } from './services/formatter-loader';
-import { Container, injectable, BindingScopeEnum } from 'inversify';
+import { Container, injectable, BindingScopeEnum, ContainerModule } from 'inversify';
 import { CORE_DI_MODULE } from './di/core.module';
 import { DEFAULT_DI_MODULE } from './di/default.module';
 import { ConfigurationManager } from './services/configuration-manager';
@@ -15,7 +15,7 @@ import { CachedFileSystem } from './services/cached-file-system';
 import * as glob from 'glob';
 import { SemVer, satisfies } from 'semver';
 import * as ts from 'typescript';
-import { TSLINT_COMPAT_MODULE } from './di/tslint-compat.module';
+import * as resolve from 'resolve';
 
 export const enum CommandName {
     Lint = 'lint',
@@ -25,33 +25,32 @@ export const enum CommandName {
     Init = 'init',
 }
 
-export interface LintCommand extends LintOptions {
-    command: CommandName.Lint;
-    format: string | undefined;
-    tslintCompat?: boolean;
+export interface BaseCommand<C extends CommandName> {
+    command: C;
+    modules: string[];
 }
 
-export interface TestCommand {
-    command: CommandName.Test;
+export interface LintCommand extends LintOptions, BaseCommand<CommandName.Lint> {
+    format: string | undefined;
+}
+
+export interface TestCommand extends BaseCommand<CommandName.Test> {
     files: string[];
     updateBaselines: boolean;
     bail: boolean;
     exact: boolean;
 }
 
-export interface ValidateCommand {
-    command: CommandName.Validate;
+export interface ValidateCommand extends BaseCommand<CommandName.Validate> {
     files: string[];
 }
 
-export interface ShowCommand {
-    command: CommandName.Show;
+export interface ShowCommand extends BaseCommand<CommandName.Show> {
     file: string;
     format: Format | undefined;
 }
 
-export interface InitCommand {
-    command: CommandName.Init;
+export interface InitCommand extends BaseCommand<CommandName.Init> {
     directories: string[];
     format: Format | undefined;
 }
@@ -62,10 +61,11 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
+    for (const moduleName of command.modules)
+        container.load(loadModule(moduleName));
+
     switch (command.command) {
         case CommandName.Lint:
-            if (command.tslintCompat)
-                container.load(TSLINT_COMPAT_MODULE);
             container.bind(AbstractCommandRunner).to(LintCommandRunner);
             break;
         case CommandName.Init:
@@ -88,6 +88,22 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
     container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     const commandRunner = container.get(AbstractCommandRunner);
     return commandRunner.run(command);
+}
+
+function loadModule(moduleName: string) {
+    try {
+        moduleName = resolve.sync(moduleName, {
+            basedir: process.cwd(),
+            extensions: Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+            paths: module.paths.slice(OFFSET_TO_NODE_MODULES),
+        });
+    } catch (e) {
+        throw new ConfigurationError(e.message);
+    }
+    const m = <{module?: {}}>require(moduleName);
+    if (!m || !(m.module instanceof ContainerModule))
+        throw new ConfigurationError(`Module '${moduleName}' does not a 'module' binding that extends 'ContainerModule'.`);
+    return m.module;
 }
 
 @injectable()

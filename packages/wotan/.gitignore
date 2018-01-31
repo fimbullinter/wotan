@@ -5,9 +5,8 @@
 .yarn-integrity
 
 # compiled files
-*.js
-!/bin/*.js
-*.js.map
+/test/conformance/**/*.js
+/test/conformance/**/*.js.map
 *.d.ts
 !/custom-typings/*.d.ts
 !/test/rules/**

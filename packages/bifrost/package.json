@@ -1,0 +1,40 @@
+{
+  "name": "@fimbul/bifrost",
+  "version": "0.0.0",
+  "description": "Compatibility layer for TSLint rules",
+  "main": "src/index",
+  "types": "src/index",
+  "scripts": {
+    "lint:tslint": "tslint -p .",
+    "lint:wotan": "wotan",
+    "lint": "run-p lint:tslint lint:wotan",
+    "test": ""
+  },
+  "author": "Klaus Meinhardt",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/fimbullinter/wotan/issues"
+  },
+  "homepage": "https://github.com/fimbullinter/wotan#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fimbullinter/wotan.git"
+  },
+  "devDependencies": {
+    "@fimbul/wotan": "^0.0.0",
+    "npm-run-all": "^4.1.2",
+    "tslint": "^5.9.1",
+    "typescript": "^2.7.0-rc"
+  },
+  "peerDependencies": {
+    "@fimbul/wotan": "^0.0.0",
+    "tslint": "^5.0.0",
+    "typescript": "^2.4.1 || >= 2.8.0-dev"
+  },
+  "dependencies": {
+    "tslib": "^1.8.1"
+  }
+}
