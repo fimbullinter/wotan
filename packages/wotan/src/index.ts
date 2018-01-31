@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 export * from './types';
 export * from './error';
 export * from './di/core.module';

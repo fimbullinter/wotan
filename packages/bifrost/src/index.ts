@@ -8,6 +8,10 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
 
+        public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
+            ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
+            : false;
+
         public static supports(sourceFile: ts.SourceFile) {
             if (Rule.metadata && Rule.metadata.typescriptOnly)
                 return /\.tsx?$/.test(sourceFile.fileName);
@@ -49,7 +53,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
 export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): FormatterConstructor { // tslint:disable-line:naming-convention
     return class extends AbstractFormatter {
         private failures: TSLint.RuleFailure[] = [];
-        private fixed: any[] = []; // hopefully no formatter really uses the contents of the array
+        private fixed: TSLint.RuleFailure[] = [];
         private delegate: TSLint.IFormatter;
 
         constructor() {
@@ -58,22 +62,30 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
         }
 
         public format(fileName: string, summary: FileSummary): undefined {
+            let sourceFile: ts.SourceFile | undefined;
             for (let i = 0; i < summary.fixes; ++i)
-                this.fixed.push(undefined);
+                this.fixed.push(new TSLint.RuleFailure(getSourceFile(), 0, 0, '', '', TSLint.Replacement.appendText(0, '')));
             if (summary.failures.length === 0)
                 return;
-            const sourceFile = ts.createSourceFile(fileName, summary.content, ts.ScriptTarget.Latest);
             this.failures.push(
-                ...summary.failures.map((f) => new TSLint.RuleFailure(
-                    sourceFile,
-                    f.start.position,
-                    f.end.position,
-                    f.message,
-                    f.ruleName,
-                    f.fix && f.fix.replacements.map((r) => new TSLint.Replacement(r.start, r.end - r.start, r.text)),
-                )),
+                ...summary.failures.map((f) => {
+                    const failure = new TSLint.RuleFailure(
+                        getSourceFile(),
+                        f.start.position,
+                        f.end.position,
+                        f.message,
+                        f.ruleName,
+                        f.fix && f.fix.replacements.map((r) => new TSLint.Replacement(r.start, r.end - r.start, r.text)));
+                    failure.setRuleSeverity(f.severity);
+                    return failure;
+                }),
             );
             return;
+
+            function getSourceFile() {
+                return sourceFile ||
+                    (sourceFile = ts.createSourceFile(fileName, summary.content, ts.ScriptTarget.Latest));
+            }
         }
 
         public flush() {
