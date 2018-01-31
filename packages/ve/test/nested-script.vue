@@ -1,0 +1,3 @@
+<template>
+    <script></script>
+</template>
