@@ -1,16 +1,16 @@
 {
   "private": true,
   "scripts": {
-    "compile:wotan": "cd packages/wotan && yarn compile",
-    "compile:ve": "cd packages/ve && yarn compile",
-    "compile": "run-p compile:wotan",
+    "compile:wotan": "tsc -p packages/wotan",
+    "compile:ve": "tsc -p packages/ve",
+    "compile": "run-p compile:wotan compile:ve",
     "lint:wotan": "cd packages/wotan && yarn lint",
     "lint:ve": "cd packages/ve && yarn lint",
-    "lint": "run-p lint:wotan",
+    "lint": "run-p lint:wotan lint:ve",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
     "test:wotan": "cd packages/wotan && yarn test",
     "test:ve": "cd packages/ve && yarn test",
-    "test": "run-p test:wotan",
+    "test": "run-p test:wotan test:ve",
     "report-coverage": "codecov",
     "coverage": "nyc",
     "test:coverage": "nyc --reporter=html yarn test",
@@ -20,6 +20,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@types/node": "^9.4.0",
     "codecov": "^3.0.0",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",

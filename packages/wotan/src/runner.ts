@@ -189,14 +189,18 @@ export class Runner {
         }
         const program = createProgram(project, host);
         const files: string[] = [];
-        const libDirectory = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
+        const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
         const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
         const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
         const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
         outer: for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
-            if (path.relative(libDirectory, fileName) === path.basename(fileName))
-                continue; // lib.xxx.d.ts
+            if (fileName.startsWith(libDirectory) || // lib.xxx.d.ts
+                // tslib implicitly gets added while linting a project where a dependecy in node_modules contains typescript files
+                // for some reason they are not correctly marked as external library
+                // therefore we always ignore it
+                fileName.endsWith('/node_modules/tslib/tslib.d.ts'))
+                continue;
             if (program.isSourceFileFromExternalLibrary(sourceFile))
                 continue;
             if (typeRoots !== undefined) {

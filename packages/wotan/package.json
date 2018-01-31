@@ -2,10 +2,11 @@
   "name": "@fimbul/wotan",
   "version": "0.0.0",
   "description": "Pluggable TypeScript and JavaScript linter",
-  "main": "bin/main.js",
+  "bin": "bin/main.js",
+  "main": "src/index",
+  "types": "src/index",
   "scripts": {
     "clean": "rimraf '{src,test/conformance}/**/*.{js?(.map),d.ts}'",
-    "compile": "tsc -p .",
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p .",
     "lint:wotan": "node src/cli lint",
@@ -13,7 +14,6 @@
     "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
-    "verify": "npm-run-all -s clean -p compile lint:tslint -p check-dependencies lint:wotan test",
     "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
   },
   "publishConfig": {

@@ -1,0 +1,4 @@
+---
+overrides:
+  - files: "*.vue"
+    processor: ./index
