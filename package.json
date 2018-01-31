@@ -16,8 +16,8 @@
     "test:ve": "cd packages/ve && yarn test",
     "test:bifrost": "cd packages/bifrost && yarn test",
     "test:heimdall": "cd packages/heimdall && yarn test",
-    "test": "run-p test:wotan test:ve",
-    "report-coverage": "codecov",
+    "test": "run-p test:wotan test:ve test:bifrost test:heimdall",
+    "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
     "test:coverage": "nyc --reporter=html yarn test",
     "verify": "run-s compile check-dependencies lint test:coverage"
