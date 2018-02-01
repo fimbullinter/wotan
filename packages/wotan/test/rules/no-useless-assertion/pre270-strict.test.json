@@ -1,5 +1,5 @@
 {
   "project": "tsconfig.json",
   "exclude": ["global2.ts", "definite-assignment.ts"],
-  "typescriptVersion": ">= 2.8.0"
+  "typescriptVersion": "< 2.7.0"
 }

@@ -136,10 +136,6 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
     };
 }
 
-export function unionTypeParts(type: ts.Type): ts.Type[] {
-    return type.flags & ts.TypeFlags.Union ? (<ts.UnionType>type).types : [type];
-}
-
 export function hasSupportedExtension(fileName: string, extensions?: ReadonlyArray<string>) {
     const ext = path.extname(fileName);
     return /^\.[jt]sx?$/.test(ext) || extensions !== undefined && extensions.includes(ext);

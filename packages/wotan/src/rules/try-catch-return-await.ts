@@ -6,9 +6,9 @@ import {
     isFunctionScopeBoundary,
     isReturnStatement,
     isParenthesizedExpression,
+    isThenableType,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { unionTypeParts } from '../utils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -74,7 +74,7 @@ export class Rule extends TypedRule {
             node = node.expression;
         if (node.kind === ts.SyntaxKind.AwaitExpression)
             return;
-        if (this.isPromiseLike(node))
+        if (isThenableType(this.checker, node))
             this.addFailure(
                 pos - 'return'.length,
                 pos,
@@ -87,34 +87,6 @@ export class Rule extends TypedRule {
                     ]
                     : Replacement.append(pos, ' await'),
             );
-    }
-
-    private isPromiseLike(node: ts.Expression): boolean {
-        for (const type of unionTypeParts(this.checker.getApparentType(this.checker.getTypeAtLocation(node)))) {
-            const then = type.getProperty('then');
-            if (then === undefined)
-                continue;
-            const thenType = this.checker.getTypeOfSymbolAtLocation(then, node);
-            for (const t of unionTypeParts(thenType))
-                for (const signature of t.getCallSignatures())
-                    if (signature.parameters.length !== 0 && this.isCallback(signature.parameters[0], node))
-                        return true;
-        }
-        return false;
-    }
-
-    private isCallback(param: ts.Symbol, node: ts.Expression): boolean {
-        let type: ts.Type | undefined = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(param, node));
-        if ((<ts.ParameterDeclaration>param.valueDeclaration).dotDotDotToken) {
-            // unwrap array type of rest parameter
-            type = type.getNumberIndexType();
-            if (type === undefined)
-                return false;
-        }
-        for (const t of unionTypeParts(type))
-            if (t.getCallSignatures().length !== 0)
-                return true;
-        return false;
     }
 }
 

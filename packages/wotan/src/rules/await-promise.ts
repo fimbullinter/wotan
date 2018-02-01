@@ -1,7 +1,6 @@
 import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
-import { unionTypeParts } from '../utils';
+import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition, unionTypeParts } from 'tsutils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {

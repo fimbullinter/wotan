@@ -10,9 +10,9 @@ import {
     isPropertyAssignment,
     isReassignmentTarget,
     isShorthandPropertyAssignment,
+    unionTypeParts,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { unionTypeParts } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 

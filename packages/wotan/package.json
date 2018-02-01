@@ -79,7 +79,7 @@
     "semver": "^5.4.1",
     "to-absolute-glob": "^2.0.1",
     "tslib": "^1.8.1",
-    "tsutils": "^2.19.1"
+    "tsutils": "^2.20.0"
   },
   "peerDependencies": {
     "typescript": "^2.4.1 || >= 2.8.0-dev"

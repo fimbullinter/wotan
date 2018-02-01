@@ -1,6 +1,6 @@
 import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
-import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled, unionTypeParts } from '../utils';
+import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled } from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -8,6 +8,7 @@ import {
     isObjectType,
     isNewExpression,
     isCallExpression,
+    unionTypeParts,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -16,7 +17,7 @@ const log = debug('wotan:rule:no-useless-assertion');
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
-const typescriptPre280 = /^2\.[4-7]\./.test(ts.version);
+const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -81,7 +82,7 @@ export class Rule extends TypedRule {
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
             const flags = getNullableFlags(
-                !typescriptPre280 || originalType.flags & ts.TypeFlags.IndexedAccess
+                !typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess
                     ? this.checker.getApparentType(originalType)
                     : originalType,
             );
