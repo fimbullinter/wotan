@@ -100,6 +100,17 @@ Configurable rules get their options through an object. The content of the `"opt
 
 `severity` and `options` are both optional. That allows you to extend a configuration and only change the severity of a rule without altering the options. Or you can change the rule's options without changing the severity inherited by the base config.
 
+## Enable or disable rules with comments
+
+Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`.
+
+* `// wotan-disable` disables all rules from the start of the comment until the end of the file (or until it is enabled again)
+* `// wotan-enable` enables all rules from the start of the comment until the end of the file. Enable comments have the same mechanics as disable comments.
+* `// wotan-disable-line` disables all rules in the current line (also works with enable)
+* `// wotan-disable-next-line` disables all rules in the next line (also works with enable)
+* `// wotan-enable-line foo` enables the rule `foo` in the current line
+* `// wotan-enable-next-line bar, local/baz` enables the rules `bar` and `local/baz` in the next line
+
 ## CLI Options
 
 * `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
