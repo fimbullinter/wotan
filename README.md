@@ -40,7 +40,7 @@ Norse mythology:
 **Wotan** is one of the many names of Odin, the All-Father. You may also know him by the name Woden, Wodan, Wensley, etc. Woden is a sacrificial god, bloodthirsty and cruel.
 He is constantly striving for wisdom. From his throne he can see everything in the nine worlds happening.
 
-**Vé** is the youngest of the three bothers Woden, Vili and Vé who sley the giant Ymir and created the nine worlds from his body.
+**Vé** is the youngest of the three bothers Woden, Vili and Vé who together slew the giant Ymir and created the nine worlds from his body.
 
 > To the first human couple, Ask and Embla, Odin gave soul and life; Vili gave wit (intelligence) and sense of touch; and Vé gave countenance (appearance, facial expression), speech, hearing, and sight.
 
