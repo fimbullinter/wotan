@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/bifrost",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Compatibility layer for TSLint rules",
   "main": "src/index",
   "types": "src/index",
@@ -24,13 +24,13 @@
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
   "devDependencies": {
-    "@fimbul/wotan": "^0.0.0",
+    "@fimbul/wotan": "^0.0.1",
     "ava": "^0.25.0",
     "npm-run-all": "^4.1.2",
     "tslint": "^5.9.1"
   },
   "peerDependencies": {
-    "@fimbul/wotan": "^0.0.0",
+    "@fimbul/wotan": "^0.0.1",
     "tslint": "^5.0.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },

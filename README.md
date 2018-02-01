@@ -35,16 +35,18 @@ Allows TSLint rule or formatter authors to provide their rules for the use insid
 
 Norse mythology:
 
-Wotan is one of the many names of Odin, the All-Father. You may also know him by the name Woden, Wodan, Wensley, etc. Woden is a sacrificial god, bloodthirsty and cruel.
+**Fimbullinter** comes from Fimbulwinter, the awful 3 years lasting winter that precedes the events of Ragnarök. 'fimbul' means 'the great', 'linter' is a tool that detects and warns about certain coding patterns.
+
+**Wotan** is one of the many names of Odin, the All-Father. You may also know him by the name Woden, Wodan, Wensley, etc. Woden is a sacrificial god, bloodthirsty and cruel.
 He is constantly striving for wisdom. From his throne he can see everything in the nine worlds happening.
 
-Vé is the youngest of the three bothers Woden, Vili and Vé who sley the giant Ymir and created the nine worlds from his body.
+**Vé** is the youngest of the three bothers Woden, Vili and Vé who sley the giant Ymir and created the nine worlds from his body.
 
 > To the first human couple, Ask and Embla, Odin gave soul and life; Vili gave wit (intelligence) and sense of touch; and Vé gave countenance (appearance, facial expression), speech, hearing, and sight.
 
-Heimdall (also known as Heimdallr) located where the burning rainbow bridge Bifröst meets heaven keeps watch for the onset of Ragnarök.
+**Heimdall** (also known as Heimdallr), located where the burning rainbow bridge Bifröst meets heaven, keeps watch for the onset of Ragnarök.
 
-Bifröst is the burning rainbow bridge that connects the world of humans with the realm of gods.
+**Bifröst** is the burning rainbow bridge that connects the world of humans with the realm of gods.
 
 ### Why yet another linter?
 
