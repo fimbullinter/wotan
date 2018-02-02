@@ -130,7 +130,7 @@ export class Rule extends TypedRule {
             );
         } else {
             const start = node.getStart(this.sourceFile);
-            this.addFailure(start, node.expression.pos, FAIL_MESSAGE, Replacement.delete(start, node.expression.getStart(this.sourceFile)));
+            this.addFailure(start, node.expression.pos, message, Replacement.delete(start, node.expression.getStart(this.sourceFile)));
         }
     }
 

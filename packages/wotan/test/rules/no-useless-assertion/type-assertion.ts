@@ -10,9 +10,15 @@ a as typeof a;
 a as {} as number;
 a as any;
 
+declare let arr: Array<string | undefined>;
+arr.indexOf(<string>a);
+
 let b = a ? a : undefined;
 b as string;
 b! as string;
+arr.indexOf(<string>b);
+arr.indexOf(b as string);
+
 
 "".trim() as string;
 

@@ -17,12 +17,21 @@ a as typeof a;
 a as {} as number;
 a as any;
 
+declare let arr: Array<string | undefined>;
+arr.indexOf(<string>a);
+            ~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
 let b = a ? a : undefined;
 b as string;
   ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 b! as string;
  ~            [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
    ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+arr.indexOf(<string>b);
+            ~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+arr.indexOf(b as string);
+              ~~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
 
 "".trim() as string;
           ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
