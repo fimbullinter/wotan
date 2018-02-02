@@ -30,7 +30,6 @@ export class Processor extends AbstractProcessor {
             line: 0,
         };
         if (path.extname(this.sourceFileName) === '.vue') {
-            // wotan-disable-next-line no-useless-assertion
             const parsed = <parse5.AST.Default.DocumentFragment>parse5.parseFragment(this.source, {locationInfo: true});
             const script = parsed.childNodes.find(isScriptElement);
             if (script !== undefined) {

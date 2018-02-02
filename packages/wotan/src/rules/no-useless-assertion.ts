@@ -18,6 +18,10 @@ const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
 const typescriptPre270 = /^2\.[456]\./.test(ts.version);
+const typeFormat = ts.TypeFormatFlags.NoTruncation
+    | ts.TypeFormatFlags.UseFullyQualifiedType
+    | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
+    | ts.TypeFormatFlags.UseStructuralFallback;
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -142,7 +146,7 @@ export class Rule extends TypedRule {
 }
 
 function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
-    return a === b || checker.typeToString(a) === checker.typeToString(b);
+    return a === b || checker.typeToString(a, undefined, typeFormat) === checker.typeToString(b, undefined, typeFormat);
 }
 
 function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
