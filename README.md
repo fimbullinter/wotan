@@ -29,6 +29,10 @@ Compatibility layer to allow the use of TSLint rules and formatters inside the W
 
 Allows TSLint rule or formatter authors to provide their rules for the use inside Wotan. Rules and formatters that use Bifröst don't need Heimdall to function correctly.
 
+## Further Documentation
+
+* [Writing Shareable Configurations](https://github.com/fimbullinter/wotan/blob/master/docs/shareable-config.md)
+
 ## What is this all about?
 
 ### What's up with those names?
