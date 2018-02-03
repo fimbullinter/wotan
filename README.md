@@ -31,6 +31,8 @@ Allows authors of TSLint rules and formatters to provide their package for the u
 
 ## Further Documentation
 
+* [Writing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/writing-rules.md)
+* [Using local Rules](https://github.com/fimbullinter/wotan/blob/master/docs/local-rules.md)
 * [Writing Shareable Configurations](https://github.com/fimbullinter/wotan/blob/master/docs/shareable-config.md)
 
 ## What is this all about?
