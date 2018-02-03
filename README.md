@@ -10,24 +10,24 @@ Pluggable TypeScript and JavaScript linter
 
 ## Available Packages
 
-### Wotan [![docs](https://img.shields.io/badge/%40fimbul%2Fwotan-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/wotan#readme)
+### Wotan [![docs](https://img.shields.io/badge/%40fimbul%2Fwotan-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/wotan/README.md)
 
 The main linter runtime with a well-chosen set of builtin rules.
 Customizable with your own rules, processors, formatters, shareable configurations and plugin modules.
 
-Please refer to the [docs](https://github.com/fimbullinter/wotan/tree/master/packages/wotan#readme) for a detailed explanation of available rules, configuration and usage.
+Please refer to the [docs](https://github.com/fimbullinter/wotan/tree/master/packages/wotan/README.md) for a detailed explanation of available rules, configuration and usage.
 
-### Vé [![docs](https://img.shields.io/badge/%40fimbul%2Fve-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/ve#readme)
+### Vé [![docs](https://img.shields.io/badge/%40fimbul%2Fve-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/ve/README.md)
 
 Official processor for Vue Single File Components (SFC). Extracts the script content from your `*.vue` files for linting.
 
-### Heimdall [![docs](https://img.shields.io/badge/%40fimbul%2Fheimdall-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/heimdall#readme)
+### Heimdall [![docs](https://img.shields.io/badge/%40fimbul%2Fheimdall-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/heimdall/README.md)
 
 Compatibility layer to allow the use of TSLint rules and formatters inside the Wotan runtime.
 
-### Bifröst [![docs](https://img.shields.io/badge/%40fimbul%2Fbifrost-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/bifrost#readme)
+### Bifröst [![docs](https://img.shields.io/badge/%40fimbul%2Fbifrost-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/bifrost/README.md)
 
-Allows TSLint rule or formatter authors to provide their rules for the use inside Wotan. Rules and formatters that use Bifröst don't need Heimdall to function correctly.
+Allows authors of TSLint rules and formatters to provide their package for the use inside Wotan. Rules and formatters that use Bifröst don't need Heimdall to function correctly.
 
 ## Further Documentation
 

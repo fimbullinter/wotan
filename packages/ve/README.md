@@ -15,7 +15,7 @@ Make sure to also read the [full documentation of all available modules](https:/
 ## Purpose
 
 Enable `wotan` to lint `*.vue` files. This works by extracting the `<script>` content of a single file component and feeding that into TypeScript.
-The `lang` attribute is respected and defaults to `js` is not present. You can use every language TypeScript supports (currently `js`, `jsx`, `ts`, `tsx`).
+The `lang` attribute is respected and defaults to `js` if not present. You can use every language TypeScript supports (currently `js`, `jsx`, `ts`, `tsx`).
 It even works with type checking.
 
 
