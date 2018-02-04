@@ -7,6 +7,8 @@ nonExistent();
 declare function nonGeneric(): void;
 
 nonGeneric();
+nonGeneric('foo');
+fn(1, 2, 3);
 
 declare function fn<T, U>(one?: T, two?: U): void;
 

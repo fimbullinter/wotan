@@ -21,14 +21,12 @@ export class Rule extends TypedRule {
 
     private checkCallExpression(node: ts.CallExpression) {
         const signature = this.checker.getResolvedSignature(node);
-        if (signature !== undefined && signature.declaration !== undefined && signature.declaration.typeParameters !== undefined)
+        if (signature.declaration !== undefined && signature.declaration.typeParameters !== undefined)
             return this.checkInferredTypeParameters(signature, signature.declaration.typeParameters, node);
     }
 
     private checkNewExpression(node: ts.NewExpression) {
         const signature = this.checker.getResolvedSignature(node);
-        if (signature === undefined)
-            return;
         if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
             if (signature.declaration.typeParameters !== undefined)
