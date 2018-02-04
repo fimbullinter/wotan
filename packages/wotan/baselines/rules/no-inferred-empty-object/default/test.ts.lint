@@ -10,6 +10,46 @@ nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
 
+import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass} from './js';
+
+nonGenericJs();
+
+jsFn();
+~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+jsFn(1);
+jsFn<number>();
+jsFn<number>(1);
+
+arrayFn();
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+arrayFn(null as any);
+~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+arrayFn([]);
+arrayFn([1]);
+arrayFn([{}]);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+arrayFn<number>();
+
+multiParam();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+multiParam(1);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+multiParam(1, '2');
+~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+multiParam(1, '2', true);
+
+weirdMultiParam();
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+new JsClass();
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+new JsClass(1);
+new JsClass<number>();
+new JsClass<number>(1);
+
 declare function fn<T, U>(one?: T, two?: U): void;
 
 fn();
@@ -138,6 +178,23 @@ new (getWrapConstructorInferred())(1);
 new (getWrapConstructorInferred())<number>();
 new (getWrapConstructorInferred())<number>(1);
 
+interface C<T> {}
+class C<T = {}> {}
+
+new C();
+new C<string>();
+
+namespace C2 {}
+interface C2<T, U, V = {}> {}
+class C2<T, U = {}> {}
+interface C2<T, U, V, W = {}> {}
+interface C2<T> {}
+interface C2<T, U> {}
+
+new C2();
+~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+new C2<string>();
+
 // avoid false positives while parsing type arguments
 withOneDefault(<T>(param: T) => param);
 withOneDefault({key: {}, anotherKey: {nested: {}}});
@@ -146,3 +203,12 @@ withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
 withOneDefault((() => 1) as {<T>(param: T): T});
+
+/**
+ * @template T
+ * @param {T} [p]
+ */
+function withJsDoc(p?) {}
+withJsDoc();
+
+new withJsDoc();

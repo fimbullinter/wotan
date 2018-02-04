@@ -1,10 +1,13 @@
 import { TypedRule } from '../types';
 import * as ts from 'typescript';
-import { isTypeLiteralNode } from 'tsutils';
+import { isTypeLiteralNode, getJsDoc } from 'tsutils';
+
+const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile; // TODO exclude JS files as well?
+        return !sourceFile.isDeclarationFile &&
+            /\.tsx?$/.test(sourceFile.fileName); // in .js files TypeParameters default to `any`
     }
 
     private scanner: ts.Scanner | undefined = undefined;
@@ -21,34 +24,52 @@ export class Rule extends TypedRule {
 
     private checkCallExpression(node: ts.CallExpression) {
         const signature = this.checker.getResolvedSignature(node);
-        if (signature.declaration !== undefined && signature.declaration.typeParameters !== undefined)
-            return this.checkInferredTypeParameters(signature, signature.declaration.typeParameters, node);
+        if (signature.declaration !== undefined)
+            return this.checkSignature(signature, signature.declaration, node);
     }
 
     private checkNewExpression(node: ts.NewExpression) {
         const signature = this.checker.getResolvedSignature(node);
-        if (signature.declaration !== undefined) {
+        if (signature.declaration !== undefined)
             // There is an explicitly declared construct signature
-            if (signature.declaration.typeParameters !== undefined)
-                return this.checkInferredTypeParameters(signature, signature.declaration.typeParameters, node);
-        } else {
-            const {symbol} = this.checker.getTypeAtLocation(node.expression);
-            if (symbol !== undefined && symbol.declarations !== undefined &&
-                (<ts.DeclarationWithTypeParameters>symbol.declarations[0]).typeParameters !== undefined)
-                return this.checkInferredTypeParameters(
-                    signature,
-                    (<ts.DeclarationWithTypeParameters>symbol.declarations[0]).typeParameters!,
-                    node,
-                );
-        }
+            return this.checkSignature(signature, signature.declaration, node);
 
+        // Otherwise look up the TypeParameters of the ClassDeclaration
+        const {symbol} = this.checker.getTypeAtLocation(node.expression);
+        if (symbol === undefined || symbol.declarations === undefined)
+            return;
+        // collect all TypeParameters and their defaults from all merged declarations
+        const typeParameterResult = [];
+        for (const {typeParameters} of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
+            if (typeParameters === undefined)
+                continue;
+            for (let i = 0; i < typeParameters.length; ++i)
+                if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
+                    typeParameterResult[i] = typeParameters[i];
+        }
+        if (typeParameterResult.length !== 0)
+            return this.checkInferredTypeParameters(signature, typeParameterResult, node);
+    }
+
+    private checkSignature(signature: ts.Signature, declaration: ts.SignatureDeclaration | ts.ClassLikeDeclaration, node: ts.Expression) {
+        const typeParameters = declaration.typeParameters !== undefined
+            ? declaration.typeParameters
+            : declaration.flags & ts.NodeFlags.JavaScriptFile
+                ? getTemplateTags(declaration)
+                : undefined;
+        if (typeParameters !== undefined)
+            return this.checkInferredTypeParameters(signature, typeParameters, node);
     }
 
     private checkInferredTypeParameters(
         signature: ts.Signature,
-        typeParameters: ts.NodeArray<ts.TypeParameterDeclaration>,
+        typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>,
         node: ts.Expression,
     ) {
+        // for compatibility with typescript@<2.7.0
+        if (typescriptPre270)
+            return this.scannerFallback(signature, typeParameters, node);
+
         const {typeArguments} = <ts.ExpressionWithTypeArguments><any>this.checker.signatureToSignatureDeclaration(
             signature,
             ts.SyntaxKind.CallExpression,
@@ -56,9 +77,8 @@ export class Rule extends TypedRule {
             ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature,
         );
 
-        // for compatibility with typescript@<2.7.0
         if (typeArguments === undefined)
-            return this.scannerFallback(signature, typeParameters, node);
+            return;
 
         for (let i = 0; i < typeArguments.length; ++i) {
             const typeArgument = typeArguments[i];
@@ -67,11 +87,7 @@ export class Rule extends TypedRule {
         }
     }
 
-    private scannerFallback(
-        signature: ts.Signature,
-        typeParameters: ts.NodeArray<ts.TypeParameterDeclaration>,
-        node: ts.Expression,
-    ) {
+    private scannerFallback(signature: ts.Signature, typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>, node: ts.Expression) {
         const scanner = this.scanner || (this.scanner = ts.createScanner(ts.ScriptTarget.ESNext, true));
         scanner.setText(
             this.checker.signatureToString(
@@ -124,4 +140,14 @@ export class Rule extends TypedRule {
                 `TypeParameter '${typeParameter.name.text}' is inferred as '{}'. Consider adding type arguments to the call.`,
             );
     }
+}
+
+function getTemplateTags(node: ts.HasJSDoc): ReadonlyArray<ts.TypeParameterDeclaration> | undefined {
+    // only the first @template tag is used
+    for (const jsDoc of getJsDoc(node))
+        if (jsDoc.tags !== undefined)
+            for (const tag of jsDoc.tags)
+                if (tag.kind === ts.SyntaxKind.JSDocTemplateTag)
+                    return (<ts.JSDocTemplateTag>tag).typeParameters;
+    return;
 }
