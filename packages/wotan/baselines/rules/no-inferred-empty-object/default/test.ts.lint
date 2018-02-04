@@ -24,6 +24,11 @@ fn({}, '2'); // there's not reliable way to tell if the empty object type is rea
 fn(1, {});
 ~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
+fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+
 declare function inferParameter<T>(param?: Array<T>): void;
 
 inferParameter();
@@ -72,6 +77,7 @@ declare function withOneDefault<T, U = T>(one?: T, two?: U): void;
 
 withOneDefault();
 ~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+withOneDefault({} as object);
 withOneDefault([{}]);
 withOneDefault(1);
 withOneDefault(1, '2');
@@ -136,4 +142,5 @@ withOneDefault({key: {}, anotherKey: {nested: {}}});
 withOneDefault(fn);
 withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
-withOneDefault({'{}, {}': [{}]);
+withOneDefault({'{}, {}': [{}]});
+withOneDefault((() => 1) as {<T>(param: T): T});

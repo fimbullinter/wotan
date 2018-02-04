@@ -388,7 +388,7 @@ test('Aliases shadow rules until cleared', (t) => {
         ]),
         filename: '/extending2.yaml',
         rulesDirectories: new Map([['b', '/extB'], ['c', '/extC']]),
-        rules: new Map([
+        rules: new Map<string, Configuration.RuleConfig>([
             ['c/ban-delete-expression', {}],
         ]),
     };

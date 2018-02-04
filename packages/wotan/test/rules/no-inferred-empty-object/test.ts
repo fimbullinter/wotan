@@ -19,6 +19,9 @@ fn<number, string>(1, '2');
 fn({}, '2'); // there's not reliable way to tell if the empty object type is really intended like in this case
 fn(1, {});
 
+fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
+fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
+
 declare function inferParameter<T>(param?: Array<T>): void;
 
 inferParameter();
@@ -63,6 +66,7 @@ withDefaultDefault<number, string>(1, '2');
 declare function withOneDefault<T, U = T>(one?: T, two?: U): void;
 
 withOneDefault();
+withOneDefault({} as object);
 withOneDefault([{}]);
 withOneDefault(1);
 withOneDefault(1, '2');
@@ -123,3 +127,4 @@ withOneDefault(fn);
 withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
+withOneDefault((() => 1) as {<T>(param: T): T});

@@ -1,8 +1,6 @@
 import { TypedRule } from '../types';
 import * as ts from 'typescript';
-
-const formatFlags =
-    ts.TypeFormatFlags.WriteTypeArgumentsOfSignature | ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.WriteArrayAsGenericType;
+import { isTypeLiteralNode } from 'tsutils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -53,12 +51,45 @@ export class Rule extends TypedRule {
         typeParameters: ts.NodeArray<ts.TypeParameterDeclaration>,
         node: ts.Expression,
     ) {
+        const {typeArguments} = <ts.ExpressionWithTypeArguments><any>this.checker.signatureToSignatureDeclaration(
+            signature,
+            ts.SyntaxKind.CallExpression,
+            undefined,
+            ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature,
+        );
+
+        // for compatibility with typescript@<2.7.0
+        if (typeArguments === undefined)
+            return this.scannerFallback(signature, typeParameters, node);
+
+        for (let i = 0; i < typeArguments.length; ++i) {
+            const typeArgument = typeArguments[i];
+            if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
+                this.handleEmptyTypeParameter(typeParameters[i], node);
+        }
+    }
+
+    private scannerFallback(
+        signature: ts.Signature,
+        typeParameters: ts.NodeArray<ts.TypeParameterDeclaration>,
+        node: ts.Expression,
+    ) {
         const scanner = this.scanner || (this.scanner = ts.createScanner(ts.ScriptTarget.ESNext, true));
-        scanner.setText(this.checker.signatureToString(signature, undefined, formatFlags), 1); // start at 1 because we know 0 is '<'
+        scanner.setText(
+            this.checker.signatureToString(
+                signature,
+                undefined,
+                ts.TypeFormatFlags.WriteTypeArgumentsOfSignature | ts.TypeFormatFlags.NoTruncation,
+            ),
+            1, // start at 1 because we know 0 is '<'
+        );
         let param = 0;
         let token = scanner.scan();
-        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken)
-            this.handleEmptyTypeParameter(typeParameters[param], node);
+        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken) {
+            token = scanner.scan();
+            if (token === ts.SyntaxKind.CommaToken || token === ts.SyntaxKind.GreaterThanToken)
+                this.handleEmptyTypeParameter(typeParameters[0], node);
+        }
         let level = 0;
         /* Scan every token until we get to the closing '>'.
            We need to keep track of nested type arguments, because we are only interested in the top level. */
@@ -68,8 +99,11 @@ export class Rule extends TypedRule {
                     if (level === 0) {
                         ++param;
                         token = scanner.scan();
-                        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken)
-                            this.handleEmptyTypeParameter(typeParameters[param], node);
+                        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken) {
+                            token = scanner.scan();
+                            if (token === ts.SyntaxKind.CommaToken || token === ts.SyntaxKind.GreaterThanToken)
+                                this.handleEmptyTypeParameter(typeParameters[param], node);
+                        }
                         continue;
                     }
                     break;
