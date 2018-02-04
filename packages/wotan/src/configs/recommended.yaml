@@ -4,6 +4,7 @@ rules:
   deprecation: error
   no-debugger: error
   no-fallthrough: error
+  no-inferred-empty-object: error
   no-return-await: error
   no-unsafe-finally: error
   no-unused-expression: error
