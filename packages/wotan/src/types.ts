@@ -223,6 +223,8 @@ export namespace Configuration {
     export interface RuleConfig {
         severity?: RuleSeverity;
         options?: any;
+        rulesDirectories: string[] | undefined;
+        rule: string;
     }
     export interface Override {
         rules?: Map<string, RuleConfig>;
@@ -233,6 +235,7 @@ export namespace Configuration {
     export interface Alias {
         rule: string;
         options?: any;
+        rulesDirectories: string[] | undefined;
     }
 }
 
@@ -353,7 +356,7 @@ export interface Stats {
 }
 
 export interface RuleLoaderHost {
-    loadCoreRule(name: string): RuleConstructor | undefined;
+    loadCoreRule(name: string, directory: string | undefined): RuleConstructor | undefined;
     loadCustomRule(name: string, directory: string): RuleConstructor | undefined;
 }
 export abstract class RuleLoaderHost {}
