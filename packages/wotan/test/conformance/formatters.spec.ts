@@ -78,6 +78,79 @@ const warningSummary: LintResult = new Map([
         {content: 'b', failures: [createFailure('b', 'warning', 'b', 0, 0)], fixes: 0},
     ],
 ]);
+const bomSummary: LintResult = new Map<string, FileSummary>([[
+    '/dir/warnings.ts',
+    {
+        content: '\uFEFFa\nb',
+        failures: [
+            {
+                severity: 'error',
+                message: 'BOM',
+                ruleName: 'bom',
+                start: {
+                    position: 0,
+                    line: 0,
+                    character: 0,
+                },
+                end: {
+                    position: 1,
+                    line: 0,
+                    character: 1,
+                },
+                fix: undefined,
+            },
+            {
+                severity: 'warning',
+                message: 'a',
+                ruleName: 'a',
+                start: {
+                    position: 1,
+                    line: 0,
+                    character: 1,
+                },
+                end: {
+                    position: 2,
+                    line: 0,
+                    character: 2,
+                },
+                fix: undefined,
+            },
+            {
+                severity: 'warning',
+                message: 'b',
+                ruleName: 'a',
+                start: {
+                    position: 3,
+                    line: 1,
+                    character: 0,
+                },
+                end: {
+                    position: 4,
+                    line: 1,
+                    character: 1,
+                },
+                fix: undefined,
+            },
+            {
+                severity: 'warning',
+                message: 'EOF',
+                ruleName: 'eof',
+                start: {
+                    position: 4,
+                    line: 1,
+                    character: 1,
+                },
+                end: {
+                    position: 4,
+                    line: 1,
+                    character: 1,
+                },
+                fix: undefined,
+            },
+        ],
+        fixes: 0,
+    },
+]]);
 
 function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, transform?: (s: string) => string) {
     testOutput(emptySummary, 'empty');
@@ -86,6 +159,7 @@ function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, tran
     testOutput(fixableSummary, 'fixable');
     testOutput(warningSummary, 'warnings');
     testOutput(summary, 'mixed');
+    testOutput(bomSummary, 'bom');
 
     function testOutput(lintResult: LintResult, name: string) {
         const output = format(lintResult, new formatterCtor());

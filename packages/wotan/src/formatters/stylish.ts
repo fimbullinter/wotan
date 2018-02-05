@@ -31,7 +31,10 @@ export class Formatter extends AbstractFormatter {
                 this.maxSeverityWidth = failure.severity.length;
             if (failure.ruleName.length > this.maxNameWidth)
                 this.maxNameWidth = failure.ruleName.length;
-            const position = `${failure.start.line + 1}:${failure.start.character + 1}`; // TODO handle BOM
+            let {character, line} = failure.start;
+            if (line !== 0 || character === 0 || !summary.content.startsWith('\uFEFF'))
+                character += 1; // avoid incrementing the character position on the first line if BOM is present, editors ignore BOM
+            const position = `${line + 1}:${character}`;
             if (position.length > this.maxPositionWidth)
                 this.maxPositionWidth = position.length;
             mapped.push({
