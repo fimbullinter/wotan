@@ -10,6 +10,34 @@ nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
 
+import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass} from './js';
+
+nonGenericJs();
+
+jsFn();
+jsFn(1);
+jsFn<number>();
+jsFn<number>(1);
+
+arrayFn();
+arrayFn(null as any);
+arrayFn([]);
+arrayFn([1]);
+arrayFn([{}]);
+arrayFn<number>();
+
+multiParam();
+multiParam(1);
+multiParam(1, '2');
+multiParam(1, '2', true);
+
+weirdMultiParam();
+
+new JsClass();
+new JsClass(1);
+new JsClass<number>();
+new JsClass<number>(1);
+
 declare function fn<T, U>(one?: T, two?: U): void;
 
 fn();
@@ -122,6 +150,22 @@ new (getWrapConstructorInferred())(1);
 new (getWrapConstructorInferred())<number>();
 new (getWrapConstructorInferred())<number>(1);
 
+interface C<T> {}
+class C<T = {}> {}
+
+new C();
+new C<string>();
+
+namespace C2 {}
+interface C2<T, U, V = {}> {}
+class C2<T, U = {}> {}
+interface C2<T, U, V, W = {}> {}
+interface C2<T> {}
+interface C2<T, U> {}
+
+new C2();
+new C2<string>();
+
 // avoid false positives while parsing type arguments
 withOneDefault(<T>(param: T) => param);
 withOneDefault({key: {}, anotherKey: {nested: {}}});
@@ -130,3 +174,12 @@ withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
 withOneDefault((() => 1) as {<T>(param: T): T});
+
+/**
+ * @template T
+ * @param {T} [p]
+ */
+function withJsDoc(p?) {}
+withJsDoc();
+
+new withJsDoc();
