@@ -254,6 +254,19 @@ export interface ReducedConfiguration extends EffectiveConfiguration {
     processor: string | undefined;
 }
 
+export interface ConfigurationProvider<T extends object> {
+    find(fileToLint: string): string | undefined;
+    read(fileName: string): T;
+    resolve(name: string, basedir: string): string;
+    parse(raw: T, fileName: string, context: ParseConfigurationContext): Configuration;
+}
+export abstract class ConfigurationProvider<T> {}
+
+export interface ParseConfigurationContext {
+    parents: ReadonlyArray<string>;
+    load(name: string): Configuration;
+}
+
 export const enum Format {
     Yaml = 'yaml',
     Json = 'json',
