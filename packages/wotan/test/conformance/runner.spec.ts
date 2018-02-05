@@ -7,7 +7,7 @@ import { Runner } from '../../src/runner';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { NodeFileSystem } from '../../src/services/default/file-system';
-import { FileSystem } from '../../src/types';
+import { FileSystem, MessageHandler } from '../../src/types';
 
 test('throws error on non-existing file', (t) => {
     const container = new Container();
@@ -56,6 +56,9 @@ test('throws if no tsconfig.json can be found', (t) => {
     const container = new Container();
     @injectable()
     class MockFileSystem extends NodeFileSystem {
+        constructor(logger: MessageHandler) {
+            super(logger);
+        }
         public stat(file: string) {
             const stat = super.stat(file);
             return {
@@ -116,6 +119,9 @@ test('reports errors while parsing tsconfig.json', (t) => {
     };
     @injectable()
     class MockFileSystem extends NodeFileSystem {
+        constructor(logger: MessageHandler) {
+            super(logger);
+        }
         public stat(file: string) {
             return {
                 isFile() { return files[path.basename(file)] !== undefined; },

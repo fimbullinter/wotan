@@ -164,6 +164,7 @@ test('DeprecationHandler', (t) => {
 test('Resolver', (t) => {
     const container = new Container();
     container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     const resolver = container.resolve(NodeResolver);
@@ -179,6 +180,7 @@ test('Resolver', (t) => {
 test('FormatterLoaderHost', (t) => {
     const container = new Container();
     container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(Resolver).to(NodeResolver);
@@ -299,7 +301,12 @@ test.before(() => {
 });
 
 test('FileSystem', (t) => {
-    const fileSystem = new NodeFileSystem();
+    const warnings: string[] = [];
+    const fileSystem = new NodeFileSystem({
+        log() { throw new Error(); },
+        error() { throw new Error(); },
+        warn(message) { warnings.push(message); },
+    });
     t.is(fileSystem.normalizePath('C:\\foo\\bar/baz'), getCanonicalFileName('C:/foo/bar/baz'));
     t.is(fileSystem.normalizePath('/foo/bar/baz'), getCanonicalFileName('/foo/bar/baz'));
     t.is(fileSystem.normalizePath('/Foo/Bar/Baz'), getCanonicalFileName('/Foo/Bar/Baz'));
@@ -340,6 +347,20 @@ test('FileSystem', (t) => {
     fileSystem.deleteFile(f);
     t.false(fs.existsSync(f));
     t.throws(() => fileSystem.stat(f));
+
+    t.is(warnings.length, 0);
+    // tslint:disable-next-line
+    fs.writeFileSync(f, Buffer.from('471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'hex'));
+    t.is(fileSystem.readFile(f), '');
+    t.deepEqual(warnings, [`Detected MPEG TS file: '${f}'.`]);
+
+    fs.writeFileSync(f, 'G' + '_'.repeat(200));
+    t.is(fileSystem.readFile(f), 'G' + '_'.repeat(200));
+    t.is(warnings.length, 1);
+
+    fs.writeFileSync(f, 'G');
+    t.is(fileSystem.readFile(f), 'G');
+    t.is(warnings.length, 1);
 
     function getCanonicalFileName(file: string) {
         return ts.sys.useCaseSensitiveFileNames ? file : file.toLowerCase();

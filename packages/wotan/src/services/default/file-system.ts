@@ -1,4 +1,4 @@
-import { FileSystem, Stats } from '../../types';
+import { FileSystem, Stats, MessageHandler } from '../../types';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 import { unixifyPath } from '../../utils';
@@ -6,12 +6,22 @@ import * as ts from 'typescript';
 
 @injectable()
 export class NodeFileSystem implements FileSystem {
+    constructor(private logger: MessageHandler) {}
+
     public normalizePath(path: string) {
         return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
     }
     public readFile(file: string) {
         const buf = fs.readFileSync(file);
         const len = buf.length;
+        // detect MPEG TS files and treat them as empty
+        outer: while (len > 188 && buf[0] === 0x47) {
+            for (let i = 188; i < len; i += 188)
+                if (buf[i] !== 0x47)
+                    break outer;
+            this.logger.warn(`Detected MPEG TS file: '${file}'.`);
+            return '';
+        }
         if (len >= 2) {
             if (buf[0] === 0xFE && buf[1] === 0xFF) // UTF16BE BOM
                 return buf.swap16().toString('utf16le', 2);

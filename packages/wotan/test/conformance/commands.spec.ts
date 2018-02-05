@@ -26,6 +26,10 @@ test('ShowCommand', async (t) => {
 
     @injectable()
     class MockFileSystem extends NodeFileSystem {
+        constructor(messageHandler: MessageHandler) {
+            super(messageHandler);
+        }
+
         public normalizePath(file: string) {
             return super.normalizePath(path.resolve(path.relative(cwd, file)));
         }
