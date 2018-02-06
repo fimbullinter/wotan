@@ -1,6 +1,5 @@
 import { injectable } from 'inversify';
 import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheManager, CacheIdentifier, Cache } from '../types';
-import { ConfigurationError } from '../error';
 import * as debug from 'debug';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
@@ -16,16 +15,12 @@ export class RuleLoader {
     }
 
     public loadRule(name: string, directories: string[] | undefined): RuleConstructor | undefined {
-        const slashIndex = name.lastIndexOf('/');
-        if (slashIndex === -1) {
+        if (directories === undefined) {
             const ctor = resolveCachedResult(this.cache, name, this.loadCoreRule);
             if (ctor === undefined)
                 this.logger.warn(`Could not find core rule '${name}'.`);
             return ctor;
         }
-        if (directories === undefined)
-            throw new ConfigurationError(`No 'rulesDirectories' for rule '${name}'.`);
-        name = name.substr(slashIndex + 1);
         for (const dir of directories) {
             const ctor = resolveCachedResult(this.cache, `${dir}💩${name}`, this.loadCustomRule);
             if (ctor !== undefined)

@@ -176,36 +176,6 @@ export interface FormatterConstructor {
     new(): AbstractFormatter;
 }
 
-export interface RawConfiguration {
-    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false}};
-    rules?: {[key: string]: RawConfiguration.RuleConfigValue};
-    settings?: {[key: string]: any};
-    extends?: string | string[];
-    overrides?: RawConfiguration.Override[];
-    rulesDirectories?: {[prefix: string]: string};
-    exclude?: string | string[];
-    processor?: string | null | false;
-}
-
-export namespace RawConfiguration {
-    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
-    export interface RuleConfig {
-        severity?: RuleSeverity;
-        options?: any;
-    }
-    export type RuleConfigValue = RuleSeverity | RuleConfig | null;
-    export interface Override {
-        files: string | string[];
-        rules?: {[key: string]: RawConfiguration.RuleConfigValue};
-        settings?: {[key: string]: any};
-        processor?: string | null | false;
-    }
-    export interface Alias {
-        rule: string;
-        options?: any;
-    }
-}
-
 export interface Configuration {
     aliases?: Map<string, Configuration.Alias | null | false>;
     rules?: Map<string, Configuration.RuleConfig>;
@@ -267,7 +237,7 @@ export abstract class ConfigurationProvider<T> {}
 
 export interface ParseConfigurationContext {
     parents: ReadonlyArray<string>;
-    load(name: string): Configuration;
+    load(this: void, name: string): Configuration;
 }
 
 export const enum Format {
@@ -356,7 +326,7 @@ export interface Stats {
 }
 
 export interface RuleLoaderHost {
-    loadCoreRule(name: string, directory: string | undefined): RuleConstructor | undefined;
+    loadCoreRule(name: string): RuleConstructor | undefined;
     loadCustomRule(name: string, directory: string): RuleConstructor | undefined;
 }
 export abstract class RuleLoaderHost {}
