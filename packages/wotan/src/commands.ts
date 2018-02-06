@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { RawConfiguration, Format, MessageHandler, Failure, DirectoryService } from './types';
+import { Format, MessageHandler, Failure, DirectoryService } from './types';
 import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
@@ -165,7 +165,7 @@ class InitCommandRunner extends AbstractCommandRunner {
                 this.logger.warn(`'${fullPath}' already exists.`);
                 success = false;
             } else {
-                this.fs.writeFile(fullPath, format<RawConfiguration>({extends: 'wotan:recommended'}, options.format));
+                this.fs.writeFile(fullPath, format({extends: 'wotan:recommended'}, options.format));
             }
         }
         return success;
@@ -188,10 +188,10 @@ class ShowCommandRunner extends AbstractCommandRunner {
         super();
     }
     public run(options: ShowCommand) {
-        const config = this.configManager.findConfiguration(options.file);
+        const config = this.configManager.find(options.file);
         if (config === undefined)
             throw new ConfigurationError(`Could not find configuration for '${options.file}'.`);
-        const reduced = this.configManager.reduceConfigurationForFile(config, options.file);
+        const reduced = this.configManager.reduce(config, options.file);
         this.logger.log(`${config.filename}\n${reduced === undefined ? 'File is excluded.' : format(reduced, options.format)}`);
         return true;
     }

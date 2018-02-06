@@ -1,23 +1,23 @@
 import { injectable } from 'inversify';
-import { ConfigurationProvider, DirectoryService, Resolver, ParseConfigurationContext, Configuration } from '../../types';
+import { ConfigurationProvider, DirectoryService, Resolver, LoadConfigurationContext, Configuration } from '../../types';
 import { CachedFileSystem } from '../cached-file-system';
 import * as path from 'path';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { OFFSET_TO_NODE_MODULES, arrayify } from '../../utils';
 
-export interface RawConfiguration {
-    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false}};
-    rules?: {[key: string]: RawConfiguration.RuleConfigValue};
+interface RawConfiguration {
+    aliases?: RawConfiguration.AliasMap;
+    rules?: RawConfiguration.RuleMap;
     settings?: {[key: string]: any};
     extends?: string | string[];
     overrides?: RawConfiguration.Override[];
-    rulesDirectories?: {[prefix: string]: string};
+    rulesDirectories?: RawConfiguration.RulesDirectoryMap;
     exclude?: string | string[];
     processor?: string | null | false;
 }
 
-export namespace RawConfiguration {
+namespace RawConfiguration {
     export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
     export interface RuleConfig {
         severity?: RuleSeverity;
@@ -26,7 +26,7 @@ export namespace RawConfiguration {
     export type RuleConfigValue = RuleSeverity | RuleConfig | null;
     export interface Override {
         files: string | string[];
-        rules?: {[key: string]: RawConfiguration.RuleConfigValue};
+        rules?: RuleMap;
         settings?: {[key: string]: any};
         processor?: string | null | false;
     }
@@ -34,13 +34,25 @@ export namespace RawConfiguration {
         rule: string;
         options?: any;
     }
+    export interface RuleMap {
+        [key: string]: RawConfiguration.RuleConfigValue;
+    }
+    export interface AliasMap {
+        [prefix: string]: {[name: string]: RawConfiguration.Alias | null | false};
+    }
+    export interface RulesDirectoryMap {
+        [prefix: string]: string;
+    }
 }
+
+type WriteableRulesDirectoryMap = Map<string, string[]>;
+type WriteableAliasesMap = Map<string, Configuration.Alias>;
 
 export const CONFIG_EXTENSIONS = ['.yaml', '.yml', '.json5', '.json', '.js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext);
 
 @injectable()
-export class DefaultConfigurationProvider implements ConfigurationProvider<RawConfiguration> {
+export class DefaultConfigurationProvider implements ConfigurationProvider {
     constructor(private fs: CachedFileSystem, private directories: DirectoryService, private resolver: Resolver) {}
 
     public find(fileToLint: string): string | undefined {
@@ -50,7 +62,52 @@ export class DefaultConfigurationProvider implements ConfigurationProvider<RawCo
         return result;
     }
 
-    public read(filename: string): RawConfiguration {
+    public resolve(name: string, basedir: string): string {
+        if (name.startsWith('wotan:')) {
+            const fileName = path.join(__dirname, `../../configs/${name.substr('wotan:'.length)}.yaml`);
+            if (!this.fs.isFile(fileName))
+                throw new Error(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
+            return fileName;
+        }
+        return this.resolver.resolve(name, basedir, CONFIG_EXTENSIONS, module.paths.slice(OFFSET_TO_NODE_MODULES + 2));
+    }
+
+    public load(filename: string, context: LoadConfigurationContext): Configuration {
+        const raw = this.read(filename);
+        const dirname = path.dirname(filename);
+        const baseConfigs = arrayify(raw.extends).map(context.load);
+        let rulesDirectories: WriteableRulesDirectoryMap | undefined;
+        let aliases: WriteableAliasesMap | undefined;
+        for (const base of baseConfigs) {
+            if (base.rulesDirectories)
+                rulesDirectories = extendRulesDirectories(rulesDirectories, base.rulesDirectories);
+            if (base.aliases) {
+                if (aliases === undefined) {
+                    aliases = new Map(base.aliases);
+                } else {
+                    for (const [name, alias] of base.aliases)
+                        aliases.set(name, alias);
+                }
+            }
+        }
+        if (raw.rulesDirectories)
+            rulesDirectories = mapRulesDirectories(rulesDirectories, raw.rulesDirectories, dirname);
+        if (raw.aliases)
+            aliases = resolveAliases(raw.aliases, aliases, rulesDirectories);
+        return {
+            aliases,
+            filename,
+            rulesDirectories,
+            extends: baseConfigs,
+            overrides: raw.overrides && raw.overrides.map((o) => this.mapOverride(o, dirname, aliases, rulesDirectories)),
+            rules: raw.rules ? mapRules(raw.rules, aliases, rulesDirectories) : undefined,
+            processor: this.mapProcessor(raw.processor, dirname),
+            exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude ? [raw.exclude] : undefined,
+            settings: raw.settings ? mapSettings(raw.settings) : undefined,
+        };
+    }
+
+    private read(filename: string): RawConfiguration {
         switch (path.extname(filename)) {
             case '.json':
             case '.json5':
@@ -66,39 +123,19 @@ export class DefaultConfigurationProvider implements ConfigurationProvider<RawCo
         }
     }
 
-    public resolve(name: string, basedir: string): string {
-        if (name.startsWith('wotan:')) {
-            const fileName = path.join(__dirname, `../../configs/${name.substr('wotan:'.length)}.yaml`);
-            if (!this.fs.isFile(fileName))
-                throw new Error(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
-            return fileName;
-        }
-        return this.resolver.resolve(name, basedir, CONFIG_EXTENSIONS, module.paths.slice(OFFSET_TO_NODE_MODULES + 2));
-    }
-
-    public parse(raw: RawConfiguration, filename: string, context: ParseConfigurationContext): Configuration {
-        const dirname = path.dirname(filename);
-        return {
-            filename,
-            extends: arrayify(raw.extends).map(context.load),
-            aliases: raw.aliases && mapAliases(raw.aliases),
-            overrides: raw.overrides && raw.overrides.map((o) => this.mapOverride(o, dirname)),
-            rules: raw.rules && mapRules(raw.rules),
-            rulesDirectories: raw.rulesDirectories && this.mapRulesDirectory(raw.rulesDirectories, dirname),
-            processor: this.mapProcessor(raw.processor, dirname),
-            exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude === undefined ? undefined : [raw.exclude],
-            settings: raw.settings && mapSettings(raw.settings),
-        };
-    }
-
-    private mapOverride(raw: RawConfiguration.Override, basedir: string): Configuration.Override {
+    private mapOverride(
+        raw: RawConfiguration.Override,
+        basedir: string,
+        aliases: Configuration['aliases'],
+        rulesDirectoryMap: Configuration['rulesDirectories'],
+    ): Configuration.Override {
         const files = arrayify(raw.files);
         if (files.length === 0)
             throw new Error(`Override does not specify files.`);
         return {
-            files: arrayify(raw.files),
-            rules: raw.rules && mapRules(raw.rules),
-            settings: raw.settings && mapSettings(raw.settings),
+            files,
+            rules: raw.rules ? mapRules(raw.rules, aliases, rulesDirectoryMap) : undefined,
+            settings: raw.settings ? mapSettings(raw.settings) : undefined,
             processor: this.mapProcessor(raw.processor, basedir),
         };
     }
@@ -110,13 +147,6 @@ export class DefaultConfigurationProvider implements ConfigurationProvider<RawCo
             Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
             module.paths.slice(OFFSET_TO_NODE_MODULES + 1),
         );
-    }
-
-    private mapRulesDirectory(raw: {[prefix: string]: string}, dirname: string) {
-        const result = new Map<string, string>();
-        for (const key of Object.keys(raw))
-            result.set(key, path.resolve(dirname, raw[key]));
-        return result;
     }
 
     private findupConfig(current: string): string | undefined {
@@ -141,36 +171,109 @@ export class DefaultConfigurationProvider implements ConfigurationProvider<RawCo
     }
 }
 
-function mapAliases(aliases: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false }}) {
-    const result: Configuration['aliases'] = new Map();
-    for (const prefix of Object.keys(aliases)) {
-        const obj = aliases[prefix];
+function mapRulesDirectories(receiver: WriteableRulesDirectoryMap | undefined, raw: RawConfiguration.RulesDirectoryMap, dirname: string) {
+    if (receiver === undefined)
+        receiver = new Map();
+    for (const key of Object.keys(raw)) {
+        const resolved = path.resolve(dirname, raw[key]);
+        const current = receiver.get(key);
+        if (current === undefined) {
+            receiver.set(key, [resolved]);
+        } else {
+            current.unshift(resolved);
+        }
+    }
+    return receiver;
+}
+
+function extendRulesDirectories(receiver: WriteableRulesDirectoryMap | undefined, current: Configuration.RulesDirectoryMap) {
+    if (receiver === undefined)
+        return new Map(Array.from(current, (v): [string, string[]] => [v[0], v[1].slice()]));
+    for (const [key, directories] of current) {
+        const prev = receiver.get(key);
+        if (prev !== undefined) {
+            prev.unshift(...directories);
+        } else {
+            receiver.set(key, directories.slice());
+        }
+    }
+    return receiver;
+}
+
+function resolveAliases(
+    raw: RawConfiguration.AliasMap,
+    receiver: WriteableAliasesMap | undefined,
+    rulesDirectoryMap: Configuration['rulesDirectories'],
+) {
+    const mapped: Map<string, RawConfiguration.Alias> = new Map();
+    for (const prefix of Object.keys(raw)) {
+        const obj = raw[prefix];
         if (!obj)
             continue;
         for (const name of Object.keys(obj)) {
             const config = obj[name];
             const fullName = `${prefix}/${name}`;
-            if (config && !config.rule)
+            if (!config) {
+                if (receiver)
+                    receiver.delete(fullName);
+                continue;
+            }
+            if (!config.rule)
                 throw new Error(`Alias '${fullName}' does not specify a rule.`);
-            result.set(fullName, config);
+            mapped.set(fullName, config);
         }
+    }
+    if (receiver === undefined)
+        receiver = new Map();
+    for (const entry of mapped) {
+        let name = entry[0];
+        let alias: RawConfiguration.Alias | undefined = entry[1];
+        const result: Pick<RawConfiguration.Alias, 'options'> = {};
+        const names = [name];
+        do {
+            name = alias.rule;
+            if (names.includes(name))
+                throw new Error(`Circular Alias: ${names.join(' => ')} => ${name}`);
+            if (!('options' in result) && 'options' in alias)
+                result.options = alias.options;
+            names.push(name);
+            alias = mapped.get(name);
+        } while (alias !== undefined);
+        const parent = receiver.get(name);
+        if (parent) {
+            receiver.set(entry[0], {...parent, ...result});
+        } else {
+            receiver.set(entry[0], {...result, ...resolveNameAndDirectories(name, rulesDirectoryMap)});
+        }
+    }
+    return receiver;
+}
+
+function resolveNameAndDirectories(rule: string, rulesDirectoryMap: Configuration['rulesDirectories']) {
+    const slashIndex = rule.lastIndexOf('/');
+    if (slashIndex === -1)
+        return {rule, rulesDirectories: undefined};
+    const rulesDirectories = rulesDirectoryMap && rulesDirectoryMap.get(rule.substr(0, slashIndex));
+    if (rulesDirectories === undefined)
+        throw new Error('No rulesDirectories specified for prefix');
+    return {rule, rulesDirectories};
+}
+
+function mapRules(raw: RawConfiguration.RuleMap, aliases: Configuration['aliases'], rulesDirectoryMap: Configuration['rulesDirectories']) {
+    const result = new Map<string, Configuration.RuleConfig>();
+    for (const ruleName of Object.keys(raw)) {
+        const alias = aliases && aliases.get(ruleName);
+        result.set(ruleName, {...(alias || resolveNameAndDirectories(ruleName, rulesDirectoryMap)), ...mapRuleConfig(raw[ruleName])});
     }
     return result;
 }
 
-function mapRules(raw: {[name: string]: RawConfiguration.RuleConfigValue}) {
-    const result: Configuration['rules'] = new Map();
-    for (const key of Object.keys(raw))
-        result.set(key, mapRuleConfig(raw[key]));
-    return result;
-}
-
-function mapRuleConfig(value: RawConfiguration.RuleConfigValue): Configuration.RuleConfig {
+function mapRuleConfig(value: RawConfiguration.RuleConfigValue) {
     if (typeof value === 'string')
         return { severity: mapRuleSeverity(value) };
     if (!value)
         return {};
-    const result: Configuration.RuleConfig = {};
+    const result: {options?: any, severity?: Configuration.RuleSeverity} = {};
     if ('options' in value)
         result.options = value.options;
     if ('severity' in value)
@@ -191,7 +294,7 @@ function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration
 }
 
 function mapSettings(settings: {[key: string]: any}) {
-    const result: Configuration['settings'] = new Map();
+    const result = new Map<string, any>();
     for (const key of Object.keys(settings))
         result.set(key, settings[key]);
     return result;

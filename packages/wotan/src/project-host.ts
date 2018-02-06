@@ -55,14 +55,14 @@ export class ProjectHost implements ts.CompilerHost {
                 case FileKind.File: {
                     if (!hasSupportedExtension(fileName)) {
                         if (c === 'initial')
-                            c = this.configManager.findConfiguration(fileName);
-                        const processor = c && this.configManager.getProcessorForFile(c, fileName);
+                            c = this.configManager.find(fileName);
+                        const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
                             const newName = fileName +
                                 ctor.getSuffixForFile(
                                     fileName,
-                                    this.configManager.getSettingsForFile(c!, fileName),
+                                    this.configManager.getSettings(c!, fileName),
                                     () => this.fs.readFile(fileName),
                                 );
                             if (hasSupportedExtension(newName)) {
@@ -121,14 +121,14 @@ export class ProjectHost implements ts.CompilerHost {
     private readProcessedFile(file: string): string {
         const realFile = this.getFileSystemFile(file)!;
         let content = this.fs.readFile(realFile);
-        const config = this.config || this.configManager.findConfiguration(realFile);
+        const config = this.config || this.configManager.find(realFile);
         if (config === undefined)
             return content;
-        const processorPath = this.configManager.getProcessorForFile(config, realFile);
+        const processorPath = this.configManager.getProcessor(config, realFile);
         if (processorPath === undefined)
             return content;
         const ctor = this.processorLoader.loadProcessor(processorPath);
-        const processor = new ctor(content, realFile, file, this.configManager.getSettingsForFile(config, realFile));
+        const processor = new ctor(content, realFile, file, this.configManager.getSettings(config, realFile));
         this.processedFiles.set(file, {
             processor,
             originalContent: content,

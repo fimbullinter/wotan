@@ -113,7 +113,7 @@ function reduceConfig(config: Configuration, filename: string, receiver: Receive
     };
 }
 
-function matchesGlobs(file: string, patterns: string[]): boolean {
+function matchesGlobs(file: string, patterns: ReadonlyArray<string>): boolean {
     for (let i = patterns.length - 1; i >= 0; --i) {
         const glob = isNegated(patterns[i]);
         const local = glob.pattern.startsWith('./');

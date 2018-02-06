@@ -55,13 +55,13 @@ export class Runner {
             if (options.config === undefined) {
                 const dirname = path.dirname(file);
                 if (dir !== dirname) {
-                    config = this.configManager.findConfiguration(file);
+                    config = this.configManager.find(file);
                     dir = dirname;
                 }
             }
             const mapped = processorHost.getProcessedFileInfo(file);
             const originalName = mapped === undefined ? file : mapped.originalName;
-            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, originalName);
+            const effectiveConfig = config && this.configManager.reduce(config, originalName);
             if (effectiveConfig === undefined)
                 continue;
             let sourceFile = program.getSourceFile(file)!;
@@ -103,11 +103,11 @@ export class Runner {
             if (options.config === undefined) {
                 const dirname = path.dirname(file);
                 if (dir !== dirname) {
-                    config = this.configManager.findConfiguration(file);
+                    config = this.configManager.find(file);
                     dir = dirname;
                 }
             }
-            const effectiveConfig = config && this.configManager.reduceConfigurationForFile(config, file);
+            const effectiveConfig = config && this.configManager.reduce(config, file);
             if (effectiveConfig === undefined)
                 continue;
             let originalContent: string | undefined;
@@ -169,8 +169,8 @@ export class Runner {
         const absolute = path.resolve(this.directories.getCurrentDirectory(), pathOrName);
         const resolved = this.fs.isFile(absolute)
             ? absolute
-            : this.configManager.resolveConfigFile(pathOrName, this.directories.getCurrentDirectory());
-        return this.configManager.loadConfigurationFromPath(resolved);
+            : this.configManager.resolve(pathOrName, this.directories.getCurrentDirectory());
+        return this.configManager.load(resolved);
     }
 
     private getFilesAndProgram(

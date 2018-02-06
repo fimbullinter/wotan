@@ -91,54 +91,54 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
     container.bind(FileSystem).to(MockFileSystem);
     const cm = container.resolve(ConfigurationManager);
     t.is(
-        cm.findConfigurationPath('test/configuration/config-findup/foo.ts'),
+        cm.findPath('test/configuration/config-findup/foo.ts'),
         path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/foo.ts'),
+        cm.findPath('test/configuration/foo.ts'),
         path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-yaml/foo.ts'),
+        cm.findPath('test/configuration/prefer-yaml/foo.ts'),
         path.resolve(cwd, 'test/configuration/prefer-yaml/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-yml/foo.ts'),
+        cm.findPath('test/configuration/prefer-yml/foo.ts'),
         path.resolve(cwd, 'test/configuration/prefer-yml/.wotanrc.yml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-json5/subdir/foo.ts'),
+        cm.findPath('test/configuration/prefer-json5/subdir/foo.ts'),
         path.resolve(cwd, 'test/configuration/prefer-json5/.wotanrc.json5'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-json/foo.ts'),
+        cm.findPath('test/configuration/prefer-json/foo.ts'),
         path.resolve(cwd, 'test/configuration/prefer-json/.wotanrc.json'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/js/foo.ts'),
+        cm.findPath('test/configuration/js/foo.ts'),
         path.resolve(cwd, 'test/configuration/js/.wotanrc.js'),
     );
     t.is(
-        cm.findConfigurationPath('test/foo.ts'),
+        cm.findPath('test/foo.ts'),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('/foo.ts'),
+        cm.findPath('/foo.ts'),
         path.normalize('/.homedir/.wotanrc.json'),
     );
 
     directories.getHomeDirectory = () => '/non-existent';
     t.is(
-        cm.findConfigurationPath('/bar.ts'),
+        cm.findPath('/bar.ts'),
         undefined,
     );
     directories.getHomeDirectory = undefined;
     t.is(
-        cm.findConfigurationPath('/baz.ts'),
+        cm.findPath('/baz.ts'),
         undefined,
     );
     t.is(
-        cm.findConfigurationPath('test/bas.ts'),
+        cm.findPath('test/bas.ts'),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
 });
@@ -769,17 +769,17 @@ test('resolve, read, parse', (t) => {
     const cm = container.get(ConfigurationManager);
 
     t.throws(
-        () => cm.resolveConfigFile('wotan:non-existent-preset', ''),
+        () => cm.resolve('wotan:non-existent-preset', ''),
         "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
     );
     const {root} = path.parse(process.cwd());
     t.throws(
-        () => cm.resolveConfigFile('fooBarBaz', root),
+        () => cm.resolve('fooBarBaz', root),
         `Cannot find module 'fooBarBaz' from '${root}'`,
     );
 
-    t.is(cm.resolveConfigFile('my-config', './test/fixtures'), path.resolve('./test/fixtures/node_modules/my-config.js'));
-    t.is(cm.resolveConfigFile('./invalid', './test/fixtures'), path.resolve('./test/fixtures/invalid.yaml'));
+    t.is(cm.resolve('my-config', './test/fixtures'), path.resolve('./test/fixtures/node_modules/my-config.js'));
+    t.is(cm.resolve('./invalid', './test/fixtures'), path.resolve('./test/fixtures/invalid.yaml'));
 
     t.throws(() => cm.readConfigurationFile('./test/fixtures/invalid.js'));
     t.throws(
@@ -1041,7 +1041,7 @@ test('resolve, read, parse', (t) => {
             filename: path.resolve('.wotanrc.yaml'),
             aliases: undefined,
             extends: [
-                cm.loadConfigurationFromPath('./src/configs/recommended.yaml'),
+                cm.load('./src/configs/recommended.yaml'),
             ],
             rules: undefined,
             settings: undefined,
@@ -1086,7 +1086,7 @@ test('resolve, read, parse', (t) => {
                     exclude: undefined,
                     processor: undefined,
                 },
-                cm.loadConfigurationFromPath('./test/fixtures/configuration/index.json5'),
+                cm.load('./test/fixtures/configuration/index.json5'),
             ],
             rules: undefined,
             settings: undefined,

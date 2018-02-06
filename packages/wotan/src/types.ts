@@ -177,35 +177,36 @@ export interface FormatterConstructor {
 }
 
 export interface Configuration {
-    aliases?: Map<string, Configuration.Alias | null | false>;
-    rules?: Map<string, Configuration.RuleConfig>;
-    settings?: Map<string, any>;
-    filename: string;
-    overrides?: Configuration.Override[];
-    extends: Configuration[];
-    rulesDirectories?: Map<string, string>;
-    processor?: string | null | false;
-    exclude?: string[];
+    readonly aliases?: ReadonlyMap<string, Configuration.Alias>;
+    readonly rules?: ReadonlyMap<string, Configuration.RuleConfig>;
+    readonly settings?: GlobalSettings;
+    readonly filename: string;
+    readonly overrides?: ReadonlyArray<Configuration.Override>;
+    readonly extends: ReadonlyArray<Configuration>;
+    readonly rulesDirectories?: Configuration.RulesDirectoryMap;
+    readonly processor?: string | null | false;
+    readonly exclude?: ReadonlyArray<string>;
 }
 
 export namespace Configuration {
+    export type RulesDirectoryMap = ReadonlyMap<string, ReadonlyArray<string>>;
     export type RuleSeverity = 'off' | 'warning' | 'error';
     export interface RuleConfig {
-        severity?: RuleSeverity;
-        options?: any;
-        rulesDirectories: string[] | undefined;
-        rule: string;
+        readonly severity?: RuleSeverity;
+        readonly options?: any;
+        readonly rulesDirectories: ReadonlyArray<string> | undefined;
+        readonly rule: string;
     }
     export interface Override {
-        rules?: Map<string, RuleConfig>;
-        settings?: Map<string, any>;
-        files: string[];
-        processor?: string | null | false;
+        readonly rules?: ReadonlyMap<string, RuleConfig>;
+        readonly settings?: ReadonlyMap<string, any>;
+        readonly files: ReadonlyArray<string>;
+        readonly processor?: string | null | false;
     }
     export interface Alias {
-        rule: string;
-        options?: any;
-        rulesDirectories: string[] | undefined;
+        readonly rule: string;
+        readonly options?: any;
+        readonly rulesDirectories: ReadonlyArray<string> | undefined;
     }
 }
 
@@ -227,16 +228,19 @@ export interface ReducedConfiguration extends EffectiveConfiguration {
     processor: string | undefined;
 }
 
-export interface ConfigurationProvider<T extends object> {
+export interface ConfigurationProvider {
     find(fileToLint: string): string | undefined;
-    read(fileName: string): T;
     resolve(name: string, basedir: string): string;
-    parse(raw: T, fileName: string, context: ParseConfigurationContext): Configuration;
+    load(fileName: string, context: LoadConfigurationContext): Configuration;
 }
-export abstract class ConfigurationProvider<T> {}
+export abstract class ConfigurationProvider {}
 
-export interface ParseConfigurationContext {
-    parents: ReadonlyArray<string>;
+export interface LoadConfigurationContext {
+    stack: ReadonlyArray<string>;
+    /**
+     * Resolves the given name relative to the current configuration file and returns the parsed Configuration.
+     * This function detects cycles and caches already loaded configurations.
+     */
     load(this: void, name: string): Configuration;
 }
 

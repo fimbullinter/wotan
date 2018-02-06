@@ -1,7 +1,5 @@
 import { injectable } from 'inversify';
-import { CachedFileSystem } from './cached-file-system';
 import {
-    Resolver,
     Configuration,
     CacheManager,
     CacheIdentifier,
@@ -12,10 +10,8 @@ import {
     ConfigurationProvider,
 } from '../types';
 import * as path from 'path';
-import * as json5 from 'json5';
 import { ConfigurationError } from '../error';
-import * as yaml from 'js-yaml';
-import { OFFSET_TO_NODE_MODULES, arrayify, resolveCachedResult } from '../utils';
+import { resolveCachedResult } from '../utils';
 import { reduceConfigurationForFile, getProcessorForFile, getSettingsForFile } from '../configuration';
 
 export const CONFIG_EXTENSIONS = ['.yaml', '.yml', '.json5', '.json', '.js'];
@@ -29,57 +25,65 @@ const configCache = new CacheIdentifier<string, Configuration>('configuration');
 export class ConfigurationManager {
     private configCache: Cache<string, Configuration>;
     constructor(
-        private fs: CachedFileSystem,
-        private resolver: Resolver,
         private directories: DirectoryService,
-        private configProvider: ConfigurationProvider<object>,
+        private configProvider: ConfigurationProvider,
         cache: CacheManager,
     ) {
         this.configCache = cache.create(configCache);
     }
 
-    public findConfigurationPath(file: string): string | undefined {
-        return this.configProvider.find(path.resolve(this.directories.getCurrentDirectory(), file));
+    public findPath(file: string): string | undefined {
+        file = path.resolve(this.directories.getCurrentDirectory(), file);
+        try {
+            return this.configProvider.find(file);
+        } catch (e) {
+            throw new ConfigurationError(`Error finding configuration for '${file}': ${e && e.message}`);
+        }
     }
 
-    public findConfiguration(file: string): Configuration | undefined {
-        const config = this.findConfigurationPath(file);
-        return config === undefined ? undefined : this.loadConfigurationFromPath(config);
+    public find(file: string): Configuration | undefined {
+        const config = this.findPath(file);
+        return config === undefined ? undefined : this.load(config);
     }
 
-    public resolveConfigFile(name: string, basedir: string): string {
-        // ConfigurationError
-        return this.configProvider.resolve(name, path.resolve(this.directories.getCurrentDirectory(), basedir));
+    public resolve(name: string, basedir: string): string {
+        try {
+            return this.configProvider.resolve(name, path.resolve(this.directories.getCurrentDirectory(), basedir));
+        } catch (e) {
+            throw new ConfigurationError(e && e.message);
+        }
     }
 
-    public reduceConfigurationForFile(config: Configuration, file: string): ReducedConfiguration | undefined {
+    public reduce(config: Configuration, file: string): ReducedConfiguration | undefined {
         return reduceConfigurationForFile(config, file, this.directories.getCurrentDirectory());
     }
 
-    public getProcessorForFile(config: Configuration, file: string): string | undefined {
-        return getProcessorForFile(config, file, this.directories.getCurrentDirectory());
+    public getProcessor(config: Configuration, fileName: string): string | undefined {
+        return getProcessorForFile(config, fileName, this.directories.getCurrentDirectory());
     }
 
-    public getSettingsForFile(config: Configuration, file: string): GlobalSettings {
-        return getSettingsForFile(config, file, this.directories.getCurrentDirectory());
+    public getSettings(config: Configuration, fileName: string): GlobalSettings {
+        return getSettingsForFile(config, fileName, this.directories.getCurrentDirectory());
     }
 
-    public loadConfigurationFromPath(file: string): Configuration {
-        return this.loadConfigurationFromPathWorker(path.resolve(this.directories.getCurrentDirectory(), file), []);
-    }
-
-    private loadConfigurationFromPathWorker(file: string, stack: ReadonlyArray<string>): Configuration {
-        return resolveCachedResult(this.configCache, file, () => {
-            if (stack.includes(file))
-                throw new ConfigurationError(`Circular configuration dependency ${stack.join(' => ')} => ${file}`);
-            // ConfigurationError
-            return this.configProvider.parse(this.configProvider.read(file), file, {
-                parents: stack,
-                load: (name) => this.loadConfigurationFromPathWorker(
-                    this.configProvider.resolve(name, path.dirname(file)),
-                    [...stack, file],
-                ),
+    public load(fileName: string): Configuration {
+        const stack: string[] = [];
+        const loadResolved = (file: string): Configuration => {
+            const circular = stack.includes(file);
+            stack.push(file);
+            if (circular)
+                throw new Error(`Circular configuration dependency.`);
+            const config = this.configProvider.load(file, {
+                stack,
+                load: (name) => resolveCachedResult(this.configCache, this.configProvider.resolve(name, path.dirname(file)), loadResolved),
             });
-        });
+            stack.pop();
+            return config;
+        };
+        try {
+            return resolveCachedResult(this.configCache, path.resolve(this.directories.getCurrentDirectory(), fileName), loadResolved);
+        } catch (e) {
+            throw new ConfigurationError(`Error loading ${stack.join(' => ')}: ${e && e.message}`);
+        }
     }
 }
