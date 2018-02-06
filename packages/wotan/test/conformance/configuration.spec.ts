@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import test from 'ava';
-import { reduceConfigurationForFile, getSettingsForFile, getProcessorForFile } from '../../src/configuration';
 import {
     Configuration,
     EffectiveConfiguration,
