@@ -219,7 +219,7 @@ export namespace EffectiveConfiguration {
     export interface RuleConfig {
         severity: Configuration.RuleSeverity;
         options: any;
-        rulesDirectories: string[] | undefined;
+        rulesDirectories: ReadonlyArray<string> | undefined;
         rule: string;
     }
 }

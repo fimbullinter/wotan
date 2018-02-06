@@ -14,11 +14,6 @@ import { ConfigurationError } from '../error';
 import { resolveCachedResult } from '../utils';
 import { reduceConfigurationForFile, getProcessorForFile, getSettingsForFile } from '../configuration';
 
-export const CONFIG_EXTENSIONS = ['.yaml', '.yml', '.json5', '.json', '.js'];
-export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext);
-
-// TODO refactor to use a ConfigurationReader/Finder instead of direct IO
-
 const configCache = new CacheIdentifier<string, Configuration>('configuration');
 
 @injectable()
