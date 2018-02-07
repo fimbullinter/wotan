@@ -81,7 +81,7 @@ export interface RuleContext {
     readonly sourceFile: ts.SourceFile;
     readonly settings: GlobalSettings;
     readonly options: {} | null | undefined;
-    addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
+    addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     /**
      * Detect if the rule is disabled somewhere in the given range.
      * A rule is considered disabled if the given range contains or overlaps a range disabled by line switches.
@@ -89,7 +89,7 @@ export interface RuleContext {
      *
      * @param range The range to check for disables. If you only care about a single position, set `pos` and `end` to the same value.
      */
-    isDisabled(this: void, range: ts.TextRange): boolean;
+    isDisabled(range: ts.TextRange): boolean;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -241,7 +241,7 @@ export interface LoadConfigurationContext {
      * Resolves the given name relative to the current configuration file and returns the parsed Configuration.
      * This function detects cycles and caches already loaded configurations.
      */
-    load(this: void, name: string): Configuration;
+    load(name: string): Configuration;
 }
 
 export const enum Format {

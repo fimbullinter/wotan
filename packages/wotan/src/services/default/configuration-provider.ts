@@ -6,10 +6,10 @@ import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import { OFFSET_TO_NODE_MODULES, arrayify } from '../../utils';
 
-interface RawConfiguration {
+export interface RawConfiguration {
     aliases?: RawConfiguration.AliasMap;
     rules?: RawConfiguration.RuleMap;
-    settings?: {[key: string]: any};
+    settings?: RawConfiguration.SettingsMap;
     extends?: string | string[];
     overrides?: RawConfiguration.Override[];
     rulesDirectories?: RawConfiguration.RulesDirectoryMap;
@@ -17,7 +17,7 @@ interface RawConfiguration {
     processor?: string | null | false;
 }
 
-namespace RawConfiguration {
+export namespace RawConfiguration {
     export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
     export interface RuleConfig {
         severity?: RuleSeverity;
@@ -27,7 +27,7 @@ namespace RawConfiguration {
     export interface Override {
         files: string | string[];
         rules?: RuleMap;
-        settings?: {[key: string]: any};
+        settings?: SettingsMap;
         processor?: string | null | false;
     }
     export interface Alias {
@@ -42,6 +42,9 @@ namespace RawConfiguration {
     }
     export interface RulesDirectoryMap {
         [prefix: string]: string;
+    }
+    export interface SettingsMap {
+        [key: string]: string;
     }
 }
 
@@ -73,15 +76,23 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
     }
 
     public load(filename: string, context: LoadConfigurationContext): Configuration {
-        const raw = this.read(filename);
+        return this.parse(this.read(filename), filename, context);
+    }
+
+    public parse(raw: RawConfiguration, filename: string, context: LoadConfigurationContext): Configuration {
         const dirname = path.dirname(filename);
-        const baseConfigs = arrayify(raw.extends).map(context.load);
+        const baseConfigs = arrayify(raw.extends).map((base) => context.load(base));
         let rulesDirectories: WriteableRulesDirectoryMap | undefined;
         let aliases: WriteableAliasesMap | undefined;
         for (const base of baseConfigs) {
-            if (base.rulesDirectories)
-                rulesDirectories = extendRulesDirectories(rulesDirectories, base.rulesDirectories);
-            if (base.aliases) {
+            if (base.rulesDirectories !== undefined) {
+                if (rulesDirectories === undefined) {
+                    rulesDirectories = new Map(Array.from(base.rulesDirectories, (v): [string, string[]] => [v[0], v[1].slice()]));
+                } else {
+                    extendRulesDirectories(rulesDirectories, base.rulesDirectories);
+                }
+            }
+            if (base.aliases !== undefined) {
                 if (aliases === undefined) {
                     aliases = new Map(base.aliases);
                 } else {
@@ -107,7 +118,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
         };
     }
 
-    private read(filename: string): RawConfiguration {
+    public read(filename: string): RawConfiguration {
         switch (path.extname(filename)) {
             case '.json':
             case '.json5':
@@ -186,9 +197,7 @@ function mapRulesDirectories(receiver: WriteableRulesDirectoryMap | undefined, r
     return receiver;
 }
 
-function extendRulesDirectories(receiver: WriteableRulesDirectoryMap | undefined, current: Configuration.RulesDirectoryMap) {
-    if (receiver === undefined)
-        return new Map(Array.from(current, (v): [string, string[]] => [v[0], v[1].slice()]));
+function extendRulesDirectories(receiver: WriteableRulesDirectoryMap, current: Configuration.RulesDirectoryMap) {
     for (const [key, directories] of current) {
         const prev = receiver.get(key);
         if (prev !== undefined) {
@@ -197,7 +206,6 @@ function extendRulesDirectories(receiver: WriteableRulesDirectoryMap | undefined
             receiver.set(key, directories.slice());
         }
     }
-    return receiver;
 }
 
 function resolveAliases(
@@ -293,7 +301,7 @@ function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration
     }
 }
 
-function mapSettings(settings: {[key: string]: any}) {
+function mapSettings(settings: RawConfiguration.SettingsMap) {
     const result = new Map<string, any>();
     for (const key of Object.keys(settings))
         result.set(key, settings[key]);

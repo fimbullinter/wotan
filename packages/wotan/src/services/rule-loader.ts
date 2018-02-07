@@ -14,7 +14,7 @@ export class RuleLoader {
         this.cache = cache.create(cacheId);
     }
 
-    public loadRule(name: string, directories: string[] | undefined): RuleConstructor | undefined {
+    public loadRule(name: string, directories: ReadonlyArray<string> | undefined): RuleConstructor | undefined {
         if (directories === undefined) {
             const ctor = resolveCachedResult(this.cache, name, this.loadCoreRule);
             if (ctor === undefined)
