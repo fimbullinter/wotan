@@ -8,8 +8,8 @@
   "scripts": {
     "clean": "rimraf '{src,test/conformance}/**/*.{js?(.map),d.ts}'",
     "lint": "run-p lint:tslint lint:wotan",
-    "lint:tslint": "tslint -p .",
-    "lint:wotan": "node src/cli lint",
+    "lint:tslint": "tslint -p tsconfig.build.json",
+    "lint:wotan": "node src/cli lint -p tsconfig.build.json",
     "test": "run-p test:api test:rules test:integration",
     "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",

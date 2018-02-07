@@ -11,6 +11,7 @@
     "test/conformance"
   ],
   "exclude": [
+    "src/index.ts", // prevent import completions from barrel
     "src/**/*.d.ts",
     "test/conformance/**/*.d.ts"
   ]

@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "compile:wotan": "tsc -p packages/wotan",
+    "compile:wotan": "tsc -p packages/wotan/tsconfig.build.json",
     "compile:ve": "tsc -p packages/ve",
     "compile:bifrost": "tsc -p packages/bifrost",
     "compile:heimdall": "tsc -p packages/heimdall",
