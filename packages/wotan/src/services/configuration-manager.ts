@@ -47,7 +47,7 @@ export class ConfigurationManager {
         try {
             return this.configProvider.resolve(name, path.resolve(this.directories.getCurrentDirectory(), basedir));
         } catch (e) {
-            throw new ConfigurationError(e && e.message);
+            throw new ConfigurationError(`${e && e.message}`);
         }
     }
 

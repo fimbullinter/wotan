@@ -7,6 +7,8 @@ import {
     FileSystem,
     Stats,
     ConfigurationProvider,
+    ReducedConfiguration,
+    Configuration,
 } from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
@@ -17,23 +19,58 @@ import * as path from 'path';
 import { ConfigurationManager } from '../../src/services/configuration-manager';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import { DefaultConfigurationProvider } from '../../src/services/default/configuration-provider';
+import { ConfigurationError } from '../../src/error';
 
 // tslint:disable:no-null-keyword
 
 test('ConfigurationManager', (t) => {
     const configProvider: ConfigurationProvider = {
-        find(file) {
-            return file;
+        find() {
+            throw undefined;
         },
-        resolve(file, _basedir) {
-            return file;
+        resolve() {
+            throw null;
         },
-        load(_file, _context) {
-            throw new Error();
+        load() {
+            throw undefined;
         },
     };
 
     const cm = new ConfigurationManager(new NodeDirectoryService(), configProvider, new DefaultCacheManager());
+    t.throws(
+        () => cm.find('foo.ts'),
+        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
+    );
+    configProvider.find = () => {
+        throw new Error();
+    };
+    t.throws(
+        () => cm.find('foo.ts'),
+        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': `,
+    );
+    t.throws(
+        () => cm.resolve('config.yaml', 'dir'),
+        (e) => e instanceof ConfigurationError && e.message === 'null',
+    );
+    configProvider.resolve = () => {
+        throw 'foo';
+    };
+    t.throws(
+        () => cm.resolve('config.yaml', 'dir'),
+        (e) => e instanceof ConfigurationError && e.message === 'undefined',
+    );
+    t.throws(
+        () => cm.load('config.yaml'),
+        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: undefined`,
+    );
+    configProvider.load = () => {
+        throw new Error('foo');
+    };
+    t.throws(
+        () => cm.load('config.yaml'),
+        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: foo`,
+    );
+
     configProvider.find = (f) => {
         t.is(f, path.resolve('foo.ts'));
         return f;
@@ -45,9 +82,115 @@ test('ConfigurationManager', (t) => {
         return basedir + '/' + f;
     };
     t.is(cm.resolve('config.yaml', 'dir'), path.resolve('dir') + '/config.yaml');
+
+    configProvider.resolve = (file, basedir) => path.resolve(basedir, file);
+    configProvider.load = (file, context) => {
+        if (path.extname(file) === '.yaml') {
+            t.is(file, path.resolve('./subdir/config.yaml'));
+            return context.load('./dir/base.json');
+        }
+        t.is(file, path.resolve('./subdir/dir/base.json'));
+        return context.load('../config.yaml');
+    };
+    t.throws(
+        () => cm.load('subdir/config.yaml'),
+        (e) => e instanceof ConfigurationError &&
+            e.message === `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
+                path.resolve('./subdir/config.yaml')}: Circular configuration dependency.`,
+    );
+
+    const config: Configuration = {
+        filename: '/subdir/config.ts',
+        exclude: ['*.spec.js'],
+        rules: undefined,
+        settings: new Map<string, any>([
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        overrides: [
+            {
+                files: ['*.js'],
+                rules: undefined,
+                settings: new Map([['b', 'from override']]),
+                processor: 'js',
+            },
+        ],
+        aliases: undefined,
+        processor: undefined,
+        extends: [
+            {
+                filename: '/basedir/config.yaml',
+                exclude: ['./*.ts'],
+                rules: undefined,
+                overrides: [
+                    {
+                        files: ['*.ts'],
+                        settings: undefined,
+                        rules: undefined,
+                        processor: null,
+                    },
+                ],
+                settings: new Map([['base', 1], ['a', 5]]),
+                processor: 'processor',
+                aliases: undefined,
+                extends: [],
+            },
+        ],
+    };
+
+    check(config, '/foo.spec.js', undefined);
+    t.is(cm.getProcessor(config, '/foo.spec.js'), 'js');
+    t.deepEqual(cm.getSettings(config, '/foo.spec.js'), new Map<string, any>([
+        ['base', 1],
+        ['a', true],
+        ['b', 'from override'],
+    ]));
+    check(config, '/basedir/test.ts', undefined);
+    t.is(cm.getProcessor(config, '/basedir/test.ts'), undefined);
+    t.deepEqual(cm.getSettings(config, '/basedir/test.ts'), new Map<string, any>([
+        ['base', 1],
+        ['a', true],
+        ['b', 'hallo?'],
+    ]));
+    check(config, '/foo.js', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'from override'],
+        ]),
+        rules: new Map(),
+        processor: 'js',
+    });
+
+    check(config, '/foo.ts', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        rules: new Map(),
+        processor: undefined,
+    });
+    check(config, '/foo.jsx', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        rules: new Map(),
+        processor: 'processor',
+    });
+
+    function check(c: Configuration, file: string, expected: ReducedConfiguration | undefined) {
+        t.deepEqual(cm.reduce(c, file), expected);
+        if (expected !== undefined) {
+            t.is(cm.getProcessor(c, file), expected.processor);
+            t.deepEqual(cm.getSettings(c, file), expected.settings);
+        }
+    }
 });
 
-test('findConfigurationPath returns closest .wotanrc and falls back to homedir if available', (t) => {
+test('DefaultConfigurationProvider.find', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
