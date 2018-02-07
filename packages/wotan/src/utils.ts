@@ -12,7 +12,7 @@ import * as path from 'path';
  * ../..     -> node_modules (or @scope)
  * ../../..  -> node_modules if @scoped package
  */
-export const OFFSET_TO_NODE_MODULES = 2; // add 1 if published as scoped module
+export const OFFSET_TO_NODE_MODULES = 3;
 
 export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
     return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;

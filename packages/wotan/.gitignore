@@ -1,3 +1,6 @@
 # keep test files
 !/test/rules/**
 !/test/integration/**
+/index.js
+/index.js.map
+/index.d.ts

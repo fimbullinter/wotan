@@ -11,6 +11,7 @@
     "test/conformance"
   ],
   "exclude": [
+    "index.*",
     "src/**/*.d.ts",
     "test/conformance/**/*.d.ts"
   ]
