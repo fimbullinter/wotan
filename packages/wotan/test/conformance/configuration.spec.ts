@@ -99,6 +99,47 @@ test('ConfigurationManager', (t) => {
                 path.resolve('./subdir/config.yaml')}: Circular configuration dependency.`,
     );
 
+    const loaded: string[] = [];
+    configProvider.load = (file, context) => {
+        loaded.push(file);
+        switch (path.basename(file)) {
+            case 'start.yaml':
+                context.load('./base1.yaml');
+                context.load('./base2.yaml');
+                return context.load('./base3.yaml');
+            case 'base1.yaml':
+                context.load('./base.yaml');
+                return context.load('./base.yaml');
+            case 'base2.yaml':
+                return context.load('./base1.yaml');
+            case 'base3.yaml':
+                context.load('base2.yaml');
+                return context.load('./base.yaml');
+            case 'base.yaml':
+                return {
+                    rules: undefined,
+                    extends: [],
+                    overrides: undefined,
+                    aliases: undefined,
+                    processor: undefined,
+                    settings: undefined,
+                    rulesDirectories: undefined,
+                    exclude: undefined,
+                    filename: file,
+                };
+            default:
+                throw new Error('unexpected file: ' + file);
+        }
+    };
+    cm.load('start.yaml');
+    t.deepEqual(loaded, [
+        path.resolve('start.yaml'),
+        path.resolve('base1.yaml'),
+        path.resolve('base.yaml'),
+        path.resolve('base2.yaml'),
+        path.resolve('base3.yaml'),
+    ]);
+
     const config: Configuration = {
         filename: '/subdir/config.ts',
         exclude: ['*.spec.js'],
