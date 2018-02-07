@@ -5,10 +5,19 @@
       "comment": "Don't allow dependencies from outside the test folder to test",
       "severity": "error",
       "from": {
-        "pathNot": "^test"
+        "pathNot": "^test/"
       },
       "to": {
-        "path": "^test"
+        "path": "^test/"
+      }
+    },
+    {
+      "name": "no-barrel",
+      "comment": "Don't import from index.ts to avoid circular imports",
+      "severity": "error",
+      "from": {},
+      "to": {
+        "path": "^index\\.[jt]s$"
       }
     },
     {
@@ -37,8 +46,8 @@
       "comment": "Warn about dependencies on core modules.",
       "severity": "error",
       "from": {
-        "path": "^(src|bin)",
-        "pathNot": "^src/services/default"
+        "path": "^(src|bin)/",
+        "pathNot": "^src/services/default/"
       },
       "to": {
         "dependencyTypes": [
@@ -52,11 +61,11 @@
       "comment": "Don't access the concretion of a service directly.",
       "severity": "error",
       "from": {
-        "path": "^src",
-        "pathNot": "^src/di/default\\.module\\.(js|ts)$"
+        "path": "^src/",
+        "pathNot": "^src/di/default\\.module\\.[jt]s$"
       },
       "to": {
-        "path": "^src/services/default"
+        "path": "^src/services/default/"
       }
     },
     {
@@ -64,7 +73,7 @@
       "comment": "These npm modules are deprecated - find an alternative.",
       "severity": "warn",
       "from": {
-        "pathNot": "^node_modules"
+        "pathNot": "^node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -86,7 +95,7 @@
       "severity": "error",
       "comment": "Don't allow dependencies to packages not in package.json (except from within node_modules)",
       "from": {
-        "pathNot": "^node_modules"
+        "pathNot": "^node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -102,7 +111,7 @@
       "severity": "info",
       "comment": "nothing serious - but just check you have some serious try/ catches around the import/ requires of these",
       "from": {
-        "pathNot": "^node_modules"
+        "pathNot": "^node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -114,7 +123,7 @@
   "allowed": [
     {
       "from": {
-        "path": "^(src|bin)"
+        "path": "^(src/|bin/|index.[jt]s$)"
       },
       "to": {
         "dependencyTypes": [
@@ -128,7 +137,7 @@
     },
     {
       "from": {
-        "path": "^test"
+        "path": "^test/"
       },
       "to": {
         "dependencyTypes": [
@@ -139,10 +148,18 @@
           "core"
         ]
       }
+    },
+    {
+      "from": {
+        "path": "^test/"
+      },
+      "to": {
+        "path": "^\\.\\./\\.\\./node_modules/typescript/"
+      }
     }
   ],
   "options": {
-    "doNotFollow": "^(../)*node_modules",
+    "doNotFollow": "\\bnode_modules\\b",
     "moduleSystems": ["cjs", "es6"]
   }
 }

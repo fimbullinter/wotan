@@ -3,10 +3,8 @@
   "version": "0.0.1",
   "description": "Pluggable TypeScript and JavaScript linter",
   "bin": "bin/main.js",
-  "main": "src/index",
-  "types": "src/index",
   "scripts": {
-    "clean": "rimraf '{src,test/conformance}/**/*.{js?(.map),d.ts}'",
+    "clean": "rimraf '{index,{src,test/conformance}/**/*}.{js?(.map),d.ts}'",
     "lint": "run-p lint:tslint lint:wotan",
     "lint:tslint": "tslint -p tsconfig.build.json",
     "lint:wotan": "node src/cli lint -p tsconfig.build.json",
@@ -14,7 +12,7 @@
     "test:api": "ava test/conformance -v --snapshot-dir baselines",
     "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
     "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
-    "check-dependencies": "depcruise src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
+    "check-dependencies": "depcruise index.js src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
   },
   "publishConfig": {
     "access": "public"
