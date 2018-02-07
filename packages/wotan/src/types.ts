@@ -388,3 +388,21 @@ export interface DirectoryService {
     getHomeDirectory?(): string;
 }
 export abstract class DirectoryService {}
+
+export interface LineSwitchParser {
+    parse(
+        sourceFile: ts.SourceFile,
+        ruleNames: ReadonlyArray<string>,
+        context: LineSwitchParserContext,
+    ): ReadonlyMap<string, ReadonlyArray<LineSwitch>>;
+}
+export abstract class LineSwitchParser {}
+
+export interface LineSwitchParserContext {
+    getCommentAtPosition(pos: number): ts.CommentRange | undefined;
+}
+
+export interface LineSwitch {
+    readonly enable: boolean;
+    readonly position: number;
+}

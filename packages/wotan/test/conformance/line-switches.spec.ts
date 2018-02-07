@@ -1,9 +1,12 @@
+import 'reflect-metadata';
 import test from 'ava';
 import * as ts from 'typescript';
-import { getDisabledRanges, DisableMap } from '../../src/line-switches';
+import { LineSwitchService, DisableMap } from '../../src/services/line-switches';
+import { DefaultLineSwitchParser } from '../../src/services/default/line-switch-parser';
 import { convertAst } from 'tsutils';
 
 test('getDisabledRanges', (t) => {
+    const lineSwitchService = new LineSwitchService(new DefaultLineSwitchParser());
     const source = `#! shebang
 // wotan-disable
 "/* wotan-enable */" /*wotan-enable*/;
@@ -21,13 +24,13 @@ let foo /* wotan-disable-line */ = true;
         },
     ]]]);
     t.deepEqual(
-        getDisabledRanges(['foobar'], sourceFile),
+        lineSwitchService.getDisabledRanges(sourceFile, ['foobar']),
         expected,
         'without WrappedAst',
     );
 
     t.deepEqual(
-        getDisabledRanges(['foobar'], sourceFile, convertAst(sourceFile).wrapped),
+        lineSwitchService.getDisabledRanges(sourceFile, ['foobar'], () => convertAst(sourceFile).wrapped),
         expected,
         'with WrappedAst',
     );
