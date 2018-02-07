@@ -264,7 +264,7 @@ function resolveNameAndDirectories(rule: string, rulesDirectoryMap: Configuratio
     const rulesDirectories = rulesDirectoryMap && rulesDirectoryMap.get(rule.substr(0, slashIndex));
     if (rulesDirectories === undefined)
         throw new Error('No rulesDirectories specified for prefix');
-    return {rule, rulesDirectories};
+    return {rule: rule.substr(slashIndex + 1), rulesDirectories}; // tslint:disable-line:object-shorthand-properties-first
 }
 
 function mapRules(raw: RawConfiguration.RuleMap, aliases: Configuration['aliases'], rulesDirectoryMap: Configuration['rulesDirectories']) {
@@ -282,10 +282,10 @@ function mapRuleConfig(value: RawConfiguration.RuleConfigValue) {
     if (!value)
         return {};
     const result: {options?: any, severity?: Configuration.RuleSeverity} = {};
-    if ('options' in value)
-        result.options = value.options;
     if ('severity' in value)
         result.severity = mapRuleSeverity(value.severity!);
+    if ('options' in value)
+        result.options = value.options;
     return result;
 }
 
