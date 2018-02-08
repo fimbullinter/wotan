@@ -14,24 +14,24 @@ function execCli(args: string[]): Promise<{err: Error | null, stdout: string, st
     });
 }
 
-test.serial('exits with code 0 on success', async (t) => {
+test('exits with code 0 on success', async (t) => {
     t.is((await execCli(['show', 'src/index.ts'])).code, 0);
 });
 
-test.serial('prints version', async (t) => {
+test('prints version', async (t) => {
     const version = require('../../package.json').version; // tslint:disable-line:no-require-imports
     t.deepEqual(await execCli(['-v']), {stdout: `${version}\n`, stderr: '', code: 0, err: null}); // tslint:disable-line:no-null-keyword
     t.is((await execCli(['version'])).stdout, `${version}\n`);
 });
 
-test.serial('exits with code 1 on configuration error', async (t) => {
+test('exits with code 1 on configuration error', async (t) => {
     const result = await execCli(['show', '--wrong-option']);
     t.is(result.code, 1);
     t.is(result.stderr, `Unknown option '--wrong-option'.\n`);
     t.is(result.stdout, '');
 });
 
-test.serial('exits with code 1 on exception and prints stack trace', async (t) => {
+test('exits with code 1 on exception and prints stack trace', async (t) => {
     const result = await execCli(['lint', __filename, '-c', 'test/fixtures/configuration/invalid-rule.yaml']);
     t.is(result.code, 1);
     t.true(result.stderr.startsWith(path.resolve('test/fixtures/invalid.js:')));
@@ -40,7 +40,7 @@ test.serial('exits with code 1 on exception and prints stack trace', async (t) =
     t.is(result.stdout, '');
 });
 
-test.serial('exits with code 2 on lint error', async (t) => {
+test('exits with code 2 on lint error', async (t) => {
     const result = await execCli(['lint', 'test/rules/trailing-newline/whitespace.ts', '--format', 'json']);
     t.is(result.code, 2);
     t.is(result.stderr, '');
