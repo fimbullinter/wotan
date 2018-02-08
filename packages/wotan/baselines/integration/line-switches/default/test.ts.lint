@@ -32,6 +32,7 @@ bar/* wotan-disable */:; /* wotan-enable */
 foo:;
 bar:; // wotan-disable-line
 baz:; // wotan-disable
+~~~                    [error no-unused-label: Unused label 'baz'.]
 bas:;
 
 foo:; // wotan-enable-line
