@@ -1,0 +1,10 @@
+rulesDirectories:
+  custom: ./my-rules
+  local: ..
+rules:
+  custom/my-cool-rule: error
+  local/base: error
+aliases:
+  a:
+    my-alias:
+      rule: custom/aliased

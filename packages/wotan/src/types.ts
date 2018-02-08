@@ -81,7 +81,7 @@ export interface RuleContext {
     readonly sourceFile: ts.SourceFile;
     readonly settings: GlobalSettings;
     readonly options: {} | null | undefined;
-    addFailure(this: void, start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
+    addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     /**
      * Detect if the rule is disabled somewhere in the given range.
      * A rule is considered disabled if the given range contains or overlaps a range disabled by line switches.
@@ -89,7 +89,7 @@ export interface RuleContext {
      *
      * @param range The range to check for disables. If you only care about a single position, set `pos` and `end` to the same value.
      */
-    isDisabled(this: void, range: ts.TextRange): boolean;
+    isDisabled(range: ts.TextRange): boolean;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -176,63 +176,37 @@ export interface FormatterConstructor {
     new(): AbstractFormatter;
 }
 
-export interface RawConfiguration {
-    aliases?: {[prefix: string]: {[name: string]: RawConfiguration.Alias | null | false}};
-    rules?: {[key: string]: RawConfiguration.RuleConfigValue};
-    settings?: {[key: string]: any};
-    extends?: string | string[];
-    overrides?: RawConfiguration.Override[];
-    rulesDirectories?: {[prefix: string]: string};
-    exclude?: string | string[];
-    processor?: string | null | false;
-}
-
-export namespace RawConfiguration {
-    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
-    export interface RuleConfig {
-        severity?: RuleSeverity;
-        options?: any;
-    }
-    export type RuleConfigValue = RuleSeverity | RuleConfig | null;
-    export interface Override {
-        files: string | string[];
-        rules?: {[key: string]: RawConfiguration.RuleConfigValue};
-        settings?: {[key: string]: any};
-        processor?: string | null | false;
-    }
-    export interface Alias {
-        rule: string;
-        options?: any;
-    }
-}
-
 export interface Configuration {
-    aliases?: Map<string, Configuration.Alias | null | false>;
-    rules?: Map<string, Configuration.RuleConfig>;
-    settings?: Map<string, any>;
-    filename: string;
-    overrides?: Configuration.Override[];
-    extends: Configuration[];
-    rulesDirectories?: Map<string, string>;
-    processor?: string | null | false;
-    exclude?: string[];
+    readonly aliases?: ReadonlyMap<string, Configuration.Alias>;
+    readonly rules?: ReadonlyMap<string, Configuration.RuleConfig>;
+    readonly settings?: GlobalSettings;
+    readonly filename: string;
+    readonly overrides?: ReadonlyArray<Configuration.Override>;
+    readonly extends: ReadonlyArray<Configuration>;
+    readonly rulesDirectories?: Configuration.RulesDirectoryMap;
+    readonly processor?: string | null | false;
+    readonly exclude?: ReadonlyArray<string>;
 }
 
 export namespace Configuration {
+    export type RulesDirectoryMap = ReadonlyMap<string, ReadonlyArray<string>>;
     export type RuleSeverity = 'off' | 'warning' | 'error';
     export interface RuleConfig {
-        severity?: RuleSeverity;
-        options?: any;
+        readonly severity?: RuleSeverity;
+        readonly options?: any;
+        readonly rulesDirectories: ReadonlyArray<string> | undefined;
+        readonly rule: string;
     }
     export interface Override {
-        rules?: Map<string, RuleConfig>;
-        settings?: Map<string, any>;
-        files: string[];
-        processor?: string | null | false;
+        readonly rules?: ReadonlyMap<string, RuleConfig>;
+        readonly settings?: ReadonlyMap<string, any>;
+        readonly files: ReadonlyArray<string>;
+        readonly processor?: string | null | false;
     }
     export interface Alias {
-        rule: string;
-        options?: any;
+        readonly rule: string;
+        readonly options?: any;
+        readonly rulesDirectories: ReadonlyArray<string> | undefined;
     }
 }
 
@@ -245,13 +219,29 @@ export namespace EffectiveConfiguration {
     export interface RuleConfig {
         severity: Configuration.RuleSeverity;
         options: any;
-        rulesDirectories: string[] | undefined;
+        rulesDirectories: ReadonlyArray<string> | undefined;
         rule: string;
     }
 }
 
 export interface ReducedConfiguration extends EffectiveConfiguration {
     processor: string | undefined;
+}
+
+export interface ConfigurationProvider {
+    find(fileToLint: string): string | undefined;
+    resolve(name: string, basedir: string): string;
+    load(fileName: string, context: LoadConfigurationContext): Configuration;
+}
+export abstract class ConfigurationProvider {}
+
+export interface LoadConfigurationContext {
+    stack: ReadonlyArray<string>;
+    /**
+     * Resolves the given name relative to the current configuration file and returns the parsed Configuration.
+     * This function detects cycles and caches already loaded configurations.
+     */
+    load(name: string): Configuration;
 }
 
 export const enum Format {

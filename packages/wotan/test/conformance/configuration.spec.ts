@@ -1,15 +1,16 @@
 import 'reflect-metadata';
 import test from 'ava';
-import { reduceConfigurationForFile, getSettingsForFile, getProcessorForFile } from '../../src/configuration';
 import {
-    Configuration,
-    EffectiveConfiguration,
     CacheManager,
     Resolver,
     DirectoryService,
     FileSystem,
     Stats,
+    ConfigurationProvider,
     ReducedConfiguration,
+    Configuration,
+    MessageHandler,
+    LoadConfigurationContext,
 } from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
@@ -18,12 +19,223 @@ import { NodeResolver } from '../../src/services/default/resolver';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { ConfigurationManager } from '../../src/services/configuration-manager';
-import { CORE_DI_MODULE } from '../../src/di/core.module';
-import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
+import { NodeDirectoryService } from '../../src/services/default/directory-service';
+import { DefaultConfigurationProvider } from '../../src/services/default/configuration-provider';
+import { ConfigurationError } from '../../src/error';
+import { NodeFileSystem } from '../../src/services/default/file-system';
+import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
 
 // tslint:disable:no-null-keyword
 
-test('findConfigurationPath returns closest .wotanrc and falls back to homedir if available', (t) => {
+test('ConfigurationManager', (t) => {
+    const configProvider: ConfigurationProvider = {
+        find() {
+            throw undefined;
+        },
+        resolve() {
+            throw null;
+        },
+        load() {
+            throw undefined;
+        },
+    };
+
+    const cm = new ConfigurationManager(new NodeDirectoryService(), configProvider, new DefaultCacheManager());
+    t.throws(
+        () => cm.find('foo.ts'),
+        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
+    );
+    configProvider.find = () => {
+        throw new Error();
+    };
+    t.throws(
+        () => cm.find('foo.ts'),
+        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': `,
+    );
+    t.throws(
+        () => cm.resolve('config.yaml', 'dir'),
+        (e) => e instanceof ConfigurationError && e.message === 'null',
+    );
+    configProvider.resolve = () => {
+        throw 'foo';
+    };
+    t.throws(
+        () => cm.resolve('config.yaml', 'dir'),
+        (e) => e instanceof ConfigurationError && e.message === 'undefined',
+    );
+    t.throws(
+        () => cm.load('config.yaml'),
+        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: undefined`,
+    );
+    configProvider.load = () => {
+        throw new Error('foo');
+    };
+    t.throws(
+        () => cm.load('config.yaml'),
+        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: foo`,
+    );
+
+    configProvider.find = (f) => {
+        t.is(f, path.resolve('foo.ts'));
+        return f;
+    };
+    t.is(cm.findPath('foo.ts'), path.resolve('foo.ts'));
+    configProvider.resolve = (f, basedir) => {
+        t.is(f, 'config.yaml');
+        t.is(basedir, path.resolve('dir'));
+        return basedir + '/' + f;
+    };
+    t.is(cm.resolve('config.yaml', 'dir'), path.resolve('dir') + '/config.yaml');
+
+    configProvider.resolve = (file, basedir) => path.resolve(basedir, file);
+    configProvider.load = (file, context) => {
+        if (path.extname(file) === '.yaml') {
+            t.is(file, path.resolve('./subdir/config.yaml'));
+            return context.load('./dir/base.json');
+        }
+        t.is(file, path.resolve('./subdir/dir/base.json'));
+        return context.load('../config.yaml');
+    };
+    t.throws(
+        () => cm.load('subdir/config.yaml'),
+        (e) => e instanceof ConfigurationError &&
+            e.message === `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
+                path.resolve('./subdir/config.yaml')}: Circular configuration dependency.`,
+    );
+
+    const loaded: string[] = [];
+    configProvider.load = (file, context) => {
+        loaded.push(file);
+        switch (path.basename(file)) {
+            case 'start.yaml':
+                context.load('./base1.yaml');
+                context.load('./base2.yaml');
+                return context.load('./base3.yaml');
+            case 'base1.yaml':
+                context.load('./base.yaml');
+                return context.load('./base.yaml');
+            case 'base2.yaml':
+                return context.load('./base1.yaml');
+            case 'base3.yaml':
+                context.load('base2.yaml');
+                return context.load('./base.yaml');
+            case 'base.yaml':
+                return {
+                    rules: undefined,
+                    extends: [],
+                    overrides: undefined,
+                    aliases: undefined,
+                    processor: undefined,
+                    settings: undefined,
+                    rulesDirectories: undefined,
+                    exclude: undefined,
+                    filename: file,
+                };
+            default:
+                throw new Error('unexpected file: ' + file);
+        }
+    };
+    cm.load('start.yaml');
+    t.deepEqual(loaded, [
+        path.resolve('start.yaml'),
+        path.resolve('base1.yaml'),
+        path.resolve('base.yaml'),
+        path.resolve('base2.yaml'),
+        path.resolve('base3.yaml'),
+    ]);
+
+    const config: Configuration = {
+        filename: '/subdir/config.ts',
+        exclude: ['*.spec.js'],
+        rules: undefined,
+        settings: new Map<string, any>([
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        overrides: [
+            {
+                files: ['*.js'],
+                rules: undefined,
+                settings: new Map([['b', 'from override']]),
+                processor: 'js',
+            },
+        ],
+        aliases: undefined,
+        processor: undefined,
+        extends: [
+            {
+                filename: '/basedir/config.yaml',
+                exclude: ['./*.ts'],
+                rules: undefined,
+                overrides: [
+                    {
+                        files: ['*.ts'],
+                        settings: undefined,
+                        rules: undefined,
+                        processor: null,
+                    },
+                ],
+                settings: new Map([['base', 1], ['a', 5]]),
+                processor: 'processor',
+                aliases: undefined,
+                extends: [],
+            },
+        ],
+    };
+
+    check(config, '/foo.spec.js', undefined);
+    t.is(cm.getProcessor(config, '/foo.spec.js'), 'js');
+    t.deepEqual(cm.getSettings(config, '/foo.spec.js'), new Map<string, any>([
+        ['base', 1],
+        ['a', true],
+        ['b', 'from override'],
+    ]));
+    check(config, '/basedir/test.ts', undefined);
+    t.is(cm.getProcessor(config, '/basedir/test.ts'), undefined);
+    t.deepEqual(cm.getSettings(config, '/basedir/test.ts'), new Map<string, any>([
+        ['base', 1],
+        ['a', true],
+        ['b', 'hallo?'],
+    ]));
+    check(config, '/foo.js', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'from override'],
+        ]),
+        rules: new Map(),
+        processor: 'js',
+    });
+
+    check(config, '/foo.ts', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        rules: new Map(),
+        processor: undefined,
+    });
+    check(config, '/foo.jsx', {
+        settings: new Map<string, any>([
+            ['base', 1],
+            ['a', true],
+            ['b', 'hallo?'],
+        ]),
+        rules: new Map(),
+        processor: 'processor',
+    });
+
+    function check(c: Configuration, file: string, expected: ReducedConfiguration | undefined) {
+        t.deepEqual(cm.reduce(c, file), expected);
+        if (expected !== undefined) {
+            t.is(cm.getProcessor(c, file), expected.processor);
+            t.deepEqual(cm.getSettings(c, file), expected.settings);
+        }
+    }
+});
+
+test('DefaultConfigurationProvider.find', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
@@ -89,1116 +301,411 @@ test('findConfigurationPath returns closest .wotanrc and falls back to homedir i
         }
     }
     container.bind(FileSystem).to(MockFileSystem);
-    const cm = container.resolve(ConfigurationManager);
+    const cp = container.resolve(DefaultConfigurationProvider);
     t.is(
-        cm.findConfigurationPath('test/configuration/config-findup/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/config-findup/foo.ts')),
         path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/foo.ts')),
         path.resolve(cwd, 'test/configuration/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-yaml/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/prefer-yaml/foo.ts')),
         path.resolve(cwd, 'test/configuration/prefer-yaml/.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-yml/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/prefer-yml/foo.ts')),
         path.resolve(cwd, 'test/configuration/prefer-yml/.wotanrc.yml'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-json5/subdir/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/prefer-json5/subdir/foo.ts')),
         path.resolve(cwd, 'test/configuration/prefer-json5/.wotanrc.json5'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/prefer-json/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/prefer-json/foo.ts')),
         path.resolve(cwd, 'test/configuration/prefer-json/.wotanrc.json'),
     );
     t.is(
-        cm.findConfigurationPath('test/configuration/js/foo.ts'),
+        cp.find(path.resolve(cwd, 'test/configuration/js/foo.ts')),
         path.resolve(cwd, 'test/configuration/js/.wotanrc.js'),
     );
     t.is(
-        cm.findConfigurationPath('test/foo.ts'),
+        cp.find(path.resolve(cwd, path.resolve(cwd, 'test/foo.ts'))),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
     t.is(
-        cm.findConfigurationPath('/foo.ts'),
+        cp.find(path.resolve(cwd, '/foo.ts')),
         path.normalize('/.homedir/.wotanrc.json'),
     );
 
     directories.getHomeDirectory = () => '/non-existent';
     t.is(
-        cm.findConfigurationPath('/bar.ts'),
+        cp.find(path.resolve(cwd, '/bar.ts')),
         undefined,
     );
     directories.getHomeDirectory = undefined;
     t.is(
-        cm.findConfigurationPath('/baz.ts'),
+        cp.find(path.resolve(cwd, '/baz.ts')),
         undefined,
     );
     t.is(
-        cm.findConfigurationPath('test/bas.ts'),
+        cp.find(path.resolve(cwd, 'test/bas.ts')),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
 });
 
-test('Circular aliases throw an exception', (t) => {
-    const config: Configuration = {
-        aliases: new Map<string, Configuration.Alias>([
-            ['my/ok', { rule: 'no-debugger' }],
-            ['my/foo', { rule: 'my/foo' }],
-            ['my/bar', { rule: 'other/bar' }],
-            ['other/bar', { rule: 'my/bar' }],
-        ]),
-        extends: [],
-        filename: '/config.yaml',
-        overrides: [
-            {
-                files: ['a.ts'],
-                rules: new Map<string, Configuration.RuleConfig>([['my/ok', { severity: 'error' }]]),
-            },
-            {
-                files: ['b.ts'],
-                rules: new Map<string, Configuration.RuleConfig>([['my/foo', { severity: 'error' }]]),
-            },
-            {
-                files: ['c.ts'],
-                rules: new Map<string, Configuration.RuleConfig>([['my/bar', { severity: 'error' }]]),
-            },
-            {
-                files: ['d.ts'],
-                rules: new Map<string, Configuration.RuleConfig>([['other/bar', { severity: 'error' }]]),
-            },
-        ],
-    };
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([['my/ok', {
-            options: undefined,
-            rule: 'no-debugger',
-            rulesDirectories: undefined,
-            severity: 'error',
-        }]]),
-    });
-    t.throws(() => reduceConfigurationForFile(config, '/b.ts', '/'), 'Circular alias: my/foo => my/foo.');
-    t.throws(() => reduceConfigurationForFile(config, '/c.ts', '/'), 'Circular alias: my/bar => other/bar => my/bar.');
-    t.throws(() => reduceConfigurationForFile(config, '/d.ts', '/'), 'Circular alias: other/bar => my/bar => other/bar.');
-});
-
-test('Aliases refer to rules or aliases in the scope they are declared', (t) => {
-    const config: Configuration = {
-        aliases: new Map<string, Configuration.Alias>([
-            ['my/foo', { rule: 'other/foo' }],
-            ['my/circular', { rule: 'circular/circular' }],
-        ]),
-        extends: [{
-            aliases: new Map<string, Configuration.Alias>([
-                ['other/foo', { rule: 'my/foo' }],
-                ['circular/circular', {rule: 'circular/circular'}],
-            ]),
-            extends: [],
-            filename: '/base.yaml',
-            rulesDirectories: new Map([['my', '/baseRules']]),
-        }],
-        filename: '/config.yaml',
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['my/foo', { severity: 'error' }],
-        ]),
-        overrides: [{
-            files: ['b.ts'],
-            rules: new Map<string, Configuration.RuleConfig>([
-                ['my/circular', { severity: 'error' }],
-            ]),
-        }],
-        rulesDirectories: new Map([['my', '/extendingRules']]),
-    };
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(config, '/a.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([['my/foo', {
-            options: undefined,
-            rule: 'my/foo',
-            severity: 'error',
-            rulesDirectories: ['/baseRules'],
-        }]]),
-    });
-
-    t.throws(
-        () => reduceConfigurationForFile(config, '/b.ts', '/'),
-        'Circular alias: my/circular => circular/circular => circular/circular.',
-    );
-});
-
-test("Aliases don't alter options unless explicitly specified", (t) => {
-    const base: Configuration = {
-        aliases: new Map<string, Configuration.Alias>([
-            ['base/ban-with-statement', { rule: 'no-restricted-syntax', options: 'WithStatement' }],
-            ['base/ban-delete-expression', { rule: 'no-restricted-syntax', options: 'DeleteExpression' }],
-        ]),
-        extends: [],
-        filename: '/base.yaml',
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['base/ban-with-statement', { severity: 'error' }],
-            ['base/ban-delete-expression', { severity: 'error' }],
-        ]),
-    };
-    const extending1: Configuration = {
-        aliases: new Map<string, Configuration.Alias>([
-            ['my/ban-with-statement', { rule: 'base/ban-with-statement', options: 'SourceFile>WithStatement'}],
-            ['my/ban-delete-expression', { rule: 'base/ban-with-statement', options: undefined }],
-            ['my/foo', { rule: 'my/ban-with-statement' }],
-            ['my/bar', { rule: 'my/foo' }],
-        ]),
-        extends: [base],
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['my/ban-with-statement', { severity: 'error' }],
-            ['my/ban-delete-expression', { severity: 'error' }],
-            ['my/foo', { severity: 'error' }],
-            ['my/bar', { severity: 'error', options: 'FooBar' }],
-        ]),
-        filename: '/extending1.yaml',
-    };
-
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending1, '/a', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-            [
-                'base/ban-with-statement',
-                { rule: 'no-restricted-syntax', options: 'WithStatement', severity: 'error', rulesDirectories: undefined},
-            ],
-            [
-                'base/ban-delete-expression',
-                { rule: 'no-restricted-syntax', options: 'DeleteExpression', severity: 'error', rulesDirectories: undefined},
-            ],
-            [
-                'my/ban-with-statement',
-                { rule: 'no-restricted-syntax', options: 'SourceFile>WithStatement', severity: 'error', rulesDirectories: undefined},
-            ],
-            [
-                'my/ban-delete-expression',
-                { rule: 'no-restricted-syntax', options: undefined, severity: 'error', rulesDirectories: undefined},
-            ],
-            [
-                'my/foo',
-                { rule: 'no-restricted-syntax', options: 'SourceFile>WithStatement', severity: 'error', rulesDirectories: undefined},
-            ],
-            [
-                'my/bar',
-                { rule: 'no-restricted-syntax', options: 'FooBar', severity: 'error', rulesDirectories: undefined},
-            ],
-        ]),
-    });
-});
-
-test('Aliases shadow rules until cleared', (t) => {
-    const base: Configuration = {
-        aliases: new Map<string, Configuration.Alias>([
-            ['a/ban-with-statement', { rule: 'b/no-restricted-syntax', options: 'WithStatement' }],
-            ['b/ban-delete-expression', { rule: 'b/no-restricted-syntax', options: 'DeleteExpression' }],
-        ]),
-        rulesDirectories: new Map([['b', '/baseB']]),
-        extends: [],
-        filename: '/base.yaml',
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['a/ban-with-statement', { severity: 'error' }],
-            ['b/ban-delete-expression', { severity: 'error' }],
-            ['b/no-restricted-syntax', { severity: 'error', options: 'AnyKeyword' }],
-        ]),
-    };
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(base, '/a.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-            [
-                'a/ban-with-statement',
-                { rule: 'b/no-restricted-syntax', options: 'WithStatement', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/ban-delete-expression',
-                { rule: 'b/no-restricted-syntax', options: 'DeleteExpression', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/no-restricted-syntax',
-                { rule: 'b/no-restricted-syntax', options: 'AnyKeyword', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-        ]),
-    });
-
-    const extending: Configuration = {
-        extends: [base],
-        aliases: new Map<string, Configuration.Alias | null>([
-            ['a/ban-with-statement', null],
-            ['b/ban-delete-expression', null],
-        ]),
-        filename: '/extending.yaml',
-        rulesDirectories: new Map([['b', '/extB'], ['a', '/extA']]),
-        overrides: [{
-            files: ['b.ts'],
-            rules: new Map<string, Configuration.RuleConfig>([
-                ['a/ban-with-statement', {}],
-                ['b/ban-delete-expression', {}],
-                ['b/no-restricted-syntax', {}],
-            ]),
-        }],
-    };
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending, '/a.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-            [
-                'a/ban-with-statement',
-                { rule: 'b/no-restricted-syntax', options: 'WithStatement', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/ban-delete-expression',
-                { rule: 'b/no-restricted-syntax', options: 'DeleteExpression', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/no-restricted-syntax',
-                { rule: 'b/no-restricted-syntax', options: 'AnyKeyword', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-        ]),
-    }, 'Only clearing alias does not invalidate the reference'); // tslint:disable-line:align
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending, '/b.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-            [
-                'a/ban-with-statement',
-                { rule: 'a/ban-with-statement', options: 'WithStatement', severity: 'error', rulesDirectories: ['/extA']},
-            ],
-            [
-                'b/ban-delete-expression',
-                { rule: 'b/ban-delete-expression', options: 'DeleteExpression', severity: 'error', rulesDirectories: ['/extB', '/baseB']},
-            ],
-            [
-                'b/no-restricted-syntax',
-                { rule: 'b/no-restricted-syntax', options: 'AnyKeyword', severity: 'error', rulesDirectories: ['/extB', '/baseB']},
-            ],
-        ]),
-    }, 'Rules need to be referenced again for cleared alias to have an effect'); // tslint:disable-line:align
-
-    const extending2: Configuration = {
-        extends: [base],
-        aliases: new Map<string, Configuration.Alias>([
-            ['c/ban-delete-expression', { rule: 'b/ban-delete-expression' }],
-        ]),
-        filename: '/extending2.yaml',
-        rulesDirectories: new Map([['b', '/extB'], ['c', '/extC']]),
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['c/ban-delete-expression', {}],
-        ]),
-    };
-    t.deepEqual<ReducedConfiguration | undefined>(reduceConfigurationForFile(extending2, '/a.ts', '/'), {
-        processor: undefined,
-        settings: new Map(),
-        rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-            [
-                'a/ban-with-statement',
-                { rule: 'b/no-restricted-syntax', options: 'WithStatement', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/ban-delete-expression',
-                { rule: 'b/no-restricted-syntax', options: 'DeleteExpression', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'b/no-restricted-syntax',
-                { rule: 'b/no-restricted-syntax', options: 'AnyKeyword', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-            [
-                'c/ban-delete-expression',
-                { rule: 'b/no-restricted-syntax', options: 'DeleteExpression', severity: 'error', rulesDirectories: ['/baseB']},
-            ],
-        ]),
-    }, 'c/ should not pick up additional rulesDirectories'); // tslint:disable-line:align
-});
-
-test('overrides, excludes, globs', (t) => {
-    const config: Configuration = {
-        filename: '/project/.wotanrc.yaml',
-        extends: [],
-        processor: '/default',
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['foo', { severity: 'error' }],
-            ['bar', { severity: 'warning' }],
-            ['baz', { severity: 'error', options: 1 }],
-            ['bas', { severity: 'warning', options: false }],
-        ]),
-        settings: new Map<string, any>([
-            ['one', true],
-            ['two', 'hello?'],
-        ]),
-        overrides: [
-            {
-                files: ['*.js'],
-                rules: new Map<string, Configuration.RuleConfig>([
-                    ['bas', {severity: 'error'}],
-                ]),
-                processor: '/node_modules/js-processor',
-            },
-            {
-                files: ['*.spec.*', '!./*.spec.*'],
-                rules: new Map<string, Configuration.RuleConfig>([
-                    ['foo', { severity: 'off' }],
-                    ['bas', { options: 'check-stuff' }],
-                    ['other', { severity: 'warning' }],
-                ]),
-                settings: new Map<string, any>([
-                    ['three', 'three'],
-                    ['one', false],
-                ]),
-                processor: '',
-            },
-            {
-                files: ['./*.ts'],
-                processor: false,
-            },
-        ],
-    };
-
-    check(
-        config,
-        '/project/a.spec.js',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'error', options: false, rulesDirectories: undefined, rule: 'bas'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-            ]),
-            processor: '/node_modules/js-processor',
-        },
-    );
-
-    check(
-        config,
-        '/a.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-            ]),
-            processor: '/default',
-        },
-    );
-
-    check(
-        config,
-        '/project/a.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    check(
-        config,
-        '/project/a.spec.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    check(
-        config,
-        '/a.spec.js',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'off', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'error', options: 'check-stuff', rulesDirectories: undefined, rule: 'bas'}],
-                ['other', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'other'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', false],
-                ['two', 'hello?'],
-                ['three', 'three'],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    check(
-        config,
-        '/project/subdir/a.spec.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'off', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: 'check-stuff', rulesDirectories: undefined, rule: 'bas'}],
-                ['other', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'other'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', false],
-                ['two', 'hello?'],
-                ['three', 'three'],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    const extended: Configuration = {
-        filename: '/project/test/.wotanrc.json',
-        exclude: ['*.js', './foobar.ts'],
-        extends: [config],
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['special', { severity: 'warning' }],
-        ]),
-        settings: new Map([
-            ['special', true],
-        ]),
-    };
-
-    t.is(reduceConfigurationForFile(extended, '/foo.js', '/'), undefined);
-    t.is(reduceConfigurationForFile(extended, '/project/foo.js', '/'), undefined);
-    t.is(reduceConfigurationForFile(extended, '/project/test/foo.js', '/'), undefined);
-    t.is(reduceConfigurationForFile(extended, '/project/test/subdir/foo.js', '/'), undefined);
-    t.is(reduceConfigurationForFile(extended, '/project/test/foobar.ts', '/'), undefined);
-
-    check(
-        extended,
-        '/project/test/subdir/foobar.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-                ['special', true],
-            ]),
-            processor: '/default',
-        },
-    );
-
-    check(
-        extended,
-        '/project/foobar.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-                ['special', true],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    const extended2: Configuration = {
-        extends: [extended],
-        filename: '/project/test/subdir/.wotanrc.json5',
-        processor: false,
-    };
-
-    t.is(reduceConfigurationForFile(extended2, '/foo.js', '/'), undefined);
-
-    check(
-        extended2,
-        '/project/test/subdir/foobar.ts',
-        {
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['foo', {severity: 'error', options: undefined, rulesDirectories: undefined, rule: 'foo'}],
-                ['bar', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'bar'}],
-                ['baz', {severity: 'error', options: 1, rulesDirectories: undefined, rule: 'baz'}],
-                ['bas', {severity: 'warning', options: false, rulesDirectories: undefined, rule: 'bas'}],
-                ['special', {severity: 'warning', options: undefined, rulesDirectories: undefined, rule: 'special'}],
-            ]),
-            settings: new Map<string, any>([
-                ['one', true],
-                ['two', 'hello?'],
-                ['special', true],
-            ]),
-            processor: undefined,
-        },
-    );
-
-    t.is(getProcessorForFile(extended2, '/foo.js', '/'), undefined);
-    t.is(getProcessorForFile(extended, '/foo.js', '/'), '/node_modules/js-processor');
-    t.is(getProcessorForFile(extended, '/foo.spec.js', '/'), undefined);
-    t.is(getProcessorForFile(extended, '/project/foo.js', '/'), '/node_modules/js-processor');
-    t.is(getProcessorForFile(extended, '/project/foo.spec.js', '/'), '/node_modules/js-processor');
-
-    t.deepEqual(getSettingsForFile(extended2, '/project/test/subdir/foo.js', '/'), new Map<string, any>([
-        ['one', true],
-        ['two', 'hello?'],
-        ['special', true],
-    ]));
-
-    const empty: Configuration = {
-        filename: '/.wotanrc.yaml',
-        extends: [
-            {
-                filename: '/base1.yaml',
-                extends: [],
-                processor: 'test',
-            },
-            {
-                filename: '/base2.yaml',
-                extends: [],
-            },
-        ],
-    };
-
-    t.is(getProcessorForFile(empty, '/foo.ts', '/'), 'test');
-
-    function check(c: Configuration, file: string, expected: ReducedConfiguration) {
-        t.deepEqual(reduceConfigurationForFile(c, file, '/'), expected);
-        t.deepEqual(getSettingsForFile(c, file, '/'), expected.settings);
-        t.deepEqual(getProcessorForFile(c, file, '/'), expected.processor);
-    }
-});
-
-test('extending multiple configs', (t) => {
-    const config: Configuration = {
-        filename: '/derived.yaml',
-        rules: new Map<string, Configuration.RuleConfig>([
-            ['one/baz', {severity: 'error'}],
-            ['two/baz', {severity: 'error'}],
-            ['three/baz', {severity: 'error'}],
-        ]),
-        extends: [
-            {
-                filename: '/base-zero.yaml',
-                extends: [],
-            },
-            {
-                filename: '/base-one.yaml',
-                extends: [],
-                aliases: new Map<string, Configuration.Alias>([
-                    ['one/alias', {rule: 'one/foo'}],
-                ]),
-                rulesDirectories: new Map([['one', '/one'], ['two', '/two']]),
-                rules: new Map<string, Configuration.RuleConfig>([
-                    ['one/bar', {severity: 'error'}],
-                    ['one/alias', {severity: 'error'}],
-                ]),
-            },
-            {
-                filename: '/base-two.yaml',
-                extends: [],
-                aliases: new Map<string, Configuration.Alias>([
-                    ['three/alias', {rule: 'three/foo'}],
-                    ['one/alias', {rule: 'foobar'}],
-                ]),
-                rulesDirectories: new Map([['one', '/other-one'], ['three', '/three']]),
-                rules: new Map<string, Configuration.RuleConfig>([
-                    ['one/bas', {severity: 'error'}],
-                    ['three/bar', {severity: 'error'}],
-                    ['three/alias', {severity: 'error'}],
-                ]),
-            },
-            {
-                filename: '/base-unused.yaml',
-                extends: [],
-                aliases: new Map<string, Configuration.Alias>([
-                    ['unused/alias', {rule: 'unused/foo'}],
-                    ['one/alias', {rule: 'foobaz'}],
-                ]),
-                rulesDirectories: new Map([['unused', '/unused'], ['three', '/other-three']]),
-            },
-        ],
-    };
-
-    t.deepEqual<ReducedConfiguration | undefined>(
-        reduceConfigurationForFile(config, '/file', '/'),
-        {
-            settings: new Map(),
-            processor: undefined,
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['one/bar', {severity: 'error', rule: 'one/bar', options: undefined, rulesDirectories: ['/one']}],
-                ['one/alias', {severity: 'error', rule: 'one/foo', options: undefined, rulesDirectories: ['/one']}],
-                ['one/bas', {severity: 'error', rule: 'one/bas', options: undefined, rulesDirectories: ['/other-one']}],
-                ['three/bar', {severity: 'error', rule: 'three/bar', options: undefined, rulesDirectories: ['/three']}],
-                ['three/alias', {severity: 'error', rule: 'three/foo', options: undefined, rulesDirectories: ['/three']}],
-                ['one/baz', {severity: 'error', rule: 'one/baz', options: undefined, rulesDirectories: ['/other-one', '/one']}],
-                ['two/baz', {severity: 'error', rule: 'two/baz', options: undefined, rulesDirectories: ['/two']}],
-                ['three/baz', {severity: 'error', rule: 'three/baz', options: undefined, rulesDirectories: ['/other-three', '/three']}],
-            ]),
-        },
-    );
-});
-
-test('resolve, read, parse', (t) => {
+test('DefaultConfigurationProvider.resolve', (t) => {
     const container = new Container();
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
-    const cm = container.get(ConfigurationManager);
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
+    container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
 
+    const cp = container.resolve(DefaultConfigurationProvider);
     t.throws(
-        () => cm.resolveConfigFile('wotan:non-existent-preset', ''),
+        () => cp.resolve('wotan:non-existent-preset', '.'),
         "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
     );
-    const {root} = path.parse(process.cwd());
-    t.throws(
-        () => cm.resolveConfigFile('fooBarBaz', root),
-        `Cannot find module 'fooBarBaz' from '${root}'`,
-    );
+    t.is(cp.resolve('wotan:recommended', ''), path.resolve('./configs/recommended.yaml'));
+});
 
-    t.is(cm.resolveConfigFile('my-config', './test/fixtures'), path.resolve('./test/fixtures/node_modules/my-config.js'));
-    t.is(cm.resolveConfigFile('./invalid', './test/fixtures'), path.resolve('./test/fixtures/invalid.yaml'));
+test('DefaultConfigurationProvider.read', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(DirectoryService).to(NodeDirectoryService);
 
-    t.throws(() => cm.readConfigurationFile('./test/fixtures/invalid.js'));
-    t.throws(
-        () => cm.readConfigurationFile('./non-existent.yaml'), // tslint:disable-next-line
-        (e) => e.message.toLowerCase() === `Error parsing '${path.resolve('./non-existent.yaml')}': ENOENT: no such file or directory, open '${path.resolve('./non-existent.yaml')}'`.toLowerCase(),
-    );
-    t.throws(
-        () => cm.readConfigurationFile('./non-existent.json'), // tslint:disable-next-line
-        (e) => e.message.toLowerCase() === `Error parsing '${path.resolve('./non-existent.json')}': ENOENT: no such file or directory, open '${path.resolve('./non-existent.json')}'`.toLowerCase(),
-    );
-    t.throws(
-        () => cm.readConfigurationFile('./test/fixtures/invalid.json'),
-        (e) => e.message.includes(path.resolve('./test/fixtures/invalid.json')),
-    );
-    t.throws(
-        () => cm.readConfigurationFile('./test/fixtures/invalid.yaml'),
-        (e) => e.message.includes(path.resolve('./test/fixtures/invalid.yaml')),
-    );
-
-    t.deepEqual(
-        cm.readConfigurationFile('./test/fixtures/configuration/base.yaml'),
-        {
-            rulesDirectories: {custom: './rules'},
-            rules: {
-                'custom/foo': 'error',
-                'custom/bar': 'warning',
-                'deprecation': 'warning',
-            },
-            settings: {
-                foo: true,
-                bar: 'something',
-            },
+    const empty = {};
+    const resolver: Resolver = {
+        resolve() {
+            return '';
         },
-    );
+        require() {
+            return empty;
+        },
+    };
+    @injectable()
+    class MockFileSystem implements FileSystem {
+        public normalizePath(file: string): string {
+            return file;
+        }
+        public readFile(file: string): string {
+            switch (path.basename(file)) {
+                case 'invalid.json':
+                case 'invalid.yaml':
+                    return '}';
+                case 'empty.json':
+                    return '{}';
+                case 'empty.yaml':
+                    return '---';
+                default:
+                    throw new Error('file not found');
+            }
+        }
+        public readDirectory(): string[] {
+            throw new Error('Method not implemented.');
+        }
+        public stat(): Stats {
+            throw new Error('Method not implemented.');
+        }
+        public writeFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public deleteFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public createDirectory(): void {
+            throw new Error('Method not implemented.');
+        }
+    }
+    container.bind(FileSystem).to(MockFileSystem);
+    container.bind(Resolver).toConstantValue(resolver);
 
+    const cp = container.resolve(DefaultConfigurationProvider);
+    t.is<{}>(cp.read('foo.js'), empty);
+    t.deepEqual<{}>(cp.read('empty.json'), empty);
+    t.is(cp.read('empty.yaml'), null);
+    t.throws(() => cp.read('invalid.json'), /unexpected/i);
+    t.throws(() => cp.read('invalid.yaml'));
+    t.throws(() => cp.read('non-existent.json5'), 'file not found');
+});
+
+test('ConfigurationProvider.parse', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
+    container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+    const cp = container.resolve(DefaultConfigurationProvider);
+    const mockContext: LoadConfigurationContext = {
+        stack: [],
+        load() {
+            throw new Error();
+        },
+    };
+
+    t.deepEqual(cp.parse({exclude: ['foo.ts', 'bar.ts']}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: undefined,
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: ['foo.ts', 'bar.ts'],
+        filename: 'config.yaml',
+    });
+    t.deepEqual(cp.parse({exclude: 'foo.ts'}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: undefined,
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: ['foo.ts'],
+        filename: 'config.yaml',
+    });
+
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: ''}}}}, 'config.yaml', mockContext), "Alias 'a/alias' does not specify a rule.");
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext), 'Circular Alias: a/alias => a/alias');
+    t.throws(
+        () => cp.parse({aliases: {a: {alias: {rule: 'b/alias'}}, b: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext),
+        'Circular Alias: a/alias => b/alias => a/alias',
+    );
+    t.deepEqual(cp.parse({aliases: {a: {alias: {rule: 'core-rule'}}}}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([['a/alias', {rule: 'core-rule', rulesDirectories: undefined}]]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'config.yaml',
+    });
+    t.deepEqual(cp.parse({rulesDirectories: {local: '.'}, aliases: {a: {alias: {rule: 'local/rule'}}}}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([['a/alias', {rule: 'rule', rulesDirectories: [process.cwd()]}]]),
+        overrides: undefined,
+        rulesDirectories: new Map([['local', [process.cwd()]]]),
+        processor: undefined,
+        exclude: undefined,
+        filename: 'config.yaml',
+    });
     t.deepEqual(
-        cm.parseConfiguration(
-            {},
-            '.wotanrc.yaml',
-        ),
+        cp.parse({aliases: {a: {a: {rule: 'rule', options: 1}, b: {rule: 'a/a'}, c: {rule: 'a/b', options: 2}}}}, 'c.yaml', mockContext),
         {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
             extends: [],
             rules: undefined,
             settings: undefined,
+            aliases: new Map([
+                ['a/a', {rule: 'rule', rulesDirectories: undefined, options: 1}],
+                ['a/b', {rule: 'rule', rulesDirectories: undefined, options: 1}],
+                ['a/c', {rule: 'rule', rulesDirectories: undefined, options: 2}],
+            ]),
             overrides: undefined,
             rulesDirectories: undefined,
-            exclude: undefined,
             processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
         },
-        'parses empty config',
     );
-
     t.deepEqual(
-        cm.parseConfiguration(
-            {
-                aliases: {
-                    foo: {
-                        one: null,
-                    },
-                    bar: <any>null,
-                },
-            },
-            '../.wotanrc.yaml',
-        ),
+        cp.parse({aliases: {a: null, b: {alias: null}}}, 'c.yaml', mockContext),
         {
-            filename: path.resolve('../.wotanrc.yaml'),
-            aliases: new Map([['foo/one', null]]),
             extends: [],
             rules: undefined,
             settings: undefined,
+            aliases: new Map(),
             overrides: undefined,
             rulesDirectories: undefined,
-            exclude: undefined,
             processor: undefined,
-        },
-        'parses empty alias object',
-    );
-
-    // TODO this could change
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                aliases: {
-                    foo: {
-                        rule: {rule: 'foo/rule'},
-                    },
-                },
-            },
-            '../.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('../.wotanrc.yaml'),
-            aliases: new Map([['foo/rule', {rule: 'foo/rule'}]]),
-            extends: [],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
             exclude: undefined,
-            processor: undefined,
+            filename: 'c.yaml',
         },
-        'parses circular alias',
     );
 
     t.throws(
-        () => cm.parseConfiguration(
-            {
-                aliases: {
-                    foo: {
-                        rule: <any>{},
-                    },
-                },
-            },
-            '../.wotanrc.yaml',
-        ),
-        "Alias 'foo/rule' does not specify a rule.",
+        () => cp.parse({aliases: {a: {alias: {rule: 'local/rule'}}}}, 'config.yaml', mockContext),
+        "No rulesDirectories specified for 'local'.",
     );
-
     t.throws(
-        () => cm.parseConfiguration(
-            {
-                overrides: [<any>{}],
-            },
-            '../.wotanrc.yaml',
-        ),
-        'Override does not specify files.',
+        () => cp.parse({aliases: {a: {a: {rule: 'rule'}, b: {rule: 'a/a'}, c: {rule: 'a/d'}}}}, 'c.yaml', mockContext),
+        "No rulesDirectories specified for 'a'.",
     );
 
     t.deepEqual(
-        cm.parseConfiguration(
-            {
-                overrides: [
-                    {
-                        files: '*',
-                    },
-                    {
-                        files: ['*.js', '!*.spec.js'],
-                        rules: {foo: 'error', bar: {options: false}, baz: {severity: 'warn'}, bas: null},
-                        settings: {foo: true},
-                        processor: false,
-                    },
-                ],
-            },
-            '../.wotanrc.yaml',
-        ),
+        cp.parse({overrides: []}, 'c.yaml', mockContext),
         {
-            filename: path.resolve('../.wotanrc.yaml'),
-            aliases: undefined,
             extends: [],
             rules: undefined,
             settings: undefined,
-            overrides: [
-                {
-                    files: ['*'],
-                    rules: undefined,
-                    settings: undefined,
-                    processor: undefined,
-                },
-                {
-                    files: ['*.js', '!*.spec.js'],
-                    rules: new Map<string, Configuration.RuleConfig>([
-                        ['foo', {severity: 'error'}],
-                        ['bar', {options: false}],
-                        ['baz', {severity: 'warning'}],
-                        ['bas', {}],
-                    ]),
-                    settings: new Map<string, any>([
-                        ['foo', true],
-                    ]),
-                    processor: false,
-                },
-            ],
-            rulesDirectories: undefined,
-            exclude: undefined,
-            processor: undefined,
-        },
-        'parses overrides',
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                overrides: [],
-            },
-            '../.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('../.wotanrc.yaml'),
             aliases: undefined,
-            extends: [],
-            rules: undefined,
-            settings: undefined,
             overrides: [],
             rulesDirectories: undefined,
-            exclude: undefined,
             processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
         },
-        'parses empty overrides array',
     );
-
+    t.throws(
+        () => cp.parse({overrides: [{files: []}]}, 'c.yaml', mockContext),
+        'Override 0 does not specify files.',
+    );
     t.deepEqual(
-        cm.parseConfiguration(
-            {
-                rulesDirectories: {
-                    foo: './rules',
-                    bar: 'my-config',
-                },
-            },
-            './test/fixtures/.wotanrc.yaml',
-        ),
+        cp.parse({overrides: [{files: 'foo.ts', settings: {a: 1}}]}, 'c.yaml', mockContext),
         {
-            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
-            aliases: undefined,
             extends: [],
             rules: undefined,
             settings: undefined,
-            overrides: undefined,
-            rulesDirectories: new Map([
-                ['foo', path.resolve('./test/fixtures/rules')],
-                ['bar', path.resolve('./test/fixtures/my-config')],
+            aliases: undefined,
+            overrides: [{
+                files: ['foo.ts'],
+                settings: new Map([['a', 1]]),
+                rules: undefined,
+                processor: undefined,
+            }],
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+
+    t.deepEqual(
+        cp.parse({rules: {a: null, b: {}, c: {severity: 'warn'}, d: {options: 1}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a', {rulesDirectories: undefined, rule: 'a'}],
+                ['b', {rulesDirectories: undefined, rule: 'b'}],
+                ['c', {rulesDirectories: undefined, rule: 'c', severity: 'warning'}],
+                ['d', {rulesDirectories: undefined, rule: 'd', options: 1}],
             ]),
-            exclude: undefined,
-            processor: undefined,
-        },
-        'rulesDirectories are resolved relative to the config file',
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                extends: [],
-            },
-            '.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [],
-            rules: undefined,
             settings: undefined,
+            aliases: undefined,
             overrides: undefined,
             rulesDirectories: undefined,
-            exclude: undefined,
             processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
         },
-        'parses empty extends',
     );
 
+    const testContext: LoadConfigurationContext = {
+        stack: [],
+        load(file) {
+            switch (file) {
+                case 'base.yaml':
+                    return base;
+                case 'base1.yaml':
+                    return base1;
+                case 'base2.yaml':
+                    return base2;
+                default:
+                    throw new Error('unexpected name');
+            }
+        },
+    };
+    const base = cp.parse({aliases: {a: {one: {rule: 'rule-one'}, two: 'rule-two'}}}, 'base.yaml', testContext);
+    const expectedBase: Configuration = {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/one', {rule: 'rule-one', rulesDirectories: undefined}],
+            ['a/two', {rule: 'rule-two', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base.yaml',
+    };
+    t.deepEqual(base, expectedBase);
+
+    const base1 = cp.parse({aliases: {a: {three: {rule: 'rule-three'}, two: 'other-rule-two'}}}, 'base1.yaml', testContext);
+    const expectedBase1: Configuration = {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/three', {rule: 'rule-three', rulesDirectories: undefined}],
+            ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base1.yaml',
+    };
+    t.deepEqual(base1, expectedBase1);
+
+    const base2 = cp.parse({aliases: {a: {one: {rule: 'other-rule-one'}, two: null}}, extends: 'base.yaml'}, 'base2.yaml', testContext);
+    const expectedBase2: Configuration = {
+        extends: [
+            expectedBase,
+        ],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base2.yaml',
+    };
+    t.deepEqual(base2, expectedBase2);
+
     t.deepEqual(
-        cm.parseConfiguration(
+        cp.parse(
             {
-                extends: 'wotan:recommended',
+                rules: {'a/one': 'error', 'a/two': 'error', 'a/three': 'error', 'a/four': 'error'},
+                aliases: {a: {four: 'a/three'}},
+                extends: ['base1.yaml', 'base2.yaml'],
             },
-            '.wotanrc.yaml',
+            'config.yaml',
+            testContext,
         ),
         {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
             extends: [
-                cm.loadConfigurationFromPath('./src/configs/recommended.yaml'),
+                expectedBase1,
+                expectedBase2,
             ],
-            rules: undefined,
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined, severity: 'error'}],
+                ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined, severity: 'error'}],
+                ['a/three', {rule: 'rule-three', rulesDirectories: undefined, severity: 'error'}],
+                ['a/four', {rule: 'rule-three', rulesDirectories: undefined, severity: 'error'}],
+            ]),
             settings: undefined,
+            aliases: new Map([
+                ['a/three', {rule: 'rule-three', rulesDirectories: undefined}],
+                ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined}],
+                ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined}],
+                ['a/four', {rule: 'rule-three', rulesDirectories: undefined}],
+            ]),
             overrides: undefined,
             rulesDirectories: undefined,
+            processor: undefined,
             exclude: undefined,
-            processor: undefined,
+            filename: 'config.yaml',
         },
-        'extends builtin',
     );
 
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                extends: ['my-config', './node_modules/my-config', './configuration'],
-            },
-            './test/fixtures/.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [
-                {
-                    filename: path.resolve('./test/fixtures/node_modules/my-config.js'),
-                    aliases: undefined,
-                    extends: [],
-                    rules: undefined,
-                    settings: undefined,
-                    overrides: undefined,
-                    rulesDirectories: undefined,
-                    exclude: undefined,
-                    processor: undefined,
-                },
-                {
-                    filename: path.resolve('./test/fixtures/node_modules/my-config.js'),
-                    aliases: undefined,
-                    extends: [],
-                    rules: undefined,
-                    settings: undefined,
-                    overrides: undefined,
-                    rulesDirectories: undefined,
-                    exclude: undefined,
-                    processor: undefined,
-                },
-                cm.loadConfigurationFromPath('./test/fixtures/configuration/index.json5'),
-            ],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
-            exclude: undefined,
-            processor: undefined,
-        },
-        'extends are resolved as node modules',
-    );
+    t.deepEqual(base, expectedBase, 'extending altered the object');
+    t.deepEqual(base1, expectedBase1, 'extending altered the object');
+    t.deepEqual(base2, expectedBase2, 'extending altered the object');
 
-    t.throws(
-        () => cm.parseConfiguration(
-            {
-                extends: ['./configuration/circular'],
-            },
-            './test/fixtures/entry.yaml',
-        ), // tslint:disable-next-line
-        `Circular configuration dependency ${path.resolve('./test/fixtures/entry.yaml')} => ${path.resolve('./test/fixtures/configuration/circular.yaml')} => ${path.resolve('./test/fixtures/configuration/circular.yml')} => ${path.resolve('./test/fixtures/configuration/circular.yaml')}`,
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                exclude: [],
-            },
-            '.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
-            exclude: [],
-            processor: undefined,
-        },
-        'parses empty exclude array',
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                exclude: '*.js',
-            },
-            '.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
-            exclude: ['*.js'],
-            processor: undefined,
-        },
-        'arrayifies excludes',
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                exclude: ['*.js', '!*.spec.js'],
-            },
-            '.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
-            exclude: ['*.js', '!*.spec.js'],
-            processor: undefined,
-        },
-        'leaves excludes untouched',
-    );
-
-    t.deepEqual(
-        cm.parseConfiguration(
-            {
-                processor: 'custom-processor',
-            },
-            './test/fixtures/.wotanrc.yaml',
-        ),
-        {
-            filename: path.resolve('./test/fixtures/.wotanrc.yaml'),
-            aliases: undefined,
-            extends: [],
-            rules: undefined,
-            settings: undefined,
-            overrides: undefined,
-            rulesDirectories: undefined,
-            exclude: undefined,
-            processor: path.resolve('./test/fixtures/node_modules/custom-processor.js'),
-        },
-        'resolves processor',
-    );
-
-    t.throws(
-        () => cm.parseConfiguration(
-            {
-                processor: './non-existent',
-            },
-            '.wotanrc.yaml',
-        ),
-        `Cannot find module './non-existent' from '${process.cwd()}'`,
-    );
 });

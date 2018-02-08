@@ -8,6 +8,7 @@ import {
     MessageHandler,
     DirectoryService,
     DeprecationHandler,
+    ConfigurationProvider,
     LineSwitchParser,
 } from '../types';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
@@ -18,6 +19,7 @@ import { NodeFileSystem } from '../services/default/file-system';
 import { ConsoleMessageHandler } from '../services/default/message-handler';
 import { NodeDirectoryService } from '../services/default/directory-service';
 import { DefaultDeprecationHandler } from '../services/default/deprecation-handler';
+import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
 import { DefaultLineSwitchParser } from '../services/default/line-switch-parser';
 
 export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
@@ -37,6 +39,8 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
         bind(DeprecationHandler).to(DefaultDeprecationHandler);
     if (!isBound(DirectoryService))
         bind(DirectoryService).to(NodeDirectoryService);
+    if (!isBound(ConfigurationProvider))
+        bind(ConfigurationProvider).to(DefaultConfigurationProvider);
     if (!isBound(LineSwitchParser))
         bind(LineSwitchParser).to(DefaultLineSwitchParser);
 });

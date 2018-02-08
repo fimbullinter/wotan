@@ -11,6 +11,7 @@ export * from './src/services/default/formatter-loader-host';
 export * from './src/services/default/message-handler';
 export * from './src/services/default/resolver';
 export * from './src/services/default/rule-loader-host';
+export * from './src/services/default/configuration-provider';
 export * from './src/services/default/line-switch-parser';
 export * from './src/services/cached-file-system';
 export * from './src/services/configuration-manager';

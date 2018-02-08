@@ -1,5 +1,0 @@
-extends:
-  - ./.wotanrc.yaml
-  - ./base.yaml
-  - ./.wotanrc.yaml
-  - ./circular.yml

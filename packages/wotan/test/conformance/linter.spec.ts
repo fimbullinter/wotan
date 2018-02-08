@@ -159,21 +159,11 @@ test('Linter', (t) => {
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['my/other/alias', {severity: 'error', rulesDirectories: ['/foo'], options: undefined, rule: 'my/non-existent'}],
+                ['my/other/alias', {severity: 'error', rulesDirectories: ['/foo'], options: undefined, rule: 'non-existent'}],
             ]),
         }),
         [],
     );
     t.is(warnings.length, 5);
     t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
-
-    t.throws(
-        () => linter.lintFile(sourceFile, {
-            settings: new Map(),
-            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
-                ['my/other/alias', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'my/non-existent'}],
-            ]),
-        }),
-        "No 'rulesDirectories' for rule 'my/non-existent'.",
-    );
 });
