@@ -1,4 +1,19 @@
 version: 2
+
+base: &base
+  steps:
+    - checkout
+    - attach_workspace:
+        at: '.'
+    - restore_cache:
+        key: dependency-cache-{{ checksum "yarn.lock" }}
+    - run: yarn ${typescriptVersion:+-D -W typescript@$typescriptVersion}
+    - run:
+        name: Run Tests
+        command: |
+          yarn coverage yarn test
+          yarn report-coverage
+
 jobs:
   build:
     docker:
@@ -35,71 +50,25 @@ jobs:
   test:
     docker:
       - image: circleci/node:latest
-    steps:
-      - checkout
-      - attach_workspace:
-          at: '.'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install dependencies
-          command: yarn
-      - run:
-          name: Run Tests
-          command: |
-            yarn coverage yarn test
-            yarn report-coverage
+    <<: *base
   test@2.4:
     docker:
       - image: circleci/node:6
-    steps:
-      - checkout
-      - attach_workspace:
-          at: '.'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install TypeScript@2.4
-          command: yarn add -D -W typescript@2.4
-      - run:
-          name: Run Tests
-          command: |
-            yarn coverage yarn test
-            yarn report-coverage
+    environment:
+      typescriptVersion: 2.4
+    <<: *base
   test@2.6:
     docker:
       - image: circleci/node:8
-    steps:
-      - checkout
-      - attach_workspace:
-          at: '.'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install TypeScript@2.6
-          command: yarn add -D -W typescript@2.6
-      - run:
-          name: Run Tests
-          command: |
-            yarn coverage yarn test
-            yarn report-coverage
+      environment:
+        typescriptVersion: 2.6
+      <<: *base
   test@next:
     docker:
       - image: circleci/node:latest
-    steps:
-      - checkout
-      - attach_workspace:
-          at: '.'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install TypeScript@next
-          command: yarn add -D -W typescript@next
-      - run:
-          name: Run Tests
-          command: |
-            yarn coverage yarn test
-            yarn report-coverage
+      environment:
+        typescriptVersion: next
+      <<: *base
 
 workflows:
   version: 2
