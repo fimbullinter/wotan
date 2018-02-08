@@ -10,6 +10,7 @@ import {
     ReducedConfiguration,
     Configuration,
     MessageHandler,
+    LoadConfigurationContext,
 } from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
@@ -430,4 +431,173 @@ test('DefaultConfigurationProvider.read', (t) => {
     t.throws(() => cp.read('invalid.json'), /unexpected/i);
     t.throws(() => cp.read('invalid.yaml'));
     t.throws(() => cp.read('non-existent.json5'), 'file not found');
+});
+
+test('ConfigurationProvider.parse', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
+    container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+    const cp = container.resolve(DefaultConfigurationProvider);
+    const mockContext: LoadConfigurationContext = {
+        stack: [],
+        load() {
+            throw new Error();
+        },
+    };
+
+    t.deepEqual(cp.parse({exclude: ['foo.ts', 'bar.ts']}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: undefined,
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: ['foo.ts', 'bar.ts'],
+        filename: 'config.yaml',
+    });
+    t.deepEqual(cp.parse({exclude: 'foo.ts'}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: undefined,
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: ['foo.ts'],
+        filename: 'config.yaml',
+    });
+
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: ''}}}}, 'config.yaml', mockContext), "Alias 'a/alias' does not specify a rule.");
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext), 'Circular Alias: a/alias => a/alias');
+    t.throws(
+        () => cp.parse({aliases: {a: {alias: {rule: 'b/alias'}}, b: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext),
+        'Circular Alias: a/alias => b/alias => a/alias',
+    );
+    t.deepEqual(cp.parse({aliases: {a: {alias: {rule: 'core-rule'}}}}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([['a/alias', {rule: 'core-rule', rulesDirectories: undefined}]]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'config.yaml',
+    });
+    t.deepEqual(cp.parse({rulesDirectories: {local: '.'}, aliases: {a: {alias: {rule: 'local/rule'}}}}, 'config.yaml', mockContext), {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([['a/alias', {rule: 'rule', rulesDirectories: [process.cwd()]}]]),
+        overrides: undefined,
+        rulesDirectories: new Map([['local', [process.cwd()]]]),
+        processor: undefined,
+        exclude: undefined,
+        filename: 'config.yaml',
+    });
+    t.deepEqual(
+        cp.parse({aliases: {a: {a: {rule: 'rule', options: 1}, b: {rule: 'a/a'}, c: {rule: 'a/b', options: 2}}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            aliases: new Map([
+                ['a/a', {rule: 'rule', rulesDirectories: undefined, options: 1}],
+                ['a/b', {rule: 'rule', rulesDirectories: undefined, options: 1}],
+                ['a/c', {rule: 'rule', rulesDirectories: undefined, options: 2}],
+            ]),
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+    t.deepEqual(
+        cp.parse({aliases: {a: null, b: {alias: null}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            aliases: new Map(),
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+
+    t.throws(
+        () => cp.parse({aliases: {a: {alias: {rule: 'local/rule'}}}}, 'config.yaml', mockContext),
+        "No rulesDirectories specified for 'local'.",
+    );
+    t.throws(
+        () => cp.parse({aliases: {a: {a: {rule: 'rule'}, b: {rule: 'a/a'}, c: {rule: 'a/d'}}}}, 'c.yaml', mockContext),
+        "No rulesDirectories specified for 'a'.",
+    );
+
+    t.deepEqual(
+        cp.parse({overrides: []}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            aliases: undefined,
+            overrides: [],
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+    t.throws(
+        () => cp.parse({overrides: [{files: []}]}, 'c.yaml', mockContext),
+        'Override 0 does not specify files.',
+    );
+    t.deepEqual(
+        cp.parse({overrides: [{files: 'foo.ts', settings: {a: 1}}]}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: undefined,
+            settings: undefined,
+            aliases: undefined,
+            overrides: [{
+                files: ['foo.ts'],
+                settings: new Map([['a', 1]]),
+                rules: undefined,
+                processor: undefined,
+            }],
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+
+    t.deepEqual(
+        cp.parse({rules: {a: null, b: {}, c: {severity: 'warn'}, d: {options: 1}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a', {rulesDirectories: undefined, rule: 'a'}],
+                ['b', {rulesDirectories: undefined, rule: 'b'}],
+                ['c', {rulesDirectories: undefined, rule: 'c', severity: 'warning'}],
+                ['d', {rulesDirectories: undefined, rule: 'd', options: 1}],
+            ]),
+            settings: undefined,
+            aliases: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
 });

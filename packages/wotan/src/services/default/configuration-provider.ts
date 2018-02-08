@@ -38,13 +38,13 @@ export namespace RawConfiguration {
         [key: string]: RawConfiguration.RuleConfigValue;
     }
     export interface AliasMap {
-        [prefix: string]: {[name: string]: RawConfiguration.Alias | null | false};
+        [prefix: string]: {[name: string]: RawConfiguration.Alias | null | false} | null | false;
     }
     export interface RulesDirectoryMap {
         [prefix: string]: string;
     }
     export interface SettingsMap {
-        [key: string]: string;
+        [key: string]: any;
     }
 }
 
@@ -110,7 +110,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
             filename,
             rulesDirectories,
             extends: baseConfigs,
-            overrides: raw.overrides && raw.overrides.map((o) => this.mapOverride(o, dirname, aliases, rulesDirectories)),
+            overrides: raw.overrides && raw.overrides.map((o, i) => this.mapOverride(o, i, dirname, aliases, rulesDirectories)),
             rules: raw.rules ? mapRules(raw.rules, aliases, rulesDirectories) : undefined,
             processor: this.mapProcessor(raw.processor, dirname),
             exclude: Array.isArray(raw.exclude) ? raw.exclude : raw.exclude ? [raw.exclude] : undefined,
@@ -136,13 +136,14 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
 
     private mapOverride(
         raw: RawConfiguration.Override,
+        index: number,
         basedir: string,
         aliases: Configuration['aliases'],
         rulesDirectoryMap: Configuration['rulesDirectories'],
     ): Configuration.Override {
         const files = arrayify(raw.files);
         if (files.length === 0)
-            throw new Error(`Override does not specify files.`);
+            throw new Error(`Override ${index} does not specify files.`);
         return {
             files,
             rules: raw.rules ? mapRules(raw.rules, aliases, rulesDirectoryMap) : undefined,
@@ -263,7 +264,7 @@ function resolveNameAndDirectories(rule: string, rulesDirectoryMap: Configuratio
         return {rule, rulesDirectories: undefined};
     const rulesDirectories = rulesDirectoryMap && rulesDirectoryMap.get(rule.substr(0, slashIndex));
     if (rulesDirectories === undefined)
-        throw new Error('No rulesDirectories specified for prefix');
+        throw new Error(`No rulesDirectories specified for '${rule.substr(0, slashIndex)}'.`);
     return {rule: rule.substr(slashIndex + 1), rulesDirectories}; // tslint:disable-line:object-shorthand-properties-first
 }
 
