@@ -38,7 +38,7 @@ export namespace RawConfiguration {
         [key: string]: RawConfiguration.RuleConfigValue;
     }
     export interface AliasMap {
-        [prefix: string]: {[name: string]: RawConfiguration.Alias | null | false} | null | false;
+        [prefix: string]: {[name: string]: RawConfiguration.Alias | null | false | string} | null | false;
     }
     export interface RulesDirectoryMap {
         [prefix: string]: string;
@@ -220,15 +220,18 @@ function resolveAliases(
         if (!obj)
             continue;
         for (const name of Object.keys(obj)) {
-            const config = obj[name];
+            let config = obj[name];
             const fullName = `${prefix}/${name}`;
             if (!config) {
                 if (receiver)
                     receiver.delete(fullName);
                 continue;
             }
-            if (!config.rule)
+            if (typeof config === 'string') {
+                config = {rule: config};
+            } else if (!config.rule) {
                 throw new Error(`Alias '${fullName}' does not specify a rule.`);
+            }
             mapped.set(fullName, config);
         }
     }

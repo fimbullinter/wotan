@@ -600,4 +600,112 @@ test('ConfigurationProvider.parse', (t) => {
             filename: 'c.yaml',
         },
     );
+
+    const testContext: LoadConfigurationContext = {
+        stack: [],
+        load(file) {
+            switch (file) {
+                case 'base.yaml':
+                    return base;
+                case 'base1.yaml':
+                    return base1;
+                case 'base2.yaml':
+                    return base2;
+                default:
+                    throw new Error('unexpected name');
+            }
+        },
+    };
+    const base = cp.parse({aliases: {a: {one: {rule: 'rule-one'}, two: 'rule-two'}}}, 'base.yaml', testContext);
+    const expectedBase: Configuration = {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/one', {rule: 'rule-one', rulesDirectories: undefined}],
+            ['a/two', {rule: 'rule-two', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base.yaml',
+    };
+    t.deepEqual(base, expectedBase);
+
+    const base1 = cp.parse({aliases: {a: {three: {rule: 'rule-three'}, two: 'other-rule-two'}}}, 'base1.yaml', testContext);
+    const expectedBase1: Configuration = {
+        extends: [],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/three', {rule: 'rule-three', rulesDirectories: undefined}],
+            ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base1.yaml',
+    };
+    t.deepEqual(base1, expectedBase1);
+
+    const base2 = cp.parse({aliases: {a: {one: {rule: 'other-rule-one'}, two: null}}, extends: 'base.yaml'}, 'base2.yaml', testContext);
+    const expectedBase2: Configuration = {
+        extends: [
+            expectedBase,
+        ],
+        rules: undefined,
+        settings: undefined,
+        aliases: new Map([
+            ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined}],
+        ]),
+        overrides: undefined,
+        rulesDirectories: undefined,
+        processor: undefined,
+        exclude: undefined,
+        filename: 'base2.yaml',
+    };
+    t.deepEqual(base2, expectedBase2);
+
+    t.deepEqual(
+        cp.parse(
+            {
+                rules: {'a/one': 'error', 'a/two': 'error', 'a/three': 'error', 'a/four': 'error'},
+                aliases: {a: {four: 'a/three'}},
+                extends: ['base1.yaml', 'base2.yaml'],
+            },
+            'config.yaml',
+            testContext,
+        ),
+        {
+            extends: [
+                expectedBase1,
+                expectedBase2,
+            ],
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined, severity: 'error'}],
+                ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined, severity: 'error'}],
+                ['a/three', {rule: 'rule-three', rulesDirectories: undefined, severity: 'error'}],
+                ['a/four', {rule: 'rule-three', rulesDirectories: undefined, severity: 'error'}],
+            ]),
+            settings: undefined,
+            aliases: new Map([
+                ['a/three', {rule: 'rule-three', rulesDirectories: undefined}],
+                ['a/two', {rule: 'other-rule-two', rulesDirectories: undefined}],
+                ['a/one', {rule: 'other-rule-one', rulesDirectories: undefined}],
+                ['a/four', {rule: 'rule-three', rulesDirectories: undefined}],
+            ]),
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'config.yaml',
+        },
+    );
+
+    t.deepEqual(base, expectedBase, 'extending altered the object');
+    t.deepEqual(base1, expectedBase1, 'extending altered the object');
+    t.deepEqual(base2, expectedBase2, 'extending altered the object');
+
 });
