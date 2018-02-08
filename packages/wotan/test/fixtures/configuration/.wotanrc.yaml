@@ -1,4 +1,6 @@
-extends: ./base.yaml
+extends:
+  - ./base.yaml
+  - ./base2.yaml
 exclude: '*.js'
 rulesDirectories:
   custom: ./custom-rules
@@ -7,5 +9,7 @@ rules:
   custom/foo: warning
   await-promise: error
   local/baz: off
+  a/my-alias: error
+  a/alias: warn
 settings:
   local/setting: moar

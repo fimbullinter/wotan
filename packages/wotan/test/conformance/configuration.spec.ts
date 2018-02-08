@@ -9,6 +9,7 @@ import {
     ConfigurationProvider,
     ReducedConfiguration,
     Configuration,
+    MessageHandler,
 } from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
@@ -20,6 +21,8 @@ import { ConfigurationManager } from '../../src/services/configuration-manager';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import { DefaultConfigurationProvider } from '../../src/services/default/configuration-provider';
 import { ConfigurationError } from '../../src/error';
+import { NodeFileSystem } from '../../src/services/default/file-system';
+import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
 
 // tslint:disable:no-null-keyword
 
@@ -349,4 +352,82 @@ test('DefaultConfigurationProvider.find', (t) => {
         cp.find(path.resolve(cwd, 'test/bas.ts')),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
+});
+
+test('DefaultConfigurationProvider.resolve', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
+    container.bind(FileSystem).to(NodeFileSystem);
+    container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+    const cp = container.resolve(DefaultConfigurationProvider);
+    t.throws(
+        () => cp.resolve('wotan:non-existent-preset', '.'),
+        "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
+    );
+    t.is(cp.resolve('wotan:recommended', ''), path.resolve('./configs/recommended.yaml'));
+});
+
+test('DefaultConfigurationProvider.read', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(DirectoryService).to(NodeDirectoryService);
+
+    const empty = {};
+    const resolver: Resolver = {
+        resolve() {
+            return '';
+        },
+        require() {
+            return empty;
+        },
+    };
+    @injectable()
+    class MockFileSystem implements FileSystem {
+        public normalizePath(file: string): string {
+            return file;
+        }
+        public readFile(file: string): string {
+            switch (path.basename(file)) {
+                case 'invalid.json':
+                case 'invalid.yaml':
+                    return '}';
+                case 'empty.json':
+                    return '{}';
+                case 'empty.yaml':
+                    return '---';
+                default:
+                    throw new Error('file not found');
+            }
+        }
+        public readDirectory(): string[] {
+            throw new Error('Method not implemented.');
+        }
+        public stat(): Stats {
+            throw new Error('Method not implemented.');
+        }
+        public writeFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public deleteFile(): void {
+            throw new Error('Method not implemented.');
+        }
+        public createDirectory(): void {
+            throw new Error('Method not implemented.');
+        }
+    }
+    container.bind(FileSystem).to(MockFileSystem);
+    container.bind(Resolver).toConstantValue(resolver);
+
+    const cp = container.resolve(DefaultConfigurationProvider);
+    t.is<{}>(cp.read('foo.js'), empty);
+    t.deepEqual<{}>(cp.read('empty.json'), empty);
+    t.is(cp.read('empty.yaml'), null);
+    t.throws(() => cp.read('invalid.json'), /unexpected/i);
+    t.throws(() => cp.read('invalid.yaml'));
+    t.throws(() => cp.read('non-existent.json5'), 'file not found');
 });

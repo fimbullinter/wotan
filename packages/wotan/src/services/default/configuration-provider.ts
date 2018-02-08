@@ -67,7 +67,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
 
     public resolve(name: string, basedir: string): string {
         if (name.startsWith('wotan:')) {
-            const fileName = path.join(__dirname, `../../configs/${name.substr('wotan:'.length)}.yaml`);
+            const fileName = path.join(__dirname, `../../../configs/${name.substr('wotan:'.length)}.yaml`);
             if (!this.fs.isFile(fileName))
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
             return fileName;
@@ -156,7 +156,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
             processor,
             basedir,
             Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
-            module.paths.slice(OFFSET_TO_NODE_MODULES + 1),
+            module.paths.slice(OFFSET_TO_NODE_MODULES + 2),
         );
     }
 

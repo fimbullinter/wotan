@@ -1,3 +1,0 @@
-extends:
-  - ./base.yaml
-  - ./circular.yaml
