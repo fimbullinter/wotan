@@ -1,4 +1,20 @@
-version: 2
+workflows:
+  version: 2
+  verify:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - test@2.4:
+          requires:
+            - build
+      - test@2.6:
+          requires:
+            - build
+      - test@next:
+          requires:
+            - build
 
 base: &base
   steps:
@@ -7,13 +23,15 @@ base: &base
         at: '.'
     - restore_cache:
         key: dependency-cache-{{ checksum "yarn.lock" }}
-    - run: yarn ${typescriptVersion:+-D -W typescript@$typescriptVersion}
+    - run: |
+        yarn ${typescriptVersion:+-D -W typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |
           yarn coverage yarn test
           yarn report-coverage
 
+version: 2
 jobs:
   build:
     docker:
@@ -60,30 +78,12 @@ jobs:
   test@2.6:
     docker:
       - image: circleci/node:8
-      environment:
-        typescriptVersion: 2.6
-      <<: *base
+    environment:
+      typescriptVersion: 2.6
+    <<: *base
   test@next:
     docker:
       - image: circleci/node:latest
-      environment:
-        typescriptVersion: next
-      <<: *base
-
-workflows:
-  version: 2
-  verify:
-    jobs:
-      - build
-      - test:
-          requires:
-            - build
-      - test@2.4:
-          requires:
-            - build
-      - test@2.6:
-          requires:
-            - build
-      - test@next:
-          requires:
-            - build
+    environment:
+      typescriptVersion: next
+    <<: *base
