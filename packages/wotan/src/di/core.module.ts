@@ -7,6 +7,7 @@ import { Linter } from '../linter';
 import { Runner } from '../runner';
 import { ProcessorLoader } from '../services/processor-loader';
 import { RuleTester } from '../test';
+import { LineSwitchService } from '../services/line-switches';
 
 export const CORE_DI_MODULE = new ContainerModule((bind) => {
     bind(CachedFileSystem).toSelf();
@@ -17,5 +18,6 @@ export const CORE_DI_MODULE = new ContainerModule((bind) => {
     bind(Linter).toSelf();
     bind(Runner).toSelf();
     bind(RuleTester).toSelf();
+    bind(LineSwitchService).toSelf();
     bind<interfaces.Container>(Container).toDynamicValue((context) => context.container);
 });

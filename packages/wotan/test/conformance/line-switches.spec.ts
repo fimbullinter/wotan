@@ -1,6 +1,8 @@
+import 'reflect-metadata';
 import test from 'ava';
 import * as ts from 'typescript';
-import { getDisabledRanges, DisableMap } from '../../src/line-switches';
+import { LineSwitchService, DisableMap } from '../../src/services/line-switches';
+import { DefaultLineSwitchParser } from '../../src/services/default/line-switch-parser';
 import { convertAst } from 'tsutils';
 
 test('getDisabledRanges', (t) => {
@@ -10,6 +12,9 @@ test('getDisabledRanges', (t) => {
 let foo /* wotan-disable-line */ = true;
 //wotan-disable-line foobaz`;
     const sourceFile = ts.createSourceFile('/foo.ts', source, ts.ScriptTarget.ESNext);
+    const {wrapped} = convertAst(sourceFile);
+
+    const lineSwitchService = new LineSwitchService(new DefaultLineSwitchParser());
     const expected: DisableMap = new Map([['foobar', [
         {
             pos: 11,
@@ -21,14 +26,28 @@ let foo /* wotan-disable-line */ = true;
         },
     ]]]);
     t.deepEqual(
-        getDisabledRanges(['foobar'], sourceFile),
+        lineSwitchService.getDisabledRanges(sourceFile, ['foobar']),
         expected,
         'without WrappedAst',
     );
 
     t.deepEqual(
-        getDisabledRanges(['foobar'], sourceFile, convertAst(sourceFile).wrapped),
+        lineSwitchService.getDisabledRanges(sourceFile, ['foobar'], () => wrapped),
         expected,
         'with WrappedAst',
+    );
+
+    t.deepEqual(
+        new LineSwitchService({
+            parse(_source, _rules, context) {
+                t.is(context.getCommentAtPosition(-1), undefined); // should not throw here
+                return new Map([
+                    ['foo', [{enable: true, position: 0}]], // is discarded, because unnecessary
+                    ['bar', []], // is ignored
+                    ['baz', [{enable: true, position: 10}, {enable: false, position: 5}]], // is correctly sorted
+                ]);
+            },
+        }).getDisabledRanges(sourceFile, ['foo', 'baz'], () => wrapped),
+        new Map([['baz', [{pos: 5, end: 10}]]]),
     );
 });

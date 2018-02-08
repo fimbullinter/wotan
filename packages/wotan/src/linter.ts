@@ -13,7 +13,7 @@ import {
     DeprecationTarget,
 } from './types';
 import { applyFixes } from './fix';
-import { getDisabledRanges, DisableMap } from './line-switches';
+import { LineSwitchService, DisableMap } from './services/line-switches';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
@@ -32,7 +32,12 @@ export type PostprocessCallback = (failures: Failure[]) => Failure[];
 
 @injectable()
 export class Linter {
-    constructor(private ruleLoader: RuleLoader, private logger: MessageHandler, private deprecationHandler: DeprecationHandler) {}
+    constructor(
+        private ruleLoader: RuleLoader,
+        private logger: MessageHandler,
+        private deprecationHandler: DeprecationHandler,
+        private lineSwitches: LineSwitchService,
+    ) {}
 
     public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
         return this.getFailures(file, config, program, undefined);
@@ -133,6 +138,13 @@ export class Linter {
         let severity: Severity;
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
+
+        const isDisabled = (range: ts.TextRange): boolean => {
+            if (disables === undefined)
+                disables = this.lineSwitches.getDisabledRanges(sourceFile, rules.map((r) => r.ruleName), getWrappedAst);
+            return this.lineSwitches.isDisabled(disables, ruleName, range);
+        };
+
         const context: RuleContext = {
             addFailure,
             isDisabled,
@@ -175,17 +187,6 @@ export class Linter {
                             ? undefined
                             : {replacements: fix},
             });
-        }
-        function isDisabled(range: ts.TextRange): boolean {
-            if (disables === undefined)
-                disables = getDisabledRanges(rules.map((r) => r.ruleName), sourceFile, getWrappedAst());
-            const ruleDisables = disables.get(ruleName);
-            if (ruleDisables === undefined)
-                return false;
-            for (const disabledRange of ruleDisables)
-                if (range.end > disabledRange.pos && range.pos < disabledRange.end)
-                    return true;
-            return false;
         }
         function getFlatAst() {
             return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
