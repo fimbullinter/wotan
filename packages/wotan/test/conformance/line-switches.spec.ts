@@ -5,7 +5,6 @@ import { LineSwitchService, DisableMap } from '../../src/services/line-switches'
 import { DefaultLineSwitchParser } from '../../src/services/default/line-switch-parser';
 import { convertAst } from 'tsutils';
 
-
 test('getDisabledRanges', (t) => {
     const source = `#! shebang
 // wotan-disable
