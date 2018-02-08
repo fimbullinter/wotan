@@ -41,9 +41,13 @@ let foo /* wotan-disable-line */ = true;
         new LineSwitchService({
             parse(_source, _rules, context) {
                 t.is(context.getCommentAtPosition(-1), undefined); // should not throw here
-                return new Map([['foo', [{enable: true, position: 0}]], ['bar', []]]);
+                return new Map([
+                    ['foo', [{enable: true, position: 0}]], // is discarded, because unnecessary
+                    ['bar', []], // is ignored
+                    ['baz', [{enable: true, position: 10}, {enable: false, position: 5}]], // is correctly sorted
+                ]);
             },
-        }).getDisabledRanges(sourceFile, ['foo'], () => wrapped),
-        new Map(),
+        }).getDisabledRanges(sourceFile, ['foo', 'baz'], () => wrapped),
+        new Map([['baz', [{pos: 5, end: 10}]]]),
     );
 });
