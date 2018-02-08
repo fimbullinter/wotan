@@ -23,8 +23,10 @@ base: &base
         at: '.'
     - restore_cache:
         key: dependency-cache-{{ checksum "yarn.lock" }}
-    - run: |
-        yarn ${typescriptVersion:+add -D -W typescript@$typescriptVersion}
+    - run:
+        name: Install correct TypeScript version
+        command: |
+          yarn ${typescriptVersion:+add -D -W typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |
@@ -61,7 +63,7 @@ jobs:
       - persist_to_workspace:
           root: '.'
           paths:
-            - "packages/wotan/index.*"
+            - "packages/*/index.*"
             - "packages/*/src"
             - "packages/*/test"
             - yarn.lock
