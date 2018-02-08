@@ -24,7 +24,7 @@ base: &base
     - restore_cache:
         key: dependency-cache-{{ checksum "yarn.lock" }}
     - run: |
-        yarn ${typescriptVersion:+-D -W typescript@$typescriptVersion}
+        yarn ${typescriptVersion:+add -D -W typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |
