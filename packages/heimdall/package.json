@@ -7,7 +7,7 @@
   "scripts": {
     "lint:tslint": "tslint -p .",
     "lint:wotan": "wotan",
-    "lint": "run-p lint:tslint lint:wotan",
+    "lint": "run-p lint:*",
     "test": "ava -v test/*.spec.js"
   },
   "author": "Klaus Meinhardt",

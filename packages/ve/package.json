@@ -6,7 +6,7 @@
   "scripts": {
     "lint:tslint": "tslint -p .",
     "lint:wotan": "wotan",
-    "lint": "run-p lint:tslint lint:wotan",
+    "lint": "run-p lint:*",
     "test": "wotan test test/*.test.json --exact"
   },
   "author": "Klaus Meinhardt",
