@@ -1,6 +1,6 @@
 import { AbstractProcessor, GlobalSettings, ProcessorUpdateResult, Failure, Replacement } from '@fimbul/wotan';
 import * as path from 'path';
-import * as parse5 from 'parse5/lib'; // tslint:disable-line
+import * as parse5 from 'parse5/lib';
 import * as ts from 'typescript';
 
 export class Processor extends AbstractProcessor {
