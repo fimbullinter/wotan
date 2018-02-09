@@ -5,22 +5,22 @@
     "compile:ve": "tsc -p packages/ve",
     "compile:bifrost": "tsc -p packages/bifrost",
     "compile:heimdall": "tsc -p packages/heimdall",
-    "compile": "run-p compile:wotan compile:ve compile:bifrost compile:heimdall",
+    "compile": "run-p compile:*",
     "lint:wotan": "cd packages/wotan && yarn lint",
     "lint:ve": "cd packages/ve && yarn lint",
     "lint:bifrost": "cd packages/bifrost && yarn lint",
     "lint:heimdall": "cd packages/heimdall && yarn lint",
-    "lint": "run-p lint:wotan lint:ve lint:bifrost lint:heimdall",
+    "lint": "run-p lint:*",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
     "test:wotan": "cd packages/wotan && yarn test",
     "test:ve": "cd packages/ve && yarn test",
     "test:bifrost": "cd packages/bifrost && yarn test",
     "test:heimdall": "cd packages/heimdall && yarn test",
-    "test": "run-p test:wotan test:ve test:bifrost test:heimdall",
+    "test": "run-p \"test:* {@}\" --",
     "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
-    "test:coverage": "nyc --reporter=html yarn test",
-    "verify": "run-s compile check-dependencies lint test:coverage"
+    "test-coverage": "nyc --reporter=html yarn test",
+    "verify": "run-s compile check-dependencies lint test-coverage"
   },
   "workspaces": [
     "packages/*"
