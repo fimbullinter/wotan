@@ -2,21 +2,28 @@ import { AbstractProcessor, GlobalSettings, ProcessorUpdateResult, Failure, Repl
 import * as path from 'path';
 import * as parse5 from 'parse5/lib';
 import * as ts from 'typescript';
+import * as voidElements from 'void-elements';
 
 export class Processor extends AbstractProcessor {
     public static getSuffixForFile(name: string, _settings: GlobalSettings, readFile: () => string) {
         if (path.extname(name) !== '.vue')
             return '';
         let suffix = '';
-        const content = readFile();
         const parser = new parse5.SAXParser();
+        let depth = 0;
         parser.on('startTag', (tagName, attr, selfClosing) => {
-            if (tagName === 'script' && !selfClosing) {
+            if (selfClosing || voidElements[tagName])
+                return;
+            ++depth;
+            if (depth === 1 && tagName === 'script') {
                 const lang = attr.find(isLangAttr);
                 suffix = lang === undefined ? '.js' : `.${lang.value}`;
             }
         });
-        parser.write(content);
+        parser.on('endTag', () => {
+            --depth;
+        });
+        parser.write(readFile());
         parser.end();
         return suffix;
     }
@@ -30,15 +37,22 @@ export class Processor extends AbstractProcessor {
             line: 0,
         };
         if (path.extname(this.sourceFileName) === '.vue') {
-            const parsed = <parse5.AST.Default.DocumentFragment>parse5.parseFragment(this.source, {locationInfo: true});
-            const script = parsed.childNodes.find(isScriptElement);
-            if (script !== undefined) {
-                const {startTag, endTag} = script.__location!;
-                range.start = startTag.endOffset;
-                range.end = endTag.startOffset;
-            } else {
-                range.end = 0;
-            }
+            const parser = new parse5.SAXParser({locationInfo: true});
+            let depth = 0;
+            parser.on('startTag', (tagName, _attr, selfClosing, location) => {
+                if (selfClosing || voidElements[tagName])
+                    return;
+                ++depth;
+                if (depth === 1 && tagName === 'script')
+                    range.start = location!.endOffset;
+            });
+            parser.on('endTag', (tagName, location) => {
+                --depth;
+                if (depth === 0 && tagName === 'script')
+                    range.end = location!.startOffset;
+            });
+            parser.write(this.source);
+            parser.end();
             const match = this.source.substring(0, range.start).match(/(\r?\n)/g);
             if (match !== null)
                 range.line = match.length;
@@ -102,8 +116,4 @@ export class Processor extends AbstractProcessor {
 
 function isLangAttr(attr: parse5.AST.Default.Attribute) {
     return attr.name === 'lang';
-}
-
-function isScriptElement(node: parse5.AST.Default.Node): node is parse5.AST.Default.Element {
-    return node.nodeName === 'script';
 }
