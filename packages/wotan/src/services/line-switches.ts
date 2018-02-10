@@ -17,8 +17,9 @@ export class LineSwitchService {
                     if (wrappedAst === undefined)
                         wrappedAst = getWrappedAst();
                     const wrap = getWrappedNodeAtPosition(wrappedAst, pos);
-                    if (wrap !== undefined)
-                        parent = wrap.node;
+                    if (wrap === undefined)
+                        return;
+                    parent = wrap.node;
                 }
                 return getCommentAtPosition(sourceFile, pos, parent);
             },

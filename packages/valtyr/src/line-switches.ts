@@ -1,14 +1,16 @@
 import { injectable } from 'inversify';
-import { LineSwitchParser, LineSwitchParserContext, LineSwitch, LineSwitchMap } from '@fimbul/wotan';
+import { LineSwitchParser, LineSwitch, LineSwitchMap } from '@fimbul/wotan';
 import * as ts from 'typescript';
+import { getCommentAtPosition } from 'tsutils';
 
 @injectable()
 export class TslintLineSwitchParser implements LineSwitchParser {
-    public parse(sourceFile: ts.SourceFile, enabledRules: ReadonlyArray<string>, context: LineSwitchParserContext): LineSwitchMap {
+    public parse(sourceFile: ts.SourceFile, enabledRules: ReadonlyArray<string>): LineSwitchMap {
         const result = new Map<string, LineSwitch[]>();
         const re = /\/[/*]\s*tslint:(enable|disable)(-line|-next-line)?($|[ *:])/gm;
         for (let match = re.exec(sourceFile.text); match !== null; match = re.exec(sourceFile.text)) {
-            const comment = context.getCommentAtPosition(match.index);
+            // not using `context.getCommentAtPosition` here is intentional, because it doesn't benefit from caching the converted AST
+            const comment = getCommentAtPosition(sourceFile, match.index);
             if (comment === undefined || comment.pos !== match.index)
                 continue;
             const rules = sourceFile.text
