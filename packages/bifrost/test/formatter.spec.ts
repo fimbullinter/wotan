@@ -5,14 +5,12 @@ import { Replacement } from '@fimbul/wotan';
 
 test('returns expected output', (t) => {
     testFormatter(TSLint.Formatters.FileslistFormatter, `/bar.ts
-/baz.ts
-`);
+/baz.ts`);
     testFormatter(TSLint.Formatters.ProseFormatter, `Fixed 2 error(s) in /foo.ts
 Fixed 1 error(s) in /baz.ts
 
 ERROR: /bar.ts[1, 1]: message
-WARNING: /baz.ts[1, 1]: a
-`);
+WARNING: /baz.ts[1, 1]: a`);
     function testFormatter(ctor: TSLint.FormatterConstructor, expected: string) {
         const formatter = wrapTslintFormatter(ctor);
         const f = new formatter();
