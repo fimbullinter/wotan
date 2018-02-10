@@ -5,3 +5,4 @@ import {Rule} from '../../src/rules/import-package';
 import foo from 'packages/something/foo';
 import self from './test';
 import heimdall = require('@fimbul/heimdall');
+export * from '@fimbul/bifrost';

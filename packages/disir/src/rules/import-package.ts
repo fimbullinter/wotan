@@ -2,12 +2,13 @@ import { AbstractRule, Replacement } from '@fimbul/wotan';
 import { findImports, ImportKind } from 'tsutils';
 import * as ts from 'typescript';
 import * as path from 'path';
+import { getPackageName } from '../util';
 
 export class Rule extends AbstractRule {
     public apply() {
         const dirname = path.dirname(this.sourceFile.fileName);
         const currentPackage = getPackageName(dirname);
-        for (const name of findImports(this.sourceFile, ImportKind.AllStaticImports)) {
+        for (const name of findImports(this.sourceFile, ImportKind.AllStaticImports | ImportKind.ExportFrom)) {
             if (!ts.isExternalModuleNameRelative(name.text))
                 continue;
             const importedPackage = getPackageName(path.resolve(dirname, name.text));
@@ -22,9 +23,4 @@ export class Rule extends AbstractRule {
             }
         }
     }
-}
-
-function getPackageName(fileName: string): string {
-    const parts = fileName.split(path.sep);
-    return parts[parts.lastIndexOf('packages') + 1];
 }
