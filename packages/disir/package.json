@@ -7,7 +7,7 @@
     "lint:tslint": "tslint -p .",
     "lint:wotan": "wotan",
     "lint": "run-p lint:*",
-    "test": "wotan test test/*/test.json"
+    "test": "wotan test 'test/*/{*.,}test.json'"
   },
   "private": true,
   "dependencies": {
