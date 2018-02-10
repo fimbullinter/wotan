@@ -1,0 +1,4 @@
+rulesDirectories:
+  disir: ./rules
+rules:
+  disir/import-package: error

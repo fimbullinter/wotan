@@ -1,0 +1,4 @@
+rulesDirectories:
+  local: ../../src/rules
+rules:
+  local/import-package: error

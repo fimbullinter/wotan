@@ -1,6 +1,7 @@
 ---
 extends:
   - wotan:latest
+  - "@fimbul/disir"
 overrides:
   - files: "packages/*/test/**"
     rules:
