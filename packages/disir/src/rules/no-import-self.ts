@@ -24,8 +24,9 @@ export class Rule extends AbstractRule {
                                 continue;
                             let {fileName} = symbol.valueDeclaration.getSourceFile();
                             fileName = path.posix.relative(dirname, fileName);
-                            if (!fileName.startsWith('.'))
+                            if (!fileName.startsWith('../'))
                                 fileName = './' + fileName;
+                            fileName = fileName.substring(0, fileName.length - path.extname(fileName).length);
                             const importsFromFile = map.get(fileName);
                             if (importsFromFile === undefined) {
                                 map.set(fileName, [binding.getText(this.sourceFile)]);

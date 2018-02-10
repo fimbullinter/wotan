@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import { getCommentAtPosition, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 import { injectable } from 'inversify';
-import { LineSwitchParser, LineSwitch } from '..//types';
+import { LineSwitchParser, LineSwitch } from '../types';
 
 export type DisableMap = Map<string, ts.TextRange[]>;
 
