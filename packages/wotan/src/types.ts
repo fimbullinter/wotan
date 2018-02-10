@@ -384,9 +384,11 @@ export interface LineSwitchParser {
         sourceFile: ts.SourceFile,
         ruleNames: ReadonlyArray<string>,
         context: LineSwitchParserContext,
-    ): ReadonlyMap<string, ReadonlyArray<LineSwitch>>;
+    ): LineSwitchMap;
 }
 export abstract class LineSwitchParser {}
+
+export type LineSwitchMap = ReadonlyMap<string, ReadonlyArray<LineSwitch>>;
 
 export interface LineSwitchParserContext {
     getCommentAtPosition(pos: number): ts.CommentRange | undefined;

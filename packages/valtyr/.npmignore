@@ -1,0 +1,13 @@
+/baselines/
+/test/
+/coverage/
+/custom-typings/
+/.*
+/src/**/*.ts
+!/src/**/*.d.ts
+/*.yml
+/*.yaml
+/*.md
+/*.json
+/yarn.lock
+/*.tgz

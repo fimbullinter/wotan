@@ -25,6 +25,10 @@ Official processor for Vue Single File Components (SFC). Extracts the script con
 
 Compatibility layer to allow the use of TSLint rules and formatters inside the Wotan runtime.
 
+### Valtýr [![docs](https://img.shields.io/badge/%40fimbul%2Fvaltyr-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/valtyr/README.md)
+
+Make wotan behave almost like TSLint. Reuse your existing `tslint.json` without any change.
+
 ### Bifröst [![docs](https://img.shields.io/badge/%40fimbul%2Fbifrost-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/bifrost/README.md)
 
 Allows authors of TSLint rules and formatters to provide their package for the use inside Wotan. Rules and formatters that use Bifröst don't need Heimdall to function correctly.
@@ -53,6 +57,8 @@ He is constantly striving for wisdom. From his throne he can see everything in t
 **Heimdall** (also known as Heimdallr), located where the burning rainbow bridge Bifröst meets heaven, keeps watch for the onset of Ragnarök.
 
 **Bifröst** is the burning rainbow bridge that connects the world of humans with the realm of gods.
+
+**Valtýr**, from 'valr' (the dead, slain in battle) and 'týr' (god), means God of the Slain and is often used to refer to Odin.
 
 ### Why yet another linter?
 
