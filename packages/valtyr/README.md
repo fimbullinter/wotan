@@ -30,8 +30,6 @@ yarn add -D @fimbul/wotan @fimbul/valtyr
 wotan -m @fimbul/valtyr
 ```
 
-`-f code-frame` refers to the TSLint core CodeFrameFormatter.
-
 The `-m @fimbul/valtyr` argument enables this package. It searches `tslint.json` (or `tslint.yaml`) files for configuration like TSLint does. It loads TSLint core rules as well as custom rules with the same rules as TSLint. It uses TSLint formatters to format the result.
 
 There are only minor differences:
@@ -39,6 +37,7 @@ There are only minor differences:
 * CLI arguments are still those of the Wotan executable
 * error messages are a bit different
 * `stylish` formatter is used by default
+* files of external modules are always excluded while `*.d.ts` in your project are included by default
 
 ## Why!?
 
@@ -50,6 +49,13 @@ Why should you use Wotan to execute TSLint rules?
 * Smart handling of overlapping fixes avoids destroying your code.
 * Allows the use of builtin configurations and shareable configs as CLI argument for `-c`, e.g. `-c tslint:latest` or `-c tslint-config-airbnb`.
 * Debug output to diagnose crashes.
+* Optimized line switch parser finds `tslint:disable` comments faster with less overhead, especially in big files.
+
+## Caveats
+
+* Additional startup time by loading Wotan and TSLint.
+* Wrapping rules and formatters comes with additional runtime and memory overhead.
+* There's some overhead of the processor machinery that still runs, even though it's unused.
 
 ## Difference to Heimdall
 
