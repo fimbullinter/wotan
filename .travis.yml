@@ -8,3 +8,5 @@ script:
   - 'false'
   - yarn check-dependencies
   - yarn test
+after_success:
+  - echo deployment goes here
