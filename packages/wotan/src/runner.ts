@@ -225,7 +225,7 @@ export class Runner {
     }
 }
 
-function getFiles(patterns: string[], exclude: string[], cwd: string): string[] {
+function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<string> {
     const result: string[] = [];
     const globOptions = {
         cwd,
@@ -247,7 +247,7 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): string[] 
                 throw new ConfigurationError(`'${normalized}' does not exist.`);
         }
     }
-    return Array.from(new Set(result.map(unixifyPath))); // deduplicate files
+    return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
 function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[]) {

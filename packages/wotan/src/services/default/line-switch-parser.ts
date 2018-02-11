@@ -15,7 +15,7 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
             const comment = context.getCommentAtPosition(match.index);
             if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
                 continue;
-            const rules = match[3] === undefined ? undefined : Array.from(new Set(match[3].trim().split(/\s*,\s*/g)));
+            const rules = match[3] === undefined ? undefined : new Set(match[3].trim().split(/\s*,\s*/g));
             const enable = match[1] === 'enable';
             switch (match[2]) {
                 case undefined:
@@ -45,7 +45,7 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
         return result;
     }
 
-    private switch(map: Map<string, LineSwitch[]>, enabled: ReadonlyArray<string>, rules = enabled, s: LineSwitch) {
+    private switch(map: Map<string, LineSwitch[]>, enabled: ReadonlyArray<string>, rules: Iterable<string> = enabled, s: LineSwitch) {
         for (const rule of rules) {
             if (!enabled.includes(rule))
                 continue;
