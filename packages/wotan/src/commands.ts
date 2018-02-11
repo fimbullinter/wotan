@@ -22,7 +22,6 @@ export const enum CommandName {
     Validate = 'validate',
     Show = 'show',
     Test = 'test',
-    Init = 'init',
 }
 
 export interface BaseCommand<C extends CommandName> {
@@ -50,12 +49,7 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
     format: Format | undefined;
 }
 
-export interface InitCommand extends BaseCommand<CommandName.Init> {
-    directories: string[];
-    format: Format | undefined;
-}
-
-export type Command = LintCommand | ShowCommand | ValidateCommand | InitCommand | TestCommand;
+export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
 
 export async function runCommand(command: Command, diContainer?: Container): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
@@ -67,9 +61,6 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
     switch (command.command) {
         case CommandName.Lint:
             container.bind(AbstractCommandRunner).to(LintCommandRunner);
-            break;
-        case CommandName.Init:
-            container.bind(AbstractCommandRunner).to(InitCommandRunner);
             break;
         case CommandName.Validate:
             container.bind(AbstractCommandRunner).to(ValidateCommandRunner);
@@ -147,29 +138,6 @@ class LintCommandRunner extends AbstractCommandRunner {
 
 function isError(failure: Failure) {
     return failure.severity === 'error';
-}
-
-@injectable()
-class InitCommandRunner extends AbstractCommandRunner {
-    constructor(private logger: MessageHandler, private fs: CachedFileSystem, private directories: DirectoryService) {
-        super();
-    }
-    public run(options: InitCommand) {
-        const cwd = this.directories.getCurrentDirectory();
-        const filename = `.wotanrc.${options.format === undefined ? 'yaml' : options.format}`;
-        const dirs = options.directories.length === 0 ? ['.'] : options.directories;
-        let success = true;
-        for (const dir of dirs) {
-            const fullPath = path.resolve(cwd, dir, filename);
-            if (this.fs.isFile(fullPath)) {
-                this.logger.warn(`'${fullPath}' already exists.`);
-                success = false;
-            } else {
-                this.fs.writeFile(fullPath, format({extends: 'wotan:recommended'}, options.format));
-            }
-        }
-        return success;
-    }
 }
 
 @injectable()
