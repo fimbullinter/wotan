@@ -49,16 +49,10 @@ export class Runner {
             this.processorLoader,
         );
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
-        let dir: string | undefined;
 
         for (const file of files) {
-            if (options.config === undefined) {
-                const dirname = path.dirname(file);
-                if (dir !== dirname) {
-                    config = this.configManager.find(file);
-                    dir = dirname;
-                }
-            }
+            if (options.config === undefined)
+                config = this.configManager.find(file);
             const mapped = processorHost.getProcessedFileInfo(file);
             const originalName = mapped === undefined ? file : mapped.originalName;
             const effectiveConfig = config && this.configManager.reduce(config, originalName);
@@ -97,16 +91,10 @@ export class Runner {
     }
 
     private *lintFiles(options: LintOptions, config: Configuration | undefined): LintResult {
-        let dir: string | undefined;
         let processor: AbstractProcessor | undefined;
         for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
-            if (options.config === undefined) {
-                const dirname = path.dirname(file);
-                if (dir !== dirname) {
-                    config = this.configManager.find(file);
-                    dir = dirname;
-                }
-            }
+            if (options.config === undefined)
+                config = this.configManager.find(file);
             const effectiveConfig = config && this.configManager.reduce(config, file);
             if (effectiveConfig === undefined)
                 continue;
