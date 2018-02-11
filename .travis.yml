@@ -8,4 +8,4 @@ script:
   - yarn check-dependencies
   - yarn test
 after_success:
-  - echo deployment goes here
+  - node scripts/nightly
