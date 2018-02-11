@@ -44,8 +44,13 @@ function markChanged(name: string) {
     }
 }
 
+const commits = process.env.TRAVIS_COMMIT_RANGE!.split('...');
+const lastReleaseTag = cp.execSync('git describe --tags --match=v*.*.* --abbrev=0', {encoding: 'utf8'}).trim();
+// if there was a release since the last nightly, only get the diff since the release
+const diffStart = cp.execSync(`git rev-list ${lastReleaseTag}...${commits[0]}`, {encoding: 'utf8'}).split(/\r?\n/)[0];
+
 const diff = cp.execSync(
-    `git diff ${process.env.TRAVIS_COMMIT_RANGE} --name-only -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
+    `git diff ${diffStart} --name-only -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
     {encoding: 'utf8'},
 ).trim();
 if (diff !== '')
