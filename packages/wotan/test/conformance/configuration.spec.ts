@@ -3,7 +3,6 @@ import test from 'ava';
 import {
     CacheManager,
     Resolver,
-    DirectoryService,
     FileSystem,
     Stats,
     ConfigurationProvider,
@@ -242,11 +241,6 @@ test('DefaultConfigurationProvider.find', (t) => {
     container.bind(Resolver).to(NodeResolver);
 
     const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
-    const directories: DirectoryService = {
-        getCurrentDirectory: () => cwd,
-        getHomeDirectory: () => '/.homedir',
-    };
-    container.bind(DirectoryService).toConstantValue(directories);
 
     @injectable()
     class MockFileSystem implements FileSystem {
@@ -334,25 +328,6 @@ test('DefaultConfigurationProvider.find', (t) => {
         cp.find(path.resolve(cwd, path.resolve(cwd, 'test/foo.ts'))),
         path.resolve(cwd, '../.wotanrc.yaml'),
     );
-    t.is(
-        cp.find(path.resolve(cwd, '/foo.ts')),
-        path.normalize('/.homedir/.wotanrc.json'),
-    );
-
-    directories.getHomeDirectory = () => '/non-existent';
-    t.is(
-        cp.find(path.resolve(cwd, '/bar.ts')),
-        undefined,
-    );
-    directories.getHomeDirectory = undefined;
-    t.is(
-        cp.find(path.resolve(cwd, '/baz.ts')),
-        undefined,
-    );
-    t.is(
-        cp.find(path.resolve(cwd, 'test/bas.ts')),
-        path.resolve(cwd, '../.wotanrc.yaml'),
-    );
 });
 
 test('DefaultConfigurationProvider.resolve', (t) => {
@@ -360,7 +335,6 @@ test('DefaultConfigurationProvider.resolve', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(Resolver).to(NodeResolver);
-    container.bind(DirectoryService).to(NodeDirectoryService);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
 
@@ -376,7 +350,6 @@ test('DefaultConfigurationProvider.read', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
-    container.bind(DirectoryService).to(NodeDirectoryService);
 
     const empty = {};
     const resolver: Resolver = {
@@ -438,7 +411,6 @@ test('ConfigurationProvider.parse', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(Resolver).to(NodeResolver);
-    container.bind(DirectoryService).to(NodeDirectoryService);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
 

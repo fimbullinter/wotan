@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { ConfigurationProvider, DirectoryService, Resolver, LoadConfigurationContext, Configuration } from '../../types';
+import { ConfigurationProvider, Resolver, LoadConfigurationContext, Configuration } from '../../types';
 import { CachedFileSystem } from '../cached-file-system';
 import * as path from 'path';
 import * as json5 from 'json5';
@@ -56,13 +56,20 @@ export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext)
 
 @injectable()
 export class DefaultConfigurationProvider implements ConfigurationProvider {
-    constructor(private fs: CachedFileSystem, private directories: DirectoryService, private resolver: Resolver) {}
+    constructor(private fs: CachedFileSystem, private resolver: Resolver) {}
 
-    public find(fileToLint: string): string | undefined {
-        let result = this.findupConfig(fileToLint);
-        if (result === undefined && this.directories.getHomeDirectory !== undefined)
-            result = this.findConfigFileInDirectory(this.directories.getHomeDirectory());
-        return result;
+    public find(current: string): string | undefined {
+        let next = path.dirname(current);
+        while (next !== current) {
+            current = next;
+            for (let name of CONFIG_FILENAMES) {
+                name = path.join(current, name);
+                if (this.fs.isFile(name))
+                    return name;
+            }
+            next = path.dirname(next);
+        }
+        return;
     }
 
     public resolve(name: string, basedir: string): string {
@@ -159,27 +166,6 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
             Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
             module.paths.slice(OFFSET_TO_NODE_MODULES + 2),
         );
-    }
-
-    private findupConfig(current: string): string | undefined {
-        let next = path.dirname(current);
-        while (next !== current) {
-            current = next;
-            const config = this.findConfigFileInDirectory(current);
-            if (config !== undefined)
-                return config;
-            next = path.dirname(next);
-        }
-        return;
-    }
-
-    private findConfigFileInDirectory(dir: string): string | undefined {
-        for (let name of CONFIG_FILENAMES) {
-            name = path.join(dir, name);
-            if (this.fs.isFile(name))
-                return name;
-        }
-        return;
     }
 }
 
