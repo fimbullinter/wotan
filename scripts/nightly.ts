@@ -61,5 +61,5 @@ if (diff !== '')
 
 for (const name of changed) {
     fs.writeFileSync(`packages/${name}/package.json`, JSON.stringify(publicPackages.get(name), undefined, 2) + '\n');
-    cp.exec(`npm publish packages/${name} --tag next`);
+    console.log(cp.exec(`npm publish packages/${name} --tag next`));
 }
