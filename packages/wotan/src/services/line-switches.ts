@@ -8,6 +8,7 @@ export type DisableMap = Map<string, ts.TextRange[]>;
 @injectable()
 export class LineSwitchService {
     constructor(private parser: LineSwitchParser) {}
+
     public getDisabledRanges(sourceFile: ts.SourceFile, enabledRules: ReadonlyArray<string>, getWrappedAst?: () => WrappedAst) {
         let wrappedAst: WrappedAst | undefined;
         const raw = this.parser.parse(sourceFile, enabledRules, {

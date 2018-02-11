@@ -44,9 +44,8 @@ function markChanged(name: string) {
     }
 }
 
-console.log(process.env.TRAVIS_COMMIT_RANGE);
 const diff = cp.execSync(
-    `git diff --name-only -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
+    `git diff ${process.env.TRAVIS_COMMIT_RANGE} --name-only -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
     {encoding: 'utf8'},
 ).trim();
 if (diff !== '')
