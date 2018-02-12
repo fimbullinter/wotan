@@ -8,4 +8,4 @@ script:
   - yarn check-dependencies
   - yarn test
 after_success:
-  - node scripts/nightly $TRAVIS_COMMIT_RANGE
+  - node scripts/nightly "$TRAVIS_COMMIT_RANGE"
