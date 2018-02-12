@@ -1,3 +1,4 @@
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/23576
 declare module 'npm-packlist' {
     function packlist(options?: packlist.Options): PromiseLike<string[]>
     function packlist<T>(options: packlist.Options | undefined, callback: (result: string[]) => T): PromiseLike<T>
