@@ -14,8 +14,14 @@
     "lint:bifrost": "cd packages/bifrost && yarn lint",
     "lint:heimdall": "cd packages/heimdall && yarn lint",
     "lint:disir": "cd packages/disir && yarn lint",
+    "lint:scripts": "tslint -p scripts && wotan -p scripts",
     "lint": "run-p lint:*",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
+    "check-package:wotan": "node scripts/api-guard wotan",
+    "check-package:heimdall": "node scripts/api-guard heimdall",
+    "check-package:bifrost": "node scripts/api-guard bifrost",
+    "check-package:ve": "node scripts/api-guard ve",
+    "check-package": "run-p \"check-package:* {@}\" --",
     "test:wotan": "cd packages/wotan && yarn test",
     "test:ve": "cd packages/ve && yarn test",
     "test:bifrost": "cd packages/bifrost && yarn test",
@@ -25,13 +31,14 @@
     "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
     "test-coverage": "nyc --reporter=html yarn test",
-    "verify": "run-s compile check-dependencies lint test-coverage"
+    "verify": "run-s compile check-dependencies check-package lint test-coverage"
   },
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
     "@fimbul/disir": "*",
+    "@fimbul/wotan": "*",
     "@types/diff": "^3.2.2",
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^9.4.0",

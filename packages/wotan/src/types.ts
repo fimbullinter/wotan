@@ -68,7 +68,6 @@ export interface FailurePosition {
 
 export type Severity = 'error' | 'warning';
 
-// @internal
 export interface RuleConstructor {
     requiresTypeInformation: boolean;
     deprecated?: boolean | string;
@@ -171,7 +170,6 @@ export abstract class AbstractFormatter {
     public flush?(): string | undefined;
 }
 
-// @internal
 export interface FormatterConstructor {
     new(): AbstractFormatter;
 }
@@ -250,7 +248,6 @@ export const enum Format {
     Json5 = 'json5',
 }
 
-// @internal
 export interface ProcessorConstructor {
     getSuffixForFile(fileName: string, settings: GlobalSettings, readFile: () => string): string;
     new(source: string, sourceFileName: string, targetFileName: string, settings: GlobalSettings): AbstractProcessor;

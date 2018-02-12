@@ -18,9 +18,10 @@ const baselineDir = path.join(p, 'baselines/package');
 
 compare(list.join('\n'), path.join(baselineDir, 'packlist.txt'));
 
-for (const file of list)
-    if (file.endsWith('.d.ts'))
-        compare(fs.readFileSync(path.join(p, file), 'utf8'), path.join(baselineDir, file));
+// TODO compare generated declaration files, compile a dummy project to find missing symbols, detect unnecessary declaration files
+// for (const file of list)
+//     if (file.endsWith('.d.ts'))
+//         compare(fs.readFileSync(path.join(p, file), 'utf8'), path.join(baselineDir, file));
 
 function compare(actual: string, fileName: string) {
     let expected = '';
@@ -54,6 +55,9 @@ function compare(actual: string, fileName: string) {
                 break;
             case '-':
                 output.push(chalk.red(line));
+                break;
+            default:
+                output.push(line);
         }
     }
     console.log(output.join('\n'));

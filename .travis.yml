@@ -6,6 +6,7 @@ script:
   - yarn compile
   - yarn lint
   - yarn check-dependencies
+  - yarn check-package
   - yarn test
 after_success:
   - node scripts/nightly "$TRAVIS_COMMIT_RANGE"
