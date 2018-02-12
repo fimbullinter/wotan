@@ -7,6 +7,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
         public static requiresTypeInformation =
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
+
         public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
