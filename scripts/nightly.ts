@@ -1,6 +1,11 @@
 import * as fs from 'fs';
 import * as cp from 'child_process';
 
+if (process.argv.length !== 3) {
+    console.log('Usage: node scripts/nightly <rev>');
+    process.exit(1);
+}
+
 interface Dependencies {
     [name: string]: string;
 }
@@ -44,22 +49,25 @@ function markChanged(name: string) {
     }
 }
 
-const commits = process.env.TRAVIS_COMMIT_RANGE!.split('...');
+const lastNightly = process.argv[2].split('..')[0]; // revision of the last nightly
+console.log('last nightly release', lastNightly);
 const lastReleaseTag = cp.execSync('git describe --tags --match=v*.*.* --abbrev=0', {encoding: 'utf8'}).trim();
-console.log('last release tag', lastReleaseTag);
-// if there was a release since the last nightly, only get the diff since the release
-const diffStart = cp.execSync(`git rev-list ${lastReleaseTag}...${commits[0]}`, {encoding: 'utf8'}).split(/\r?\n/)[0];
-console.log('newest release', diffStart);
+console.log('last stable release tag', lastReleaseTag);
+// if there was a release since the last nightly, only get the diff since that release
+const diffStart = lastNightly
+    ? cp.execSync(`git rev-list ${lastReleaseTag}...${lastNightly}`, {encoding: 'utf8'}).split(/\r?\n/)[0]
+    : lastReleaseTag;
+console.log('releasing changes since', diffStart);
 
 const diff = cp.execSync(
-    `git diff ${diffStart} --name-only -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
+    `git diff ${diffStart} --name-only -z --no-color -- packages/${Array.from(publicPackages.keys()).join(' packages/')}`,
     {encoding: 'utf8'},
 ).trim();
-if (diff !== '')
-    for (const file of diff.split(/\r?\n/))
+for (const file of diff.split('\0'))
+    if (file)
         markChanged(file.split(/[/\\]/)[1]);
 
 for (const name of changed) {
     fs.writeFileSync(`packages/${name}/package.json`, JSON.stringify(publicPackages.get(name), undefined, 2) + '\n');
-    console.log(cp.exec(`npm publish packages/${name} --tag next`));
+    console.log(cp.exec(`npm publish packages/${name} --tag next`, {encoding: 'utf8'}));
 }
