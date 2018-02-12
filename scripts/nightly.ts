@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as cp from 'child_process';
 
-if (process.argv.length !== 3) {
-    console.log('Usage: node scripts/nightly <rev>');
+if (process.argv.length < 3) {
+    console.log('Usage: node scripts/nightly <rev> [<options>...]');
     process.exit(1);
 }
 
@@ -69,5 +69,5 @@ for (const file of diff.split('\0'))
 
 for (const name of changed) {
     fs.writeFileSync(`packages/${name}/package.json`, JSON.stringify(publicPackages.get(name), undefined, 2) + '\n');
-    console.log(cp.exec(`npm publish packages/${name} --tag next`, {encoding: 'utf8'}));
+    console.log(cp.execSync(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`, {encoding: 'utf8'}));
 }
