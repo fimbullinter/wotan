@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - node
+cache: yarn
+script:
+  - yarn compile
+  - yarn lint
+  - yarn check-dependencies
+  - yarn test
+after_success:
+  - node scripts/nightly "$TRAVIS_COMMIT_RANGE"
