@@ -7,10 +7,14 @@ import { Runner } from '../../src/runner';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { NodeFileSystem } from '../../src/services/default/file-system';
-import { FileSystem, MessageHandler } from '../../src/types';
+import { FileSystem, MessageHandler, DirectoryService } from '../../src/types';
 
+const directories: DirectoryService = {
+    getCurrentDirectory() { return path.resolve('packages/wotan'); }
+};
 test('throws error on non-existing file', (t) => {
     const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
     container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     const runner = container.get(Runner);
     t.throws(
@@ -33,6 +37,7 @@ test('throws error on non-existing file', (t) => {
 
 test('throws error on file not included in project', (t) => {
     const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
     container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
     const runner = container.get(Runner);
     t.throws(
@@ -48,7 +53,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `'${unixifyPath(path.resolve('non-existent.ts'))}' is not included in the project.`,
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
     );
 });
 
