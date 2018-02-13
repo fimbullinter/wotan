@@ -1,7 +1,7 @@
 import { getPackages, getChangedPackageNames, getLastRelaseTag, PackageData, writeManifest, execAndLog } from './util';
 import * as semver from 'semver';
 
-const rootManifest = require('../package.json'); // tslint:disable-line
+const rootManifest = require('../package.json');
 const releaseVersion = rootManifest.version;
 const version = new semver.SemVer(releaseVersion);
 const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease.length === 0 && version.build.length === 0;
