@@ -44,7 +44,11 @@ console.log('releasing changes since', diffStart);
 for (const name of getChangedPackageNames(diffStart, publicPackages.keys()))
     markForRelease(name);
 
-for (const name of needsRelease) {
-    writeManifest(`packages/${name}/package.json`, publicPackages.get(name)!);
-    execAndLog(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`);
+if (needsRelease.size !== 0) {
+    for (const name of needsRelease) {
+        writeManifest(`packages/${name}/package.json`, publicPackages.get(name)!);
+        execAndLog(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`);
+    }
+} else {
+    console.log('nothing changed');
 }
