@@ -10,4 +10,4 @@ script:
 deploy:
   provider: script
   skip_cleanup: true
-  script: bash -c 'echo $NPM_AUTH > ~/.npmrc && node scripts/nightly "$TRAVIS_COMMIT_RANGE"'
+  script: bash -c 'echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/nightly "$TRAVIS_COMMIT_RANGE"'
