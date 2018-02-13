@@ -7,7 +7,7 @@ script:
   - yarn lint
   - yarn check-dependencies
   - yarn test
-  deploy:
-    provider: script
-    skip_cleanup: true
-    script: bash -c 'echo $NPM_AUTH > ~/.npmrc && npm whoami && node scripts/nightly "$TRAVIS_COMMIT_RANGE"'
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: bash -c 'echo $NPM_AUTH > ~/.npmrc && npm whoami && node scripts/nightly "$TRAVIS_COMMIT_RANGE"'
