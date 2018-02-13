@@ -6,9 +6,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^1.8.1",
-    "tsutils": "^2.21.0"
-  },
-  "devDependencies": {
+    "tsutils": "^2.21.0",
     "@fimbul/wotan": "^0.0.1"
   },
   "peerDependencies": {

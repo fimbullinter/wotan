@@ -17,7 +17,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@fimbul/disir": "*",
+    "@fimbul/disir": "^0.0.1",
     "@types/cross-spawn": "^6.0.0",
     "@types/glob": "^5.0.35",
     "@types/node": "^9.4.0",
