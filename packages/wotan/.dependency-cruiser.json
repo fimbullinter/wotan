@@ -154,7 +154,7 @@
         "path": "^test/"
       },
       "to": {
-        "path": "^\\.\\./\\.\\./node_modules/typescript/"
+        "path": "^\\.\\./\\.\\./node_modules/(typescript|ava)/"
       }
     }
   ],
