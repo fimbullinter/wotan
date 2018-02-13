@@ -8,9 +8,8 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/scripts/foreach.js",
+      "program": "${workspaceFolder}/packages/wotan/src/cli.js",
       "args": [
-        "{packages/*,scripts}", "wotan -p %s", "tslint -p %s"
       ],
       "outputCapture": "std",
       "sourceMaps": true,

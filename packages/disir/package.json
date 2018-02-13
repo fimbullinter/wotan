@@ -8,8 +8,10 @@
     "tslib": "^1.8.1",
     "tsutils": "^2.21.0"
   },
+  "devDependencies": {
+    "@fimbul/wotan": "^0.0.1"
+  },
   "peerDependencies": {
-    "@fimbul/wotan": "^0.0.1",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   }
 }
