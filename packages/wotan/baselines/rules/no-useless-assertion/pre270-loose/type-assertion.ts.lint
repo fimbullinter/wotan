@@ -120,3 +120,19 @@ function fn<T extends string | undefined>(param: T) {
     takeStringUndefined(b as string);
                           ~~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }
+
+namespace A {
+    export class MyClass {
+        public prop = '';
+    }
+}
+
+namespace B {
+    export class MyClass {
+        public prop = '';
+        public prop2 = '';
+    }
+}
+
+declare let myObj: A.MyClass;
+<B.MyClass>myObj;

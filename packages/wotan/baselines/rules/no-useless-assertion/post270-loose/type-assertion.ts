@@ -89,3 +89,19 @@ function fn<T extends string | undefined>(param: T) {
     takeStringUndefined(param);
     takeStringUndefined(b);
 }
+
+namespace A {
+    export class MyClass {
+        public prop = '';
+    }
+}
+
+namespace B {
+    export class MyClass {
+        public prop = '';
+        public prop2 = '';
+    }
+}
+
+declare let myObj: A.MyClass;
+<B.MyClass>myObj;
