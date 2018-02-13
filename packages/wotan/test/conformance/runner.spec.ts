@@ -10,7 +10,7 @@ import { NodeFileSystem } from '../../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService } from '../../src/types';
 
 const directories: DirectoryService = {
-    getCurrentDirectory() { return path.resolve('packages/wotan'); }
+    getCurrentDirectory() { return path.resolve('packages/wotan'); },
 };
 test('throws error on non-existing file', (t) => {
     const container = new Container();

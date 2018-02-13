@@ -6,11 +6,11 @@ function execCli(...args: string[]): Promise<{err: Error | null, stdout: string,
     interface ErrorWithCode extends Error {
         code: number;
     }
-    return new Promise((resolve) => {
+    return new Promise((r) => {
         cp.exec(
             `${path.normalize('./node_modules/.bin/wotan')} '${args.join("' '")}'`,
             {cwd: 'packages/heimdall'},
-            (err, stdout, stderr) => resolve({err, stdout, stderr, code: err ? (<ErrorWithCode>err).code : 0}),
+            (err, stdout, stderr) => r({err, stdout, stderr, code: err ? (<ErrorWithCode>err).code : 0}),
         );
     });
 }
