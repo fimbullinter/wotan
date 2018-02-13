@@ -7,7 +7,9 @@ script:
   - yarn lint
   - yarn check-dependencies
   - yarn test
-after_success:
-  - echo $NPM_AUTH > ~/.npmrc
-  - npm whoami
-  - node scripts/nightly "$TRAVIS_COMMIT_RANGE"
+deploy:
+  - provider: script
+    script: |
+      echo $NPM_AUTH > ~/.npmrc
+      npm whoami
+      node scripts/nightly "$TRAVIS_COMMIT_RANGE"
