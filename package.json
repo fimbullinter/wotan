@@ -16,7 +16,7 @@
     "lint:disir": "cd packages/disir && yarn lint",
     "lint": "run-p lint:*",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
-    "test:unit": "ava 'packages/*/test/**/*.spec.js' -v --snapshot-dir baselines",
+    "test:unit": "ava \"packages/*/test/**/*.spec.js\" -v --snapshot-dir baselines",
     "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
     "test": "run-p \"test:* {@}\" --",
     "report-coverage": "codecov --disable=gcov",
