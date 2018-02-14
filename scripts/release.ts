@@ -8,7 +8,7 @@ const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease
 
 const {packages, publicPackages} = getPackages();
 
-const needsRelease = isMajor ? new Set(packages.keys()) : getChangedPackageNames(getLastRelaseTag(), publicPackages.keys());
+const needsRelease = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastRelaseTag(), publicPackages.keys());
 
 function updateManifest(path: string, manifest: PackageData, toVersion: string) {
     manifest.version = toVersion;

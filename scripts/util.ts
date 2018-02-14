@@ -19,12 +19,12 @@ export function getLastRelaseTag() {
 }
 
 export function getPackages() {
-    const packages = new Map(
+    const packages = new Map<string, PackageData>(
         fs.readdirSync('packages').map((name): [string, PackageData] => {
             return [name, require(`../packages/${name}/package.json`)];
         }),
     );
-    const publicPackages = new Map(Array.from(packages).filter((v) => !v[1].private));
+    const publicPackages = new Map<string, PackageData>(Array.from(packages).filter((v) => !v[1].private));
     return {
         packages,
         publicPackages,
