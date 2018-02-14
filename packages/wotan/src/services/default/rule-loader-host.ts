@@ -29,7 +29,7 @@ export class NodeRuleLoader implements RuleLoaderHost {
             log('Found %s', name);
             return rule;
         } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND')
+            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && e.message === `Cannot find module '${name}'`)
                 return;
             throw e;
         }

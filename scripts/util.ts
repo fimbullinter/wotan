@@ -19,12 +19,12 @@ export function getLastRelaseTag() {
 }
 
 export function getPackages() {
-    const packages = new Map(
+    const packages = new Map<string, PackageData>(
         fs.readdirSync('packages').map((name): [string, PackageData] => {
             return [name, require(`../packages/${name}/package.json`)];
         }),
     );
-    const publicPackages = new Map(Array.from(packages).filter((v) => !v[1].private));
+    const publicPackages = new Map<string, PackageData>(Array.from(packages).filter((v) => !v[1].private));
     return {
         packages,
         publicPackages,
@@ -33,7 +33,7 @@ export function getPackages() {
 
 export function getChangedPackageNames(startRev: string, packageNames: Iterable<string>) {
     const diff = cp.execSync(
-        `git diff ${startRev} --name-only -z --no-color -- packages/${Array.from(packageNames).join(' packages/')}`,
+        `git --no-pager diff ${startRev} --name-only -z --no-color -- packages/${Array.from(packageNames).join(' packages/')}`,
         {encoding: 'utf8'},
     );
     const result = new Set<string>();

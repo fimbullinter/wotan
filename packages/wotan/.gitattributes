@@ -1,2 +1,0 @@
-test/rules/**/*crlf*        -text
-baselines/rules/**/*crlf*   -text

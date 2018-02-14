@@ -30,6 +30,8 @@ yarn-error.log*
 /packages/*/test/**/*.d.ts
 /scripts/*.js
 /scripts/*.js.map
+# this one is written as js file
+!/scripts/foreach.js
 
 !/packages/*/baselines/**
 !/packages/*/test/fixtures/**

@@ -54,28 +54,28 @@ test('ShowCommand', async (t) => {
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.js',
+        file: 'packages/wotan/test/fixtures/configuration/foo.js',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json5,
     });
 

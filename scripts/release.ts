@@ -1,14 +1,14 @@
 import { getPackages, getChangedPackageNames, getLastRelaseTag, PackageData, writeManifest, execAndLog } from './util';
 import * as semver from 'semver';
 
-const rootManifest = require('../package.json'); // tslint:disable-line
+const rootManifest = require('../package.json');
 const releaseVersion = rootManifest.version;
 const version = new semver.SemVer(releaseVersion);
 const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease.length === 0 && version.build.length === 0;
 
 const {packages, publicPackages} = getPackages();
 
-const needsRelease = isMajor ? new Set(packages.keys()) : getChangedPackageNames(getLastRelaseTag(), publicPackages.keys());
+const needsRelease = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastRelaseTag(), publicPackages.keys());
 
 function updateManifest(path: string, manifest: PackageData, toVersion: string) {
     manifest.version = toVersion;

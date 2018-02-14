@@ -25,7 +25,7 @@ export class ProcessorLoader {
                 throw new ConfigurationError(`'${path}' has no export named 'Processor'.`);
             return result;
         } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND')
+            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && e.message === `Cannot find module '${path}'`)
                 throw new ConfigurationError(e.message);
             throw e;
         }
