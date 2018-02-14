@@ -103,7 +103,8 @@
           "undetermined",
           "npm-no-pkg",
           "npm-unknown"
-        ]
+        ],
+        "pathNot": "/ava/"
       }
     },
     {
