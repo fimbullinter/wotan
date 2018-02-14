@@ -20,9 +20,6 @@
   "peerDependencies": {
     "@fimbul/wotan": "^0.0.1"
   },
-  "devDependencies": {
-    "@fimbul/wotan": "^0.0.1"
-  },
   "dependencies": {
     "@fimbul/bifrost": "0.0.1",
     "inversify": "^4.10.0",
