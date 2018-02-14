@@ -7,10 +7,11 @@ export class NodeFormatterLoader implements FormatterLoaderHost {
     constructor(private resolver: Resolver) {}
 
     public loadCoreFormatter(name: string): FormatterConstructor | undefined {
+        name = `../../formatters/${name}.js`;
         try {
-            return require(`../../formatters/${name}.js`).Formatter;
+            return require(name).Formatter;
         } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND')
+            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && `Cannot find module '${name}'`)
                 return;
             throw e;
         }
