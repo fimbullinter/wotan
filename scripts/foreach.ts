@@ -35,7 +35,7 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
         const cmd = queue.shift();
         if (cmd === undefined)
             return;
-        console.log(chalk.grey(cmd));
+        console.log(chalk.grey('$ ' + cmd));
         const p = spawn(cmd, undefined, {shell: true, stdio: 'inherit'})
             .on('exit', (code) => {
                 running.delete(p);
