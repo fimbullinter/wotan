@@ -3,7 +3,6 @@
     "allowJs": true,
     "target": "esnext",
     "strict": true,
-    "declaration": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   }

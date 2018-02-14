@@ -16,3 +16,8 @@ function fn2(param1: string, param2): string {
 }
 
 fn2();
+
+type MyType<T> = string;
+export interface MyInterface {
+    prop: MyType<typeof fn>;
+}

@@ -33,3 +33,9 @@ function fn2(param1: string, param2): string {
 
 fn2();
 ~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
+
+type MyType<T> = string;
+            ~            [error typecheck: 'T' is declared but its value is never read.]
+export interface MyInterface {
+    prop: MyType<typeof fn>;
+}
