@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const glob = require("glob");
 const spawn = require("cross-spawn");
-const util_1 = require("util");
 const chalk_1 = require("chalk");
 const os = require("os");
 let bail = false;
@@ -24,7 +23,7 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
     let failed = [];
     for (const match of matches)
         for (const cmd of cmds)
-            queue.push(util_1.format(trimSingleQuotes(cmd), match));
+            queue.push(formatCommand(trimSingleQuotes(cmd), match));
     const running = new Set();
     const maxParallel = os.cpus().length;
     for (let j = 0; j < maxParallel; ++j)
@@ -33,7 +32,7 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
         const cmd = queue.shift();
         if (cmd === undefined)
             return;
-        console.log(chalk_1.default.grey(cmd));
+        console.log(chalk_1.default.grey('$ ' + cmd));
         const p = spawn(cmd, undefined, { shell: true, stdio: 'inherit' })
             .on('exit', (code) => {
             running.delete(p);
@@ -60,5 +59,8 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
 });
 function trimSingleQuotes(str) {
     return str.startsWith("'") && str.endsWith("'") ? str.slice(1, -1) : str;
+}
+function formatCommand(cmd, file) {
+    return cmd.replace('{{file}}', file);
 }
 //# sourceMappingURL=foreach.js.map
