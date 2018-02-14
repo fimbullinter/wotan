@@ -1,6 +1,5 @@
 import * as glob from 'glob';
 import * as spawn from 'cross-spawn';
-import { format } from 'util';
 import chalk from 'chalk';
 import * as cp from 'child_process';
 import * as os from 'os';
@@ -26,7 +25,7 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
     let failed: Array<{cmd: string, code: number}> = [];
     for (const match of matches)
         for (const cmd of cmds)
-            queue.push(format(trimSingleQuotes(cmd), match));
+            queue.push(formatCommand(trimSingleQuotes(cmd), match));
     const running = new Set<cp.ChildProcess>();
     const maxParallel = os.cpus().length;
     for (let j = 0; j < maxParallel; ++j)
@@ -63,4 +62,8 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
 
 function trimSingleQuotes(str: string) {
     return str.startsWith("'") && str.endsWith("'") ? str.slice(1, -1) : str;
+}
+
+function formatCommand(cmd: string, file: string) {
+    return cmd.replace('{{file}}', file);
 }
