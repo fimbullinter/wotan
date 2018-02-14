@@ -33,7 +33,7 @@ export function getPackages() {
 
 export function getChangedPackageNames(startRev: string, packageNames: Iterable<string>) {
     const diff = cp.execSync(
-        `git diff ${startRev} --name-only -z --no-color -- packages/${Array.from(packageNames).join(' packages/')}`,
+        `git --no-pager diff ${startRev} --name-only -z --no-color -- packages/${Array.from(packageNames).join(' packages/')}`,
         {encoding: 'utf8'},
     );
     const result = new Set<string>();
