@@ -5,9 +5,8 @@ import * as ts from 'typescript';
 export class Rule extends TypedRule {
     public apply() {
         for (const diagnostic of this.program.getSyntacticDiagnostics(this.sourceFile)) {
-            const start = diagnostic.start || 0;
-            const end = start + (diagnostic.length || 0);
-            this.addFailure(start, end, ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+            const start = diagnostic.start!;
+            this.addFailure(start, start + diagnostic.length!, ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
         }
     }
 }
