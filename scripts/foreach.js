@@ -1,3 +1,4 @@
+// @ts-check
 const glob =require('glob');
 const spawn = require('cross-spawn');
 const chalk = require('chalk').default;
@@ -17,7 +18,7 @@ outer: for (; i < process.argv.length; ++i) {
 
 const [pattern, ...cmds] = process.argv.slice(i);
 
-glob(trimSingleQuotes(pattern), (err, matches) => {
+glob(pattern, (err, matches) => {
     if (err)
         throw err;
     /** @type {Array<string>} */
@@ -26,7 +27,7 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
     let failed = [];
     for (const match of matches)
         for (const cmd of cmds)
-            queue.push(formatCommand(trimSingleQuotes(cmd), match));
+            queue.push(formatCommand(cmd, match));
     const running = new Set();
     const maxParallel = os.cpus().length;
     for (let j = 0; j < maxParallel; ++j)
@@ -60,13 +61,6 @@ glob(trimSingleQuotes(pattern), (err, matches) => {
         running.add(p);
     }
 });
-
-/**
- * @param {string} str
- */
-function trimSingleQuotes(str) {
-    return str.startsWith("'") && str.endsWith("'") ? str.slice(1, -1) : str;
-}
 
 /**
  * @param {string} cmd

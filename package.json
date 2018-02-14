@@ -2,8 +2,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "compile": "node scripts/foreach '{packages/*,scripts}' 'tsc -p {{file}}'",
-    "lint": "node scripts/foreach '{packages/*,scripts}' 'wotan -p {{file}}' 'tslint -p {{file}} -t stylish'",
+    "compile": "node scripts/foreach \"{packages/*,scripts}\" \"tsc -p {{file}}\"",
+    "lint": "node scripts/foreach \"{packages/*,scripts}\" \"wotan -p {{file}}\" \"tslint -p {{file}} -t stylish\"",
     "check-dependencies": "cd packages/wotan && yarn check-dependencies",
     "test:unit": "ava \"packages/*/test/**/*.spec.js\" -v --snapshot-dir baselines",
     "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
