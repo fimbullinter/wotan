@@ -30,7 +30,7 @@ yarn-error.log*
 /packages/*/test/**/*.d.ts
 /scripts/*.js
 /scripts/*.js.map
-# needed to compile itself
+# this one is written as js file
 !/scripts/foreach.js
 
 !/packages/*/baselines/**
