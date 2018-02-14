@@ -20,6 +20,9 @@
     "@fimbul/wotan": "^0.0.1",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
+  "devDependencies": {
+    "@fimbul/wotan": "^0.0.1"
+  },
   "dependencies": {
     "parse5": "^4.0.0",
     "tslib": "^1.8.1",
