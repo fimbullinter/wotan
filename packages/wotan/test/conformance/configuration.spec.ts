@@ -343,7 +343,7 @@ test('DefaultConfigurationProvider.resolve', (t) => {
         () => cp.resolve('wotan:non-existent-preset', '.'),
         "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
     );
-    t.is(cp.resolve('wotan:recommended', ''), path.resolve('./configs/recommended.yaml'));
+    t.is(cp.resolve('wotan:recommended', ''), path.resolve('packages/wotan/configs/recommended.yaml'));
 });
 
 test('DefaultConfigurationProvider.read', (t) => {

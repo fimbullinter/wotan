@@ -66,6 +66,7 @@ jobs:
             - "packages/*/index.*"
             - "packages/*/src"
             - "packages/*/test"
+            - "scripts/*"
             - yarn.lock
   test:
     docker:

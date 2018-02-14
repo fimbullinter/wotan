@@ -287,11 +287,10 @@ class TestCommandRunner extends AbstractCommandRunner {
 
 function buildBaselineDirectoryName(basedir: string, baselineDir: string, testcase: string): string {
     const parts = path.relative(basedir, path.dirname(testcase)).split(path.sep);
-    const testIndex = parts[0] === 'packages' ? 2 : 0;
-    if (/^(__)?tests?(__)?$/.test(parts[testIndex])) {
-        parts[testIndex] = baselineDir;
+    if (/^(__)?tests?(__)?$/.test(parts[0])) {
+        parts[0] = baselineDir;
     } else {
-        parts.splice(testIndex, 0, baselineDir);
+        parts.unshift(baselineDir);
     }
     return path.resolve(basedir, parts.join(path.sep), getTestName(path.basename(testcase)));
 }

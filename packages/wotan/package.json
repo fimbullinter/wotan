@@ -5,13 +5,6 @@
   "bin": "bin/main.js",
   "scripts": {
     "clean": "rimraf '{index,{src,test/conformance}/**/*}.{js?(.map),d.ts}'",
-    "lint": "run-p lint:*",
-    "lint:tslint": "tslint -p tsconfig.build.json",
-    "lint:wotan": "node src/cli lint -p tsconfig.build.json",
-    "test": "run-p \"test:* {@}\" --",
-    "test:api": "ava test/conformance -v --snapshot-dir baselines",
-    "test:integration": "node src/cli test 'test/integration/**/*.test.json' --exact",
-    "test:rules": "node src/cli test 'test/rules/**/*.test.json' --exact",
     "check-dependencies": "depcruise index.js src/**/*.js bin test/conformance/*.js -v .dependency-cruiser.json"
   },
   "publishConfig": {
@@ -53,12 +46,9 @@
     "@types/rimraf": "^2.0.2",
     "@types/semver": "^5.4.0",
     "@types/to-absolute-glob": "^2.0.0",
-    "ava": "^0.25.0",
     "dependency-cruiser": "^2.10.1",
     "escape-string-regexp": "^1.0.5",
-    "npm-run-all": "^4.1.2",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.9.1"
+    "rimraf": "^2.6.2"
   },
   "dependencies": {
     "bind-decorator": "^1.0.11",
