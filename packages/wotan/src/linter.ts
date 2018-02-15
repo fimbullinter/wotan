@@ -140,31 +140,7 @@ export class Linter {
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const isDisabled = (failure: Failure): boolean => {
-            if (failureFilter === undefined)
-                failureFilter = this.filterFactory.create(sourceFile, rules.map((r) => r.ruleName), getWrappedAst);
-            return failureFilter.filter(failure);
-        };
-
-        const context: RuleContext = {
-            addFailure,
-            getFlatAst,
-            getWrappedAst,
-            program,
-            sourceFile,
-            settings,
-            options: undefined,
-        };
-
-        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
-            log('Executing rule %s', ruleName);
-            new ctor(context).apply();
-        }
-
-        log('Found %d failures', result.length);
-        return result;
-
-        function addFailure(pos: number, end: number, message: string, fix?: Replacement | Replacement[]) {
+        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | Replacement[]) => {
             const failure: Failure = {
                 ruleName,
                 severity,
@@ -185,9 +161,30 @@ export class Linter {
                             ? undefined
                             : {replacements: fix},
             };
-            if (!isDisabled(failure))
+            if (failureFilter === undefined)
+                failureFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
+            if (failureFilter.filter(failure))
                 result.push(failure);
+        };
+
+        const context: RuleContext = {
+            addFailure,
+            getFlatAst,
+            getWrappedAst,
+            program,
+            sourceFile,
+            settings,
+            options: undefined,
+        };
+
+        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
+            log('Executing rule %s', ruleName);
+            new ctor(context).apply();
         }
+
+        log('Found %d failures', result.length);
+        return result;
+
         function getFlatAst() {
             return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
         }

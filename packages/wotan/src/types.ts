@@ -373,9 +373,15 @@ export interface DirectoryService {
 export abstract class DirectoryService {}
 
 export interface FailureFilterFactory {
-    create(sourceFile: ts.SourceFile, rules: ReadonlyArray<string>, getWrappedAst?: () => WrappedAst): FailureFilter;
+    create(context: FailureFilterContext): FailureFilter;
 }
 export abstract class FailureFilterFactory {}
+
+export interface FailureFilterContext {
+    sourceFile: ts.SourceFile;
+    ruleNames: ReadonlyArray<string>;
+    getWrappedAst(): WrappedAst;
+}
 
 export interface FailureFilter {
     /** @returns `true` if the failure should be used, false if it should be filtered out. */

@@ -87,7 +87,6 @@ test('applies rules correctly', (t) => {
         },
         getFlatAst(): any {},
         getWrappedAst(): any {},
-        isDisabled(): any {},
         sourceFile: ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest),
         options: undefined,
         settings: new Map(),

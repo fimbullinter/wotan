@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { getCommentAtPosition, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
-import { FailureFilterFactory, FailureFilter, Failure } from '../../types';
+import { FailureFilterFactory, FailureFilter, Failure, FailureFilterContext } from '../../types';
 
 export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*$/;
 
@@ -25,31 +25,28 @@ export interface RawLineSwitch {
 export class LineSwitchFilterFactory implements FailureFilterFactory {
     constructor(private parser: LineSwitchParser) {}
 
-    public create(sourceFile: ts.SourceFile, rules: ReadonlyArray<string>, getWrappedAst?: () => WrappedAst): FailureFilter {
-        return new Filter(this.getDisabledRanges(sourceFile, rules, getWrappedAst));
+    public create(context: FailureFilterContext): FailureFilter {
+        return new Filter(this.getDisabledRanges(context));
     }
 
-    public getDisabledRanges(sourceFile: ts.SourceFile, enabledRules: ReadonlyArray<string>, getWrappedAst?: () => WrappedAst) {
+    public getDisabledRanges(context: FailureFilterContext) {
+        const {sourceFile, ruleNames} = context;
         let wrappedAst: WrappedAst | undefined;
         const raw = this.parser.parse({
             sourceFile,
-            ruleNames: enabledRules,
+            ruleNames,
             getCommentAtPosition(pos) {
                 let parent: ts.Node | undefined;
-                if (getWrappedAst !== undefined) {
-                    if (wrappedAst === undefined)
-                        wrappedAst = getWrappedAst();
-                    const wrap = getWrappedNodeAtPosition(wrappedAst, pos);
-                    if (wrap !== undefined)
-                        parent = wrap.node;
-                }
+                const wrap = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), pos);
+                if (wrap !== undefined)
+                    parent = wrap.node;
                 return getCommentAtPosition(sourceFile, pos, parent);
             },
         });
 
         const result: DisableMap = new Map();
         for (const [rule, switches] of raw) {
-            if (!enabledRules.includes(rule))
+            if (!ruleNames.includes(rule))
                 continue;
             const disables: ts.TextRange[] = [];
             let isDisabled = false;
@@ -84,9 +81,9 @@ class Filter implements FailureFilter {
             const {start: {position: pos}, end: {position: end}} = failure;
             for (const disabledRange of ruleDisables)
                 if (end > disabledRange.pos && pos < disabledRange.end)
-                    return true;
+                    return false;
         }
-        return false;
+        return true;
     }
 }
 
