@@ -14,8 +14,28 @@ export interface PackageData {
     peerDependencies?: Dependencies;
 }
 
+export function isTreeClean() {
+    return cp.spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--']).status === 0 && // unstaged and staged changes
+        cp.spawnSync('git', ['ls-files', '--others', '--exclude-standard', '--error-unmatch', '.']).status === 1; // untracked files
+}
+
+export function ensureCleanTree() {
+    if (!isTreeClean())
+        throw new Error('Working directory contains uncommited changes.');
+}
+
+export function getCurrentBranch() {
+    return cp.spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {encoding: 'utf8'}).stdout.trim();
+}
+
+export function ensureBranch(name: string) {
+    const branch = getCurrentBranch();
+    if (branch !== name)
+        throw new Error(`Expected current branch to be ${name}, but it's actually ${branch}.`);
+}
+
 export function getLastRelaseTag() {
-    return cp.execSync('git describe --tags --match=v*.*.* --abbrev=0', {encoding: 'utf8'}).trim();
+    return cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*', '--abbrev=0'], {encoding: 'utf8'}).stdout.trim();
 }
 
 export function getPackages() {
@@ -32,10 +52,13 @@ export function getPackages() {
 }
 
 export function getChangedPackageNames(startRev: string, packageNames: Iterable<string>) {
-    const diff = cp.execSync(
-        `git --no-pager diff ${startRev} --name-only -z --no-color -- packages/${Array.from(packageNames).join(' packages/')}`,
+    const packageDirs = Array.from(packageNames, (p) => 'packages/' + p);
+    if (packageDirs.length === 0)
+        return new Set<string>();
+    const diff = cp.spawnSync(
+        'git', ['diff-tree', '-r', '--name-only', '-z', startRev, 'HEAD', ...packageDirs],
         {encoding: 'utf8'},
-    );
+    ).stdout;
     const result = new Set<string>();
     for (const file of diff.split('\0'))
         if (file)
