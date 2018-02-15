@@ -220,7 +220,6 @@ class HasDeprecatedMethods {
     ~~~~~~~~~~~~~~~~~  [error deprecation: Property 'deprecatedProp2' is deprecated.]
     v.deprecatedProp2();
     ~~~~~~~~~~~~~~~~~    [error deprecation: Property 'deprecatedProp2' is deprecated.]
-    ~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
     v.initialized;
     v.initialized();
     ~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
