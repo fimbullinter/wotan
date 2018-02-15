@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/ve",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Vue processor for wotan",
   "main": "src/index",
   "author": "Klaus Meinhardt",
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
   "peerDependencies": {
-    "@fimbul/wotan": "^0.0.1",
+    "@fimbul/wotan": "^0.1.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
   "dependencies": {

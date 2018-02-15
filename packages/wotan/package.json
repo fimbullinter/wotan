@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/wotan",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pluggable TypeScript and JavaScript linter",
   "bin": "bin/main.js",
   "scripts": {

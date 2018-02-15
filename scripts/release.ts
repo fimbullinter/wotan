@@ -45,7 +45,7 @@ writeManifest('package.json', rootManifest);
 for (const [name, manifest] of packages) {
     if (!manifest.private && needsRelease.has(name)) {
         execAndLog(`npm publish packages/${name} --tag latest ${process.argv.slice(2).join(' ')}`);
-        execAndLog(`npm dist-tag ${manifest.name}@${manifest.version} next`);
+        execAndLog(`npm dist-tag add ${manifest.name}@${manifest.version} next`);
     }
 }
 execAndLog(`git commit -a -m "v${releaseVersion}"`);
