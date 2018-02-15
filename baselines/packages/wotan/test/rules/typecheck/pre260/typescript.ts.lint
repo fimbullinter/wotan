@@ -1,0 +1,41 @@
+import * as m from 'non-existent-module';
+            ~                             [error typecheck: 'm' is declared but never used.]
+                   ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+let foo: string;
+foo = 1;
+~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
+console.clog(foo);
+        ~~~~       [error typecheck: Property 'clog' does not exist on type 'Console'. Did you mean 'log'?]
+
+let bar: Array<Map<number, [boolean, string]>>;
+let baz = foo;
+    ~~~        [error typecheck: 'baz' is declared but never used.]
+
+function fn(param?: Array<Map<number, [number, string]>>): boolean {
+    return param[0];
+    ~~~~~~~~~~~~~~~~ [error typecheck: Type 'Map<number, [number, string]>' is not assignable to type 'boolean'.]
+           ~~~~~     [error typecheck: Object is possibly 'undefined'.]
+    return true;
+    ~~~~~~       [error typecheck: Unreachable code detected.]
+}
+
+function fn2(param1: string, param2): string {
+             ~~~~~~                            [error typecheck: 'param1' is declared but never used.]
+                             ~~~~~~            [error typecheck: 'param2' is declared but never used.]
+                             ~~~~~~            [error typecheck: Parameter 'param2' implicitly has an 'any' type.]
+                                      ~~~~~~   [error typecheck: A function whose declared type is neither 'void' nor 'any' must return a value.]
+    fn(bar);
+       ~~~   [error typecheck: Argument of type 'Map<number, [boolean, string]>[]' is not assignable to parameter of type 'Map<number, [number, string]>[] | undefined'.\
+  Type 'Map<number, [boolean, string]>[]' is not assignable to type 'Map<number, [number, string]>[]'.\
+    Type 'Map<number, [boolean, string]>' is not assignable to type 'Map<number, [number, string]>'.\
+      Type '[boolean, string]' is not assignable to type '[number, string]'.\
+        Type 'boolean' is not assignable to type 'number'.]
+}
+
+fn2();
+~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
+
+type MyType<T> = string;
+export interface MyInterface {
+    prop: MyType<typeof fn>;
+}
