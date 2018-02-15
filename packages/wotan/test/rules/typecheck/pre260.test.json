@@ -1,3 +1,4 @@
 {
-  "typescriptVersion": "< 2.6.0"
+  "typescriptVersion": "< 2.6.0",
+  "files": ["typescript.ts"]
 }
