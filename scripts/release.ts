@@ -1,4 +1,13 @@
-import { getPackages, getChangedPackageNames, getLastRelaseTag, PackageData, writeManifest, execAndLog, ensureBranch, ensureCleanTree } from './util';
+import {
+    getPackages,
+    getChangedPackageNames,
+    getLastRelaseTag,
+    PackageData,
+    writeManifest,
+    execAndLog,
+    ensureBranch,
+    ensureCleanTree,
+} from './util';
 import * as semver from 'semver';
 
 ensureBranch('master');
