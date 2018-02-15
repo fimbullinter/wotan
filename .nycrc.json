@@ -4,6 +4,7 @@
     "packages/*/index.js"
   ],
   "exclude": [
+    "packages/wotan/src/di/*.module.js"
   ],
   "extension": [
     ".js"
