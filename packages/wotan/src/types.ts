@@ -13,9 +13,9 @@ export interface LintAndFixFileResult {
 }
 
 export interface Replacement {
-    start: number;
-    end: number;
-    text: string;
+    readonly start: number;
+    readonly end: number;
+    readonly text: string;
 }
 
 export abstract class Replacement {
@@ -71,8 +71,8 @@ export type Severity = 'error' | 'warning';
 
 // @internal
 export interface RuleConstructor {
-    requiresTypeInformation: boolean;
-    deprecated?: boolean | string;
+    readonly requiresTypeInformation: boolean;
+    readonly deprecated?: boolean | string;
     supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
     new(context: RuleContext): AbstractRule;
 }
@@ -229,7 +229,7 @@ export interface ConfigurationProvider {
 export abstract class ConfigurationProvider {}
 
 export interface LoadConfigurationContext {
-    stack: ReadonlyArray<string>;
+    readonly stack: ReadonlyArray<string>;
     /**
      * Resolves the given name relative to the current configuration file and returns the parsed Configuration.
      * This function detects cycles and caches already loaded configurations.
@@ -245,8 +245,21 @@ export const enum Format {
 
 // @internal
 export interface ProcessorConstructor {
-    getSuffixForFile(fileName: string, settings: GlobalSettings, readFile: () => string): string;
-    new(source: string, sourceFileName: string, targetFileName: string, settings: GlobalSettings): AbstractProcessor;
+    getSuffixForFile(context: ProcessorSuffixContext): string;
+    new(context: ProcessorContext): AbstractProcessor;
+}
+
+export interface ProcessorSuffixContext {
+    fileName: string;
+    getSettings(): GlobalSettings;
+    readFile(): string;
+}
+
+export interface ProcessorContext {
+    source: string;
+    sourceFileName: string;
+    targetFileName: string;
+    settings: GlobalSettings;
 }
 
 export interface ProcessorUpdateResult {
@@ -258,16 +271,21 @@ export abstract class AbstractProcessor {
     /**
      * Returns the resulting file name.
      */
-    public static getSuffixForFile(_fileName: string, _settings: GlobalSettings, _readFile: () => string): string {
+    public static getSuffixForFile(_context: ProcessorSuffixContext): string {
         return '';
     }
 
-    constructor(
-        protected source: string,
-        protected sourceFileName: string,
-        protected targetFileName: string,
-        protected settings: GlobalSettings,
-    ) {}
+    protected source: string;
+    protected sourceFileName: string;
+    protected targetFileName: string;
+    protected settings: GlobalSettings;
+
+    constructor(context: ProcessorContext) {
+        this.source = context.source;
+        this.sourceFileName = context.sourceFileName;
+        this.targetFileName = context.targetFileName;
+        this.settings = context.settings;
+    }
 
     public abstract preprocess(): string;
 

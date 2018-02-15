@@ -1,14 +1,15 @@
+// @ts-check
 const {AbstractProcessor} = require('../../../../src/types');
 
 class Processor extends AbstractProcessor {
-    static getSuffixForFile(_name, _settings, readFile) {
-        const content = readFile();
+    static getSuffixForFile(context) {
+        const content = context.readFile();
         const match = /<script.*? +lang=(["'])(\w+)\1.*?>/.exec(content);
         return match === null ? '.js' : '.' + match[2];
     }
 
-    constructor(...args) {
-        super(...args);
+    constructor(context) {
+        super(context);
         // this is overly simplified and should never be used in production
         const match = /<script.*?>\r?\n/.exec(this.source);
         this.start = match.index + match[0].length;

@@ -1,3 +1,4 @@
+// @ts-check
 const {AbstractProcessor} = require('../../../../src/types');
 
 class Processor extends AbstractProcessor {
@@ -5,8 +6,8 @@ class Processor extends AbstractProcessor {
         return '.ts';
     }
 
-    constructor(...args) {
-        super(...args);
+    constructor(context) {
+        super(context);
         this._init();
     }
 
