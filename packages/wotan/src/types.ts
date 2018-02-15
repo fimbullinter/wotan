@@ -32,16 +32,16 @@ export abstract class Replacement {
 }
 
 export interface Fix {
-    replacements: Replacement[];
+    readonly replacements: ReadonlyArray<Replacement>;
 }
 
 export interface Failure {
-    start: FailurePosition;
-    end: FailurePosition;
-    message: string;
-    ruleName: string;
-    severity: Severity;
-    fix: Fix | undefined;
+    readonly start: FailurePosition;
+    readonly end: FailurePosition;
+    readonly message: string;
+    readonly ruleName: string;
+    readonly severity: Severity;
+    readonly fix: Fix | undefined;
 }
 
 export namespace Failure {
@@ -62,9 +62,9 @@ function compareStrings(a: string, b: string): number {
 }
 
 export interface FailurePosition {
-    line: number;
-    character: number;
-    position: number;
+    readonly line: number;
+    readonly character: number;
+    readonly position: number;
 }
 
 export type Severity = 'error' | 'warning';
