@@ -22,15 +22,16 @@ const {packages, publicPackages} = getPackages();
 
 const needsRelease = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastRelaseTag(), publicPackages.keys());
 
-function updateManifest(path: string, manifest: PackageData, toVersion: string) {
-    manifest.version = toVersion;
+function updateManifest(path: string, manifest: PackageData, toVersion: string | undefined) {
+    if (toVersion !== undefined)
+        manifest.version = toVersion;
     for (const localName of needsRelease) {
         const {name} = packages.get(localName)!;
         if (manifest.dependencies && manifest.dependencies[name])
             manifest.dependencies[name] = `^${releaseVersion}`;
         if (manifest.peerDependencies && manifest.peerDependencies[name])
             manifest.peerDependencies[name] = `^${releaseVersion}`;
-        if (isMajor && manifest.devDependencies && manifest.devDependencies[name])
+        if (manifest.devDependencies && manifest.devDependencies[name])
             manifest.devDependencies[name] = `^${releaseVersion}`;
     }
     writeManifest(path, manifest);
@@ -38,10 +39,8 @@ function updateManifest(path: string, manifest: PackageData, toVersion: string) 
 
 updateManifest('package.json', rootManifest, semver.inc(version, 'minor')!); // set root version to next minor version
 for (const [name, manifest] of packages)
-    if (needsRelease.has(name))
-        updateManifest(`packages/${name}/package.json`, manifest, releaseVersion);
+    updateManifest(`packages/${name}/package.json`, manifest, needsRelease.has(name) ? releaseVersion : undefined);
 
-writeManifest('package.json', rootManifest);
 for (const [name, manifest] of packages) {
     if (!manifest.private && needsRelease.has(name)) {
         execAndLog(`npm publish packages/${name} --tag latest ${process.argv.slice(2).join(' ')}`);
