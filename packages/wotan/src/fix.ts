@@ -94,7 +94,7 @@ function compareReplacements(a: Replacement, b: Replacement): number {
 }
 
 /** Combine adjacent replacements to avoid sorting replacements of other fixes between them. */
-function combineReplacements(replacements: Replacement[]): Replacement[] {
+function combineReplacements(replacements: ReadonlyArray<Replacement>): ReadonlyArray<Replacement> {
     if (replacements.length === 1)
         return replacements;
     replacements = replacements.slice().sort(compareReplacements);

@@ -19,6 +19,7 @@ export interface Replacement {
 }
 
 export abstract class Replacement {
+    private constructor() {}
     public static replace(start: number, end: number, text: string): Replacement {
         return {start, end, text};
     }
@@ -31,16 +32,16 @@ export abstract class Replacement {
 }
 
 export interface Fix {
-    replacements: Replacement[];
+    readonly replacements: ReadonlyArray<Replacement>;
 }
 
 export interface Failure {
-    start: FailurePosition;
-    end: FailurePosition;
-    message: string;
-    ruleName: string;
-    severity: Severity;
-    fix: Fix | undefined;
+    readonly start: FailurePosition;
+    readonly end: FailurePosition;
+    readonly message: string;
+    readonly ruleName: string;
+    readonly severity: Severity;
+    readonly fix: Fix | undefined;
 }
 
 export namespace Failure {
@@ -61,9 +62,9 @@ function compareStrings(a: string, b: string): number {
 }
 
 export interface FailurePosition {
-    line: number;
-    character: number;
-    position: number;
+    readonly line: number;
+    readonly character: number;
+    readonly position: number;
 }
 
 export type Severity = 'error' | 'warning';
@@ -82,14 +83,6 @@ export interface RuleContext {
     readonly settings: GlobalSettings;
     readonly options: {} | null | undefined;
     addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
-    /**
-     * Detect if the rule is disabled somewhere in the given range.
-     * A rule is considered disabled if the given range contains or overlaps a range disabled by line switches.
-     * This can be used to avoid CPU intensive check if the error is ignored anyway.
-     *
-     * @param range The range to check for disables. If you only care about a single position, set `pos` and `end` to the same value.
-     */
-    isDisabled(range: ts.TextRange): boolean;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -379,20 +372,18 @@ export interface DirectoryService {
 }
 export abstract class DirectoryService {}
 
-export interface LineSwitchParser {
-    parse(
-        sourceFile: ts.SourceFile,
-        ruleNames: ReadonlyArray<string>,
-        context: LineSwitchParserContext,
-    ): ReadonlyMap<string, ReadonlyArray<LineSwitch>>;
+export interface FailureFilterFactory {
+    create(context: FailureFilterContext): FailureFilter;
 }
-export abstract class LineSwitchParser {}
+export abstract class FailureFilterFactory {}
 
-export interface LineSwitchParserContext {
-    getCommentAtPosition(pos: number): ts.CommentRange | undefined;
+export interface FailureFilterContext {
+    sourceFile: ts.SourceFile;
+    ruleNames: ReadonlyArray<string>;
+    getWrappedAst(): WrappedAst;
 }
 
-export interface LineSwitch {
-    readonly enable: boolean;
-    readonly position: number;
+export interface FailureFilter {
+    /** @returns `true` if the failure should be used, false if it should be filtered out. */
+    filter(failure: Failure): boolean;
 }

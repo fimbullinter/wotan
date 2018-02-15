@@ -11,9 +11,10 @@ import {
     AbstractProcessor,
     DeprecationHandler,
     DeprecationTarget,
+    FailureFilterFactory,
+    FailureFilter,
 } from './types';
 import { applyFixes } from './fix';
-import { LineSwitchService, DisableMap } from './services/line-switches';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
@@ -36,7 +37,7 @@ export class Linter {
         private ruleLoader: RuleLoader,
         private logger: MessageHandler,
         private deprecationHandler: DeprecationHandler,
-        private lineSwitches: LineSwitchService,
+        private filterFactory: FailureFilterFactory,
     ) {}
 
     public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
@@ -133,41 +134,14 @@ export class Linter {
 
     private applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, rules: PreparedRule[], settings: Map<string, any>) {
         const result: Failure[] = [];
-        let disables: DisableMap | undefined;
+        let failureFilter: FailureFilter | undefined;
         let ruleName: string;
         let severity: Severity;
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const isDisabled = (range: ts.TextRange): boolean => {
-            if (disables === undefined)
-                disables = this.lineSwitches.getDisabledRanges(sourceFile, rules.map((r) => r.ruleName), getWrappedAst);
-            return this.lineSwitches.isDisabled(disables, ruleName, range);
-        };
-
-        const context: RuleContext = {
-            addFailure,
-            isDisabled,
-            getFlatAst,
-            getWrappedAst,
-            program,
-            sourceFile,
-            settings,
-            options: undefined,
-        };
-
-        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
-            log('Executing rule %s', ruleName);
-            new ctor(context).apply();
-        }
-
-        log('Found %d failures', result.length);
-        return result;
-
-        function addFailure(pos: number, end: number, message: string, fix?: Replacement | Replacement[]) {
-            if (isDisabled({pos, end}))
-                return;
-            result.push({
+        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | Replacement[]) => {
+            const failure: Failure = {
                 ruleName,
                 severity,
                 message,
@@ -186,8 +160,31 @@ export class Linter {
                         : fix.length === 0
                             ? undefined
                             : {replacements: fix},
-            });
+            };
+            if (failureFilter === undefined)
+                failureFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
+            if (failureFilter.filter(failure))
+                result.push(failure);
+        };
+
+        const context: RuleContext = {
+            addFailure,
+            getFlatAst,
+            getWrappedAst,
+            program,
+            sourceFile,
+            settings,
+            options: undefined,
+        };
+
+        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
+            log('Executing rule %s', ruleName);
+            new ctor(context).apply();
         }
+
+        log('Found %d failures', result.length);
+        return result;
+
         function getFlatAst() {
             return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
         }
