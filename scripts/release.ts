@@ -1,5 +1,8 @@
-import { getPackages, getChangedPackageNames, getLastRelaseTag, PackageData, writeManifest, execAndLog } from './util';
+import { getPackages, getChangedPackageNames, getLastRelaseTag, PackageData, writeManifest, execAndLog, ensureBranch, ensureCleanTree } from './util';
 import * as semver from 'semver';
+
+ensureBranch('master');
+ensureCleanTree();
 
 const rootManifest = require('../package.json');
 const releaseVersion = rootManifest.version;
