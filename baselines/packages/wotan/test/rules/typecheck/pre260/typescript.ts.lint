@@ -28,7 +28,8 @@ function fn2(param1: string, param2): string {
        ~~~   [error typecheck: Argument of type 'Map<number, [boolean, string]>[]' is not assignable to parameter of type 'Map<number, [number, string]>[] | undefined'.\
   Type 'Map<number, [boolean, string]>[]' is not assignable to type 'Map<number, [number, string]>[]'.\
     Type 'Map<number, [boolean, string]>' is not assignable to type 'Map<number, [number, string]>'.\
-      Type '[boolean, string]' is not assignable to type '[number, string]'.]
+      Type '[boolean, string]' is not assignable to type '[number, string]'.\
+        Type 'boolean' is not assignable to type 'number'.]
 }
 
 fn2();
