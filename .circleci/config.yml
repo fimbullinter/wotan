@@ -63,9 +63,9 @@ jobs:
       - persist_to_workspace:
           root: '.'
           paths:
-            - "packages/*/index.js"
-            - "packages/*/src/**/*.js"
-            - "packages/*/test/**/*.js"
+            - "packages/*/index.js*"
+            - "packages/*/src/**/*.js*"
+            - "packages/*/test/**/*.js*"
             - yarn.lock
   test:
     docker:
