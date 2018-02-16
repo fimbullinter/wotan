@@ -17,7 +17,17 @@
     "inlineSourceMap": false,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "declaration": true
   },
-  "include": []
+  "include": [
+    "scripts",
+    "custom-typings",
+    "packages/*/src",
+    "packages/*/test/**/*.spec.ts"
+  ],
+  "exclude": [
+    "scripts/**/*.d.ts",
+    "packages/**/*.d.ts"
+  ]
 }
