@@ -1,12 +1,11 @@
 import * as cp from 'child_process';
-import { getLastRelaseTag, getPackages, getChangedPackageNames, writeManifest, execAndLog, ensureBranch, ensureCleanTree } from './util';
+import { getLastRelaseTag, getPackages, getChangedPackageNames, writeManifest, execAndLog, ensureCleanTree } from './util';
 
 if (process.argv.length < 3) {
     console.log('Usage: node scripts/nightly <rev> [<options>...]');
     process.exit(1);
 }
 
-ensureBranch('master');
 ensureCleanTree();
 
 const currentDate = new Date();
