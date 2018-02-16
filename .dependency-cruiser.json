@@ -5,19 +5,46 @@
       "comment": "Don't allow dependencies from outside the test folder to test",
       "severity": "error",
       "from": {
-        "pathNot": "^test/"
+        "pathNot": "^packages/[^/]+/test/"
       },
       "to": {
-        "path": "^test/"
+        "path": "^packages/[^/]+/test/"
+      }
+    },
+    {
+      "name": "not-outside-package",
+      "comment": "Don't allow packages to anything outside of packages",
+      "severity": "error",
+      "from": {
+        "path": "^packages/[^/]+/"
+      },
+      "to": {
+        "dependencyTypes": [
+          "local"
+        ],
+        "pathNot": "^packages/[^/]+/"
       }
     },
     {
       "name": "no-barrel",
-      "comment": "Don't import from index.ts to avoid circular imports",
+      "comment": "Within Wotan - don't import from index.ts to avoid circular imports",
       "severity": "error",
-      "from": {},
+      "from": {
+        "path": "packages/wotan/(src|test|bin)/"
+      },
       "to": {
-        "path": "^index\\.[jt]s$"
+        "path": "^packages/wotan/index\\.[jt]s$"
+      }
+    },
+    {
+      "name": "no-rules-or-formatters",
+      "comment": "Within Wotan - disallow direct imports of rules and formatters",
+      "severity": "error",
+      "from": {
+        "path": "packages/wotan/src/"
+      },
+      "to": {
+        "path": "^packages/wotan/src/(rules|formatters)/"
       }
     },
     {
@@ -46,8 +73,8 @@
       "comment": "Warn about dependencies on core modules.",
       "severity": "error",
       "from": {
-        "path": "^(src|bin)/",
-        "pathNot": "^src/services/default/"
+        "path": "^packages/[^/]+/(src|bin)/",
+        "pathNot": "^packages/wotan/src/services/default/"
       },
       "to": {
         "dependencyTypes": [
@@ -61,11 +88,10 @@
       "comment": "Don't access the concretion of a service directly.",
       "severity": "error",
       "from": {
-        "path": "^src/",
-        "pathNot": "^src/di/default\\.module\\.[jt]s$"
+        "pathNot": "^packages/wotan/(test/|(src/di/default\\.module|index)\\.[jt]s$)"
       },
       "to": {
-        "path": "^src/services/default/"
+        "path": "^packages/wotan/src/services/default/"
       }
     },
     {
@@ -73,7 +99,7 @@
       "comment": "These npm modules are deprecated - find an alternative.",
       "severity": "warn",
       "from": {
-        "pathNot": "^node_modules/"
+        "pathNot": "(^|/)node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -95,7 +121,7 @@
       "severity": "error",
       "comment": "Don't allow dependencies to packages not in package.json (except from within node_modules)",
       "from": {
-        "pathNot": "^node_modules/"
+        "pathNot": "(^|/)node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -112,7 +138,7 @@
       "severity": "info",
       "comment": "nothing serious - but just check you have some serious try/ catches around the import/ requires of these",
       "from": {
-        "pathNot": "^node_modules/"
+        "pathNot": "(^|/)node_modules/"
       },
       "to": {
         "dependencyTypes": [
@@ -124,7 +150,7 @@
   "allowed": [
     {
       "from": {
-        "path": "^(src/|bin/|index.[jt]s$)"
+        "path": "^packages/[^/]+/(src/|bin/|index.[jt]s$)"
       },
       "to": {
         "dependencyTypes": [
@@ -138,7 +164,7 @@
     },
     {
       "from": {
-        "path": "^test/"
+        "path": "^(packages/[^/]+/test|scripts)/"
       },
       "to": {
         "dependencyTypes": [
@@ -152,15 +178,15 @@
     },
     {
       "from": {
-        "path": "^test/"
+        "path": "^packages/[^/]+/test/"
       },
       "to": {
-        "path": "^\\.\\./\\.\\./node_modules/(typescript|ava)/"
+        "path": "^node_modules/(typescript|ava)/"
       }
     }
   ],
   "options": {
-    "doNotFollow": "\\bnode_modules\\b",
+    "doNotFollow": "(^|/)node_modules/",
     "moduleSystems": ["cjs", "es6"]
   }
 }
