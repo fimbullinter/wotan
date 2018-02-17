@@ -1,6 +1,17 @@
 {
-  "extends": "./tsconfig.json",
-  "files": [
-    "packages/wotan/index.ts"
+  "extends": "./tsconfig-base.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": [
+    "scripts",
+    "custom-typings",
+    "packages/*/src",
+    "packages/*/index.ts",
+    "packages/*/test/**/*.spec.ts"
+  ],
+  "exclude": [
+    "scripts/**/*.d.ts",
+    "packages/**/*.d.ts"
   ]
 }
