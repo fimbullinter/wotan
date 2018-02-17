@@ -1,7 +1,4 @@
-/baselines/
 /test/
-/coverage/
-/custom-typings/
 /.*
 *.ts
 !*.d.ts

@@ -4,8 +4,10 @@
   "scripts": {
     "sh": "echo $0",
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/{!(fixtures)/**/*,*}.spec},scripts/!(foreach)}.{js?(.map),d.ts}\"",
-    "compile": "node scripts/foreach \"{packages/*,scripts}\" \"tsc -p {{file}}\"",
-    "lint": "node scripts/foreach \"{packages/*,scripts}\" \"wotan -p {{file}}\" \"tslint -p {{file}} -t stylish\"",
+    "compile": "tsc -p tsconfig.build.json",
+    "lint:tslint": "tslint -p tsconfig.build.json -t stylish",
+    "lint:wotan": "wotan -p tsconfig.build.json",
+    "lint": "run-p \"lint:* {@}\" --",
     "check-dependencies": "depcruise -v .dependency-cruiser.json {scripts/*,packages/*/{src/{**/,}*,index,test/{**/,}*.spec}}.js",
     "test:unit": "ava \"packages/*/test/**/*.spec.js\" -v --snapshot-dir baselines",
     "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
