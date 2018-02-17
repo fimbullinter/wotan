@@ -1,8 +1,7 @@
 import { injectable } from 'inversify';
-import { ConfigurationProvider, Resolver, Configuration } from '@fimbul/wotan';
+import { ConfigurationProvider, Resolver, Configuration, CacheManager, Cache, CacheIdentifier } from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as path from 'path';
-import { CacheManager, Cache, CacheIdentifier } from '../../wotan/src/types';
 
 /**
  * Number of .. until the containing node_modules.

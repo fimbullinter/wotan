@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
-import { LineSwitchParser, LineSwitch, LineSwitchMap } from '@fimbul/wotan';
+import { LineSwitchParser, RawLineSwitch, LineSwitchParserContext } from '@fimbul/wotan';
 import * as ts from 'typescript';
 import { getCommentAtPosition } from 'tsutils';
 
 @injectable()
 export class TslintLineSwitchParser implements LineSwitchParser {
-    public parse(sourceFile: ts.SourceFile, enabledRules: ReadonlyArray<string>): LineSwitchMap {
-        const result = new Map<string, LineSwitch[]>();
+    public parse({sourceFile, ruleNames}: LineSwitchParserContext) {
+        const result = new Map<string, RawLineSwitch[]>();
         const re = /\/[/*]\s*tslint:(enable|disable)(-line|-next-line)?($|[ *:])/gm;
         for (let match = re.exec(sourceFile.text); match !== null; match = re.exec(sourceFile.text)) {
             // not using `context.getCommentAtPosition` here is intentional, because it doesn't benefit from caching the converted AST
@@ -23,24 +23,24 @@ export class TslintLineSwitchParser implements LineSwitchParser {
             if (rules === '') {
                 if (match[3] === ':')
                     continue;
-                switchedRules = enabledRules;
+                switchedRules = ruleNames;
             } else {
                 switchedRules = rules.split(/\s+/);
                 if (switchedRules.includes('all'))
-                    switchedRules = enabledRules;
+                    switchedRules = ruleNames;
             }
             const enable = match[1] === 'enable';
             switch (match[2]) {
                 default:
-                    this.switch(result, enabledRules, switchedRules, {enable, position: comment.pos});
+                    this.switch(result, ruleNames, switchedRules, {enable, position: comment.pos});
                     break;
                 case '-line': {
                     const lineStarts = sourceFile.getLineStarts();
                     let {line} = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos);
-                    this.switch(result, enabledRules, switchedRules, {enable, position: lineStarts[line]});
+                    this.switch(result, ruleNames, switchedRules, {enable, position: lineStarts[line]});
                     ++line;
                     if (lineStarts.length !== line) // no need to switch back if there is no next line
-                        this.switch(result, enabledRules, switchedRules, {enable: !enable, position: lineStarts[line]});
+                        this.switch(result, ruleNames, switchedRules, {enable: !enable, position: lineStarts[line]});
                     break;
                 }
                 case '-next-line': {
@@ -48,17 +48,17 @@ export class TslintLineSwitchParser implements LineSwitchParser {
                     let line = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos).line + 1;
                     if (lineStarts.length === line)
                         continue; // no need to switch if there is no next line
-                    this.switch(result, enabledRules, switchedRules, {enable, position: lineStarts[line]});
+                    this.switch(result, ruleNames, switchedRules, {enable, position: lineStarts[line]});
                     ++line;
                     if (lineStarts.length > line) // no need to switch back if there is no next line
-                        this.switch(result, enabledRules, switchedRules, {enable: !enable, position: lineStarts[line]});
+                        this.switch(result, ruleNames, switchedRules, {enable: !enable, position: lineStarts[line]});
                 }
             }
         }
         return result;
     }
 
-    private switch(map: Map<string, LineSwitch[]>, enabled: ReadonlyArray<string>, rules: ReadonlyArray<string>, s: LineSwitch) {
+    private switch(map: Map<string, RawLineSwitch[]>, enabled: ReadonlyArray<string>, rules: ReadonlyArray<string>, s: RawLineSwitch) {
         for (const rule of rules) {
             if (!enabled.includes(rule))
                 continue;
