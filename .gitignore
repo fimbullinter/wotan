@@ -23,6 +23,7 @@ yarn-error.log*
 
 # Compiled files
 /packages/**/*.js
+!/packages/*/bin/main.js
 /packages/**/*.js.map
 /packages/**/*.d.ts
 /scripts/*.js
