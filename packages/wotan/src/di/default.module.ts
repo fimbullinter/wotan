@@ -9,7 +9,7 @@ import {
     DirectoryService,
     DeprecationHandler,
     ConfigurationProvider,
-    LineSwitchParser,
+    FailureFilterFactory,
 } from '../types';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
@@ -20,7 +20,7 @@ import { ConsoleMessageHandler } from '../services/default/message-handler';
 import { NodeDirectoryService } from '../services/default/directory-service';
 import { DefaultDeprecationHandler } from '../services/default/deprecation-handler';
 import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
-import { DefaultLineSwitchParser } from '../services/default/line-switch-parser';
+import { LineSwitchParser, DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
 
 export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
     if (!isBound(FormatterLoaderHost))
@@ -41,6 +41,8 @@ export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) =>
         bind(DirectoryService).to(NodeDirectoryService);
     if (!isBound(ConfigurationProvider))
         bind(ConfigurationProvider).to(DefaultConfigurationProvider);
+    if (!isBound(FailureFilterFactory))
+        bind(FailureFilterFactory).to(LineSwitchFilterFactory);
     if (!isBound(LineSwitchParser))
         bind(LineSwitchParser).to(DefaultLineSwitchParser);
 });

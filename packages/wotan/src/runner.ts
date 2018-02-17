@@ -49,16 +49,10 @@ export class Runner {
             this.processorLoader,
         );
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
-        let dir: string | undefined;
 
         for (const file of files) {
-            if (options.config === undefined) {
-                const dirname = path.dirname(file);
-                if (dir !== dirname) {
-                    config = this.configManager.find(file);
-                    dir = dirname;
-                }
-            }
+            if (options.config === undefined)
+                config = this.configManager.find(file);
             const mapped = processorHost.getProcessedFileInfo(file);
             const originalName = mapped === undefined ? file : mapped.originalName;
             const effectiveConfig = config && this.configManager.reduce(config, originalName);
@@ -97,16 +91,10 @@ export class Runner {
     }
 
     private *lintFiles(options: LintOptions, config: Configuration | undefined): LintResult {
-        let dir: string | undefined;
         let processor: AbstractProcessor | undefined;
         for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
-            if (options.config === undefined) {
-                const dirname = path.dirname(file);
-                if (dir !== dirname) {
-                    config = this.configManager.find(file);
-                    dir = dirname;
-                }
-            }
+            if (options.config === undefined)
+                config = this.configManager.find(file);
             const effectiveConfig = config && this.configManager.reduce(config, file);
             if (effectiveConfig === undefined)
                 continue;
@@ -118,13 +106,22 @@ export class Runner {
                 if (hasSupportedExtension(file, options.extensions)) {
                     name = file;
                 } else {
-                    name = file + ctor.getSuffixForFile(file, effectiveConfig.settings, () => originalContent = this.fs.readFile(file));
+                    name = file + ctor.getSuffixForFile({
+                        fileName: file,
+                        getSettings: () => effectiveConfig.settings,
+                        readFile: () => originalContent = this.fs.readFile(file),
+                    });
                     if (!hasSupportedExtension(name, options.extensions))
                         continue;
                 }
                 if (originalContent === undefined) // might be initialized by the processor requesting the file content
                     originalContent = this.fs.readFile(file);
-                processor = new ctor(originalContent, file, name, effectiveConfig.settings);
+                processor = new ctor({
+                    source: originalContent,
+                    sourceFileName: file,
+                    targetFileName: name,
+                    settings: effectiveConfig.settings,
+                });
                 content = processor.preprocess();
             } else if (hasSupportedExtension(file, options.extensions)) {
                 processor = undefined;
@@ -237,7 +234,7 @@ export class Runner {
     }
 }
 
-function getFiles(patterns: string[], exclude: string[], cwd: string): string[] {
+function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<string> {
     const result: string[] = [];
     const globOptions = {
         cwd,
@@ -259,7 +256,7 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): string[] 
                 throw new ConfigurationError(`'${normalized}' does not exist.`);
         }
     }
-    return Array.from(new Set(result.map(unixifyPath))); // deduplicate files
+    return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
 function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[]) {

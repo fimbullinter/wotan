@@ -1,15 +1,9 @@
 {
   "name": "@fimbul/heimdall",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Wotan plugin to load and use TSLint rules and formatters",
   "main": "src/index",
   "types": "src/index",
-  "scripts": {
-    "lint:tslint": "tslint -p .",
-    "lint:wotan": "wotan",
-    "lint": "run-p lint:*",
-    "test": "ava -v test/*.spec.js"
-  },
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
   "bugs": {
@@ -23,16 +17,11 @@
     "type": "git",
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
-  "devDependencies": {
-    "@fimbul/wotan": "^0.0.1",
-    "ava": "^0.25.0",
-    "npm-run-all": "^4.1.2"
-  },
   "peerDependencies": {
-    "@fimbul/wotan": "^0.0.1"
+    "@fimbul/wotan": "^0.1.0"
   },
   "dependencies": {
-    "@fimbul/bifrost": "0.0.1",
+    "@fimbul/bifrost": "^0.1.0",
     "inversify": "^4.10.0",
     "tslib": "^1.8.1",
     "tslint": "^5.0.0"

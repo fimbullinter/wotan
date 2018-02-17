@@ -60,11 +60,11 @@ export class ProjectHost implements ts.CompilerHost {
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
                             const newName = fileName +
-                                ctor.getSuffixForFile(
+                                ctor.getSuffixForFile({
                                     fileName,
-                                    this.configManager.getSettings(c!, fileName),
-                                    () => this.fs.readFile(fileName),
-                                );
+                                    getSettings: () => this.configManager.getSettings(<Configuration>c, fileName),
+                                    readFile: () => this.fs.readFile(fileName),
+                                });
                             if (hasSupportedExtension(newName)) {
                                 files.push(newName);
                                 this.reverseMap.set(newName, fileName);
@@ -128,7 +128,12 @@ export class ProjectHost implements ts.CompilerHost {
         if (processorPath === undefined)
             return content;
         const ctor = this.processorLoader.loadProcessor(processorPath);
-        const processor = new ctor(content, realFile, file, this.configManager.getSettings(config, realFile));
+        const processor = new ctor({
+            source: content,
+            sourceFileName: realFile,
+            targetFileName: file,
+            settings: this.configManager.getSettings(config, realFile),
+        });
         this.processedFiles.set(file, {
             processor,
             originalContent: content,

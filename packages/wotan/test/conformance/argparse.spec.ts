@@ -378,52 +378,6 @@ test('parses test command', (t) => {
     t.throws(() => parseArguments(['test', '--option']), "Unknown option '--option'.");
 });
 
-test('parses init command', (t) => {
-    t.deepEqual<Command>(
-        parseArguments(['init', '-m', 'foo,bar', '--module', 'baz']),
-        {
-            command: CommandName.Init,
-            modules: ['foo', 'bar', 'baz'],
-            format: undefined,
-            directories: [],
-        },
-        'parses modules',
-    );
-
-    t.deepEqual<Command>(
-        parseArguments(['init']),
-        {
-            command: CommandName.Init,
-            modules: [],
-            format: undefined,
-            directories: [],
-        },
-    );
-    t.deepEqual<Command>(
-        parseArguments(['init', '--format', 'JSON', '.', 'subdir']),
-        {
-            command: CommandName.Init,
-            modules: [],
-            format: Format.Json,
-            directories: ['.', 'subdir'],
-        },
-    );
-
-    t.deepEqual<Command>(
-        parseArguments(['init', '--', '--format', 'JSON', '.', 'subdir']),
-        {
-            command: CommandName.Init,
-            modules: [],
-            format: undefined,
-            directories: ['--format', 'JSON', '.', 'subdir'],
-        },
-    );
-
-    t.throws(() => parseArguments(['init', '-d']), "Unknown option '-d'.");
-    t.throws(() => parseArguments(['init', '-f']), "Option '-f' expects an argument.");
-    t.throws(() => parseArguments(['init', '-f', 'ymal']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
-});
-
 test('parses validate command', (t) => {
     t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.");
 });

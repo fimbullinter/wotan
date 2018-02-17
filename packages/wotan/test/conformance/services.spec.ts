@@ -81,9 +81,9 @@ test('RuleLoaderHost', (t) => {
     t.is(loader.loadCoreRule('fooBarBaz'), undefined);
     t.throws(() => loader.loadCoreRule('../../test/fixtures/invalid'));
 
-    t.is(loader.loadCustomRule('no-debugger', path.resolve('src/rules')), Rule);
+    t.is(loader.loadCustomRule('no-debugger', path.resolve('packages/wotan/src/rules')), Rule);
     t.is(loader.loadCustomRule('fooBarBaz', process.cwd()), undefined);
-    t.throws(() => loader.loadCustomRule('invalid', path.resolve('test/fixtures')));
+    t.throws(() => loader.loadCustomRule('invalid', path.resolve('packages/wotan/test/fixtures')));
 });
 
 test('MessageHandler', (t) => {
@@ -170,7 +170,10 @@ test('Resolver', (t) => {
     const resolver = container.resolve(NodeResolver);
     t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
-    t.is(resolver.resolve('./no-debugger', path.resolve('src/rules'), ['.ts']), path.resolve('src/rules/no-debugger.ts'));
+    t.is(
+        resolver.resolve('./no-debugger', path.resolve('packages/wotan/src/rules'), ['.ts']),
+        path.resolve('packages/wotan/src/rules/no-debugger.ts'),
+    );
 
     const tslib = require('tslib'); // tslint:disable-line
     t.is(resolver.require(require.resolve('tslib')), tslib);
@@ -189,13 +192,13 @@ test('FormatterLoaderHost', (t) => {
     t.is(loader.loadCoreFormatter('fooBarBaz'), undefined);
     t.throws(() => loader.loadCoreFormatter('../../test/fixtures/invalid'));
 
-    t.is(loader.loadCustomFormatter('./src/formatters/json', process.cwd()), Formatter);
+    t.is(loader.loadCustomFormatter('./packages/wotan/src/formatters/json', process.cwd()), Formatter);
     t.is(loader.loadCustomFormatter('fooBarBaz', process.cwd()), undefined);
     t.is(
-        loader.loadCustomFormatter('custom-formatter', path.resolve('test/fixtures')),
+        loader.loadCustomFormatter('custom-formatter', path.resolve('packages/wotan/test/fixtures')),
         require('../fixtures/node_modules/custom-formatter').Formatter, // tslint:disable-line
     );
-    t.throws(() => loader.loadCustomFormatter('./test/fixtures/invalid', process.cwd()));
+    t.throws(() => loader.loadCustomFormatter('./packages/wotan/test/fixtures/invalid', process.cwd()));
 });
 
 test('FormatterLoader', (t) => {

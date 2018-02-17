@@ -1,12 +1,12 @@
-import { AbstractProcessor, GlobalSettings, ProcessorUpdateResult, Failure, Replacement } from '@fimbul/wotan';
+import { AbstractProcessor, ProcessorUpdateResult, Failure, Replacement, ProcessorSuffixContext, ProcessorContext } from '@fimbul/wotan';
 import * as path from 'path';
 import * as parse5 from 'parse5/lib';
 import * as ts from 'typescript';
 import * as voidElements from 'void-elements';
 
 export class Processor extends AbstractProcessor {
-    public static getSuffixForFile(name: string, _settings: GlobalSettings, readFile: () => string) {
-        if (path.extname(name) !== '.vue')
+    public static getSuffixForFile(context: ProcessorSuffixContext) {
+        if (path.extname(context.fileName) !== '.vue')
             return '';
         let suffix = '';
         const parser = new parse5.SAXParser();
@@ -23,19 +23,19 @@ export class Processor extends AbstractProcessor {
         parser.on('endTag', () => {
             --depth;
         });
-        parser.write(readFile());
+        parser.write(context.readFile());
         parser.end();
         return suffix;
     }
 
-    private range = this.initRange();
+    private range = {
+        start: 0,
+        end: Infinity,
+        line: 0,
+    };
 
-    private initRange() {
-        const range = {
-            start: 0,
-            end: Infinity,
-            line: 0,
-        };
+    constructor(context: ProcessorContext) {
+        super(context);
         if (path.extname(this.sourceFileName) === '.vue') {
             const parser = new parse5.SAXParser({locationInfo: true});
             let depth = 0;
@@ -44,20 +44,19 @@ export class Processor extends AbstractProcessor {
                     return;
                 ++depth;
                 if (depth === 1 && tagName === 'script')
-                    range.start = location!.endOffset;
+                    this.range.start = location!.endOffset;
             });
             parser.on('endTag', (tagName, location) => {
                 --depth;
                 if (depth === 0 && tagName === 'script')
-                    range.end = location!.startOffset;
+                    this.range.end = location!.startOffset;
             });
             parser.write(this.source);
             parser.end();
-            const match = this.source.substring(0, range.start).match(/(\r?\n)/g);
+            const match = this.source.substring(0, this.range.start).match(/(\r?\n)/g);
             if (match !== null)
-                range.line = match.length;
+                this.range.line = match.length;
         }
-        return range;
     }
 
     public preprocess() {

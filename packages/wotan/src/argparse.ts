@@ -1,4 +1,4 @@
-import { Command, CommandName, LintCommand, TestCommand, ShowCommand, InitCommand, ValidateCommand } from './commands';
+import { Command, CommandName, LintCommand, TestCommand, ShowCommand, ValidateCommand } from './commands';
 import { ConfigurationError } from './error';
 import { Format } from './types';
 
@@ -9,8 +9,6 @@ export function parseArguments(args: string[]): Command {
     switch (command) {
         case CommandName.Lint:
             return parseLintCommand(args.slice(1));
-        case CommandName.Init:
-            return parseInitCommand(args.slice(1));
         case CommandName.Test:
             return parseTestCommand(args.slice(1));
         case CommandName.Show:
@@ -173,38 +171,6 @@ function parseShowCommand(args: string[]): ShowCommand {
         default:
             throw new ConfigurationError('more than one filename provided');
     }
-}
-
-function parseInitCommand(args: string[]): InitCommand {
-    const result: InitCommand = {
-        command: CommandName.Init,
-        modules: [],
-        directories: [],
-        format: undefined,
-    };
-
-    outer: for (let i = 0; i < args.length; ++i) {
-        const arg = args[i];
-        switch (arg) {
-            case '-f':
-            case '--format':
-                result.format = expectFormatArgument(args, ++i, arg);
-                break;
-            case '-m':
-            case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
-                break;
-            case '--':
-                result.directories.push(...args.slice(i + 1));
-                break outer;
-            default:
-                if (arg.startsWith('-'))
-                    throw new ConfigurationError(`Unknown option '${arg}'.`);
-                result.directories.push(arg);
-        }
-    }
-
-    return result;
 }
 
 function parseValidateCommand(_args: string[]): ValidateCommand {

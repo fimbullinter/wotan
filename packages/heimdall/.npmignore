@@ -1,10 +1,7 @@
-/baselines/
 /test/
-/coverage/
-/custom-typings/
 /.*
-/src/**/*.ts
-!/src/**/*.d.ts
+*.ts
+!*.d.ts
 /*.yml
 /*.yaml
 /*.md

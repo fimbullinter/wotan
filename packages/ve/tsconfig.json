@@ -1,13 +1,13 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "strict": true
+    "rootDir": "."
   },
   "include": [
     "src",
-    "custom-typings"
+    "test/**/*.spec.ts"
   ],
   "exclude": [
+    "src/**/*.d.ts"
   ]
 }

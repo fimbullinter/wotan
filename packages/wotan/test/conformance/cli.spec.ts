@@ -8,9 +8,11 @@ function execCli(args: string[]): Promise<{err: Error | null, stdout: string, st
         code: number;
     }
     return new Promise((resolve) => {
-        cp.exec(`node src/cli '${args.join("' '")}'`, (err, stdout, stderr) => {
-            return resolve({err, stdout, stderr, code: err ? (<ErrorWithCode>err).code : 0});
-        });
+        cp.exec(
+            `node src/cli '${args.join("' '")}'`,
+            {cwd: 'packages/wotan'},
+            (err, stdout, stderr) => resolve({err, stdout, stderr, code: err ? (<ErrorWithCode>err).code : 0}),
+        );
     });
 }
 
@@ -34,7 +36,7 @@ test('exits with code 1 on configuration error', async (t) => {
 test('exits with code 1 on exception and prints stack trace', async (t) => {
     const result = await execCli(['lint', __filename, '-c', 'test/fixtures/configuration/invalid-rule.yaml']);
     t.is(result.code, 1);
-    t.true(result.stderr.startsWith(path.resolve('test/fixtures/invalid.js:')));
+    t.true(result.stderr.startsWith(path.resolve('packages/wotan/test/fixtures/invalid.js:')));
     t.regex(result.stderr, /SyntaxError:/);
     t.regex(result.stderr, /^\s+at [\w. ]+ \([\w.]+:\d+:\d+\)$/m);
     t.is(result.stdout, '');
@@ -45,7 +47,7 @@ test('exits with code 2 on lint error', async (t) => {
     t.is(result.code, 2);
     t.is(result.stderr, '');
     t.is(result.stdout, /* tslint:disable-next-line */ `[
-{"ruleName":"trailing-newline","severity":"error","message":"File must end with a newline.","start":{"position":5,"line":0,"character":5},"end":{"position":5,"line":0,"character":5},"fix":{"replacements":[{"start":5,"end":5,"text":"\\n"}]},"fileName":"${unixifyPath(path.resolve('test/rules/trailing-newline/whitespace.ts'))}"}
+{"ruleName":"trailing-newline","severity":"error","message":"File must end with a newline.","start":{"position":5,"line":0,"character":5},"end":{"position":5,"line":0,"character":5},"fix":{"replacements":[{"start":5,"end":5,"text":"\\n"}]},"fileName":"${unixifyPath(path.resolve('packages/wotan/test/rules/trailing-newline/whitespace.ts'))}"}
 ]
 `);
 });

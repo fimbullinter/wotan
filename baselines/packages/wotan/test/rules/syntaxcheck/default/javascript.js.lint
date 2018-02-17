@@ -1,0 +1,15 @@
+class Foo {
+    public method() {}
+    ~~~~~~             [error syntaxcheck: 'public' can only be used in a .ts file.]
+}
+let foo: 'bar';
+         ~~~~~  [error syntaxcheck: 'types' can only be used in a .ts file.]
+let bar:;
+        ~nil [error syntaxcheck: 'types' can only be used in a .ts file.]
+        ~ [error syntaxcheck: Type expected.]
+
+new Set<string>();
+        ~~~~~~     [error syntaxcheck: 'type arguments' can only be used in a .ts file.]
+
+function () {}
+         ~     [error syntaxcheck: Identifier expected.]

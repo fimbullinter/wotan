@@ -1,40 +1,42 @@
 {
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "compile:wotan": "tsc -p packages/wotan/tsconfig.build.json",
-    "compile:ve": "tsc -p packages/ve",
-    "compile:bifrost": "tsc -p packages/bifrost",
-    "compile:heimdall": "tsc -p packages/heimdall",
-    "compile:valtyr": "tsc -p packages/valtyr",
-    "compile": "run-p compile:*",
-    "lint:wotan": "cd packages/wotan && yarn lint",
-    "lint:ve": "cd packages/ve && yarn lint",
-    "lint:bifrost": "cd packages/bifrost && yarn lint",
-    "lint:heimdall": "cd packages/heimdall && yarn lint",
-    "lint:valtyr": "cd packages/valtyr && yarn lint",
-    "lint": "run-p lint:*",
-    "check-dependencies": "cd packages/wotan && yarn check-dependencies",
-    "test:wotan": "cd packages/wotan && yarn test",
-    "test:ve": "cd packages/ve && yarn test",
-    "test:bifrost": "cd packages/bifrost && yarn test",
-    "test:heimdall": "cd packages/heimdall && yarn test",
-    "test:valtyr": "cd packages/valtyr && yarn test",
+    "clean": "rimraf \"{packages/*/{index,src/**/*,test/{!(fixtures)/**/*,*}.spec},scripts/!(foreach)}.{js?(.map),d.ts}\"",
+    "compile": "tsc -p tsconfig.build.json",
+    "lint:tslint": "tslint -p tsconfig.build.json -t stylish",
+    "lint:wotan": "wotan -p tsconfig.build.json",
+    "lint": "run-p \"lint:* {@}\" --",
+    "check-dependencies": "depcruise -v .dependency-cruiser.json {scripts/*,packages/*/{src/{**/,}*,index,test/{**/,}*.spec}}.js",
+    "test:unit": "ava \"packages/*/test/**/*.spec.js\" -v --snapshot-dir baselines",
+    "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
     "test": "run-p \"test:* {@}\" --",
     "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
     "test-coverage": "nyc --reporter=html yarn test",
-    "verify": "run-s compile check-dependencies lint test-coverage"
+    "verify": "npm-run-all -s clean compile -p check-dependencies lint -s test-coverage"
   },
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
+    "@fimbul/disir": "^0.0.1",
+    "@fimbul/wotan": "^0.1.0",
+    "@types/cross-spawn": "^6.0.0",
+    "@types/glob": "^5.0.35",
     "@types/node": "^9.4.0",
+    "ava": "^0.25.0",
+    "chalk": "^2.3.1",
     "codecov": "^3.0.0",
+    "cross-spawn": "^6.0.4",
+    "dependency-cruiser": "^2.13.1",
+    "glob": "^7.1.2",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
+    "rimraf": "^2.6.2",
+    "semver": "^5.5.0",
     "tslint": "^5.9.1",
     "tslint-consistent-codestyle": "^1.11.1",
-    "typescript": "^2.7.1"
+    "typescript": "2.7.2"
   }
 }

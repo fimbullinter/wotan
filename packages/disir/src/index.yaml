@@ -1,0 +1,5 @@
+rulesDirectories:
+  disir: ./rules
+rules:
+  disir/import-package: error
+  disir/no-import-self: error

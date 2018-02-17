@@ -1,0 +1,452 @@
+import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import * as moduleNamespace from './es6-module';
+import * as namespaceImport from './export-assignment';
+
+import MyImportedInterface = ns.I;
+                             ~~    [error deprecation: Namespace 'ns' is deprecated.]
+import MyOtherImportedInterface = ns.D;
+                                  ~~    [error deprecation: Namespace 'ns' is deprecated.]
+import myNamespaceAlias = moduleNamespace.ns;
+import MyDAlias = moduleNamespace.ns.D;
+                  ~~~~~~~~~~~~~~~~~~    [error deprecation: Namespace 'ns' is deprecated.]
+
+namespaceImport;
+~~~~~~~~~~~~~~~  [error deprecation: Function 'namespaceImport' is deprecated.]
+namespaceImport();
+~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+def;
+~~~  [error deprecation: Variable 'def' is deprecated.]
+v;
+~  [error deprecation: Variable 'v' is deprecated.]
+somethingSomething;
+~~~~~~~~~~~~~~~~~~  [error deprecation: Variable 'somethingSomething' is deprecated.]
+moduleNamespace.default;
+~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Variable 'default' is deprecated.]
+moduleNamespace.v;
+~~~~~~~~~~~~~~~~~  [error deprecation: Variable 'v' is deprecated.]
+moduleNamespace.something;
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Variable 'something' is deprecated.]
+let _v: ns.I,
+        ~~    [error deprecation: Namespace 'ns' is deprecated.]
+    _v2: ns.D,
+         ~~    [error deprecation: Namespace 'ns' is deprecated.]
+         ~~~~  [error deprecation: Interface 'D' is deprecated.]
+    _v3: myNamespaceAlias.I;
+         ~~~~~~~~~~~~~~~~    [error deprecation: Namespace 'myNamespaceAlias' is deprecated.]
+
+/** @deprecated */
+class Foo implements ns.D, MyDAlias {}
+                     ~~                [error deprecation: Namespace 'ns' is deprecated.]
+                     ~~~~              [error deprecation: Interface 'D' is deprecated.]
+                           ~~~~~~~~    [error deprecation: Interface 'MyDAlias' is deprecated.]
+class Bar extends Foo implements ns.I {}
+                  ~~~                    [error deprecation: Class 'Foo' is deprecated.]
+                                 ~~      [error deprecation: Namespace 'ns' is deprecated.]
+
+new Foo();
+    ~~~    [error deprecation: Class 'Foo' is deprecated.]
+new Bar();
+
+/** @deprecated Use the other overload instead. */
+function baz(): string;
+function baz(v: string): string;
+function baz(...args: string[]) {return args[0];}
+
+baz;
+~~~  [error deprecation: Function 'baz' is deprecated: Use the other overload instead. ]
+baz();
+~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+baz('');
+(((baz)));
+   ~~~     [error deprecation: Function 'baz' is deprecated: Use the other overload instead. ]
+((baz))();
+~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+((baz))('');
+
+declare const bas: {
+    /** @deprecated Use the other overload instead. */
+    (): string;
+    (v: string): string;
+};
+
+bas;
+bas();
+~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+bas('');
+
+/** @deprecated Variable is deprecated. */
+declare const fn: typeof bas;
+fn;
+~~  [error deprecation: Variable 'fn' is deprecated: Variable is deprecated. ]
+fn();
+~~    [error deprecation: Variable 'fn' is deprecated: Variable is deprecated. ]
+~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+fn('');
+~~      [error deprecation: Variable 'fn' is deprecated: Variable is deprecated. ]
+
+declare function getFn(): typeof bas;
+getFn()();
+~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+getFn()('');
+
+declare let key: 'foo';
+declare let key2: string;
+declare let k: 'b' | 'a' | 'foo';
+
+let obj = {
+    /** @deprecated a*/
+    a: '',
+    b: '',
+    /** @deprecated c*/
+    'c': '',
+    /** @deprecated d*/
+    ['d']: '',
+    /** @deprecated foo*/
+    [key]: '',
+    /** @deprecated something*/
+    [key2]: '',
+};
+
+obj.a;
+~~~~~  [error deprecation: Property 'a' is deprecated: a]
+obj.b;
+obj.c;
+~~~~~  [error deprecation: Property 'c' is deprecated: c]
+obj.d;
+~~~~~  [error deprecation: Property 'd' is deprecated: d]
+obj.foo;
+~~~~~~~  [error deprecation: Property 'foo' is deprecated: foo]
+obj['a'];
+~~~~~~~~  [error deprecation: Property 'a' is deprecated: a]
+obj['b'];
+obj['c'];
+~~~~~~~~  [error deprecation: Property 'c' is deprecated: c]
+obj['d'];
+~~~~~~~~  [error deprecation: Property 'd' is deprecated: d]
+obj['foo'];
+~~~~~~~~~~  [error deprecation: Property 'foo' is deprecated: foo]
+obj[key];
+~~~~~~~~  [error deprecation: Property 'foo' is deprecated: foo]
+obj.somethingElse;
+obj['somethingElse'];
+obj[key2];
+obj[k];
+~~~~~~  [error deprecation: Property 'a' is deprecated: a]
+~~~~~~  [error deprecation: Property 'foo' is deprecated: foo]
+obj[];
+
+declare let obj2: {
+    /** @deprecated */
+    [key: string]: string;
+};
+obj2.a;
+obj2['b'];
+obj2[key];
+
+class HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor() {}
+}
+class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
+    /** @deprecated */
+    constructor(p: string);
+    constructor(p: number);
+    constructor(p: string | number) {
+        super();
+        ~~~~~~~  [error deprecation: CostructSignature 'new (): HasDeprecatedConstructor' is deprecated.]
+    }
+}
+class Extending extends HasDeprecatedConstructorOverload {
+    constructor(p?: string) {
+        if (p !== undefined) {
+            super(p);
+            ~~~~~~~~  [error deprecation: CostructSignature 'new (p: string): HasDeprecatedConstructorOverload' is deprecated.]
+        } else {
+            super(1);
+        }
+    }
+}
+
+new HasDeprecatedConstructor();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CostructSignature 'new (): HasDeprecatedConstructor' is deprecated.]
+new HasDeprecatedConstructorOverload('');
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CostructSignature 'new (p: string): HasDeprecatedConstructorOverload' is deprecated.]
+new HasDeprecatedConstructorOverload(1);
+new Extending('');
+new Extending();
+let _1: HasDeprecatedConstructor,
+    _2: HasDeprecatedConstructorOverload,
+    _3: Extending;
+
+class HasDeprecatedMethods {
+    prop: typeof bas;
+    /** @deprecated */
+    method(): void;
+    method(p: string): void;
+    method() {}
+
+    /** @deprecated */
+    deprecatedProp: typeof bas;
+
+    /** @deprecated */
+    deprecatedProp2: () => void;
+
+    initialized = baz;
+                  ~~~  [error deprecation: Function 'baz' is deprecated: Use the other overload instead. ]
+
+    /** @notDeprecated */
+    notDeprecated: () => void;
+}
+
+{
+    const v = new HasDeprecatedMethods();
+    v.prop;
+    v.prop();
+    ~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    v.prop('');
+    v.method;
+    ~~~~~~~~  [error deprecation: Method 'method' is deprecated.]
+    v.method();
+    ~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    v.method('');
+    v.deprecatedProp;
+    ~~~~~~~~~~~~~~~~  [error deprecation: Property 'deprecatedProp' is deprecated.]
+    v.deprecatedProp();
+    ~~~~~~~~~~~~~~~~    [error deprecation: Property 'deprecatedProp' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    v.deprecatedProp('');
+    ~~~~~~~~~~~~~~~~      [error deprecation: Property 'deprecatedProp' is deprecated.]
+    v.deprecatedProp2;
+    ~~~~~~~~~~~~~~~~~  [error deprecation: Property 'deprecatedProp2' is deprecated.]
+    v.deprecatedProp2();
+    ~~~~~~~~~~~~~~~~~    [error deprecation: Property 'deprecatedProp2' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    v.initialized;
+    v.initialized();
+    ~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    v.initialized('');
+
+    v['prop']();
+    ~~~~~~~~~~~  [error deprecation: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    v['notDeprecated']();
+    v[Boolean() ? 'prop' : 'notDeprecated']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): string | void' is deprecated: Use the other overload instead. ]
+    v[Boolean() ? 'method' : 'notDeprecated']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    v[Boolean() ? 'method' : 'deprecatedProp']();
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error deprecation: Property 'deprecatedProp' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(): string | void' is deprecated: Use the other overload instead. ]
+    v['method'];
+    ~~~~~~~~~~~  [error deprecation: Method 'method' is deprecated.]
+    v['method']();
+    ~~~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    v['prop'];
+}
+
+{
+    /* @deprecated */
+    let noJsdoc: string;
+    noJsdoc = 'foo';
+
+    // @deprecated
+    let alsoNoJsdoc: string;
+    alsoNoJsdoc = 'bar';
+}
+
+declare function tag(parts: TemplateStringsArray, ...values: string[]): string;
+declare function tag(parts: TemplateStringsArray, ...values: number[]): string;
+/** @deprecated */
+declare function tag(parts: TemplateStringsArray, ...values: any[]): string;
+
+tag`a`;
+tag`${''}`;
+tag`${1}`;
+tag`${''}${1}`;
+~~~~~~~~~~~~~~  [error deprecation: CallSignature '(parts: TemplateStringsArray, ...values: any[]): string' is deprecated.]
+
+declare function decorator<T extends Function>(clazz: T): T;
+/** @deprecated Options should be provided. */
+declare function decorator(): ClassDecorator;
+declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
+
+@decorator
+@decorator()
+ ~~~~~~~~~~~ [error deprecation: CallSignature '(): ClassDecorator' is deprecated: Options should be provided. ]
+@decorator({foo: '', bar: ''})
+class Decorated {}
+
+/** @deprecated */
+class MyClass {}
+namespace MyClass {
+    export function something() {
+        let MyDAlias = '';
+        let myObj = {MyClass, v, MyDAlias, nonExistent};
+                     ~~~~~~~                             [error deprecation: Class 'MyClass' is deprecated.]
+                              ~                          [error deprecation: Variable 'v' is deprecated.]
+    }
+}
+
+{
+    /** @deprecated */
+    let a: string;
+    /** @deprecated */
+    let b: string;
+    /** @deprecated */
+    let c: {};
+    let d: string;
+    ({a, c: b, d, ...c} = {a: 'a', b: 'b', c: 'c'});
+      ~                                              [error deprecation: Variable 'a' is deprecated.]
+            ~                                        [error deprecation: Variable 'b' is deprecated.]
+                     ~                               [error deprecation: Variable 'c' is deprecated.]
+    let myObj = {a, c: b, ...c};
+                 ~               [error deprecation: Variable 'a' is deprecated.]
+                       ~         [error deprecation: Variable 'b' is deprecated.]
+                             ~   [error deprecation: Variable 'c' is deprecated.]
+    ({d = a} = {d: 'd'}); // TODO show error on `a`: https://github.com/Microsoft/TypeScript/issues/21046
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let a: string;
+    let b: string;
+    let c: {};
+    ({a, c: b, ...c} = obj);
+      ~                      [error deprecation: Property 'a' is deprecated: a ]
+         ~                   [error deprecation: Property 'c' is deprecated: c ]
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let {a, c: b, d, 'foo': e, ...c} = obj;
+         ~                                  [error deprecation: Property 'a' is deprecated: a ]
+            ~                               [error deprecation: Property 'c' is deprecated: c ]
+    c.b;
+    ~~~  [error deprecation: Property 'b' is deprecated: b ]
+}
+
+{
+    let obj = {
+        /** @deprecated a */
+        a: 'a',
+        /** @deprecated b */
+        b: 'b',
+        /** @deprecated c */
+        c: 'c',
+    };
+    let k: keyof typeof obj = null as any;
+    let {[k]: prop} = obj;
+         ~~~               [error deprecation: Property 'a' is deprecated: a ]
+         ~~~               [error deprecation: Property 'b' is deprecated: b ]
+         ~~~               [error deprecation: Property 'c' is deprecated: c ]
+    let v: string;
+    ({[k]: v} = obj); // TODO this would be possible with some effort
+}
+
+{
+    /** @deprecated */
+    const enum Indizes {
+        Zero,
+        One,
+        Two,
+    }
+    const enum StringIndizes {
+        /** @deprecated */
+        Zero = '0',
+        One = '1',
+        Two = '2',
+    }
+    let tuple: {
+        0: string;
+        /** @deprecated */
+        1: number;
+        2: boolean;
+    } = null as any;
+    tuple[0];
+    tuple[1];
+    ~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+    tuple[2];
+    tuple[Indizes.Zero];
+          ~~~~~~~        [error deprecation: Enum 'Indizes' is deprecated.]
+    tuple[Indizes.One];
+    ~~~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+          ~~~~~~~       [error deprecation: Enum 'Indizes' is deprecated.]
+    tuple[Indizes.Two];
+          ~~~~~~~       [error deprecation: Enum 'Indizes' is deprecated.]
+    tuple[StringIndizes.Zero];
+          ~~~~~~~~~~~~~~~~~~   [error deprecation: EnumMember 'Zero' is deprecated.]
+    tuple[StringIndizes.One];
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+    tuple[StringIndizes.Two];
+    const key: Indizes = null as any;
+               ~~~~~~~                [error deprecation: Enum 'Indizes' is deprecated.]
+    tuple[key];
+    ~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+    const stringKey: StringIndizes = null as any;
+    tuple[stringKey];
+    ~~~~~~~~~~~~~~~~  [error deprecation: Property '1' is deprecated.]
+
+    /** @deprecated */
+    type MyAlias = StringIndizes;
+    let myVar: MyAlias;
+               ~~~~~~~  [error deprecation: TypeAlias 'MyAlias' is deprecated.]
+}
+
+{
+    interface A {
+        /** @deprecated */
+        a: string;
+        b: string;
+        d: string;
+        e: string;
+        /** @deprecated reason 1 */
+        f: string;
+        /** @deprecated */
+        fnA(): void;
+        fnB(): void;
+    }
+    interface B {
+        a: string;
+        /** @deprecated */
+        b: string;
+        c: string;
+        e: string;
+        /** @deprecated reason 2 */
+        f: string;
+        fnA(): void;
+        /** @deprecated */
+        fnB(): void;
+    }
+    let myObj: A | B = null  as any;
+    myObj.a;
+    ~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    myObj.b;
+    ~~~~~~~  [error deprecation: Property 'b' is deprecated.]
+    myObj.e;
+    myObj.f;
+    ~~~~~~~  [error deprecation: Property 'f' is deprecated: reason 1 ]
+    ~~~~~~~  [error deprecation: Property 'f' is deprecated: reason 2 ]
+    myObj[Boolean() ? 'a' : 'b'];
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'b' is deprecated.]
+    myObj[Boolean() ? 'a' : 'e'];
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: Property 'a' is deprecated.]
+    myObj.fnA();
+    ~~~~~~~~~    [error deprecation: Property 'fnA' is deprecated.]
+    ~~~~~~~~~~~  [error deprecation: CallSignature '(): void' is deprecated.]
+    myObj.fnB();
+    ~~~~~~~~~    [error deprecation: Property 'fnB' is deprecated.]
+}

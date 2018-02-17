@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - node
+cache: yarn
+script:
+  - yarn compile
+  - yarn lint
+  - yarn check-dependencies
+  - yarn test
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: bash -c 'echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/nightly "$TRAVIS_COMMIT_RANGE"'

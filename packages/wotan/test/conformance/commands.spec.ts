@@ -1,13 +1,12 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { MessageHandler, FileSystem, Format, DirectoryService, CacheManager, Stats } from '../../src/types';
+import { MessageHandler, FileSystem, Format, DirectoryService, CacheManager } from '../../src/types';
 import { runCommand, CommandName, ShowCommand } from '../../src/commands';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import * as path from 'path';
 import { unixifyPath } from '../../src/utils';
 import * as escapeRegex from 'escape-string-regexp';
-import { CachedFileSystem } from '../../src/services/cached-file-system';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
 
 test('ShowCommand', async (t) => {
@@ -55,28 +54,28 @@ test('ShowCommand', async (t) => {
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.js',
+        file: 'packages/wotan/test/fixtures/configuration/foo.js',
         format: undefined,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json,
     });
 
     await verify({
         command: CommandName.Show,
         modules: [],
-        file: 'test/fixtures/configuration/foo.ts',
+        file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json5,
     });
 
@@ -94,78 +93,4 @@ test('ShowCommand', async (t) => {
         const re = new RegExp(`'?${escapeRegex(cwd)}(.*?)'?$`, 'gm');
         return str.replace(/\\\\/g, '\\').replace(re, (_, p) => unixifyPath(p));
     }
-});
-
-test('InitCommand', async (t) => {
-    const container = new Container();
-    const warnings: string[] = [];
-    const cwd = path.join(path.parse(process.cwd()).root, 'cwd');
-    const logger: MessageHandler = {
-        log() { throw new Error('not implemented'); },
-        warn(message) { warnings.push(message); },
-        error() { throw new Error('not implemented'); },
-    };
-    container.bind(DirectoryService).toConstantValue({
-        getCurrentDirectory: () => cwd,
-    });
-    container.bind(MessageHandler).toConstantValue(logger);
-    container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
-    const filesWritten: Array<[string, string]> = [];
-    @injectable()
-    class MockFileSystem implements FileSystem {
-        public normalizePath(p: string): string {
-            return p;
-        }
-        public readFile(): string {
-            throw new Error('Method not implemented.');
-        }
-        public readDirectory(): string[] {
-            throw new Error('Method not implemented.');
-        }
-        public stat(file: string): Stats {
-            if (path.basename(path.dirname(file)) === 'existing')
-                return {
-                    isFile: () => true,
-                    isDirectory: () => false,
-                };
-            throw new Error();
-        }
-        public writeFile(file: string, content: string): void {
-            filesWritten.push([file, content]);
-        }
-        public deleteFile(): void {
-            throw new Error('Method not implemented.');
-        }
-        public createDirectory(): void {
-            throw new Error('Method not implemented.');
-        }
-    }
-    container.bind(FileSystem).to(MockFileSystem);
-
-    t.true(await runCommand(
-        {
-            command: CommandName.Init,
-            modules: [],
-            format: undefined,
-            directories: [],
-        },
-        container,
-    ));
-
-    t.is(warnings.length, 0);
-    t.deepEqual(filesWritten, [[path.resolve(cwd, '.wotanrc.yaml'), "extends: 'wotan:recommended'\n"]]);
-
-    filesWritten.length = 0;
-    t.false(await runCommand(
-        {
-            command: CommandName.Init,
-            modules: [],
-            format: Format.Json,
-            directories: ['existing', 'other'],
-        },
-        container,
-    ));
-    t.deepEqual(warnings, [`'${path.resolve(cwd, 'existing/.wotanrc.json')}' already exists.`]);
-    t.deepEqual(filesWritten, [[path.resolve(cwd, 'other/.wotanrc.json'), '{\n  "extends": "wotan:recommended"\n}']]);
 });

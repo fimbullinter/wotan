@@ -1,0 +1,4 @@
+rulesDirectories:
+  local: ../../src/rules
+rules:
+  local/no-import-self: error

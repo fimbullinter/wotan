@@ -12,15 +12,14 @@ import {
     EffectiveConfiguration,
     Failure,
     Replacement,
-    LineSwitchParser,
+    FailureFilterFactory,
 } from '../../src/types';
 import { DefaultCacheManager } from '../../src/services/default/cache-manager';
 import { RuleLoader } from '../../src/services/rule-loader';
 import { Linter } from '../../src/linter';
 import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
-import { LineSwitchService } from '../../src/services/line-switches';
-import { DefaultLineSwitchParser } from '../../src/services/default/line-switch-parser';
+import { LineSwitchFilterFactory, LineSwitchParser, DefaultLineSwitchParser } from '../../src/services/default/line-switches';
 
 class MyTypedRule extends TypedRule {
     public apply() {
@@ -46,7 +45,7 @@ test('Linter', (t) => {
     container.bind(CacheManager).to(DefaultCacheManager);
     container.bind(RuleLoader).toSelf();
     container.bind(DeprecationHandler).to(DefaultDeprecationHandler);
-    container.bind(LineSwitchService).toSelf();
+    container.bind(FailureFilterFactory).to(LineSwitchFilterFactory);
     container.bind(LineSwitchParser).to(DefaultLineSwitchParser);
     container.bind(MessageHandler).toConstantValue({
         log() {
