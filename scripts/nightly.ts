@@ -6,13 +6,13 @@ if (process.argv.length < 3) {
     process.exit(1);
 }
 
-ensureCleanTree();
+const {packages, publicPackages} = getPackages();
+
+ensureCleanTree(Array.from(publicPackages.keys(), (p) => 'packages/' + p));
 
 const currentDate = new Date();
 const version = // tslint:disable-next-line
     `${require('../package.json').version}-dev.${currentDate.getFullYear() * 10000 + (currentDate.getMonth() + 1) * 100 + currentDate.getDate()}`;
-
-const {packages, publicPackages} = getPackages();
 
 const needsRelease = new Set<string>();
 function markForRelease(name: string) {

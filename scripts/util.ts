@@ -14,14 +14,21 @@ export interface PackageData {
     peerDependencies?: Dependencies;
 }
 
-export function isTreeClean() {
-    return cp.spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--']).status === 0 && // unstaged and staged changes
-        cp.spawnSync('git', ['ls-files', '--others', '--exclude-standard', '--error-unmatch', '.']).status === 1; // untracked files
+export function isTreeClean(directories: string[] = []) {
+    if (cp.spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--', ...directories], {stdio: 'ignore'}).status === 0)
+        return false;
+    const untracked = cp.spawnSync('git', ['ls-files', '--others', '--exclude-standard', '--', ...directories]);
+    if (untracked.status !== 0)
+        throw new Error(untracked.stderr.toString());
+    return untracked.stdout.length === 0;
 }
 
-export function ensureCleanTree() {
-    if (!isTreeClean())
-        throw new Error('Working directory contains uncommited changes.');
+export function ensureCleanTree(directories: string[] = []) {
+    if (isTreeClean(directories))
+        return;
+    console.error('Working directory contains uncommited changes.');
+    cp.spawnSync('git', ['status', '--', ...directories], {stdio: 'inherit'});
+    process.exit(1);
 }
 
 export function getCurrentBranch() {
