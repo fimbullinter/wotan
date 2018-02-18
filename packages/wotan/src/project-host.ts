@@ -48,21 +48,19 @@ export class ProjectHost implements ts.CompilerHost {
         } catch {
             return result;
         }
-        let c: Configuration | undefined | 'initial' = this.config || 'initial';
         for (const entry of entries) {
             const fileName = `${dir}/${entry}`;
             switch (this.fs.getKind(fileName)) {
                 case FileKind.File: {
                     if (!hasSupportedExtension(fileName)) {
-                        if (c === 'initial')
-                            c = this.configManager.find(fileName);
+                        const c = this.config || this.configManager.find(fileName);
                         const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
                             const newName = fileName +
                                 ctor.getSuffixForFile({
                                     fileName,
-                                    getSettings: () => this.configManager.getSettings(<Configuration>c, fileName),
+                                    getSettings: () => this.configManager.getSettings(c!, fileName),
                                     readFile: () => this.fs.readFile(fileName),
                                 });
                             if (hasSupportedExtension(newName)) {

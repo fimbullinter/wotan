@@ -2,7 +2,11 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
+<<<<<<< HEAD
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/{!(fixtures)/**/*,*}.spec},scripts/!(foreach)}.{js?(.map),d.ts}\"",
+=======
+    "clean": "rimraf \"{packages/*/{index,src/**/*,test/{!(fixtures)/**/*,*}.spec},scripts/!(foreach|last-travis-nightly)}.{js?(.map),d.ts}\"",
+>>>>>>> master
     "compile": "tsc -p tsconfig.build.json",
     "lint:tslint": "tslint -p tsconfig.build.json -t stylish",
     "lint:wotan": "wotan -p tsconfig.build.json",
