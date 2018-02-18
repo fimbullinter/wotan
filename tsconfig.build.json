@@ -12,6 +12,10 @@
   ],
   "exclude": [
     "scripts/**/*.d.ts",
-    "packages/**/*.d.ts"
+    "packages/**/*.d.ts",
+    // avoid scanning into these directories
+    "packages/*/test/fixtures",
+    "packages/wotan/test/integration",
+    "packages/wotan/test/rules"
   ]
 }

@@ -37,6 +37,18 @@ export class ProjectHost implements ts.CompilerHost {
     public getDirectoryEntries(dir: string): ts.FileSystemEntries {
         return resolveCachedResult(this.directoryEntries, dir, this.processDirectory);
     }
+    /**
+     * Try to find and load the configuration for a file.
+     * If it fails, just continue as if there was no config.
+     * This may happen during project setup if there is an invalid config file anywhere in a scanned folder.
+     */
+    private tryFindConfig(file: string) {
+        try {
+            return this.configManager.find(file);
+        } catch {
+            return;
+        }
+    }
     @bind
     private processDirectory(dir: string): ts.FileSystemEntries {
         const files: string[] = [];
@@ -53,7 +65,7 @@ export class ProjectHost implements ts.CompilerHost {
             switch (this.fs.getKind(fileName)) {
                 case FileKind.File: {
                     if (!hasSupportedExtension(fileName)) {
-                        const c = this.config || this.configManager.find(fileName);
+                        const c = this.config || this.tryFindConfig(fileName);
                         const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
@@ -119,7 +131,7 @@ export class ProjectHost implements ts.CompilerHost {
     private readProcessedFile(file: string): string {
         const realFile = this.getFileSystemFile(file)!;
         let content = this.fs.readFile(realFile);
-        const config = this.config || this.configManager.find(realFile);
+        const config = this.config || this.tryFindConfig(realFile);
         if (config === undefined)
             return content;
         const processorPath = this.configManager.getProcessor(config, realFile);

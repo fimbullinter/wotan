@@ -4,7 +4,7 @@
   },
   "include": [
     "test.ts",
-    "types/*.ts",
+    "types",
     "non-existent",
     "../non-existent"
   ]
