@@ -11,7 +11,7 @@ async function run() {
     }
 }
 if (process.argv.length === 3 && /^(')?(?:-v|version)\1$/.test(process.argv[2])) {
-    console.log(require('../package.json').version); // tslint:disable-line:no-require-imports
+    console.log(require('../package.json').version); // tslint:disable-line:no-var-requires
 } else {
     run();
 }

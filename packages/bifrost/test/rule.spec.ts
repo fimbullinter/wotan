@@ -159,4 +159,32 @@ test('applies rules correctly', (t) => {
         () => new (wrapTslintRule(WrongFileFailureRule, 'wrong-file'))(context).apply(),
         "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'wrong-file'.",
     );
+    t.throws(
+        () => new (wrapTslintRule(WrongFileFailureRule))(context).apply(),
+        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'rule.spec'.",
+    );
+
+    class AnotherWrongFileFailureRule extends TSLint.Rules.AbstractRule {
+        public static metadata: TSLint.IRuleMetadata = {
+            type: 'typescript',
+            description: '',
+            optionsDescription: '',
+            options: undefined,
+            ruleName: 'some-name',
+            typescriptOnly: false,
+        };
+        public apply() {
+            return [new TSLint.RuleFailure(
+                ts.createSourceFile('other.ts', '', ts.ScriptTarget.Latest),
+                0,
+                0,
+                '',
+                '',
+            )];
+        }
+    }
+    t.throws(
+        () => new (wrapTslintRule(AnotherWrongFileFailureRule))(context).apply(),
+        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'some-name'.",
+    );
 });

@@ -175,7 +175,7 @@ test('Resolver', (t) => {
         path.resolve('packages/wotan/src/rules/no-debugger.ts'),
     );
 
-    const tslib = require('tslib'); // tslint:disable-line
+    const tslib = require('tslib');
     t.is(resolver.require(require.resolve('tslib')), tslib);
     t.not(resolver.require(require.resolve('tslib'), {cache: false}), tslib);
 });
@@ -196,7 +196,7 @@ test('FormatterLoaderHost', (t) => {
     t.is(loader.loadCustomFormatter('fooBarBaz', process.cwd()), undefined);
     t.is(
         loader.loadCustomFormatter('custom-formatter', path.resolve('packages/wotan/test/fixtures')),
-        require('../fixtures/node_modules/custom-formatter').Formatter, // tslint:disable-line
+        require('../fixtures/node_modules/custom-formatter').Formatter,
     );
     t.throws(() => loader.loadCustomFormatter('./packages/wotan/test/fixtures/invalid', process.cwd()));
 });

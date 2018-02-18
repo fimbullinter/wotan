@@ -4,6 +4,6 @@
     "no-implicit-dependencies": {
       "options": "dev"
     },
-    "no-require-imports": false
+    "no-var-requires": false
   }
 }

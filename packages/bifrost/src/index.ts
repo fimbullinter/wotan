@@ -1,8 +1,11 @@
 import { AbstractRule, RuleContext, AbstractFormatter, FileSummary, RuleConstructor, FormatterConstructor } from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
+import getCaller = require('get-caller-file');
+import * as path from 'path';
 
-export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): RuleConstructor { // tslint:disable-line:naming-convention
+// tslint:disable-next-line:naming-convention
+export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
     return class extends AbstractRule {
         public static requiresTypeInformation =
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
@@ -42,8 +45,8 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             const {fileName} = this.sourceFile;
             for (const failure of result) {
                 if (failure.getFileName() !== fileName)
-                    throw new Error('Adding failures for a different SourceFile is not supported. '
-                        + `Expected '${fileName}' but received '${failure.getFileName()}' from rule '${name}'.`);
+                    throw new Error(`Adding failures for a different SourceFile is not supported. Expected '${
+                        fileName}' but received '${failure.getFileName()}' from rule '${this.delegate.getOptions().ruleName}'.`);
                 this.addFailure(
                     failure.getStartPosition().getPosition(),
                     failure.getEndPosition().getPosition(),
@@ -53,6 +56,13 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             }
         }
     };
+}
+
+function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
+    if (Rule.metadata !== undefined && Rule.metadata.ruleName)
+        return Rule.metadata.ruleName;
+    const caller = getCaller(3);
+    return path.basename(caller, path.extname(caller));
 }
 
 export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): FormatterConstructor { // tslint:disable-line:naming-convention
