@@ -3605,7 +3605,7 @@ tslint-consistent-codestyle@^1.11.1:
     tslib "^1.7.1"
     tsutils "^2.21.0"
 
-tslint@^5.0.0, tslint@^5.9.1:
+tslint@^5.0.0:
   version "5.9.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.9.1.tgz#1255f87a3ff57eb0b0e1f0e610a8b4748046c9ae"
   dependencies:
