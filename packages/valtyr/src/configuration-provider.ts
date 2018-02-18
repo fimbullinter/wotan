@@ -70,7 +70,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         const overrides: Configuration.Override[] = [];
         if (raw.rules.size !== 0)
             overrides.push({
-                files: ['*', '.*', '!*.js?(x)', '!.*.js?(x)'],
+                files: ['*', '.*', '!*.js?(x)'],
                 rules: new Map(Array.from(raw.rules, mapRules)),
             });
         if (raw.jsRules.size !== 0)
@@ -82,7 +82,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
             overrides,
             filename,
             extends: [],
-            exclude: raw.linterOptions && raw.linterOptions.exclude,
+            exclude: raw.linterOptions && raw.linterOptions.exclude && mapExcludes(raw.linterOptions.exclude, path.dirname(filename)),
         };
 
         function mapRules([rule, config]: [string, Partial<TSLint.IOptions>]): [string, Configuration.RuleConfig] {
@@ -97,4 +97,11 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
             ];
         }
     }
+}
+
+function mapExcludes(excludes: Iterable<string>, configDir: string) {
+    const result = [];
+    for (const e of excludes)
+        result.push(path.relative(configDir, e));
+    return result;
 }
