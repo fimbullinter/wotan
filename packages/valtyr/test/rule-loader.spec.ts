@@ -30,6 +30,13 @@ test('loads core TSLint rule', (t) => {
     testRule(t, rule!, 2, 2, 'file should end with a newline');
 });
 
+test('loads core TSLint rule when directory given', (t) => {
+    const loader = new TslintRuleLoaderHost();
+    const rule = loader.loadCustomRule('eofline', path.join(__dirname, 'fixtures'));
+    t.truthy(rule);
+    testRule(t, rule!, 2, 2, 'file should end with a newline');
+});
+
 test('loads custom TSLint rule', (t) => {
     const loader = new TslintRuleLoaderHost();
     const rule = loader.loadCustomRule('my-rule', path.join(__dirname, 'fixtures'));
