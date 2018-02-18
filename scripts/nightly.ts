@@ -33,8 +33,7 @@ function markForRelease(name: string) {
     }
 }
 
-const lastNightly = process.argv[2].split('..')[0]; // revision of the last nightly
-console.log('last nightly release', lastNightly);
+const lastNightly = process.argv[2]; // revision of the last nightly
 const lastReleaseTag = getLastRelaseTag();
 console.log('last stable release tag', lastReleaseTag);
 // if there was a release since the last nightly, only get the diff since that release
