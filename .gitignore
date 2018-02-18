@@ -29,8 +29,9 @@ yarn-error.log*
 /scripts/*.js
 /scripts/*.js.map
 /scripts/*.d.ts
-# this one is written as js file
+# these are written as js file
 !/scripts/foreach.js
+!/scripts/last-travis-nightly.js
 
 !/packages/*/test/fixtures/**
 !/baselines/**

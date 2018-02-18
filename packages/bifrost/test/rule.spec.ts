@@ -143,4 +143,20 @@ test('applies rules correctly', (t) => {
         }
     }
     new (wrapTslintRule(DisabledRule, 'disabled'))(context).apply();
+
+    class WrongFileFailureRule extends TSLint.Rules.AbstractRule {
+        public apply() {
+            return [new TSLint.RuleFailure(
+                ts.createSourceFile('other.ts', '', ts.ScriptTarget.Latest),
+                0,
+                0,
+                '',
+                '',
+            )];
+        }
+    }
+    t.throws(
+        () => new (wrapTslintRule(WrongFileFailureRule, 'wrong-file'))(context).apply(),
+        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'wrong-file'.",
+    );
 });

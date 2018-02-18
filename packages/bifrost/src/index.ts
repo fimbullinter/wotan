@@ -39,13 +39,18 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             } else {
                 result = this.delegate.apply(this.sourceFile);
             }
-            for (const failure of result)
+            const {fileName} = this.sourceFile;
+            for (const failure of result) {
+                if (failure.getFileName() !== fileName)
+                    throw new Error('Adding failures for a different SourceFile is not supported. '
+                        + `Expected '${fileName}' but received '${failure.getFileName()}' from rule '${name}'.`);
                 this.addFailure(
                     failure.getStartPosition().getPosition(),
                     failure.getEndPosition().getPosition(),
                     failure.getFailure(),
                     arrayify(failure.getFix()).map((r) => ({start: r.start, end: r.end, text: r.text})),
                 );
+            }
         }
     };
 }
