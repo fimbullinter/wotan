@@ -94,7 +94,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
         }
 
         public flush() {
-            return this.delegate.format(this.failures, this.fixed);
+            return this.delegate.format(this.failures, this.fixed).trim();
         }
     };
 }

@@ -36,11 +36,10 @@ export class LineSwitchFilterFactory implements FailureFilterFactory {
             sourceFile,
             ruleNames,
             getCommentAtPosition(pos) {
-                let parent: ts.Node | undefined;
                 const wrap = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), pos);
-                if (wrap !== undefined)
-                    parent = wrap.node;
-                return getCommentAtPosition(sourceFile, pos, parent);
+                if (wrap === undefined)
+                    return;
+                return getCommentAtPosition(sourceFile, pos, wrap.node);
             },
         });
 
