@@ -17,6 +17,7 @@ const cacheId = new CacheIdentifier<string, string | undefined>('configPath');
 @injectable()
 export class TslintConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
+    private tslintConfigDir: string | undefined;
     constructor(private resolver: Resolver, cache: CacheManager) {
         this.cache = cache.create(cacheId);
     }
@@ -26,7 +27,9 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         let result = this.cache.get(fileName);
         if (result === undefined && !this.cache.has(fileName)) {
             result = TSLint.Configuration.findConfigurationPath(null, fileName); // tslint:disable-line:no-null-keyword
-            const configDirname = result === undefined ? path.parse(fileName).root : path.dirname(result);
+            const {root} = path.parse(fileName);
+            // prevent infinite loop when result is on different drive
+            const configDirname = result === undefined || root !== path.parse(result).root ? root : path.dirname(result);
             this.cache.set(fileName, result);
             while (fileName !== configDirname) {
                 this.cache.set(fileName, result);
@@ -40,14 +43,12 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         const extensions = Object.keys(require.extensions).filter((e) => e !== '.node');
         if (name.startsWith('tslint:')) {
             try {
-                return this.resolver.resolve(
-                    path.join(
-                        this.resolver.resolve('tslint', path.join(__dirname, '/..'.repeat(OFFSET_TO_NODE_MODULES)), extensions),
-                        `../configs/${name.substr('tslint:'.length)}`,
-                    ),
-                    '',
-                    extensions,
-                );
+                if (this.tslintConfigDir === undefined)
+                    this.tslintConfigDir = path.join(
+                        this.resolver.resolve('tslint', path.dirname(__dirname), extensions),
+                        '../configs',
+                    );
+                return this.resolver.resolve(path.join(this.tslintConfigDir, name.substr('tslint:'.length)), '', extensions);
             } catch {
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'tslint:recommended.'`);
             }
@@ -61,7 +62,10 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
     }
 
     public load(filename: string): Configuration {
-        const raw = TSLint.Configuration.loadConfigurationFromPath(filename);
+        return this.parse(TSLint.Configuration.loadConfigurationFromPath(filename), filename);
+    }
+
+    public parse(raw: TSLint.Configuration.IConfigurationFile, filename: string): Configuration {
         const rulesDirectories = raw.rulesDirectory.length === 0 ? undefined : raw.rulesDirectory;
         const overrides: Configuration.Override[] = [];
         if (raw.rules.size !== 0)

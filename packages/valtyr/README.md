@@ -49,6 +49,7 @@ Why should you use Wotan to execute TSLint rules?
 * Smart handling of overlapping fixes avoids destroying your code.
 * Allows the use of builtin configurations and shareable configs as CLI argument for `-c`, e.g. `-c tslint:latest` or `-c tslint-config-airbnb`.
 * Debug output to diagnose crashes.
+* Configuration caching avoids unnecessary work when linting many directories with the same config.
 * Optimized line switch parser finds `tslint:disable` comments faster with less overhead, especially in big files.
 
 ## Caveats
@@ -56,6 +57,7 @@ Why should you use Wotan to execute TSLint rules?
 * Additional startup time by loading Wotan and TSLint.
 * Wrapping rules and formatters comes with additional runtime and memory overhead.
 * There's some overhead of the processor machinery that still runs, even though it's unused.
+* For most projects there will be no noticeable difference in performance, smaller projects usually take longer to lint while bigger ones get faster.
 
 ## Difference to Heimdall
 

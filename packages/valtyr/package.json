@@ -2,8 +2,6 @@
   "name": "@fimbul/valtyr",
   "version": "0.0.1",
   "description": "Wotan plugin to behave almost like TSLint",
-  "main": "src/index",
-  "types": "src/index",
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
   "bugs": {
