@@ -26,17 +26,6 @@
       }
     },
     {
-      "name": "no-barrel",
-      "comment": "Within Wotan - don't import from index.ts to avoid circular imports",
-      "severity": "error",
-      "from": {
-        "path": "packages/wotan/(src|test|bin)/"
-      },
-      "to": {
-        "path": "^packages/wotan/index\\.[jt]s$"
-      }
-    },
-    {
       "name": "no-rules-or-formatters",
       "comment": "Within Wotan - disallow direct imports of rules and formatters",
       "severity": "error",

@@ -1,0 +1,13 @@
+import {baz} from '.';
+                  ~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+import {bas} from './index';
+                  ~~~~~~~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+
+import {foo as otherFoo} from './other';
+import {bar as otherBar} from './other';
+import {foo} from './subdir';
+import {bar} from './subdir/index';
+
+export * from '.';
+              ~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+export * from '@fimbul/wotan';

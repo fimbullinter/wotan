@@ -6,3 +6,8 @@ overrides:
   - files: "packages/*/test/**"
     rules:
       deprecation: off
+  - files: "packages/**"
+    rules:
+      disir/import-package: error
+      disir/no-barrel-import: error
+      disir/no-import-self: error
