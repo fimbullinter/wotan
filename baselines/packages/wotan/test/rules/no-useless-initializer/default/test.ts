@@ -5,11 +5,13 @@
 }
 {
     // TODO these need the type checker
-    const {a = undefined, b = undefined} = {a: 1}; // a useless, b necessary
+    let {a = undefined, b = undefined} = {a: 1}; // a useless, b necessary
     const {c = undefined} = {}; // necessary
     let v = Boolean() ? {d: 1} : {};
     const {d = undefined} = v; // useless
     const {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
+    ({a = undefined, b = undefined} = {a}); // a useless, b necessary
+    // TODO array destructuring should be handled, too
 }
 {
     let foo = "undefined";
