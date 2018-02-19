@@ -1,0 +1,48 @@
+{
+    let foo = undefined;
+              ~~~~~~~~~  [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+    const bar = undefined;
+    var baz = undefined;
+              ~~~~~~~~~  [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+    const {a = undefined, b = undefined} = {a: 1, b: 2};
+               ~~~~~~~~~                                 [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+                              ~~~~~~~~~                  [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+    const {c = undefined, d = undefined} = {}; // TODO this should be allowed
+               ~~~~~~~~~                                                      [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+                              ~~~~~~~~~                                       [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+}
+{
+    let foo = "undefined";
+    let bar = null;
+    let baz = bar ? bar : undefined;
+    let bas = undefined!;
+    const {a = null, b = "undefined"} = {};
+}
+
+function one(a: string | undefined = undefined, b: string, c: any = undefined, d?: number) {}
+                                     ~~~~~~~~~                                                [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+                                                                    ~~~~~~~~~                 [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+(function two(a: undefined | string = undefined, ...rest: string[]) {});
+                                      ~~~~~~~~~                          [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+
+type undef = undefined;
+function three(a: boolean | undef = undefined) {}
+                                    ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+
+let fn: typeof three = (a = undefined) => {};
+                            ~~~~~~~~~         [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+
+class Foo {
+    prop = undefined;
+    prop2: string | undefined = undefined;
+
+    method(param = undefined) {}
+                   ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+
+    constructor(private prop3: string | undefined = undefined) {}
+                                                    ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+}
+
+let obj = {
+    prop: undefined,
+};
