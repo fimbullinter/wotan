@@ -4,19 +4,17 @@ import { isIdentifier, getChildOfKind, isFunctionWithBody, isUnionTypeNode, getP
 
 export class Rule extends AbstractRule {
     public apply() {
+        const isJs = this.sourceFile.flags & ts.NodeFlags.JavaScriptFile;
         for (const node of this.context.getFlatAst()) {
             switch (node.kind) {
                 case ts.SyntaxKind.VariableDeclaration:
-                    if (node.parent!.flags & ts.NodeFlags.Const)
-                        break;
-                    // falls through
-                case ts.SyntaxKind.BindingElement:
-                    if ((<ts.HasExpressionInitializer>node).initializer !== undefined &&
-                        isUndefined((<ts.HasExpressionInitializer>node).initializer!))
-                        this.fail(<ts.HasExpressionInitializer>node);
+                    if ((node.parent!.flags & ts.NodeFlags.Const) === 0 &&
+                        (<ts.VariableDeclaration>node).initializer !== undefined &&
+                        isUndefined((<ts.VariableDeclaration>node).initializer!))
+                        this.fail(<ts.VariableDeclaration>node);
                     break;
                 default:
-                    if (isFunctionWithBody(node))
+                    if (!isJs && isFunctionWithBody(node))
                         this.checkFunctionParameters(node.parameters);
             }
         }

@@ -2,8 +2,14 @@
     let foo = undefined;
     const bar = undefined;
     var baz = undefined;
-    const {a = undefined, b = undefined} = {a: 1, b: 2};
-    const {c = undefined, d = undefined} = {}; // TODO this should be allowed
+}
+{
+    // TODO these need the type checker
+    const {a = undefined, b = undefined} = {a: 1}; // a useless, b necessary
+    const {c = undefined} = {}; // necessary
+    let v = Boolean() ? {d: 1} : {};
+    const {d = undefined} = v; // useless
+    const {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
 }
 {
     let foo = "undefined";
