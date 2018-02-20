@@ -1216,15 +1216,16 @@ delegates@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
 
-dependency-cruiser@^2.13.1:
-  version "2.13.1"
-  resolved "https://registry.yarnpkg.com/dependency-cruiser/-/dependency-cruiser-2.13.1.tgz#994d0b2511ad3391e3cf61b86a9117ece9e066d2"
+dependency-cruiser@^2.14.0:
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/dependency-cruiser/-/dependency-cruiser-2.14.0.tgz#db5a07cec13b5e0ceb1f0e800fcd37788578bc6c"
   dependencies:
     acorn "5.4.1"
     ajv "6.1.1"
     chalk "2.3.1"
     commander "2.14.1"
     figures "2.0.0"
+    glob "7.1.2"
     handlebars "4.0.11"
     lodash "4.17.5"
     resolve "1.5.0"
@@ -1608,7 +1609,7 @@ glob-parent@^2.0.0:
   dependencies:
     is-glob "^2.0.0"
 
-glob@^7.0.3, glob@^7.0.5, glob@^7.0.6, glob@^7.1.1, glob@^7.1.2:
+glob@7.1.2, glob@^7.0.3, glob@^7.0.5, glob@^7.0.6, glob@^7.1.1, glob@^7.1.2:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.2.tgz#c19c9df9a028702d678612384a6552404c636d15"
   dependencies:
