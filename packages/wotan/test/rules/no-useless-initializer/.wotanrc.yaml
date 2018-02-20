@@ -1,0 +1,2 @@
+rules:
+  no-useless-initializer: error

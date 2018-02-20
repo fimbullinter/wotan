@@ -10,5 +10,6 @@ rules:
   no-unused-expression: error
   no-unused-label: error
   no-useless-assertion: error
+  no-useless-initializer: error
   trailing-newline: error
   try-catch-return-await: error
