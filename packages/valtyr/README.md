@@ -35,7 +35,7 @@ The `-m @fimbul/valtyr` argument enables this package. It searches `tslint.json`
 There are only minor differences:
 
 * CLI arguments are still those of the Wotan executable
-* error messages are a bit different
+* exception messages are a bit different
 * `stylish` formatter is used by default
 * files of external modules are always excluded while `*.d.ts` in your project are included by default
 
@@ -59,7 +59,7 @@ Why should you use Wotan to execute TSLint rules?
 * There's some overhead of the processor machinery that still runs, even though it's unused.
 * For most projects there will be no noticeable difference in performance, smaller projects usually take longer to lint while bigger ones get faster.
 
-## Difference to Heimdall
+## Difference to [Heimdall](https://github.com/fimbullinter/wotan/blob/master/packages/heimdall/README.md)
 
 This package allows you to use your existing TSLint configuration.
 On the other hand you cannot use any of the builtin rules of Wotan or all those other useful features like processors, overrides, aliases, etc.

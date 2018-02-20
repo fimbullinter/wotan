@@ -12,6 +12,32 @@ Pluggable TypeScript and JavaScript linter
 
 Make sure to also read the [full documentation of all available modules](https://github.com/fimbullinter/wotan#readme).
 
+## Quick Start
+
+Install Wotan as a local dependency:
+
+```sh
+npm install --save-dev @fimbul/wotan
+# or
+yarn add -D @fimbult/wotan
+```
+
+Add a `.wotanrc.yaml` file to the root of your project with the following content:
+
+```yaml
+extends: wotan:recommended
+```
+
+That enables all recommended builtin rules. See the below for a list of [available rules](#available-rules) and [how the configuration works](#configuration).
+
+Now you can run the linter with one of the following commands depending on your use case:
+
+```sh
+wotan -p <path/to/tsconfig.json> # lint the whole project
+wotan "src/**/*.ts" -e "**/*.d.ts" # lint all typescript files excluding declaration files
+wotan --fix # lint the whole project and fix all fixable errors
+```
+
 ## Available Rules
 
 Rule | Description | Difference to TSLint rule / Why you should use it
@@ -104,6 +130,13 @@ Configurable rules get their options through an object. The content of the `"opt
 
 `severity` and `options` are both optional. That allows you to extend a configuration and only change the severity of a rule without altering the options. Or you can change the rule's options without changing the severity inherited by the base config.
 
+### Display Configuration
+
+If the linter behaves somehow unexpected, it's probably because you configured it that way.
+You're lucky because there's a builtin command to diagnose this, so you don't need to know how the configuration file lookup and the handling of overrides, excludes and aliases works in detail.
+
+Just use `wotan show <filename>` to display the configuration file and the exact rule config used to lint this file. If there is no file found or the file is excluded, you will see that too.
+
 ## Enable or disable rules with comments
 
 Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`.
@@ -138,6 +171,11 @@ wotan -p . # lint the whole project configured by ./tsconfig.json, with type inf
 wotan -p . 'src/**' # lint all files in src directory that are included in the project with type information
 wotan -m @fimbul/heimdall # enables TSLint rules and formatters to be used. for more information, see @fimbul/heimdall
 ```
+
+## Diagnosing Misbehavior
+
+Catching bugs by just looking at an exception is hard. That's why Wotan produces debug output for certain events. You only need to enable it via environment variable `DEBUG=wotan:*` and run the previous command again.
+See the [detailed documentation](https://github.com/visionmedia/debug#wildcards) on how to use the wildcards.
 
 ## License
 

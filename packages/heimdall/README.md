@@ -63,10 +63,10 @@ rules:
 Why should you use Wotan to execute TSLint rules?
 
 * Allows you to reuse existing rules and rules packages without any modification.
-* Enables the use of processors, for example to use files like Vue Single File Components (see `@fimbul/ve`), that are currently not supported by TSLint.
+* Enables the use of processors, to lint for example Vue Single File Components (see [`@fimbul/ve`](https://github.com/fimbullinter/wotan/blob/master/packages/ve/README.md)), that are currently not supported by TSLint.
 * Configuration goodness provided by Wotan:
   * Overrides to change the config by matching glob patterns.
-  * You can use a rule with the same name from different packages. Because you need to specify a prefix for every package, rules won't get overidden by other packages or TSLint core rules.
+  * You can use a rule with the same name from different packages. Because you need to specify a prefix for every package, rules won't get overidden by other packages.
   * Aliases
   * JSON5 support
 * Blazingly fast autofixing, especially when linting the whole project with the `-p` flag.
