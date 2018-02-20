@@ -36,7 +36,7 @@ export class Rule extends AbstractRule {
     private fail(node: ts.HasExpressionInitializer, makeOptional?: boolean) {
         const fix = [Replacement.delete(getChildOfKind(node, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, node.end)];
         let message = "Unnecessary initialization with 'undefined'.";
-        if (makeOptional !== undefined) {
+        if (makeOptional) {
             fix.push(Replacement.append(node.name.end, '?'));
             const removeUndefined = this.removeUndefinedFromType((<ts.ParameterDeclaration>node).type);
             if (removeUndefined !== undefined)

@@ -24,10 +24,10 @@
 }
 
 function one(a: string | undefined = undefined, b: string, c: any = undefined, d?: number) {}
-                                     ~~~~~~~~~                                                [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+                                     ~~~~~~~~~                                                [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
                                                                     ~~~~~~~~~                 [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
-(function two(a: undefined | string = undefined, ...rest: string[]) {});
-                                      ~~~~~~~~~                          [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
+(function two(a: undefined | string = undefined, b = 1, ...rest: string[]) {});
+                                      ~~~~~~~~~                                 [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 
 type undef = undefined;
 function three(a: boolean | undef = undefined) {}

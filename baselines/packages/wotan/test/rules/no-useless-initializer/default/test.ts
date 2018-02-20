@@ -21,8 +21,8 @@
     const {a = null, b = "undefined"} = {};
 }
 
-function one(a?: string, b: string, c?: any, d?: number) {}
-(function two(a?: string, ...rest: string[]) {});
+function one(a: string | undefined, b: string, c?: any, d?: number) {}
+(function two(a?: string, b = 1, ...rest: string[]) {});
 
 type undef = undefined;
 function three(a?: boolean | undef) {}

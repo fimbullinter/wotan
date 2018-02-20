@@ -22,7 +22,7 @@
 }
 
 function one(a: string | undefined = undefined, b: string, c: any = undefined, d?: number) {}
-(function two(a: undefined | string = undefined, ...rest: string[]) {});
+(function two(a: undefined | string = undefined, b = 1, ...rest: string[]) {});
 
 type undef = undefined;
 function three(a: boolean | undef = undefined) {}
