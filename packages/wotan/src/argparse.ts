@@ -137,6 +137,7 @@ function parseShowCommand(args: string[]): ShowCommand {
     const files = [];
     const modules = [];
     let format: Format | undefined;
+    let config: string | undefined;
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
@@ -144,6 +145,10 @@ function parseShowCommand(args: string[]): ShowCommand {
             case '-f':
             case '--format':
                 format = expectFormatArgument(args, ++i, arg);
+                break;
+            case '-c':
+            case '--config':
+                config = expectStringArgument(args, ++i, arg);
                 break;
             case '-m':
             case '--module':
@@ -165,6 +170,7 @@ function parseShowCommand(args: string[]): ShowCommand {
             return {
                 format,
                 modules,
+                config,
                 command: CommandName.Show,
                 file: files[0],
             };

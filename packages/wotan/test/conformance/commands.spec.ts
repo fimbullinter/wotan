@@ -47,8 +47,20 @@ test('ShowCommand', async (t) => {
             modules: [],
             file: '../foo.ts',
             format: undefined,
+            config: undefined,
         }),
         "Could not find configuration for '../foo.ts'.",
+    );
+
+    t.throws(
+        verify({
+            command: CommandName.Show,
+            modules: [],
+            file: '../foo.ts',
+            format: undefined,
+            config: 'non-existent.conf',
+        }),
+        `Cannot find module 'non-existent.conf' from '${cwd}'`,
     );
 
     await verify({
@@ -56,6 +68,7 @@ test('ShowCommand', async (t) => {
         modules: [],
         file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: undefined,
+        config: undefined,
     });
 
     await verify({
@@ -63,6 +76,7 @@ test('ShowCommand', async (t) => {
         modules: [],
         file: 'packages/wotan/test/fixtures/configuration/foo.js',
         format: undefined,
+        config: undefined,
     });
 
     await verify({
@@ -70,6 +84,7 @@ test('ShowCommand', async (t) => {
         modules: [],
         file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json,
+        config: undefined,
     });
 
     await verify({
@@ -77,6 +92,15 @@ test('ShowCommand', async (t) => {
         modules: [],
         file: 'packages/wotan/test/fixtures/configuration/foo.ts',
         format: Format.Json5,
+        config: undefined,
+    });
+
+    await verify({
+        command: CommandName.Show,
+        modules: [],
+        file: 'packages/wotan/test/fixtures/configuration/other-config.ts',
+        format: undefined,
+        config: 'packages/wotan/test/fixtures/configuration/base.yaml',
     });
 
     async function verify(command: ShowCommand) {

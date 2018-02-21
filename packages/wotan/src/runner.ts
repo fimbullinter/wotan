@@ -33,7 +33,7 @@ export class Runner {
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
-        const config = options.config !== undefined ? this.resolveConfig(options.config) : undefined;
+        const config = options.config !== undefined ? this.configManager.loadLocalOrResolved(options.config) : undefined;
         if (options.project === undefined && options.files.length !== 0)
             return this.lintFiles(options, config);
 
@@ -160,14 +160,6 @@ export class Runner {
             }
             yield [file, summary];
         }
-    }
-
-    private resolveConfig(pathOrName: string): Configuration {
-        const absolute = path.resolve(this.directories.getCurrentDirectory(), pathOrName);
-        const resolved = this.fs.isFile(absolute)
-            ? absolute
-            : this.configManager.resolve(pathOrName, this.directories.getCurrentDirectory());
-        return this.configManager.load(resolved);
     }
 
     private getFilesAndProgram(
