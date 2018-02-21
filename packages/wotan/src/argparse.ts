@@ -1,28 +1,72 @@
 import { Command, CommandName, LintCommand, TestCommand, ShowCommand, ValidateCommand } from './commands';
 import { ConfigurationError } from './error';
-import { Format, GlobalSettings } from './types';
+import { Format, GlobalOptions } from './types';
+import { LintOptions } from './runner';
 
-export function parseArguments(args: string[], defaults: GlobalSettings): Command {
+export function parseArguments(args: string[], globalOptions?: GlobalOptions): Command {
     args = args.map(trimSingleQuotes);
-
     const command = <CommandName>args[0];
     switch (command) {
         case CommandName.Lint:
-            return parseLintCommand(args.slice(1));
+            return parseLintCommand(args.slice(1), parseGlobalOptions(globalOptions));
         case CommandName.Test:
             return parseTestCommand(args.slice(1));
         case CommandName.Show:
-            return parseShowCommand(args.slice(1));
+            return parseShowCommand(args.slice(1), parseGlobalOptions(globalOptions));
         case CommandName.Validate:
             return parseValidateCommand(args.slice(1));
         default:
-            return parseLintCommand(<AssertNever<typeof command>>args); // wotan-disable-line no-useless-assertion
+            // wotan-disable-next-line no-useless-assertion
+            return parseLintCommand(<AssertNever<typeof command>>args, parseGlobalOptions(globalOptions));
     }
+}
+
+export interface ParsedGlobalOptions extends Partial<LintOptions> {
+    modules?: string[];
+    formatter?: string;
+}
+
+export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
+    const result: ParsedGlobalOptions = {};
+    if (options === undefined)
+        return result;
+    if (options.fix !== undefined) {
+        if (typeof options.fix !== 'number' && typeof options.fix !== 'boolean')
+            throw new ConfigurationError("Expected a value of type 'boolean | number' for option 'fix'.");
+        result.fix = options.fix;
+    }
+    if (options.project !== undefined)
+        result.project = expectStringOption(options.project, 'project');
+    if (options.formatter !== undefined)
+        result.formatter = expectStringOption(options.formatter, 'formatter');
+    if (options.modules !== undefined)
+        result.modules = expectStringOrStringArray(options.modules, 'modules');
+    if (options.files !== undefined)
+        result.files = expectStringOrStringArray(options.files, 'files');
+    if (options.exclude !== undefined)
+        result.exclude = expectStringOrStringArray(options.exclude, 'exclude');
+    if (options.extensions !== undefined)
+        result.extensions = expectStringOrStringArray(options.extensions, 'extensions');
+
+    return result;
+}
+
+function expectStringOrStringArray(value: {} | null, option: string): string[] {
+    if (Array.isArray(value) && value.every((v) => typeof v === 'string'))
+        return value;
+    if (typeof value === 'string')
+        return [value];
+    throw new ConfigurationError(`Expected a value of type 'string | string[]' for option '${option}'`);
+}
+function expectStringOption(value: {} | null, option: string): string {
+    if (typeof value === 'string')
+        return value;
+    throw new ConfigurationError(`Expected a value of type 'string' for option '${option}'`);
 }
 
 type AssertNever<T extends never> = T;
 
-function parseLintCommand(args: string[]): LintCommand {
+function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCommand {
     const result: LintCommand = {
         command: CommandName.Lint,
         modules: [],
@@ -30,10 +74,16 @@ function parseLintCommand(args: string[]): LintCommand {
         files: [],
         exclude: [],
         project: undefined,
-        format: undefined,
+        formatter: undefined,
         fix: false,
         extensions: undefined,
+        ...defaults,
     };
+
+    const exclude: string[] = [];
+    const extensions: string[] = [];
+    const modules: string[] = [];
+    const files: string[] = [];
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
@@ -44,11 +94,12 @@ function parseLintCommand(args: string[]): LintCommand {
                 break;
             case '-e':
             case '--exclude':
-                result.exclude.push(expectStringArgument(args, ++i, arg));
+                result.exclude = exclude;
+                exclude.push(expectStringArgument(args, ++i, arg));
                 break;
             case '-f':
-            case '--format':
-                result.format = expectStringArgument(args, ++i, arg);
+            case '--formatter':
+                result.formatter = expectStringArgument(args, ++i, arg);
                 break;
             case '-c':
             case '--config':
@@ -58,25 +109,24 @@ function parseLintCommand(args: string[]): LintCommand {
                 ({index: i, argument: result.fix} = parseOptionalBooleanOrNumber(args, i));
                 break;
             case '--ext': {
-                const extensions = expectStringArgument(args, ++i, arg).split(/,/g).map(sanitizeExtensionArgument);
-                if (result.extensions === undefined) {
-                    result.extensions = extensions;
-                } else {
-                    result.extensions.push(...extensions);
-                }
+                result.extensions = extensions;
+                extensions.push(...expectStringArgument(args, ++i, arg).split(/,/g).map(sanitizeExtensionArgument));
                 break;
             }
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
+                result.modules = modules;
+                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g));
                 break;
             case '--':
-                result.files.push(...args.slice(i + 1));
+                result.files = files;
+                files.push(...args.slice(i + 1));
                 break outer;
             default:
                 if (arg.startsWith('-'))
                     throw new ConfigurationError(`Unknown option '${arg}'.`);
-                result.files.push(arg);
+                result.files = files;
+                files.push(arg);
         }
     }
 
@@ -133,7 +183,7 @@ function parseTestCommand(args: string[]): TestCommand {
     return result;
 }
 
-function parseShowCommand(args: string[]): ShowCommand {
+function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCommand {
     const files = [];
     const modules = [];
     let format: Format | undefined;
@@ -164,7 +214,7 @@ function parseShowCommand(args: string[]): ShowCommand {
         case 1:
             return {
                 format,
-                modules,
+                modules: modules.length === 0 && defaults.modules ? defaults.modules : modules,
                 command: CommandName.Show,
                 file: files[0],
             };

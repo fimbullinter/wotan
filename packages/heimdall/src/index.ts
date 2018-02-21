@@ -37,7 +37,9 @@ export class TslintRuleLoaderHost extends NodeRuleLoader {
     }
 }
 
-export const module = new ContainerModule((bind) => {
-    bind(FormatterLoaderHost).to(TslintFormatterLoaderHost);
-    bind(RuleLoaderHost).to(TslintRuleLoaderHost);
-});
+export function createModule() {
+    return new ContainerModule((bind) => {
+        bind(FormatterLoaderHost).to(TslintFormatterLoaderHost);
+        bind(RuleLoaderHost).to(TslintRuleLoaderHost);
+    });
+}

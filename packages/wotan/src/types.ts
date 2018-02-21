@@ -2,9 +2,11 @@ import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
-export interface GlobalSettings {
+export interface GlobalOptions {
     readonly [key: string]: {} | null | undefined;
 }
+
+export type GlobalSettings = GlobalOptions;
 
 export type LintResult = Iterable<[string, FileSummary]>;
 

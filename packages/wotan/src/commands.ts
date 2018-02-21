@@ -30,7 +30,7 @@ export interface BaseCommand<C extends CommandName> {
 }
 
 export interface LintCommand extends LintOptions, BaseCommand<CommandName.Lint> {
-    format: string | undefined;
+    formatter: string | undefined;
 }
 
 export interface TestCommand extends BaseCommand<CommandName.Test> {
@@ -51,12 +51,12 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
 
-export async function runCommand(command: Command, diContainer?: Container, globalSettings?: GlobalSettings): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container, globalSettings: GlobalSettings = {}): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
     for (const moduleName of command.modules)
-        container.load(loadModule(moduleName));
+        container.load(loadModule(moduleName, globalSettings));
 
     switch (command.command) {
         case CommandName.Lint:
@@ -81,7 +81,7 @@ export async function runCommand(command: Command, diContainer?: Container, glob
     return commandRunner.run(command);
 }
 
-function loadModule(moduleName: string) {
+function loadModule(moduleName: string, settings: GlobalSettings) {
     try {
         moduleName = resolve.sync(moduleName, {
             basedir: process.cwd(),
@@ -91,10 +91,13 @@ function loadModule(moduleName: string) {
     } catch (e) {
         throw new ConfigurationError(e.message);
     }
-    const m = <{module?: {}}>require(moduleName);
-    if (!m || !(m.module instanceof ContainerModule))
-        throw new ConfigurationError(`Module '${moduleName}' does not a 'module' binding that extends 'ContainerModule'.`);
-    return m.module;
+    const m = <{createModule?(settings: GlobalSettings): ContainerModule}>require(moduleName);
+    if (!m || typeof m.createModule !== 'function')
+        throw new ConfigurationError(`Module '${moduleName}' does not export a function 'createModule'.`);
+    const result = m.createModule(settings);
+    if (result instanceof ContainerModule)
+        return result;
+    throw new ConfigurationError(`Return value of 'createModule' in '${moduleName}' is not a 'ContainerModule'.`);
 }
 
 @injectable()
@@ -113,7 +116,7 @@ class LintCommandRunner extends AbstractCommandRunner {
         super();
     }
     public run(options: LintCommand) {
-        const formatter = new (this.formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
+        const formatter = new (this.formatterLoader.loadFormatter(options.formatter === undefined ? 'stylish' : options.formatter))();
         const result = this.runner.lintCollection(options);
         let success = true;
         if (formatter.prefix !== undefined)

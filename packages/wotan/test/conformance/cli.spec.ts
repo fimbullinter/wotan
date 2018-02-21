@@ -43,7 +43,7 @@ test('exits with code 1 on exception and prints stack trace', async (t) => {
 });
 
 test('exits with code 2 on lint error', async (t) => {
-    const result = await execCli(['lint', 'test/rules/trailing-newline/whitespace.ts', '--format', 'json']);
+    const result = await execCli(['lint', 'test/rules/trailing-newline/whitespace.ts', '-f', 'json']);
     t.is(result.code, 2);
     t.is(result.stderr, '');
     t.is(result.stdout, /* tslint:disable-next-line */ `[
