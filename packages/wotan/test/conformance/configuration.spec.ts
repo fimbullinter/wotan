@@ -18,15 +18,17 @@ import { NodeResolver } from '../../src/services/default/resolver';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { ConfigurationManager } from '../../src/services/configuration-manager';
-import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import { DefaultConfigurationProvider } from '../../src/services/default/configuration-provider';
 import { ConfigurationError } from '../../src/error';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
+import { CORE_DI_MODULE } from '../../src/di/core.module';
+import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
 
 // tslint:disable:no-null-keyword
 
 test('ConfigurationManager', (t) => {
+    const container = new Container();
     const configProvider: ConfigurationProvider = {
         find() {
             throw undefined;
@@ -38,8 +40,10 @@ test('ConfigurationManager', (t) => {
             throw undefined;
         },
     };
+    container.bind(ConfigurationProvider).toConstantValue(configProvider);
+    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
 
-    const cm = new ConfigurationManager(new NodeDirectoryService(), configProvider, new DefaultCacheFactory());
+    const cm = container.get(ConfigurationManager);
     t.throws(
         () => cm.find('foo.ts'),
         (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
