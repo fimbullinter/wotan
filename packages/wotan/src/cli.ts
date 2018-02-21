@@ -6,7 +6,7 @@ async function run() {
     try {
         const config = await loadConfig();
         const args = (await import('./argparse')).parseArguments(process.argv.slice(2), config);
-        if (!await (await import('./commands')).runCommand(args, undefined, config.settings || {}))
+        if (!await (await import('./commands')).runCommand(args, undefined, config))
             process.exitCode = 2;
     } catch (e) {
         console.error(e instanceof ConfigurationError ? e.message : e);

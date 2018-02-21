@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { Format, MessageHandler, Failure, DirectoryService, GlobalSettings } from './types';
+import { Format, MessageHandler, Failure, DirectoryService, GlobalOptions } from './types';
 import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
@@ -52,7 +52,7 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
 
-export async function runCommand(command: Command, diContainer?: Container, globalSettings: GlobalSettings = {}): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container, globalSettings: GlobalOptions = {}): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
@@ -82,7 +82,7 @@ export async function runCommand(command: Command, diContainer?: Container, glob
     return commandRunner.run(command);
 }
 
-function loadModule(moduleName: string, settings: GlobalSettings) {
+function loadModule(moduleName: string, options: GlobalOptions) {
     try {
         moduleName = resolve.sync(moduleName, {
             basedir: process.cwd(),
@@ -92,10 +92,10 @@ function loadModule(moduleName: string, settings: GlobalSettings) {
     } catch (e) {
         throw new ConfigurationError(e.message);
     }
-    const m = <{createModule?(settings: GlobalSettings): ContainerModule}>require(moduleName);
+    const m = <{createModule?(options: GlobalOptions): ContainerModule}>require(moduleName);
     if (!m || typeof m.createModule !== 'function')
         throw new ConfigurationError(`Module '${moduleName}' does not export a function 'createModule'.`);
-    const result = m.createModule(settings);
+    const result = m.createModule(options);
     if (result instanceof ContainerModule)
         return result;
     throw new ConfigurationError(`Return value of 'createModule' in '${moduleName}' is not a 'ContainerModule'.`);

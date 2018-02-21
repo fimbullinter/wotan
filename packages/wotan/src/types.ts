@@ -6,8 +6,6 @@ export interface GlobalOptions {
     readonly [key: string]: {} | null | undefined;
 }
 
-export type GlobalSettings = GlobalOptions;
-
 export type LintResult = Iterable<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
