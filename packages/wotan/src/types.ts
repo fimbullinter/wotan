@@ -349,13 +349,12 @@ export interface FormatterLoaderHost {
 }
 export abstract class FormatterLoaderHost {}
 
-export interface CacheManager {
-    /** Returns the existing cache if one exists for the given id. */
-    get<K, V>(id: CacheIdentifier<K, V>): Cache<K, V> | undefined;
-    /** Returns the existing cache or creates a new one for the given id. */
-    create<K, V>(id: CacheIdentifier<K, V>): Cache<K, V>;
+export interface CacheFactory {
+    /** Creates a new cache instance. */
+    create<K extends object, V = any>(weak: true): Cache<K, V>;
+    create<K = any, V = any>(weak?: false): Cache<K, V>;
 }
-export abstract class CacheManager {}
+export abstract class CacheFactory {}
 
 export interface Cache<K, V> {
     get(key: K): V | undefined;
@@ -363,16 +362,6 @@ export interface Cache<K, V> {
     delete(key: K): void;
     has(key: K): boolean;
     clear(): void;
-}
-
-export class CacheIdentifier<K, V> {
-    public readonly weak: boolean = false;
-    protected key!: K;
-    protected value!: V;
-    constructor(public description: string) {}
-}
-export class WeakCacheIdentifier<K extends object, V> extends CacheIdentifier<K, V> {
-    public readonly weak = true;
 }
 
 export interface Resolver {

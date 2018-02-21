@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { MessageHandler, FileSystem, Format, DirectoryService, CacheManager } from '../../src/types';
+import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory } from '../../src/types';
 import { runCommand, CommandName, ShowCommand } from '../../src/commands';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import * as path from 'path';
 import { unixifyPath } from '../../src/utils';
 import * as escapeRegex from 'escape-string-regexp';
-import { DefaultCacheManager } from '../../src/services/default/cache-manager';
+import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
 
 test('ShowCommand', async (t) => {
     const container = new Container();
@@ -16,7 +16,7 @@ test('ShowCommand', async (t) => {
         warn() { throw new Error('not implemented'); },
         error() { throw new Error('not implemented'); },
     };
-    container.bind(CacheManager).to(DefaultCacheManager).inSingletonScope();
+    container.bind(CacheFactory).to(DefaultCacheFactory).inSingletonScope();
     container.bind(MessageHandler).toConstantValue(logger);
     const cwd = path.join(path.parse(process.cwd()).root, '.chroot');
     container.bind(DirectoryService).toConstantValue({

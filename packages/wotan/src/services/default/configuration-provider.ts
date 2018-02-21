@@ -4,8 +4,7 @@ import {
     Resolver,
     LoadConfigurationContext,
     Configuration,
-    CacheManager,
-    CacheIdentifier,
+    CacheFactory,
     Cache,
 } from '../../types';
 import { CachedFileSystem } from '../cached-file-system';
@@ -63,13 +62,11 @@ type WriteableAliasesMap = Map<string, Configuration.Alias>;
 export const CONFIG_EXTENSIONS = ['.yaml', '.yml', '.json5', '.json', '.js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext);
 
-const cacheId = new CacheIdentifier<string, string | undefined>('configPath');
-
 @injectable()
 export class DefaultConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
-    constructor(private fs: CachedFileSystem, private resolver: Resolver, cache: CacheManager) {
-        this.cache = cache.create(cacheId);
+    constructor(private fs: CachedFileSystem, private resolver: Resolver, cache: CacheFactory) {
+        this.cache = cache.create();
     }
 
     public find(fileToLint: string): string | undefined {

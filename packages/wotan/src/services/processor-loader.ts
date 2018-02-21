@@ -1,16 +1,14 @@
-import { ProcessorConstructor, Resolver, CacheManager, CacheIdentifier, Cache } from '../types';
+import { ProcessorConstructor, Resolver, CacheFactory, Cache } from '../types';
 import { injectable } from 'inversify';
 import { resolveCachedResult } from '../utils';
 import bind from 'bind-decorator';
 import { ConfigurationError } from '../error';
 
-const cacheId = new CacheIdentifier<string, ProcessorConstructor>('processor');
-
 @injectable()
 export class ProcessorLoader {
     private cache: Cache<string, ProcessorConstructor>;
-    constructor(private resolver: Resolver, cache: CacheManager) {
-        this.cache = cache.create(cacheId);
+    constructor(private resolver: Resolver, cache: CacheFactory) {
+        this.cache = cache.create();
     }
 
     public loadProcessor(path: string): ProcessorConstructor {
