@@ -63,7 +63,7 @@
       "severity": "error",
       "from": {
         "path": "^packages/[^/]+/(src|bin)/",
-        "pathNot": "^packages/wotan/src/services/default/"
+        "pathNot": "^packages/wotan/src/(cli.[jt]s$|services/default/)"
       },
       "to": {
         "dependencyTypes": [
