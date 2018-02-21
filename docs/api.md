@@ -83,3 +83,23 @@ apiUser.lint(program);
 
 Note that in the above example the cache is never cleared. There are several reasons to clear the cache. For example you suspect there might be a change to the configuration file.
 In that case you just need to create a new instance of `ApiUser`. That creates new instances of each service with a clean cache.
+
+## Required `compilerOptions`
+
+To compile the above example or anything else that uses the API you need *at least* the following compilerOptions:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "target": "es2015"
+  }
+}
+```
+
+`experimentalDecorators` and `emitDecoratorMetadata` is required for the `@injectable()` decorator to work properly.
+`target` should be at least ES2015 (aka ES6) to have support for native classes. Otherwise you'll have a problem if you want to extend one of the classes exposed as public API.
+If you want, you can set `"lib": ["es2016"]` to make the types of `Array.prototype.includes` available.
+
+Because Wotan only supports node.js >= 6 you can be sure that all ES2015 and ES2016 features are available.
