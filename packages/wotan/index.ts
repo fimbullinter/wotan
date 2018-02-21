@@ -3,7 +3,7 @@ export * from './src/types';
 export * from './src/error';
 export * from './src/di/core.module';
 export * from './src/di/default.module';
-export * from './src/services/default/cache-manager';
+export * from './src/services/default/cache-factory';
 export * from './src/services/default/deprecation-handler';
 export * from './src/services/default/directory-service';
 export * from './src/services/default/file-system';

@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FileSystem, CacheManager, CacheIdentifier, Cache } from '../types';
+import { FileSystem, CacheFactory, Cache } from '../types';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
 import * as path from 'path';
@@ -11,16 +11,13 @@ export const enum FileKind {
     Other,
 }
 
-const fileKind = new CacheIdentifier<string, FileKind>('fileKind');
-const realpathCache = new CacheIdentifier<string, string>('realpath');
-
 @injectable()
 export class CachedFileSystem {
     private fileKindCache: Cache<string, FileKind>;
     private realpathCache: Cache<string, string>;
-    constructor(private fs: FileSystem, cache: CacheManager) {
-        this.fileKindCache = cache.create(fileKind);
-        this.realpathCache = cache.create(realpathCache);
+    constructor(private fs: FileSystem, cache: CacheFactory) {
+        this.fileKindCache = cache.create();
+        this.realpathCache = cache.create();
     }
 
     public isFile(file: string): boolean {

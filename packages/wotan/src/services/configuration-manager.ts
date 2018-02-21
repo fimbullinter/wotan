@@ -1,8 +1,7 @@
 import { injectable } from 'inversify';
 import {
     Configuration,
-    CacheManager,
-    CacheIdentifier,
+    CacheFactory,
     Cache,
     ReducedConfiguration,
     GlobalSettings,
@@ -16,17 +15,15 @@ import { resolveCachedResult } from '../utils';
 import { Minimatch } from 'minimatch';
 import * as isNegated from 'is-negated-glob';
 
-const configCache = new CacheIdentifier<string, Configuration>('configuration');
-
 @injectable()
 export class ConfigurationManager {
     private configCache: Cache<string, Configuration>;
     constructor(
         private directories: DirectoryService,
         private configProvider: ConfigurationProvider,
-        cache: CacheManager,
+        cache: CacheFactory,
     ) {
-        this.configCache = cache.create(configCache);
+        this.configCache = cache.create();
     }
 
     public findPath(file: string): string | undefined {

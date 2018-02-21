@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { test } from 'ava';
 import { Container, injectable } from 'inversify';
 import {
-    CacheManager,
+    CacheFactory,
     RuleLoaderHost,
     MessageHandler,
     TypedRule,
@@ -14,7 +14,7 @@ import {
     Replacement,
     FailureFilterFactory,
 } from '../../src/types';
-import { DefaultCacheManager } from '../../src/services/default/cache-manager';
+import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
 import { RuleLoader } from '../../src/services/rule-loader';
 import { Linter } from '../../src/linter';
 import * as ts from 'typescript';
@@ -42,7 +42,7 @@ class MyCustomDeprecatedRule extends AbstractRule {
 test('Linter', (t) => {
     const warnings: string[] = [];
     const container = new Container();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(RuleLoader).toSelf();
     container.bind(DeprecationHandler).to(DefaultDeprecationHandler);
     container.bind(FailureFilterFactory).to(LineSwitchFilterFactory);

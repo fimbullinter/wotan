@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { ConfigurationProvider, Resolver, Configuration, CacheManager, Cache, CacheIdentifier } from '@fimbul/wotan';
+import { ConfigurationProvider, Resolver, Configuration, CacheFactory, Cache } from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as path from 'path';
 
@@ -12,14 +12,12 @@ import * as path from 'path';
  */
 const OFFSET_TO_NODE_MODULES = 3;
 
-const cacheId = new CacheIdentifier<string, string | undefined>('configPath');
-
 @injectable()
 export class TslintConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
     private tslintConfigDir: string | undefined;
-    constructor(private resolver: Resolver, cache: CacheManager) {
-        this.cache = cache.create(cacheId);
+    constructor(private resolver: Resolver, cache: CacheFactory) {
+        this.cache = cache.create();
     }
 
     public find(fileName: string) {

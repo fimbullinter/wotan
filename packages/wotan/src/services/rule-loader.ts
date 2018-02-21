@@ -1,17 +1,16 @@
 import { injectable } from 'inversify';
-import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheManager, CacheIdentifier, Cache } from '../types';
+import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheFactory, Cache } from '../types';
 import * as debug from 'debug';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
 
-const cacheId = new CacheIdentifier<string, RuleConstructor | undefined>('rules');
 const log = debug('wotan:ruleLoader');
 
 @injectable()
 export class RuleLoader {
     private cache: Cache<string, RuleConstructor | undefined>;
-    constructor(private host: RuleLoaderHost, private logger: MessageHandler, cache: CacheManager) {
-        this.cache = cache.create(cacheId);
+    constructor(private host: RuleLoaderHost, private logger: MessageHandler, cache: CacheFactory) {
+        this.cache = cache.create();
     }
 
     public loadRule(name: string, directories: ReadonlyArray<string> | undefined): RuleConstructor | undefined {

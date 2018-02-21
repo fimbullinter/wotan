@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import test from 'ava';
 import {
-    CacheManager,
+    CacheFactory,
     Resolver,
     FileSystem,
     Stats,
@@ -13,7 +13,7 @@ import {
 } from '../../src/types';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
-import { DefaultCacheManager } from '../../src/services/default/cache-manager';
+import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
 import { NodeResolver } from '../../src/services/default/resolver';
 import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
@@ -39,7 +39,7 @@ test('ConfigurationManager', (t) => {
         },
     };
 
-    const cm = new ConfigurationManager(new NodeDirectoryService(), configProvider, new DefaultCacheManager());
+    const cm = new ConfigurationManager(new NodeDirectoryService(), configProvider, new DefaultCacheFactory());
     t.throws(
         () => cm.find('foo.ts'),
         (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
@@ -237,7 +237,7 @@ test('ConfigurationManager', (t) => {
 test('DefaultConfigurationProvider.find', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
 
     const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
@@ -333,7 +333,7 @@ test('DefaultConfigurationProvider.find', (t) => {
 test('DefaultConfigurationProvider.resolve', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
@@ -349,7 +349,7 @@ test('DefaultConfigurationProvider.resolve', (t) => {
 test('DefaultConfigurationProvider.read', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
 
     const empty = {};
     const resolver: Resolver = {
@@ -409,7 +409,7 @@ test('DefaultConfigurationProvider.read', (t) => {
 test('ConfigurationProvider.parse', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);

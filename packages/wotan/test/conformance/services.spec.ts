@@ -1,11 +1,9 @@
 import 'reflect-metadata';
 import { test } from 'ava';
-import { DefaultCacheManager } from '../../src/services/default/cache-manager';
+import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
 import {
-    CacheIdentifier,
-    WeakCacheIdentifier,
     FileSystem,
-    CacheManager,
+    CacheFactory,
     Resolver,
     MessageHandler,
     DeprecationTarget,
@@ -32,19 +30,15 @@ import { DefaultDeprecationHandler } from '../../src/services/default/deprecatio
 import { FormatterLoader } from '../../src/services/formatter-loader';
 import { ProcessorLoader } from '../../src/services/processor-loader';
 
-test('CacheManager', (t) => {
-    const cm = new DefaultCacheManager();
-    testWithIdentifier(new CacheIdentifier('test'));
-    testWithIdentifier(new WeakCacheIdentifier('test'));
+test('CacheFactory', (t) => {
+    const cm = new DefaultCacheFactory();
+    testWithWeakParam(false);
+    testWithWeakParam(true);
 
-    function testWithIdentifier(id: CacheIdentifier<object, number>) {
-        let cache = cm.get(id);
-        t.is(cache, undefined);
-        cache = cm.create(id);
+    function testWithWeakParam(weak: boolean) {
+        const cache = cm.create<object>(<true>weak);
         t.not(cache, undefined);
-        t.is(cm.get(id), cache);
-        t.is(cm.create(id), cache);
-        t.is(cm.get(id), cache);
+        t.not(cm.create<object>(<true>weak), cache);
         const key = {};
         t.is(cache.get(key), undefined);
         t.is(cache.has(key), false);
@@ -166,7 +160,7 @@ test('Resolver', (t) => {
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     const resolver = container.resolve(NodeResolver);
     t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
@@ -185,7 +179,7 @@ test('FormatterLoaderHost', (t) => {
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
     const loader = container.resolve(NodeFormatterLoader);
     t.is(loader.loadCoreFormatter('json'), Formatter);
@@ -386,7 +380,7 @@ test('ProcessorLoader', (t) => {
     };
     const container = new Container();
     container.bind(Resolver).toConstantValue(resolver);
-    container.bind(CacheManager).to(DefaultCacheManager);
+    container.bind(CacheFactory).to(DefaultCacheFactory);
     const loader = container.resolve(ProcessorLoader);
     t.throws(() => loader.loadProcessor('foo'), TypeError);
     class Processor {}
