@@ -9,7 +9,7 @@ There are several core services that are provided by Wotan through the Container
 
 * `CachedFileSystem` is a wrapper for the low level `FileSystem` service, which caches the file system layout. File contents are not cached.
 * `ConfigurationManager` is the place for everything related to configuration handling. Internally it uses `ConfigurationProvider` to find, load and parse configuration files. Parsed configuration files are cached.
-* `FormatterLoader` loads and caches core and custom formatters via `FormatterLoaderHost`.
+* `FormatterLoader` loads core and custom formatters via `FormatterLoaderHost`.
 * `Linter` executes a given set of rules on a SourceFile. It automatically loads enabled rules using `RuleLoader` and filters out disabled failures using `FailureFilterFactory`. `Linter` can also automatically fix failures and return the fixed source code. It does not access the file system.
 * `ProcessorLoader` loads and caches processors using `Resolver`.
 * `RuleLoader` loads and caches core and custom rules via `RuleLoaderHost`.
@@ -18,7 +18,7 @@ There are several core services that are provided by Wotan through the Container
 These core services use other abstractions for the low level tasks. That enables you to change the behavior of certain services without the need to implement the whole thing.
 The default implementations (targeting the Node.js runtime environment) are provided throug the ContainerModule `DEFAULT_DI_MODULE`. The default implementation is only used if there is no binding for the identifier.
 
-* `CacheManager` (`DefaultCacheManager`) is responsible for creating cache objects that are used by other services to store their data.
+* `CacheFactory` (`DefaultCacheFactory`) is responsible for creating cache objects that are used by other services to store their data.
 * `ConfigurationProvider` (`DefaultConfigurationProvider`) is responsible to find, resolve and load configuration files.
 * `DeprecationHandler` (`DefaultDeprecationHandler`) is notified everytime a deprecated rule, formatter of processor is used. This service can choose to inform the user or just swallow the event.
 * `DirectoryService` (`NodeDirectoryService`) provides the current directory. None of the builtin services cache the current directory. Therefore you can change it dynamically if you need to.
