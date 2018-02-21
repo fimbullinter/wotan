@@ -4,7 +4,7 @@ import {
     CacheFactory,
     Cache,
     ReducedConfiguration,
-    GlobalSettings,
+    Settings,
     DirectoryService,
     ConfigurationProvider,
     EffectiveConfiguration,
@@ -60,7 +60,7 @@ export class ConfigurationManager {
         return findProcessorInConfig(config, path.resolve(this.directories.getCurrentDirectory(), fileName)) || undefined;
     }
 
-    public getSettings(config: Configuration, fileName: string): GlobalSettings {
+    public getSettings(config: Configuration, fileName: string): Settings {
         return reduceSettings(config, path.resolve(this.directories.getCurrentDirectory(), fileName), new Map());
     }
 

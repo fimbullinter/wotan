@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { Format, MessageHandler, Failure, DirectoryService } from './types';
+import { Format, MessageHandler, Failure, DirectoryService, GlobalSettings } from './types';
 import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
@@ -51,7 +51,7 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
 
-export async function runCommand(command: Command, diContainer?: Container): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container, globalSettings?: GlobalSettings): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;

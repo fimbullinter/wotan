@@ -1,8 +1,8 @@
 import { Command, CommandName, LintCommand, TestCommand, ShowCommand, ValidateCommand } from './commands';
 import { ConfigurationError } from './error';
-import { Format } from './types';
+import { Format, GlobalSettings } from './types';
 
-export function parseArguments(args: string[]): Command {
+export function parseArguments(args: string[], defaults: GlobalSettings): Command {
     args = args.map(trimSingleQuotes);
 
     const command = <CommandName>args[0];
