@@ -47,6 +47,7 @@ export interface ValidateCommand extends BaseCommand<CommandName.Validate> {
 export interface ShowCommand extends BaseCommand<CommandName.Show> {
     file: string;
     format: Format | undefined;
+    config: string | undefined;
 }
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
@@ -156,7 +157,9 @@ class ShowCommandRunner extends AbstractCommandRunner {
         super();
     }
     public run(options: ShowCommand) {
-        const config = this.configManager.find(options.file);
+        const config = options.config === undefined
+            ? this.configManager.find(options.file)
+            : this.configManager.loadLocalOrResolved(options.config);
         if (config === undefined)
             throw new ConfigurationError(`Could not find configuration for '${options.file}'.`);
         const reduced = this.configManager.reduce(config, options.file);
