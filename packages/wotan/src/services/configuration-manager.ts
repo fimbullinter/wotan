@@ -14,6 +14,7 @@ import { ConfigurationError } from '../error';
 import { resolveCachedResult } from '../utils';
 import { Minimatch } from 'minimatch';
 import * as isNegated from 'is-negated-glob';
+import { CachedFileSystem } from './cached-file-system';
 
 @injectable()
 export class ConfigurationManager {
@@ -21,6 +22,7 @@ export class ConfigurationManager {
     constructor(
         private directories: DirectoryService,
         private configProvider: ConfigurationProvider,
+        private fs: CachedFileSystem,
         cache: CacheFactory,
     ) {
         this.configCache = cache.create();
@@ -38,6 +40,12 @@ export class ConfigurationManager {
     public find(file: string): Configuration | undefined {
         const config = this.findPath(file);
         return config === undefined ? undefined : this.load(config);
+    }
+
+    /** Load the given config from a local file if it exists or from the resolved path otherwise */
+    public loadLocalOrResolved(pathOrName: string): Configuration {
+        const absolute = path.resolve(this.directories.getCurrentDirectory(), pathOrName);
+        return this.load(this.fs.isFile(absolute) ? absolute : this.resolve(pathOrName, this.directories.getCurrentDirectory()));
     }
 
     public resolve(name: string, basedir: string): string {

@@ -279,6 +279,7 @@ test('parses show command', (t) => {
             modules: ['foo', 'bar', 'baz'],
             file: 'foo',
             format: undefined,
+            config: undefined,
         },
         'parses modules',
     );
@@ -290,27 +291,30 @@ test('parses show command', (t) => {
             modules: [],
             file: 'foo',
             format: Format.Json,
+            config: undefined,
         },
     );
 
     t.deepEqual<Command>(
-        parseArguments(['show', 'foo']),
+        parseArguments(['show', 'foo', '-c', 'wotan:recommended']),
         {
             command: CommandName.Show,
             modules: [],
             file: 'foo',
             format: undefined,
+            config: 'wotan:recommended',
         },
         '--format is optional',
     );
 
     t.deepEqual<Command>(
-        parseArguments(['show', '--format', 'yaml', '--', '-f']),
+        parseArguments(['show', '--config', '.wotanrc.yaml', '--format', 'yaml', '--', '-f']),
         {
             command: CommandName.Show,
             modules: [],
             file: '-f',
             format: Format.Yaml,
+            config: '.wotanrc.yaml',
         },
         '-- ends options',
     );
@@ -318,7 +322,9 @@ test('parses show command', (t) => {
     t.throws(() => parseArguments(['show', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['show', '-f', 'foobar']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
 
-    t.throws(() => parseArguments(['show']), 'filename expected');
+    t.throws(() => parseArguments(['show', '-c']), "Option '-c' expects an argument.");
+
+    t.throws(() => parseArguments(['show', '-c', 'config.yaml']), 'filename expected');
     t.throws(() => parseArguments(['show', 'foo', 'bar']), 'more than one filename provided');
 
     t.throws(() => parseArguments(['show', '--foobar']), "Unknown option '--foobar'.");

@@ -74,7 +74,7 @@ export class Rule extends TypedRule {
             signature,
             ts.SyntaxKind.CallExpression,
             undefined,
-            ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature,
+            ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature | ts.NodeBuilderFlags.IgnoreErrors,
         );
 
         if (typeArguments === undefined)
