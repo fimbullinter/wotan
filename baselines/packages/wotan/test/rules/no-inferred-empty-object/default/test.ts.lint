@@ -212,3 +212,13 @@ function withJsDoc(p?) {}
 withJsDoc();
 
 new withJsDoc();
+
+new Promise<object>((resolve, reject) => {
+    return import('js-yaml').then((yaml) => { // avoid crashing here
+        try {
+            return resolve(yaml.safeLoad("", {strict: true}) || {});
+        } catch (e) {
+            return reject(e);
+        }
+    });
+});
