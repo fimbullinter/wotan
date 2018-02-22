@@ -4,7 +4,6 @@ import { Container, injectable } from 'inversify';
 import { CORE_DI_MODULE } from '../../src/di/core.module';
 import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
 import { Runner } from '../../src/runner';
-import { unixifyPath } from '../../src/utils';
 import * as path from 'path';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService } from '../../src/types';
@@ -53,7 +52,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
+        "'non-existent.ts' is not included in the project.",
     );
 });
 

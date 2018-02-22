@@ -5,7 +5,6 @@ import * as ts from 'typescript';
 import * as glob from 'glob';
 import { unixifyPath, hasSupportedExtension } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
-import * as resolveGlob from 'to-absolute-glob';
 import { ConfigurationError } from './error';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -178,9 +177,10 @@ export class Runner {
         }
         const program = createProgram(project, host);
         const files: string[] = [];
+        const originalNames: string [] = [];
         const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
-        const include = patterns.map((p) => new Minimatch(resolveGlob(p, {cwd})));
-        const ex = exclude.map((p) => new Minimatch(resolveGlob(p, {cwd}), {dot: true}));
+        const include = patterns.map((p) => new Minimatch(p));
+        const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
         outer: for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
@@ -199,14 +199,15 @@ export class Runner {
                         continue outer;
                 }
             }
-            const originalName = host.getFileSystemFile(fileName)!;
+            const originalName = path.relative(cwd, host.getFileSystemFile(fileName)!);
             if (include.length !== 0 && !include.some((e) => e.match(originalName)))
                 continue;
             if (ex.some((e) => e.match(originalName)))
                 continue;
             files.push(fileName);
+            originalNames.push(originalName);
         }
-        ensurePatternsMatch(include, ex, files);
+        ensurePatternsMatch(include, ex, originalNames);
         return {files, program};
     }
 
