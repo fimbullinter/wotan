@@ -41,7 +41,6 @@
     "@types/resolve": "^0.0.6",
     "@types/rimraf": "^2.0.2",
     "@types/semver": "^5.4.0",
-    "@types/to-absolute-glob": "^2.0.0",
     "escape-string-regexp": "^1.0.5",
     "rimraf": "^2.6.2"
   },
