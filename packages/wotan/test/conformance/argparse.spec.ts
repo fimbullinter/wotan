@@ -1,7 +1,81 @@
 import test from 'ava';
-import { parseArguments } from '../../src/argparse';
+import { parseArguments, parseGlobalOptions } from '../../src/argparse';
 import { CommandName, Command } from '../../src/commands';
 import { Format } from '../../src/types';
+
+test('parseGlobalOptions', (t) => {
+    t.deepEqual(
+        parseGlobalOptions(undefined),
+        {
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: undefined,
+            formatter: undefined,
+            fix: false,
+            extensions: undefined,
+        },
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({foo: 'bar'}),
+        {
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: undefined,
+            formatter: undefined,
+            fix: false,
+            extensions: [],
+        },
+        'ignores excess options',
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({modules: 'm', files: ['**/*.ts'], fix: 10, extensions: 'mjs', formatter: 'foo'}),
+        {
+            modules: ['m'],
+            config: undefined,
+            files: ['**/*.ts'],
+            exclude: [],
+            project: undefined,
+            formatter: 'foo',
+            fix: 10,
+            extensions: ['.mjs'],
+        },
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({modules: [], config: 'config.yaml', project: '.', fix: true, exclude: '**/*.d.ts'}),
+        {
+            modules: [],
+            config: 'config.yaml',
+            files: [],
+            exclude: ['**/*.d.ts'],
+            project: '.',
+            formatter: undefined,
+            fix: true,
+            extensions: [],
+        },
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({fix: 'foo', project: false, modules: [1]}),
+        {
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: undefined,
+            formatter: undefined,
+            fix: false,
+            extensions: [],
+        },
+        'invalid values are ignored',
+    );
+});
 
 test('defaults to lint command', (t) => {
     t.deepEqual<Command>(
@@ -12,7 +86,7 @@ test('defaults to lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -26,7 +100,7 @@ test('defaults to lint command', (t) => {
             config: undefined,
             files: ['foo'],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -43,7 +117,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -52,14 +126,14 @@ test('parses lint command', (t) => {
     );
 
     t.deepEqual<Command>(
-        parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--format', '--project']),
+        parseArguments(['lint', '--', '-foo', '--bar', '--fix', '--exclude', '--formatter', '--project']),
         {
             command: CommandName.Lint,
             modules: [],
             config: undefined,
-            files: ['-foo', '--bar', '--fix', '--exclude', '--format', '--project'],
+            files: ['-foo', '--bar', '--fix', '--exclude', '--formatter', '--project'],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -75,7 +149,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: true,
             extensions: undefined,
@@ -91,7 +165,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: '.',
             fix: true,
             extensions: undefined,
@@ -107,7 +181,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: '.',
             fix: false,
             extensions: undefined,
@@ -123,7 +197,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: true,
             extensions: undefined,
@@ -139,7 +213,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: '.',
             fix: 10,
             extensions: undefined,
@@ -155,7 +229,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: [],
             exclude: ['**/*.d.ts', 'node_modules/**'],
-            format: 'json',
+            formatter: 'json',
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -164,14 +238,14 @@ test('parses lint command', (t) => {
     );
 
     t.deepEqual<Command>(
-        parseArguments(['lint', '-f', 'json', 'foo', '--format', 'stylish', 'bar']),
+        parseArguments(['lint', '-f', 'json', 'foo', '--formatter', 'stylish', 'bar']),
         {
             command: CommandName.Lint,
             modules: [],
             config: undefined,
             files: ['foo', 'bar'],
             exclude: [],
-            format: 'stylish',
+            formatter: 'stylish',
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -187,7 +261,7 @@ test('parses lint command', (t) => {
             config: 'foo.json',
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -203,7 +277,7 @@ test('parses lint command', (t) => {
             config: '../bar.yaml',
             files: [],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: undefined,
@@ -219,7 +293,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: ['foo'],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: ['.mjs', '.es6', '.esm'],
@@ -235,7 +309,7 @@ test('parses lint command', (t) => {
             config: undefined,
             files: ['foo'],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: ['.mjs', '.es6'],
@@ -251,12 +325,68 @@ test('parses lint command', (t) => {
             config: undefined,
             files: ['foo'],
             exclude: [],
-            format: undefined,
+            formatter: undefined,
             project: undefined,
             fix: false,
             extensions: ['.esm', '.mjs', '.es6'],
         },
         '--ext merges arrays',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(
+            ['lint', '--ext', '', '-f', '', '-p', '', '-m', '', '-c', '', '-e', '', '--'],
+            {
+                formatter: 'foo',
+                extensions: 'bar',
+                project: 'baz',
+                files: ['bas'],
+                modules: ['foo', 'bar'],
+                config: 'fooconfig',
+                exclude: '**/*.d.ts',
+                fix: true,
+            },
+        ),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: undefined,
+            fix: true,
+            extensions: undefined,
+        },
+        'overrides defaults',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(
+            ['lint', '--ext', '', ''],
+            {
+                formatter: 'foo',
+                extensions: 'bar',
+                project: 'baz',
+                files: ['bas'],
+                modules: ['foo', 'bar'],
+                config: 'fooconfig',
+                exclude: '**/*.d.ts',
+                fix: 10,
+            },
+        ),
+        {
+            command: CommandName.Lint,
+            modules: ['foo', 'bar'],
+            config: 'fooconfig',
+            files: [],
+            exclude: ['**/*.d.ts'],
+            formatter: 'foo',
+            project: 'baz',
+            fix: 10,
+            extensions: undefined,
+        },
+        'uses defaults where not overridden',
     );
 
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
@@ -273,7 +403,7 @@ test('parses lint command', (t) => {
 
 test('parses show command', (t) => {
     t.deepEqual<Command>(
-        parseArguments(['show', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        parseArguments(['show', 'foo', '', '-m', 'foo,bar', '--module', 'baz']),
         {
             command: CommandName.Show,
             modules: ['foo', 'bar', 'baz'],
@@ -319,11 +449,42 @@ test('parses show command', (t) => {
         '-- ends options',
     );
 
+    t.deepEqual<Command>(
+        parseArguments(
+            ['show', '--config', '', 'file.ts', '-m', ''],
+            {formatter: 'json', files: 'foo.ts', config: 'my.config', modules: 'foo'},
+        ),
+        {
+            command: CommandName.Show,
+            modules: [],
+            file: 'file.ts',
+            format: undefined,
+            config: undefined,
+        },
+        'overrides defaults',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(
+            ['show', 'file.ts'],
+            {formatter: 'json', files: 'foo.ts', config: 'my.config', modules: 'foo'},
+        ),
+        {
+            command: CommandName.Show,
+            modules: ['foo'],
+            file: 'file.ts',
+            format: undefined,
+            config: 'my.config',
+        },
+        'uses defaults',
+    );
+
     t.throws(() => parseArguments(['show', '-f']), "Option '-f' expects an argument.");
     t.throws(() => parseArguments(['show', '-f', 'foobar']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
 
     t.throws(() => parseArguments(['show', '-c']), "Option '-c' expects an argument.");
 
+    t.throws(() => parseArguments(['show'], {files: 'test.ts'}), 'filename expected');
     t.throws(() => parseArguments(['show', '-c', 'config.yaml']), 'filename expected');
     t.throws(() => parseArguments(['show', 'foo', 'bar']), 'more than one filename provided');
 
@@ -332,7 +493,7 @@ test('parses show command', (t) => {
 
 test('parses test command', (t) => {
     t.deepEqual<Command>(
-        parseArguments(['test', 'foo', '-m', 'foo,bar', '--module', 'baz']),
+        parseArguments(['test', 'foo', '', '-m', 'foo,bar', '--module', 'baz', '--', '']),
         {
             command: CommandName.Test,
             modules: ['foo', 'bar', 'baz'],

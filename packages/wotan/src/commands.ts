@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
 import { ConfigurationError } from './error';
-import { Format, MessageHandler, Failure, DirectoryService } from './types';
+import { Format, MessageHandler, Failure, DirectoryService, GlobalOptions } from './types';
 import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
@@ -16,6 +16,9 @@ import * as glob from 'glob';
 import { SemVer, satisfies } from 'semver';
 import * as ts from 'typescript';
 import * as resolve from 'resolve';
+import debug = require('debug');
+
+const log = debug('wotan:commands');
 
 export const enum CommandName {
     Lint = 'lint',
@@ -30,7 +33,7 @@ export interface BaseCommand<C extends CommandName> {
 }
 
 export interface LintCommand extends LintOptions, BaseCommand<CommandName.Lint> {
-    format: string | undefined;
+    formatter: string | undefined;
 }
 
 export interface TestCommand extends BaseCommand<CommandName.Test> {
@@ -52,12 +55,12 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
 
 export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
 
-export async function runCommand(command: Command, diContainer?: Container): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container, globalSettings: GlobalOptions = {}): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
     for (const moduleName of command.modules)
-        container.load(loadModule(moduleName));
+        container.load(loadModule(moduleName, globalSettings));
 
     switch (command.command) {
         case CommandName.Lint:
@@ -82,7 +85,8 @@ export async function runCommand(command: Command, diContainer?: Container): Pro
     return commandRunner.run(command);
 }
 
-function loadModule(moduleName: string) {
+function loadModule(moduleName: string, options: GlobalOptions) {
+    log("Loading module '%s'.", moduleName);
     try {
         moduleName = resolve.sync(moduleName, {
             basedir: process.cwd(),
@@ -92,10 +96,11 @@ function loadModule(moduleName: string) {
     } catch (e) {
         throw new ConfigurationError(e.message);
     }
-    const m = <{module?: {}}>require(moduleName);
-    if (!m || !(m.module instanceof ContainerModule))
-        throw new ConfigurationError(`Module '${moduleName}' does not a 'module' binding that extends 'ContainerModule'.`);
-    return m.module;
+    log("Found module at '%s'.", moduleName);
+    const m = <{createModule?(options: GlobalOptions): ContainerModule}>require(moduleName);
+    if (!m || typeof m.createModule !== 'function')
+        throw new ConfigurationError(`Module '${moduleName}' does not export a function 'createModule'.`);
+    return m.createModule(options);
 }
 
 @injectable()
@@ -114,7 +119,7 @@ class LintCommandRunner extends AbstractCommandRunner {
         super();
     }
     public run(options: LintCommand) {
-        const formatter = new (this.formatterLoader.loadFormatter(options.format === undefined ? 'stylish' : options.format))();
+        const formatter = new (this.formatterLoader.loadFormatter(options.formatter === undefined ? 'stylish' : options.formatter))();
         const result = this.runner.lintCollection(options);
         let success = true;
         if (formatter.prefix !== undefined)

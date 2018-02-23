@@ -12,9 +12,11 @@ export {
     TslintConfigurationProvider,
 };
 
-export const module = new ContainerModule((bind) => {
-    bind(FormatterLoaderHost).to(TslintFormatterLoaderHost);
-    bind(RuleLoaderHost).to(TslintRuleLoaderHost);
-    bind(LineSwitchParser).to(TslintLineSwitchParser);
-    bind(ConfigurationProvider).to(TslintConfigurationProvider);
-});
+export function createModule() {
+    return new ContainerModule((bind) => {
+        bind(FormatterLoaderHost).to(TslintFormatterLoaderHost);
+        bind(RuleLoaderHost).to(TslintRuleLoaderHost);
+        bind(LineSwitchParser).to(TslintLineSwitchParser);
+        bind(ConfigurationProvider).to(TslintConfigurationProvider);
+    });
+}

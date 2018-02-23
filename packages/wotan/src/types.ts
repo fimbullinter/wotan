@@ -2,6 +2,10 @@ import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
+export interface GlobalOptions {
+    readonly [key: string]: {} | null | undefined;
+}
+
 export type LintResult = Iterable<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
@@ -72,14 +76,14 @@ export type Severity = 'error' | 'warning';
 export interface RuleConstructor {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
+    supports?(sourceFile: ts.SourceFile, options: any, settings: Settings): boolean;
     new(context: RuleContext): AbstractRule;
 }
 
 export interface RuleContext {
     readonly program?: ts.Program;
     readonly sourceFile: ts.SourceFile;
-    readonly settings: GlobalSettings;
+    readonly settings: Settings;
     readonly options: {} | null | undefined;
     addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
@@ -92,12 +96,12 @@ export interface TypedRuleContext extends RuleContext {
 }
 export abstract class TypedRuleContext {}
 
-export interface GlobalSettings extends ReadonlyMap<string, {} | null | undefined> {}
+export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated?: boolean | string;
-    public static supports?(sourceFile: ts.SourceFile, options: any, settings: GlobalSettings): boolean;
+    public static supports?(sourceFile: ts.SourceFile, options: any, settings: Settings): boolean;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
@@ -170,7 +174,7 @@ export interface FormatterConstructor {
 export interface Configuration {
     readonly aliases?: ReadonlyMap<string, Configuration.Alias>;
     readonly rules?: ReadonlyMap<string, Configuration.RuleConfig>;
-    readonly settings?: GlobalSettings;
+    readonly settings?: Settings;
     readonly filename: string;
     readonly overrides?: ReadonlyArray<Configuration.Override>;
     readonly extends: ReadonlyArray<Configuration>;
@@ -248,7 +252,7 @@ export interface ProcessorConstructor {
 
 export interface ProcessorSuffixContext {
     fileName: string;
-    getSettings(): GlobalSettings;
+    getSettings(): Settings;
     readFile(): string;
 }
 
@@ -256,7 +260,7 @@ export interface ProcessorContext {
     source: string;
     sourceFileName: string;
     targetFileName: string;
-    settings: GlobalSettings;
+    settings: Settings;
 }
 
 export interface ProcessorUpdateResult {
@@ -275,7 +279,7 @@ export abstract class AbstractProcessor {
     protected source: string;
     protected sourceFileName: string;
     protected targetFileName: string;
-    protected settings: GlobalSettings;
+    protected settings: Settings;
 
     constructor(context: ProcessorContext) {
         this.source = context.source;

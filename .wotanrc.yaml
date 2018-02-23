@@ -6,6 +6,7 @@ overrides:
   - files: "packages/*/test/**"
     rules:
       deprecation: off
+      no-inferred-empty-object: off
   - files: "packages/**"
     rules:
       disir/import-package: error
