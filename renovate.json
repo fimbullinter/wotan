@@ -1,5 +1,22 @@
 {
   "extends": [
-    "config:base"
-  ]
+    "config:base",
+    ":semanticCommitsDisabled",
+    ":preserveSemverRanges",
+    ":prNotPending",
+    ":automergeMinor",
+    ":automergeBranchPush",
+    ":automergeRequireAllStatusChecks",
+    ":maintainLockFilesWeekly",
+    "group:definitelyTyped"
+  ],
+  "prHourlyLimit": 0,
+  "timezone": "Europe/Berlin",
+  "lockFileMaintenance": {
+    "automerge": true
+  },
+  "node": {
+    "enabled": true,
+    "supportPolicy": ["current"]
+  }
 }
