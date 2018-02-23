@@ -1,14 +1,18 @@
 import { ConfigurationError } from './error';
 import * as fs from 'fs';
+import * as path from 'path';
 import { GlobalOptions } from './types';
 import debug = require('debug');
 
 const log = debug('wotan:cli');
 
-async function run() {
+// @internal
+export async function run(argv: string[]) {
+    if (argv.length === 1 && /^(')?(?:-v|version)\1$/.test(argv[0]))
+        return console.log(require('../package.json').version);
     try {
-        const config = await loadConfig();
-        const args = (await import('./argparse')).parseArguments(process.argv.slice(2), config);
+        const config = await loadConfig('.');
+        const args = (await import('./argparse')).parseArguments(argv, config);
         if (!await (await import('./commands')).runCommand(args, undefined, config))
             process.exitCode = 2;
     } catch (e) {
@@ -16,27 +20,27 @@ async function run() {
         process.exitCode = 1;
     }
 }
-function loadConfig() {
+// @internal
+export function loadConfig(dir: string) {
+    const fileName = path.join(dir, '.fimbullinter.yaml');
     return new Promise<GlobalOptions>((resolve) => {
-        return fs.readFile('.fimbullinter.yaml', {encoding: 'utf8'}, (err, content) => {
+        return fs.readFile(fileName, {encoding: 'utf8'}, (err, content) => {
             if (err) {
-                log('Not using .fimbullinter.yaml in current directory: %s', err.code);
+                log("Not using '%s': %s", fileName, err.code);
                 return resolve({});
             }
-            log('Using global options from .fimbullinter.yaml');
             return import('js-yaml').then((yaml) => {
                 try {
-                    return resolve(yaml.safeLoad(content, {strict: true}) || {});
+                    resolve(yaml.safeLoad(content, {schema: yaml.JSON_SCHEMA, strict: true}) || {});
+                    log("Using global options from '%s'", fileName);
                 } catch (e) {
-                    log('Error parsing .fimbullinter.yaml: %s', e && e.message);
-                    return resolve({});
+                    log("Not using '%s': %s", fileName, e && e.message);
+                    resolve({});
                 }
             });
         });
     });
 }
-if (process.argv.length === 3 && /^(')?(?:-v|version)\1$/.test(process.argv[2])) {
-    console.log(require('../package.json').version); // tslint:disable-line:no-var-requires
-} else {
-    run();
-}
+
+if (require.main === module)
+    run(process.argv.slice(2));

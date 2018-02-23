@@ -15,6 +15,10 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
         case CommandName.Lint:
             command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions));
             break;
+        default:
+            // wotan-disable-next-line no-useless-assertion
+            command = parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions));
+            break;
         case CommandName.Test:
             command = parseTestCommand(args.slice(1));
             break;
@@ -23,10 +27,6 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
             break;
         case CommandName.Validate:
             command = parseValidateCommand(args.slice(1));
-            break;
-        default:
-            // wotan-disable-next-line no-useless-assertion
-            command = parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions));
     }
     log("Parsed '%s' command as %O", command.command, command);
     if (defaults !== undefined)
@@ -59,35 +59,35 @@ export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGl
         project: expectStringOption(options, 'project'),
         formatter: expectStringOption(options, 'formatter'),
         fix: expectBooleanOrNumberOption(options, 'fix'),
-        extensions: expectStringOrStringArray(options, 'extensions'),
+        extensions: (expectStringOrStringArray(options, 'extensions') || []).map(sanitizeExtensionArgument),
     };
 }
 
 function expectStringOrStringArray(options: GlobalOptions, option: string): string[] | undefined {
     const value = options[option];
-    if (value === undefined)
-        return;
     if (Array.isArray(value) && value.every((v) => typeof v === 'string'))
         return value;
     if (typeof value === 'string')
         return [value];
-    throw new ConfigurationError(`Expected a value of type 'string | string[]' for option '${option}'.`);
+    if (value !== undefined)
+        log("Expected a value of type 'string | string[]' for option '%s'.", option);
+    return;
 }
 function expectStringOption(options: GlobalOptions, option: string): string | undefined {
     const value = options[option];
-    if (value === undefined)
-        return;
     if (typeof value === 'string')
         return value;
-    throw new ConfigurationError(`Expected a value of type 'string' for option '${option}'.`);
+    if (value !== undefined)
+        log("Expected a value of type 'string' for option '%s'.", option);
+    return;
 }
 function expectBooleanOrNumberOption(options: GlobalOptions, option: string): boolean | number {
     const value = options[option];
-    if (value === undefined)
-        return false;
     if (typeof value === 'boolean' || typeof value === 'number')
         return value;
-    throw new ConfigurationError(`Expected a value of type 'boolean | number' for option '${option}'.`);
+    if (value !== undefined)
+        log("Expected a value of type 'boolean | number' for option '%s'.", option);
+    return false;
 }
 
 type AssertNever<T extends never> = T;
@@ -114,7 +114,7 @@ function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCo
             case '--exclude':
                 result.exclude = exclude;
                 const opt = expectStringArgument(args, ++i, arg);
-                if (opt)
+                if (opt !== '')
                     exclude.push(opt);
                 break;
             case '-f':
@@ -123,7 +123,7 @@ function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCo
                 break;
             case '-c':
             case '--config':
-                result.config = expectStringArgument(args, ++i, arg);
+                result.config = expectStringArgument(args, ++i, arg) || undefined;
                 break;
             case '--fix':
                 ({index: i, argument: result.fix} = parseOptionalBooleanOrNumber(args, i));
@@ -145,7 +145,7 @@ function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCo
                 if (arg.startsWith('-'))
                     throw new ConfigurationError(`Unknown option '${arg}'.`);
                 result.files = files;
-                if (arg)
+                if (arg !== '')
                     files.push(arg);
         }
     }
@@ -161,13 +161,13 @@ function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCo
     return result;
 }
 
-function isTruthy(v: any): boolean {
-    return !!v;
+function isTruthy(v: string): boolean {
+    return v !== '';
 }
 
 function sanitizeExtensionArgument(ext: string): string {
     ext = ext.trim();
-    return ext.startsWith('.') ? ext : `.${ext}`;
+    return ext === '' || ext.startsWith('.') ? ext : `.${ext}`;
 }
 
 function parseTestCommand(args: string[]): TestCommand {
@@ -203,7 +203,7 @@ function parseTestCommand(args: string[]): TestCommand {
             default:
                 if (arg.startsWith('-'))
                     throw new ConfigurationError(`Unknown option '${arg}'.`);
-                if (arg)
+                if (arg !== '')
                     result.files.push(arg);
         }
     }
@@ -215,9 +215,9 @@ function parseTestCommand(args: string[]): TestCommand {
 
 function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCommand {
     const files = [];
-    const modules = [];
+    let modules: string[] | undefined;
     let format: Format | undefined;
-    let config: string | undefined;
+    let config = defaults.config;
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
@@ -228,10 +228,12 @@ function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCo
                 break;
             case '-c':
             case '--config':
-                config = expectStringArgument(args, ++i, arg);
+                config = expectStringArgument(args, ++i, arg) || undefined;
                 break;
             case '-m':
             case '--module':
+                if (modules === undefined)
+                    modules = [];
                 modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
                 break;
             case '--':
@@ -240,7 +242,7 @@ function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCo
             default:
                 if (arg.startsWith('-'))
                     throw new ConfigurationError(`Unknown option '${arg}'.`);
-                if (arg)
+                if (arg !== '')
                     files.push(arg);
         }
     }
@@ -250,8 +252,8 @@ function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCo
         case 1:
             return {
                 format,
-                modules: modules.length === 0 && defaults.modules ? defaults.modules : modules,
-                config: config || defaults.config,
+                config,
+                modules: modules === undefined ? defaults.modules : modules,
                 command: CommandName.Show,
                 file: files[0],
             };

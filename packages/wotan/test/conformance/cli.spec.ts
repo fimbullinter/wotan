@@ -2,6 +2,7 @@ import test from 'ava';
 import * as cp from 'child_process';
 import * as path from 'path';
 import { unixifyPath } from '../../src/utils';
+import { loadConfig } from '../../src/cli';
 
 function execCli(args: string[]): Promise<{err: Error | null, stdout: string, stderr: string, code: number}> {
     interface ErrorWithCode extends Error {
@@ -50,4 +51,14 @@ test('exits with code 2 on lint error', async (t) => {
 {"ruleName":"trailing-newline","severity":"error","message":"File must end with a newline.","start":{"position":5,"line":0,"character":5},"end":{"position":5,"line":0,"character":5},"fix":{"replacements":[{"start":5,"end":5,"text":"\\n"}]},"fileName":"${unixifyPath(path.resolve('packages/wotan/test/rules/trailing-newline/whitespace.ts'))}"}
 ]
 `);
+});
+
+test('loads .fimbullinter.yaml file', async (t) => {
+    t.deepEqual(await loadConfig(__dirname), {}, 'empty if not found');
+    t.deepEqual(await loadConfig(path.join(__dirname, '../fixtures/global-config/invalid')), {}, 'empty on parse error');
+    t.deepEqual(await loadConfig(path.join(__dirname, '../fixtures/global-config/empty')), {}, 'empty object on falsy value');
+    t.deepEqual(
+        await loadConfig(path.join(__dirname, '../fixtures/global-config')),
+        {project: 'tsconfig.base.json', fix: true, exclude: ['**/*.d.ts']},
+    );
 });

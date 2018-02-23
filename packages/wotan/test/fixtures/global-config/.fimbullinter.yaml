@@ -1,0 +1,4 @@
+project: tsconfig.base.json
+fix: true
+exclude:
+  - "**/*.d.ts"
