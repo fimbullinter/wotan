@@ -4,7 +4,7 @@ Wotan module to use TSLint rules and formatters.
 
 [![npm version](https://img.shields.io/npm/v/@fimbul/heimdall.svg)](https://www.npmjs.com/package/@fimbul/heimdall)
 [![npm downloads](https://img.shields.io/npm/dm/@fimbul/heimdall.svg)](https://www.npmjs.com/package/@fimbul/heimdall)
-[![Greenkeeper badge](https://badges.greenkeeper.io/fimbullinter/wotan.svg)](https://greenkeeper.io/)
+[![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovateapp.com/)
 [![CircleCI](https://circleci.com/gh/fimbullinter/wotan/tree/master.svg?style=shield)](https://circleci.com/gh/fimbullinter/wotan/tree/master)
 [![Build status](https://ci.appveyor.com/api/projects/status/a28dpupxvjljibq3/branch/master?svg=true)](https://ci.appveyor.com/project/ajafff/wotan/branch/master)
 [![codecov](https://codecov.io/gh/fimbullinter/wotan/branch/master/graph/badge.svg)](https://codecov.io/gh/fimbullinter/wotan)
