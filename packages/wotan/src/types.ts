@@ -96,7 +96,7 @@ export interface TypedRuleContext extends RuleContext {
 }
 export abstract class TypedRuleContext {}
 
-export interface Settings extends ReadonlyMap<string, {} | null | undefined> {}
+export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
