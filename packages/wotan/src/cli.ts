@@ -17,21 +17,19 @@ async function run() {
     }
 }
 function loadConfig() {
-    return new Promise<GlobalOptions>((resolve, reject) => {
+    return new Promise<GlobalOptions>((resolve) => {
         return fs.readFile('.fimbullinter.yaml', {encoding: 'utf8'}, (err, content) => {
             if (err) {
-                if (err.code === 'ENOENT') {
-                    log('No .fimbullinter.yaml in current directory.');
-                    return resolve({});
-                }
-                return reject(err);
+                log('Not using .fimbullinter.yaml in current directory: %s', err.code);
+                return resolve({});
             }
             log('Using global options from .fimbullinter.yaml');
             return import('js-yaml').then((yaml) => {
                 try {
                     return resolve(yaml.safeLoad(content, {strict: true}) || {});
                 } catch (e) {
-                    return reject(e);
+                    log('Error parsing .fimbullinter.yaml: %s', e && e.message);
+                    return resolve({});
                 }
             });
         });
