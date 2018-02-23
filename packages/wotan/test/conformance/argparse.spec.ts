@@ -1,7 +1,70 @@
 import test from 'ava';
-import { parseArguments } from '../../src/argparse';
+import { parseArguments, parseGlobalOptions } from '../../src/argparse';
 import { CommandName, Command } from '../../src/commands';
 import { Format } from '../../src/types';
+
+test('parseGlobalOptions', (t) => {
+    t.deepEqual(
+        parseGlobalOptions(undefined),
+        {
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: undefined,
+            formatter: undefined,
+            fix: false,
+            extensions: undefined,
+        },
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({foo: 'bar'}),
+        {
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: undefined,
+            formatter: undefined,
+            fix: false,
+            extensions: undefined,
+        },
+        'ignores excess options',
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({modules: 'm', files: ['**/*.ts'], fix: 10, extensions: '.mjs', formatter: 'foo'}),
+        {
+            modules: ['m'],
+            config: undefined,
+            files: ['**/*.ts'],
+            exclude: [],
+            project: undefined,
+            formatter: 'foo',
+            fix: 10,
+            extensions: ['.mjs'],
+        },
+    );
+
+    t.deepEqual(
+        parseGlobalOptions({modules: [], config: 'config.yaml', project: '.', fix: true, exclude: '**/*.d.ts'}),
+        {
+            modules: [],
+            config: 'config.yaml',
+            files: [],
+            exclude: ['**/*.d.ts'],
+            project: '.',
+            formatter: undefined,
+            fix: true,
+            extensions: undefined,
+        },
+    );
+
+    t.throws(() => parseGlobalOptions({fix: 'foo'}), "Expected a value of type 'boolean | number' for option 'fix'.");
+    t.throws(() => parseGlobalOptions({project: null}), "Expected a value of type 'string' for option 'project'."); // tslint:disable-line
+    t.throws(() => parseGlobalOptions({modules: [1]}), "Expected a value of type 'string | string[]' for option 'modules'.");
+});
 
 test('defaults to lint command', (t) => {
     t.deepEqual<Command>(

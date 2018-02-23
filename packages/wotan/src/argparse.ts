@@ -71,7 +71,7 @@ function expectStringOrStringArray(options: GlobalOptions, option: string): stri
         return value;
     if (typeof value === 'string')
         return [value];
-    throw new ConfigurationError(`Expected a value of type 'string | string[]' for option '${option}'`);
+    throw new ConfigurationError(`Expected a value of type 'string | string[]' for option '${option}'.`);
 }
 function expectStringOption(options: GlobalOptions, option: string): string | undefined {
     const value = options[option];
@@ -79,7 +79,7 @@ function expectStringOption(options: GlobalOptions, option: string): string | un
         return;
     if (typeof value === 'string')
         return value;
-    throw new ConfigurationError(`Expected a value of type 'string' for option '${option}'`);
+    throw new ConfigurationError(`Expected a value of type 'string' for option '${option}'.`);
 }
 function expectBooleanOrNumberOption(options: GlobalOptions, option: string): boolean | number {
     const value = options[option];
@@ -87,7 +87,7 @@ function expectBooleanOrNumberOption(options: GlobalOptions, option: string): bo
         return false;
     if (typeof value === 'boolean' || typeof value === 'number')
         return value;
-    throw new ConfigurationError(`Expected a value of type 'boolean | number' for option '${option}'`);
+    throw new ConfigurationError(`Expected a value of type 'boolean | number' for option '${option}'.`);
 }
 
 type AssertNever<T extends never> = T;

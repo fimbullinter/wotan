@@ -16,6 +16,9 @@ import * as glob from 'glob';
 import { SemVer, satisfies } from 'semver';
 import * as ts from 'typescript';
 import * as resolve from 'resolve';
+import debug = require('debug');
+
+const log = debug('wotan:commands');
 
 export const enum CommandName {
     Lint = 'lint',
@@ -83,6 +86,7 @@ export async function runCommand(command: Command, diContainer?: Container, glob
 }
 
 function loadModule(moduleName: string, options: GlobalOptions) {
+    log("Loading module '%s'.", moduleName);
     try {
         moduleName = resolve.sync(moduleName, {
             basedir: process.cwd(),
@@ -92,13 +96,11 @@ function loadModule(moduleName: string, options: GlobalOptions) {
     } catch (e) {
         throw new ConfigurationError(e.message);
     }
+    log("Found module at '$s'.", moduleName);
     const m = <{createModule?(options: GlobalOptions): ContainerModule}>require(moduleName);
     if (!m || typeof m.createModule !== 'function')
         throw new ConfigurationError(`Module '${moduleName}' does not export a function 'createModule'.`);
-    const result = m.createModule(options);
-    if (result instanceof ContainerModule)
-        return result;
-    throw new ConfigurationError(`Return value of 'createModule' in '${moduleName}' is not a 'ContainerModule'.`);
+    return m.createModule(options);
 }
 
 @injectable()
