@@ -3,8 +3,8 @@ environment:
   nodejs_version: ""
 
 cache:
-  - node_modules
-  - "%LOCALAPPDATA%\\Yarn"
+  - node_modules -> yarn.lock
+  - "%LOCALAPPDATA%\\Yarn" -> yarn.lock
 
 install:
   - ps: Install-Product node $env:nodejs_version
