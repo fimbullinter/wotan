@@ -93,9 +93,9 @@ export class Formatter extends AbstractFormatter {
                     ),
                 );
         }
-        return lines
-            .slice(1) // remove first line, because it's always empty
-            .join('\n');
+        return lines.length === 0
+            ? undefined
+            : lines.slice(1).join('\n'); // remove first line, because it's always empty
     }
 }
 

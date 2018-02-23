@@ -15,6 +15,16 @@
     "type": "git",
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
+  "keywords": [
+    "wotan",
+    "plugin",
+    "tslint",
+    "compatibility",
+    "rules",
+    "formatters",
+    "configuration",
+    "tslint.json"
+  ],
   "devDependencies": {
     "@fimbul/wotan": "^0.1.0"
   },

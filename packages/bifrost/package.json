@@ -17,6 +17,13 @@
     "type": "git",
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
+  "keywords": [
+    "wotan",
+    "rules",
+    "formatters",
+    "tslint",
+    "compatibility"
+  ],
   "peerDependencies": {
     "@fimbul/wotan": "^0.1.0",
     "tslint": "^5.0.0",

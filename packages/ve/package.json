@@ -16,6 +16,14 @@
     "type": "git",
     "url": "git+https://github.com/fimbullinter/wotan.git"
   },
+  "keywords": [
+    "wotan",
+    "processor",
+    "vue",
+    "sfc",
+    "single file component",
+    "lint"
+  ],
   "peerDependencies": {
     "@fimbul/wotan": "^0.1.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
