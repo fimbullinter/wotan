@@ -1,13 +1,15 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory } from '../../src/types';
-import { runCommand, CommandName, ShowCommand } from '../../src/commands';
+import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '../../src/types';
+import { runCommand, CommandName, ShowCommand, SaveCommand } from '../../src/commands';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import * as path from 'path';
-import { unixifyPath } from '../../src/utils';
+import { unixifyPath, format } from '../../src/utils';
 import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
+import { CORE_DI_MODULE } from '../../src/di/core.module';
+import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
 
 test('ShowCommand', async (t) => {
     const container = new Container();
@@ -116,5 +118,135 @@ test('ShowCommand', async (t) => {
         // replace `cwd` with / and all backslashes with forward slash
         const re = new RegExp(`'?${escapeRegex(cwd)}(.*?)'?$`, 'gm');
         return str.replace(/\\\\/g, '\\').replace(re, (_, p) => unixifyPath(p));
+    }
+});
+
+test('SaveCommand', async (t) => {
+    t.deepEqual(
+        await verify({
+            command: CommandName.Save,
+            project: undefined,
+            config: undefined,
+            fix: false,
+            exclude: [],
+            files: [],
+            extensions: undefined,
+            formatter: undefined,
+            modules: [],
+        }),
+        {
+            content: false,
+            log: "Removed '.fimbullinter.yaml'.",
+        },
+        'removes file if empty',
+    );
+    t.deepEqual(
+        await verify(
+            {
+                command: CommandName.Save,
+                project: undefined,
+                config: undefined,
+                fix: 0,
+                exclude: [],
+                files: [],
+                extensions: undefined,
+                formatter: undefined,
+                modules: [],
+            },
+            {
+                project: 'foo',
+            },
+            true,
+        ),
+        {
+            content: false,
+            log: undefined,
+        },
+        "doesn't crash if file does not exist",
+    );
+    t.deepEqual(
+        await verify(
+            {
+                command: CommandName.Save,
+                project: undefined,
+                config: '.wotanrc.yaml',
+                fix: true,
+                exclude: [],
+                files: ['**/*.d.ts'],
+                extensions: undefined,
+                formatter: undefined,
+                modules: [],
+            },
+            {
+                project: 'foo.json',
+                modules: ['foo', 'bar'],
+            },
+        ),
+        {
+            content: format({config: '.wotanrc.yaml', fix: true, files: ['**/*.d.ts']}, Format.Yaml),
+            log: "Updated '.fimbullinter.yaml'.",
+        },
+        'overrides existing options',
+    );
+    t.deepEqual(
+        await verify(
+            {
+                command: CommandName.Save,
+                project: undefined,
+                config: undefined,
+                fix: 0,
+                exclude: [],
+                files: [],
+                extensions: undefined,
+                formatter: undefined,
+                modules: [],
+            },
+            {
+                other: 'foo',
+                project: 'bar',
+            },
+        ),
+        {
+            content: format({other: 'foo'}, Format.Yaml),
+            log: "Updated '.fimbullinter.yaml'.",
+        },
+        'preserves other config values',
+    );
+
+    async function verify(command: SaveCommand, defaults?: GlobalOptions, throwOnDelete?: boolean) {
+        const container = new Container();
+        let content: string | false | undefined;
+        const fileSystem: FileSystem = {
+            normalizePath(p) { return p; },
+            readFile() { throw new Error(); },
+            readDirectory() { throw new Error(); },
+            stat() { throw new Error(); },
+            createDirectory() { throw new Error(); },
+            writeFile(f, c) {
+                t.is(f, path.resolve('.fimbullinter.yaml'));
+                content = c;
+            },
+            deleteFile(f) {
+                t.is(f, path.resolve('.fimbullinter.yaml'));
+                content = false;
+                if (throwOnDelete)
+                    throw new Error('ENOENT');
+            },
+        };
+        container.bind(FileSystem).toConstantValue(fileSystem);
+        let log: string | undefined;
+        const logger: MessageHandler = {
+            log(m) { log = m; },
+            warn() { throw new Error(); },
+            error() { throw new Error(); },
+        };
+        container.bind(MessageHandler).toConstantValue(logger);
+        container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+
+        await runCommand(command, container, defaults);
+        return {
+            log,
+            content,
+        };
     }
 });

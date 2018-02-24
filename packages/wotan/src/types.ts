@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
-export interface GlobalOptions {
+export abstract class GlobalOptions {
     readonly [key: string]: {} | null | undefined;
 }
 

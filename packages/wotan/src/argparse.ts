@@ -1,4 +1,4 @@
-import { Command, CommandName, LintCommand, TestCommand, ShowCommand, ValidateCommand } from './commands';
+import { Command, CommandName, TestCommand, ShowCommand, ValidateCommand, BaseLintCommand } from './commands';
 import { ConfigurationError } from './error';
 import { Format, GlobalOptions } from './types';
 import { LintOptions } from './runner';
@@ -13,11 +13,14 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
     let defaults: ParsedGlobalOptions | undefined;
     switch (commandName) {
         case CommandName.Lint:
-            command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions));
+            command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions), CommandName.Lint);
+            break;
+        case CommandName.Save:
+            command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions), CommandName.Save);
             break;
         default:
-            // wotan-disable-next-line no-useless-assertion
-            command = parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions));
+            command = // wotan-disable-next-line no-useless-assertion
+                parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions), CommandName.Lint);
             break;
         case CommandName.Test:
             command = parseTestCommand(args.slice(1));
@@ -92,9 +95,13 @@ function expectBooleanOrNumberOption(options: GlobalOptions, option: string): bo
 
 type AssertNever<T extends never> = T;
 
-function parseLintCommand(args: string[], defaults: ParsedGlobalOptions): LintCommand {
-    const result: LintCommand = {
-        command: CommandName.Lint,
+function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
+    args: string[],
+    defaults: ParsedGlobalOptions,
+    command: T,
+): BaseLintCommand<T> {
+    const result: BaseLintCommand<T> = {
+        command,
         ...defaults,
     };
 
