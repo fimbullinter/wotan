@@ -170,7 +170,7 @@
         "path": "^packages/[^/]+/test/"
       },
       "to": {
-        "path": "^node_modules/(typescript|ava)/"
+        "path": "^(node_modules/(typescript|ava|tslint)|packages)/"
       }
     }
   ],

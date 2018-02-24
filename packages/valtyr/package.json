@@ -26,7 +26,8 @@
     "tslint.json"
   ],
   "devDependencies": {
-    "@fimbul/wotan": "^0.1.0"
+    "@fimbul/wotan": "^0.1.0",
+    "reflect-metadata": "^0.1.12"
   },
   "peerDependencies": {
     "@fimbul/wotan": "^0.1.0",

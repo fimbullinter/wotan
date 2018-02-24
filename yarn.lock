@@ -1212,9 +1212,9 @@ delegates@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
 
-dependency-cruiser@^2.14.0:
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/dependency-cruiser/-/dependency-cruiser-2.14.0.tgz#db5a07cec13b5e0ceb1f0e800fcd37788578bc6c"
+dependency-cruiser@^3.0.0-beta-1:
+  version "3.0.0-beta-1"
+  resolved "https://registry.yarnpkg.com/dependency-cruiser/-/dependency-cruiser-3.0.0-beta-1.tgz#76a342d98a6ad187e0dab36f9123c6724f22a84b"
   dependencies:
     acorn "5.4.1"
     ajv "6.1.1"
