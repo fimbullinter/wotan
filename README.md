@@ -80,7 +80,10 @@ This one tries to avoid design decisions of other linters that turned out to be 
 - [x] Caching of file system access and configuration. As the Cache is a DI service, API users can clear the cache when needed.
 - [x] Support for processors from the beginning. Enabling linting of *.vue files and many more.
 - [x] Aliases for rules with configuration. Can be used to treat rules like ESLint's `no-resticted-syntax` as distinct named rules for each config option.
-- [x] The whole API is powered by a DI container. That makes it easy to inject a different service. Rules have access to a limited set of DI bindings.
+- [x] The whole API is powered by a DI container. That makes it easy to inject a different service. You can even use plugins through the CLI to inject different services.
+- [x] "Global" configuration file (besides `.wotanrc.yaml`) for CLI defaults and plugin configuration: `.fimbullinter.yaml`. This file can be used by editor plugins as well, so there's no need to duplicate common configuration.
+  - ESLint doesn't have such a file and declined to add one in the future. Tools like `standard` or `xo` wouldn't need to exist if you just needed to create such a config file with CLI defaults.
+  - TSLint startet to stuff it into their `tslint.json` which leads to confused users.
 
 ### Differences to TSLint
 
@@ -155,7 +158,7 @@ In theory every change to a rule can break users and could be considered a break
 Currently there is no fixed release schedule.
 Nightly builds are published every night if there are changes on master.
 Patch releases are published as soon as bugs are identified and fixed.
-Minor releases are published every week or two if there changes on master.
+Minor releases are published every week or two if there are changes on master.
 Major releases are published once enough breaking changes have piled up.
 
 ## License

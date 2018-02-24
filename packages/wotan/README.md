@@ -172,6 +172,45 @@ wotan -p . 'src/**' # lint all files in src directory that are included in the p
 wotan -m @fimbul/heimdall # enables TSLint rules and formatters to be used. for more information, see @fimbul/heimdall
 ```
 
+### Adding CLI defaults to `.fimbullinter.yaml`
+
+If you find yourself using Wotan with the same CLI arguments over and over again, you can simply save them as defaults to a file called `.fimbullinter.yaml`. By default Wotan uses this file for CLI defaults if it's present in your current working directory.
+
+There's a subcommand to create and update this file, so you don't need to know any implementation details to guess the file structure.
+
+Let's assume you always use the following CLI arguments:
+
+```sh
+wotan -p tsconfig.build.json -c config/.wotanrc.yaml -e '**/*.d.ts'
+```
+
+To save these as defaults, simply use the `save` subcommand:
+
+```sh
+wotan save -p tsconfig.build.json -c config/.wotanrc.yaml -e '**/*.d.ts'
+```
+
+You just created a `.fimbullinter.yaml` file with the following contents:
+
+```yaml
+config: config/.wotanrc.yaml
+exclude:
+  - "**/*.d.ts"
+project: tsconfig.build.json
+```
+
+The next time you execute `wotan` in that directory, this default configuration is automatically picked up.
+
+Defaults can be overridden or cleared by explicitly specifying them as CLI arguments, for example:
+
+```sh
+wotan -p tsconfig.json -e '' # overrides 'project' and clears 'exclude'
+
+wotan save -c '' # clear 'config' option and update .fimbullinter.yaml
+```
+
+Note that `.fimbullinter.yaml` can also be used to store configuration for plugin modules. See the documentation of the plugins you use if this applies to you. In that case you need to edit the file manually. Using `wotan save` will not alter third party configuration.
+
 ## Diagnosing Misbehavior
 
 Catching bugs by just looking at an exception is hard. That's why Wotan produces debug output for certain events. You only need to enable it via environment variable `DEBUG=wotan:*` and run the previous command again.
