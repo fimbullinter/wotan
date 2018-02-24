@@ -203,7 +203,7 @@ test('SaveCommand', async (t) => {
             },
             {
                 other: 'foo',
-                project: 'bar'
+                project: 'bar',
             },
         ),
         {
