@@ -22,6 +22,7 @@ const log = debug('wotan:commands');
 
 export const enum CommandName {
     Lint = 'lint',
+    Save = 'save',
     Validate = 'validate',
     Show = 'show',
     Test = 'test',
@@ -32,9 +33,12 @@ export interface BaseCommand<C extends CommandName> {
     modules: string[];
 }
 
-export interface LintCommand extends LintOptions, BaseCommand<CommandName.Lint> {
+export interface BaseLintCommand<T extends CommandName.Lint | CommandName.Save> extends LintOptions, BaseCommand<T> {
     formatter: string | undefined;
 }
+
+export type LintCommand = BaseLintCommand<CommandName.Lint>;
+export type SaveCommand = BaseLintCommand<CommandName.Save>;
 
 export interface TestCommand extends BaseCommand<CommandName.Test> {
     files: string[];
@@ -53,18 +57,22 @@ export interface ShowCommand extends BaseCommand<CommandName.Show> {
     config: string | undefined;
 }
 
-export type Command = LintCommand | ShowCommand | ValidateCommand | TestCommand;
+export type Command = LintCommand | SaveCommand | ShowCommand | ValidateCommand | TestCommand;
 
-export async function runCommand(command: Command, diContainer?: Container, globalSettings: GlobalOptions = {}): Promise<boolean> {
+export async function runCommand(command: Command, diContainer?: Container, globalOptions: GlobalOptions = {}): Promise<boolean> {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     if (diContainer !== undefined)
         container.parent = diContainer;
     for (const moduleName of command.modules)
-        container.load(loadModule(moduleName, globalSettings));
+        container.load(loadModule(moduleName, globalOptions));
 
     switch (command.command) {
         case CommandName.Lint:
             container.bind(AbstractCommandRunner).to(LintCommandRunner);
+            break;
+        case CommandName.Save:
+            container.bind(AbstractCommandRunner).to(SaveCommandRunner);
+            container.bind(GlobalOptions).toConstantValue(globalOptions);
             break;
         case CommandName.Validate:
             container.bind(AbstractCommandRunner).to(ValidateCommandRunner);
@@ -144,6 +152,26 @@ class LintCommandRunner extends AbstractCommandRunner {
 
 function isError(failure: Failure) {
     return failure.severity === 'error';
+}
+
+@injectable()
+class SaveCommandRunner extends AbstractCommandRunner {
+    constructor(private fs: CachedFileSystem, private directories: DirectoryService, private options: GlobalOptions) {
+        super();
+    }
+
+    public run({command: _command, ...config}: LintCommand) {
+        const newContent = format({...this.options, ...config, fix: config.fix || undefined}, Format.Yaml);
+        const filePath = path.join(this.directories.getCurrentDirectory(), '.fimbullinter.yaml');
+        if (newContent.trim() === '{}') {
+            try {
+                this.fs.remove(filePath);
+            } catch {}
+        } else {
+            this.fs.writeFile(filePath, newContent);
+        }
+        return true;
+    }
 }
 
 @injectable()

@@ -57,7 +57,7 @@ export function unixifyPath(p: string): string {
 }
 
 export function format<T = any>(value: T, fmt = Format.Yaml): string {
-    value = convertToPrintable(value);
+    value = convertToPrintable(value) || {};
     switch (fmt) {
         case Format.Json:
             return JSON.stringify(value, undefined, 2);
