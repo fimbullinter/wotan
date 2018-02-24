@@ -1,5 +1,36 @@
 # Change Log
 
+## v0.2.0
+
+**Features:**
+
+* Added some documentation on how to use the API
+* `wotan`:
+  * new rule `no-useless-initializer`
+  * Renamed `--format` CLI argument to `--formatter`
+  * Added support for a configuration file with CLI defaults called `.fimbullinter.yaml`
+  * Added `wotan save` subcommand to write or update `.fimbullinter.yaml`
+  * Some internal refactoring and breaking API changes for plugin modules
+  * `wotan show` subcommand added optional `-c` option
+  * Refactored failure filtering to allow custom services to filter by different criteria than line base comments with rule names.
+* `valtyr`:
+  * Added new package `@fimbul/valtyr` to enable TSLint-like behavior
+  * Uses `tslint.json` files for configuration
+  * Uses TSLint rules and formatters
+  * Filters by `//tslint:disable` comments
+  * Cannot be used together with `.wotanrc.yaml` or Wotan rules and formatters
+  * The next release will include support for processors by using the new `.fimbullinter.yaml` file
+* `bifrost`:
+  * Enforce that rules add failures for the current SourceFile only
+  * `wrapTslintRule`: `name` parameter is now optional
+
+**Bugfixes:**
+
+* `wotan`:
+  * Really "Include missing declarations in bundled declaration files" which was documented as part of v0.1.0
+  * Fixed logic to find and report unmatched files in processed projects
+  * Fixed crash during directory scanning when using `--project` if a directory contains an invalid `.wotanrc.yaml` file
+
 ## v0.1.0
 
 **Features:**
