@@ -156,7 +156,12 @@ function isError(failure: Failure) {
 
 @injectable()
 class SaveCommandRunner extends AbstractCommandRunner {
-    constructor(private fs: CachedFileSystem, private directories: DirectoryService, private options: GlobalOptions) {
+    constructor(
+        private fs: CachedFileSystem,
+        private logger: MessageHandler,
+        private directories: DirectoryService,
+        private options: GlobalOptions,
+    ) {
         super();
     }
 
@@ -166,9 +171,11 @@ class SaveCommandRunner extends AbstractCommandRunner {
         if (newContent.trim() === '{}') {
             try {
                 this.fs.remove(filePath);
+                this.logger.log("Removed '.fimbullinter.yaml'.");
             } catch {}
         } else {
             this.fs.writeFile(filePath, newContent);
+            this.logger.log("Updated '.fimbullinter.yaml'.");
         }
         return true;
     }

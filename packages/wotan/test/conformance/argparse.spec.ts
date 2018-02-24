@@ -401,6 +401,35 @@ test('parses lint command', (t) => {
     t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), "Options '--ext' and '--project' cannot be used together.");
 });
 
+test('parses save command', (t) => {
+    t.deepEqual<Command>(
+        parseArguments(
+            ['save', '--ext', '', ''],
+            {
+                formatter: 'foo',
+                extensions: 'bar',
+                project: 'baz',
+                files: ['bas'],
+                modules: ['foo', 'bar'],
+                config: 'fooconfig',
+                exclude: '**/*.d.ts',
+                fix: 10,
+            },
+        ),
+        {
+            command: CommandName.Save,
+            modules: ['foo', 'bar'],
+            config: 'fooconfig',
+            files: [],
+            exclude: ['**/*.d.ts'],
+            formatter: 'foo',
+            project: 'baz',
+            fix: 10,
+            extensions: undefined,
+        },
+    );
+});
+
 test('parses show command', (t) => {
     t.deepEqual<Command>(
         parseArguments(['show', 'foo', '', '-m', 'foo,bar', '--module', 'baz']),
