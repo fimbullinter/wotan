@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/{!(fixtures)/**/*,*}.spec},scripts/!(foreach|last-travis-nightly)}.{js?(.map),d.ts}\"",
@@ -21,8 +21,8 @@
   ],
   "devDependencies": {
     "@fimbul/disir": "^0.0.1",
-    "@fimbul/valtyr": "^0.0.1",
-    "@fimbul/wotan": "^0.1.0",
+    "@fimbul/valtyr": "^0.2.0",
+    "@fimbul/wotan": "^0.2.0",
     "@types/cross-spawn": "^6.0.0",
     "@types/glob": "^5.0.35",
     "@types/node": "^9.4.0",

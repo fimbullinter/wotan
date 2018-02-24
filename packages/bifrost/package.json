@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/bifrost",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Compatibility layer for TSLint rules",
   "main": "src/index",
   "types": "src/index",
@@ -25,7 +25,7 @@
     "compatibility"
   ],
   "peerDependencies": {
-    "@fimbul/wotan": "^0.1.0",
+    "@fimbul/wotan": "^0.2.0",
     "tslint": "^5.0.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
