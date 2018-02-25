@@ -7,15 +7,19 @@ import { Linter } from '../linter';
 import { Runner } from '../runner';
 import { ProcessorLoader } from '../services/processor-loader';
 import { RuleTester } from '../test';
+import { GlobalOptions } from '../types';
 
-export const CORE_DI_MODULE = new ContainerModule((bind) => {
-    bind(CachedFileSystem).toSelf();
-    bind(ConfigurationManager).toSelf();
-    bind(FormatterLoader).toSelf();
-    bind(RuleLoader).toSelf();
-    bind(ProcessorLoader).toSelf();
-    bind(Linter).toSelf();
-    bind(Runner).toSelf();
-    bind(RuleTester).toSelf();
-    bind<interfaces.Container>(Container).toDynamicValue((context) => context.container);
-});
+export function createCoreModule(globalOptions: GlobalOptions) {
+    return new ContainerModule((bind) => {
+        bind(CachedFileSystem).toSelf();
+        bind(ConfigurationManager).toSelf();
+        bind(FormatterLoader).toSelf();
+        bind(RuleLoader).toSelf();
+        bind(ProcessorLoader).toSelf();
+        bind(Linter).toSelf();
+        bind(Runner).toSelf();
+        bind(RuleTester).toSelf();
+        bind<interfaces.Container>(Container).toDynamicValue((context) => context.container);
+        bind(GlobalOptions).toConstantValue(globalOptions);
+    });
+}

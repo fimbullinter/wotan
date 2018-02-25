@@ -1,0 +1,4 @@
+valtyr:
+  overrides:
+    - files: "*.vue"
+      processor: "@fimbul/ve"

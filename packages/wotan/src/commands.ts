@@ -8,8 +8,8 @@ import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';
 import { FormatterLoader } from './services/formatter-loader';
 import { Container, injectable, BindingScopeEnum, ContainerModule } from 'inversify';
-import { CORE_DI_MODULE } from './di/core.module';
-import { DEFAULT_DI_MODULE } from './di/default.module';
+import { createCoreModule } from './di/core.module';
+import { createDefaultModule } from './di/default.module';
 import { ConfigurationManager } from './services/configuration-manager';
 import { CachedFileSystem } from './services/cached-file-system';
 import * as glob from 'glob';
@@ -72,7 +72,6 @@ export async function runCommand(command: Command, diContainer?: Container, glob
             break;
         case CommandName.Save:
             container.bind(AbstractCommandRunner).to(SaveCommandRunner);
-            container.bind(GlobalOptions).toConstantValue(globalOptions);
             break;
         case CommandName.Validate:
             container.bind(AbstractCommandRunner).to(ValidateCommandRunner);
@@ -88,7 +87,7 @@ export async function runCommand(command: Command, diContainer?: Container, glob
         default:
             return assertNever(command);
     }
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule(globalOptions), createDefaultModule());
     const commandRunner = container.get(AbstractCommandRunner);
     return commandRunner.run(command);
 }

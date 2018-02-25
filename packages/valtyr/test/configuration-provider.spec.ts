@@ -3,12 +3,13 @@ import * as path from 'path';
 import * as TSLint from 'tslint';
 import { TslintConfigurationProvider } from '../src/configuration-provider';
 import { Container } from 'inversify';
-import { DEFAULT_DI_MODULE, CORE_DI_MODULE, ConfigurationProvider, Configuration } from '@fimbul/wotan';
+import { createCoreModule, createDefaultModule, ConfigurationProvider, Configuration, GlobalOptions } from '@fimbul/wotan';
+import * as resolve from 'resolve';
 
 test('resolve', (t) => {
     const container = new Container();
     container.bind(ConfigurationProvider).to(TslintConfigurationProvider);
-    container.load(DEFAULT_DI_MODULE, CORE_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const cp = container.get(ConfigurationProvider);
     t.regex(cp.resolve('tslint:all', '').replace(/\\/g, '/'), /\/tslint\/.*\/configs\/all.js$/);
     t.throws(
@@ -23,7 +24,7 @@ test('resolve', (t) => {
 test('find', (t) => {
     const container = new Container();
     container.bind(ConfigurationProvider).to(TslintConfigurationProvider);
-    container.load(DEFAULT_DI_MODULE, CORE_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const cp = container.get(ConfigurationProvider);
 
     // don't know if this is a good idea, might fail if someone has a tslint.json in their home directory
@@ -34,8 +35,9 @@ test('find', (t) => {
 
 test('parse', (t) => {
     const container = new Container();
-    container.load(DEFAULT_DI_MODULE, CORE_DI_MODULE);
-    const cp = container.resolve(TslintConfigurationProvider);
+    container.load(createCoreModule({}), createDefaultModule());
+    container.bind(TslintConfigurationProvider).toSelf();
+    let cp = container.get(TslintConfigurationProvider);
 
     t.deepEqual(
         cp.parse(
@@ -93,6 +95,71 @@ test('parse', (t) => {
                     ]),
                 },
             ],
+        },
+    );
+
+    container.rebind(GlobalOptions).toConstantValue({valtyr: {exclude: ['foo.ts']}});
+    cp = container.get(TslintConfigurationProvider);
+    t.throws(
+        () => cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
+        "Error parsing global configuration for 'valtyr': 'exclude' is not allowed in global configuration.",
+    );
+
+    container.rebind(GlobalOptions).toConstantValue({valtyr: {extends: 'wotan:recommended'}});
+    cp = container.get(TslintConfigurationProvider);
+    t.throws(
+        () => cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
+        "Error parsing global configuration for 'valtyr': Global configuration is not allowed to extend other configs.",
+    );
+
+    container.rebind(GlobalOptions).toConstantValue({valtyr: {processor: '@fimbul/ve'}});
+    cp = container.get(TslintConfigurationProvider);
+    t.deepEqual(
+        cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
+        {
+            filename: 'tslint.json',
+            extends: [{
+                filename: path.resolve('.fimbullinter.yaml'),
+                extends: [],
+                settings: undefined,
+                aliases: undefined,
+                rules: undefined,
+                rulesDirectories: undefined,
+                exclude: undefined,
+                processor: resolve.sync('@fimbul/ve', {basedir: process.cwd()}),
+                overrides: undefined,
+            }],
+            overrides: [],
+            exclude: undefined,
+        },
+    );
+
+    container.rebind(GlobalOptions).toConstantValue({
+        valtyr: {overrides: [{files: '*.vue', processor: '@fimbul/ve'}], settings: {foo: 'bar'}},
+    });
+    cp = container.get(TslintConfigurationProvider);
+    t.deepEqual(
+        cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
+        {
+            filename: 'tslint.json',
+            extends: [{
+                filename: path.resolve('.fimbullinter.yaml'),
+                extends: [],
+                settings: new Map([['foo', 'bar']]),
+                aliases: undefined,
+                rules: undefined,
+                rulesDirectories: undefined,
+                exclude: undefined,
+                processor: undefined,
+                overrides: [{
+                    files: ['*.vue'],
+                    processor: resolve.sync('@fimbul/ve', {basedir: process.cwd()}),
+                    rules: undefined,
+                    settings: undefined,
+                }],
+            }],
+            overrides: [],
+            exclude: undefined,
         },
     );
 });

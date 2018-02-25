@@ -22,27 +22,29 @@ import { DefaultDeprecationHandler } from '../services/default/deprecation-handl
 import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
 import { LineSwitchParser, DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
 
-export const DEFAULT_DI_MODULE = new ContainerModule((bind, _unbind, isBound) => {
-    if (!isBound(FormatterLoaderHost))
-        bind(FormatterLoaderHost).to(NodeFormatterLoader);
-    if (!isBound(RuleLoaderHost))
-        bind(RuleLoaderHost).to(NodeRuleLoader);
-    if (!isBound(Resolver))
-        bind(Resolver).to(NodeResolver);
-    if (!isBound(CacheFactory))
-        bind(CacheFactory).to(DefaultCacheFactory);
-    if (!isBound(FileSystem))
-        bind(FileSystem).to(NodeFileSystem);
-    if (!isBound(MessageHandler))
-        bind(MessageHandler).to(ConsoleMessageHandler);
-    if (!isBound(DeprecationHandler))
-        bind(DeprecationHandler).to(DefaultDeprecationHandler);
-    if (!isBound(DirectoryService))
-        bind(DirectoryService).to(NodeDirectoryService);
-    if (!isBound(ConfigurationProvider))
-        bind(ConfigurationProvider).to(DefaultConfigurationProvider);
-    if (!isBound(FailureFilterFactory))
-        bind(FailureFilterFactory).to(LineSwitchFilterFactory);
-    if (!isBound(LineSwitchParser))
-        bind(LineSwitchParser).to(DefaultLineSwitchParser);
-});
+export function createDefaultModule() {
+    return new ContainerModule((bind, _unbind, isBound) => {
+        if (!isBound(FormatterLoaderHost))
+            bind(FormatterLoaderHost).to(NodeFormatterLoader);
+        if (!isBound(RuleLoaderHost))
+            bind(RuleLoaderHost).to(NodeRuleLoader);
+        if (!isBound(Resolver))
+            bind(Resolver).to(NodeResolver);
+        if (!isBound(CacheFactory))
+            bind(CacheFactory).to(DefaultCacheFactory);
+        if (!isBound(FileSystem))
+            bind(FileSystem).to(NodeFileSystem);
+        if (!isBound(MessageHandler))
+            bind(MessageHandler).to(ConsoleMessageHandler);
+        if (!isBound(DeprecationHandler))
+            bind(DeprecationHandler).to(DefaultDeprecationHandler);
+        if (!isBound(DirectoryService))
+            bind(DirectoryService).to(NodeDirectoryService);
+        if (!isBound(ConfigurationProvider))
+            bind(ConfigurationProvider).to(DefaultConfigurationProvider);
+        if (!isBound(FailureFilterFactory))
+            bind(FailureFilterFactory).to(LineSwitchFilterFactory);
+        if (!isBound(LineSwitchParser))
+            bind(LineSwitchParser).to(DefaultLineSwitchParser);
+    });
+}

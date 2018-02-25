@@ -22,8 +22,8 @@ import { DefaultConfigurationProvider } from '../../src/services/default/configu
 import { ConfigurationError } from '../../src/error';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
-import { CORE_DI_MODULE } from '../../src/di/core.module';
-import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
+import { createCoreModule } from '../../src/di/core.module';
+import { createDefaultModule } from '../../src/di/default.module';
 
 // tslint:disable:no-null-keyword
 
@@ -41,7 +41,7 @@ test('ConfigurationManager', (t) => {
         },
     };
     container.bind(ConfigurationProvider).toConstantValue(configProvider);
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
 
     const cm = container.get(ConfigurationManager);
     t.throws(
