@@ -25,7 +25,7 @@
     "lint"
   ],
   "peerDependencies": {
-    "@fimbul/wotan": "^0.2.0",
+    "@fimbul/wotan": "^0.3.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
   "dependencies": {
