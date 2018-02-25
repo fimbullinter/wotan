@@ -8,6 +8,14 @@ script:
   - yarn check-dependencies
   - yarn test
 deploy:
-  provider: script
-  skip_cleanup: true
-  script: bash -c 'set -o pipefail && echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/last-travis-nightly | xargs node scripts/nightly'
+  - provider: script
+    skip_cleanup: true
+    script: bash -c 'set -o pipefail && echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/last-travis-nightly | xargs node scripts/nightly'
+    on:
+      condition: $TRAVIS_EVENT_TYPE = cron
+  - provider: script
+    skip_cleanup: true
+    script: bash -c 'set -o pipefail && echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/release'
+    on:
+      tags: true
+      condition: "$TRAVIS_EVENT_TYPE != cron -a $TRAVIS_TAG =~ ^v[0-9]+[.][0-9]+[.][0-9]+$"
