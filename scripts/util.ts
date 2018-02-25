@@ -15,6 +15,7 @@ export interface PackageData {
 }
 
 export function isTreeClean(directories: string[] = []) {
+    cp.spawnSync('git', ['update-index', '-q', '--refresh'], {stdio: 'ignore'});
     if (cp.spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--', ...directories], {stdio: 'ignore'}).status !== 0)
         return false;
     const untracked = cp.spawnSync('git', ['ls-files', '--others', '--exclude-standard', '--', ...directories]);
