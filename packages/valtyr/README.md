@@ -39,6 +39,22 @@ There are only minor differences:
 * `stylish` formatter is used by default
 * files of external modules are always excluded while `*.d.ts` in your project are included by default
 
+### Using Processors
+
+Because `tslint.json` has no field to configure processors, you need to configure them in a separate file.
+Create a file named `.fimbullinter.yaml`. If it already exists, simply add the new cofiguration under the `valtyr` key.
+
+The following example shows how to enable a processor for `.vue` files:
+
+```yaml
+valtyr:
+  overrides:
+    - files: "*.vue"
+      processor: "@fimbul/ve"
+```
+
+Note that the configuration for `valtyr` can only contain `overrides`, `settings` and `processor`. Everything else is not supported and will result in an error.
+
 ## Why!?
 
 Why should you use Wotan to execute TSLint rules?
@@ -51,18 +67,18 @@ Why should you use Wotan to execute TSLint rules?
 * Debug output to diagnose crashes.
 * Configuration caching avoids unnecessary work when linting many directories with the same config.
 * Optimized line switch parser finds `tslint:disable` comments faster with less overhead, especially in big files.
+* [Processor support for TSLint rules](https://github.com/palantir/tslint/issues/2099)
 
 ## Caveats
 
 * Additional startup time by loading Wotan and TSLint.
 * Wrapping rules and formatters comes with additional runtime and memory overhead.
-* There's some overhead of the processor machinery that still runs, even though it's unused.
 * For most projects there will be no noticeable difference in performance, smaller projects usually take longer to lint while bigger ones get faster.
 
 ## Difference to [Heimdall](https://github.com/fimbullinter/wotan/blob/master/packages/heimdall/README.md)
 
 This package allows you to use your existing TSLint configuration.
-On the other hand you cannot use any of the builtin rules of Wotan or all those other useful features like processors, overrides, aliases, etc.
+On the other hand you cannot use any of the builtin rules of Wotan or all those other useful features like overrides, aliases, etc.
 If you want to lint with your existing TSLint config *and* your new Wotan config, you need to run Wotan twice, which adds a lot of overhead.
 
 Heimdall requires you to rewrite your linter configuration and switch to `.wotanrc.yaml` (or `.wotanrc.json` if you like that better).
