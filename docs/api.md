@@ -5,7 +5,7 @@ The API is designed for dependency injection using [`inversify`](https://github.
 
 ## Services
 
-There are several core services that are provided by Wotan through the ContainerModule `CORE_DI_MODULE`. These services are not meant to be overridden.
+There are several core services that are provided by Wotan through the ContainerModule created by calling `createCoreModule(globalOptions)`. These services are not meant to be overridden.
 
 * `CachedFileSystem` is a wrapper for the low level `FileSystem` service, which caches the file system layout. File contents are not cached.
 * `ConfigurationManager` is the place for everything related to configuration handling. Internally it uses `ConfigurationProvider` to find, load and parse configuration files. Parsed configuration files are cached.
@@ -36,7 +36,7 @@ The example below creates a new DI-Container and binds all necessary services. A
 
 ```ts
 import { Container, BindingScopeEnum, injectable } from 'inversify';
-import { DEFAULT_DI_MODULE, CORE_DI_MODULE, ConfigurationManager, Linter, FileSystem, NodeFileSystem } from '@fimbul/wotan';
+import { createDefaultModule, createCoreModule, ConfigurationManager, Linter, FileSystem, NodeFileSystem } from '@fimbul/wotan';
 import * as ts from 'typescript';
 
 // using RequestScope makes sure there is only one instance of each service and therefore only one cache
@@ -47,7 +47,7 @@ declare class MyFileSystem extends NodeFileSystem {}
 container.bind(FileSystem).to(MyFileSystem);
 
 // load all core services and all default service implementations that are not already bound
-container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+container.load(createCoreModule({}), createDefaultModule());
 
 @injectable()
 class ApiUser {

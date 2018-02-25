@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { CORE_DI_MODULE } from '../../src/di/core.module';
-import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
+import { createCoreModule } from '../../src/di/core.module';
+import { createDefaultModule } from '../../src/di/default.module';
 import { Runner } from '../../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../../src/services/default/file-system';
@@ -14,7 +14,7 @@ const directories: DirectoryService = {
 test('throws error on non-existing file', (t) => {
     const container = new Container();
     container.bind(DirectoryService).toConstantValue(directories);
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
@@ -37,7 +37,7 @@ test('throws error on non-existing file', (t) => {
 test('throws error on file not included in project', (t) => {
     const container = new Container();
     container.bind(DirectoryService).toConstantValue(directories);
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
@@ -72,7 +72,7 @@ test('throws if no tsconfig.json can be found', (t) => {
         }
     }
     container.bind(FileSystem).to(MockFileSystem);
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const {root} = path.parse(process.cwd());
     t.throws(
@@ -144,7 +144,7 @@ test('reports errors while parsing tsconfig.json', (t) => {
         }
     }
     container.bind(FileSystem).to(MockFileSystem);
-    container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+    container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
 
     t.throws(

@@ -8,8 +8,8 @@ import * as path from 'path';
 import { unixifyPath, format } from '../../src/utils';
 import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
-import { CORE_DI_MODULE } from '../../src/di/core.module';
-import { DEFAULT_DI_MODULE } from '../../src/di/default.module';
+import { createCoreModule } from '../../src/di/core.module';
+import { createDefaultModule } from '../../src/di/default.module';
 
 test('ShowCommand', async (t) => {
     const container = new Container();
@@ -241,7 +241,7 @@ test('SaveCommand', async (t) => {
             error() { throw new Error(); },
         };
         container.bind(MessageHandler).toConstantValue(logger);
-        container.load(CORE_DI_MODULE, DEFAULT_DI_MODULE);
+        container.load(createCoreModule({}), createDefaultModule());
 
         await runCommand(command, container, defaults);
         return {

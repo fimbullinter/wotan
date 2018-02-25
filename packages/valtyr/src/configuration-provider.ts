@@ -1,5 +1,16 @@
 import { injectable } from 'inversify';
-import { ConfigurationProvider, Resolver, Configuration, CacheFactory, Cache } from '@fimbul/wotan';
+import {
+    ConfigurationProvider,
+    Resolver,
+    Configuration,
+    CacheFactory,
+    Cache,
+    DefaultConfigurationProvider,
+    GlobalOptions,
+    DirectoryService,
+    CachedFileSystem,
+    ConfigurationError,
+} from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as path from 'path';
 
@@ -15,9 +26,16 @@ const OFFSET_TO_NODE_MODULES = 3;
 @injectable()
 export class TslintConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
-    private tslintConfigDir: string | undefined;
-    constructor(private resolver: Resolver, cache: CacheFactory) {
-        this.cache = cache.create();
+    private tslintConfigDir: string | undefined = undefined;
+    private baseConfig: Configuration[] | undefined = undefined;
+    constructor(
+        private resolver: Resolver,
+        private fs: CachedFileSystem,
+        private cacheFactory: CacheFactory,
+        private directories: DirectoryService,
+        private options: GlobalOptions,
+    ) {
+        this.cache = cacheFactory.create();
     }
 
     public find(fileName: string) {
@@ -79,7 +97,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         return {
             overrides,
             filename,
-            extends: [],
+            extends: this.getBaseConfiguration(),
             exclude: raw.linterOptions && raw.linterOptions.exclude && mapExcludes(raw.linterOptions.exclude, path.dirname(filename)),
         };
 
@@ -95,6 +113,27 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
             ];
         }
     }
+
+    private getBaseConfiguration() {
+        if (this.baseConfig !== undefined)
+            return this.baseConfig;
+        if (!this.options.valtyr)
+            return this.baseConfig = [];
+        try {
+            const fullPath = path.join(this.directories.getCurrentDirectory(), '.fimbullinter.yaml');
+            const configProvider = new DefaultConfigurationProvider(this.fs, this.resolver, this.cacheFactory);
+            const config = configProvider.parse(this.options.valtyr, fullPath, {
+                stack: [],
+                load() {
+                    throw new Error('Global configuration is not allowed to extend other configs.');
+                },
+            });
+            validateGlobalConfig(config);
+            return this.baseConfig = [config];
+        } catch (e) {
+            throw new ConfigurationError(`Error parsing global configuration for 'valtyr': ${e.message}`);
+        }
+    }
 }
 
 function mapExcludes(excludes: Iterable<string>, configDir: string) {
@@ -102,4 +141,19 @@ function mapExcludes(excludes: Iterable<string>, configDir: string) {
     for (const e of excludes)
         result.push(path.relative(configDir, e));
     return result;
+}
+
+function validateGlobalConfig(config: Configuration) {
+    checkNonExistence(config, 'exclude');
+    checkNonExistence(config, 'rules');
+    checkNonExistence(config, 'rulesDirectories');
+    checkNonExistence(config, 'aliases');
+    if (config.overrides !== undefined)
+        for (const override of config.overrides)
+            checkNonExistence(override, 'rules');
+}
+
+function checkNonExistence<T extends Configuration | Configuration.Override, K extends keyof T>(config: T, key: K) {
+    if (config[key] !== undefined)
+        throw new Error(`'${key}' is not allowed in global configuration.`);
 }

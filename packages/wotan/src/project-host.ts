@@ -6,6 +6,9 @@ import { FileKind, CachedFileSystem } from './services/cached-file-system';
 import { Configuration, AbstractProcessor } from './types';
 import { bind } from 'bind-decorator';
 import { ConfigurationManager } from './services/configuration-manager';
+import debug = require('debug');
+
+const log = debug('wotan:projectHost');
 
 // @internal
 export interface ProcessedFileInfo {
@@ -45,7 +48,8 @@ export class ProjectHost implements ts.CompilerHost {
     private tryFindConfig(file: string) {
         try {
             return this.configManager.find(file);
-        } catch {
+        } catch (e) {
+            log("Error while loading configuration for '%s': %s", file, e.message);
             return;
         }
     }
