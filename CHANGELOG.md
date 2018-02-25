@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.3.0
+
+**Features:**
+
+`valtyr` added support for processors via `.fimbullinter.yaml`
+
 ## v0.2.0
 
 **Features:**
