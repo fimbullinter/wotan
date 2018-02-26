@@ -1,0 +1,42 @@
+declare let foo: number;
+declare let NaNa: number;
+declare let aNaN: number;
+declare let obj: {NaN: number};
+
+foo = NaN;
+foo += NaN;
+
+foo == NaN;
+~~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+foo!==NaN;
+~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+NaN != foo;
+~~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+NaN===foo;
+~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+
+NaNa === foo;
+aNaN === foo;
+foo === NaNa;
+foo === aNaN;
+
+NaN === NaN;
+~~~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+~~~~~~~~~~~  [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+
+foo === obj.NaN;
+
+`${foo}` === "NaN";
+
+/** this is NaN */
+NaN;
+
+isNaN(foo);
+
+switch (foo) {
+    case 1:
+    case obj.NaN:
+    case NaN:
+    ~~~~~~~~~ [error use-isnan: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+    case 2:
+}

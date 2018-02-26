@@ -58,6 +58,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
 `try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. | TSLint has no similar rule.
 `typecheck` | TypeScript's compiler errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
+`use-isnan` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 
 ## Configuration
 

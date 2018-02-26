@@ -14,3 +14,4 @@ rules:
   no-useless-initializer: error
   trailing-newline: error
   try-catch-return-await: error
+  use-isnan: error
