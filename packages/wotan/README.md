@@ -44,6 +44,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
 `await-promise` | Finds uses of `await` on non-Promise values. Also checks `for await` loops. *requires type information* | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 `deprecation` | Finds uses of deprecated variables, classes, properties, functions, signatures, ... *requires type information* | This rule checks element accesses (`foo[bar]`), JSX elements, chained function calls (`getFn()()`) in addition to what the TSLint rule does and has more useful error reporting.
+`generator-yield` | Require at least one `yield` inside generator functions. | There's no similar TSLint rule.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
 `no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
