@@ -2,6 +2,7 @@
 rules:
   await-promise: error
   deprecation: error
+  generator-yield: error
   no-debugger: error
   no-fallthrough: error
   no-inferred-empty-object: error
