@@ -3,6 +3,10 @@ import * as ts from 'typescript';
 import { isIdentifier, getChildOfKind, isFunctionWithBody, isUnionTypeNode, getPreviousToken, getNextToken } from 'tsutils';
 
 export class Rule extends AbstractRule {
+    public static supports(sourceFile: ts.SourceFile) {
+        return !sourceFile.isDeclarationFile;
+    }
+
     public apply() {
         const isJs = this.sourceFile.flags & ts.NodeFlags.JavaScriptFile;
         for (const node of this.context.getFlatAst()) {
