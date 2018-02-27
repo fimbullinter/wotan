@@ -37,9 +37,8 @@ const lastNightly = process.argv[2]; // revision of the last nightly
 const lastReleaseTag = getLastRelaseTag();
 console.log('last stable release tag', lastReleaseTag);
 // if there was a release since the last nightly, only get the diff since that release
-const diffStart = lastNightly
-    ? cp.execSync(`git rev-list ${lastReleaseTag}...${lastNightly}`, {encoding: 'utf8'}).split(/\r?\n/)[0]
-    : lastReleaseTag;
+const diffStart = lastNightly && cp.execSync(`git rev-list ${lastReleaseTag}...${lastNightly}`, {encoding: 'utf8'}).split(/\r?\n/)[0]
+    || lastReleaseTag;
 console.log('releasing changes since', diffStart);
 
 for (const name of getChangedPackageNames(diffStart, publicPackages.keys()))
