@@ -47,7 +47,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `generator-yield` | Require at least one `yield` inside generator functions. | There's no similar TSLint rule.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
-`no-floating-promises` | Warns about not using the result of a call to an async function inside async functions. *requires type information* | TSLint's `no-floating-promises` also checks outside of async functions and only requires you to register the `onrejected` callback.
+`no-floating-promises` | Warns about not using the result of a call to an async function inside async functions. *requires type information* | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 `no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 `no-unsafe-finally` | Forbids control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
