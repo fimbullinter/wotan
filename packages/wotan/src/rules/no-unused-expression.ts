@@ -40,7 +40,8 @@ export class Rule extends  ConfigurableRule<Options> {
                 if (node.operatorToken.kind === ts.SyntaxKind.CommaToken && !isIndirectEval(node))
                     this.checkNode(node.left);
             } else if (isExpressionStatement(node)) {
-                if (!isDirective(node))
+                // allow `void asyncFn()` to mute 'await-async-result'
+                if (!isDirective(node) && node.expression.kind !== ts.SyntaxKind.VoidExpression)
                     this.checkNode(node.expression, node);
             } else if (isForStatement(node)) {
                 if (node.initializer !== undefined && node.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)

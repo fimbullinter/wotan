@@ -43,7 +43,7 @@ test('ShowCommand', async (t) => {
     }
     container.bind(FileSystem).to(MockFileSystem);
 
-    t.throws(
+    void t.throws(
         verify({
             command: CommandName.Show,
             modules: [],
@@ -54,7 +54,7 @@ test('ShowCommand', async (t) => {
         "Could not find configuration for '../foo.ts'.",
     );
 
-    t.throws(
+    void t.throws(
         verify({
             command: CommandName.Show,
             modules: [],

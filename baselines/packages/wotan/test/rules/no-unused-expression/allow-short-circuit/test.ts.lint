@@ -17,6 +17,12 @@ foo;
 let bar = (foo, 'bar');
            ~~~          [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
 
+void foo;
+     ~~~  [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+void (foo);
+     ~~~~~  [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+void parseInt('');
+
 function fn() {
     'use strict';
     ;

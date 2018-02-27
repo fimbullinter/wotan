@@ -12,6 +12,10 @@ foo;
 'bar';
 let bar = (foo, 'bar');
 
+void foo;
+void (foo);
+void parseInt('');
+
 function fn() {
     'use strict';
     ;
