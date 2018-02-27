@@ -1,0 +1,2 @@
+rules:
+  prefer-object-spread: error

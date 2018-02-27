@@ -1,0 +1,72 @@
+class Foo {
+    spreadTypeParam<T extends object>(param: T) {
+        return Object.assign({}, param); // requires TypeChecker
+               ~~~~~~~~~~~~~~~~~~~~~~~~                          [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    spreadNonObject(param: number | boolean) {
+        return Object.assign({}, param); // requires TypeChecker
+               ~~~~~~~~~~~~~~~~~~~~~~~~                          [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    spreadObjectFalsyUnion(param: object | undefined | '' | 0 | false | null) {
+        return Object.assign({}, param); // this could be spreaded
+               ~~~~~~~~~~~~~~~~~~~~~~~~                            [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    spreadObjectTruthyUnion(param: object | boolean) {
+        return Object.assign({}, param); // requires TypeChecker
+               ~~~~~~~~~~~~~~~~~~~~~~~~                          [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    spreadThis() {
+        return Object.assign({}, this);
+    }
+}
+
+declare let assign: any;
+assign({}, {});
+assign.assign({}, {});
+assign.Object({}, {});
+Object.assign({}, Object.assign);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+
+Object.assign;
+Object.assign();
+Object.assign({});
+~~~~~~~~~~~~~~~~~  [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+
+// Object.assign
+Object.assign({}, {});
+~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+// Object.assign
+obj;
+Object.
+~~~~~~~
+    assign({}, {});
+~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+Object
+~~~~~~
+    .assign({}, {});
+~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+Object. // eol comment
+~~~~~~~~~~~~~~~~~~~~~~
+    assign({}, {});
+~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+Object./** inline comment*/ assign({}, {});
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+
+(() => Object.assign({}));
+       ~~~~~~~~~~~~~~~~~   [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+(() => Object.assign({}, {}));
+       ~~~~~~~~~~~~~~~~~~~~~   [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+
+let obj = Object.assign({}, {}, {});
+          ~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+obj = Object.assign({prop: 1}, obj);
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+obj = Object.assign(obj, {prop: 1});
+obj = Object.assign({}, ...[obj, obj]);
+obj = Object.assign({prop: 1}, {}, {}, {prop: 2}, {}, obj, {},)
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+obj = Object.assign({});
+      ~~~~~~~~~~~~~~~~~  [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+
+obj = Object.assign({}, Boolean() && {prop: 1}, Boolean() ? {prop2: 1} : {prop3: 1});
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
