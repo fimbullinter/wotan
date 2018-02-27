@@ -1,7 +1,6 @@
 import { TypedRule, Replacement } from '../types';
 import {
     NodeWrap,
-    hasModifier,
     isTryStatement,
     isFunctionScopeBoundary,
     isReturnStatement,
@@ -9,6 +8,7 @@ import {
     isThenableType,
 } from 'tsutils';
 import * as ts from 'typescript';
+import { isAsyncFunction } from '../rule-utils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -23,23 +23,14 @@ export class Rule extends TypedRule {
 
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined, inTryCatch: boolean) {
         do { // iterate as linked list until we find an async function / method
-            switch (wrap.kind) {
-                case ts.SyntaxKind.FunctionDeclaration:
-                case ts.SyntaxKind.MethodDeclaration:
-                    if ((<ts.FunctionLikeDeclaration>wrap.node).body === undefined)
-                        break;
-                    // falls through
-                case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.FunctionExpression:
-                    if (hasModifier(wrap.node.modifiers, ts.SyntaxKind.AsyncKeyword)) {
-                        this.inTryCatch = false;
-                        wrap.children.forEach(this.visitNode, this); // visit children recursively
-                        this.inTryCatch = inTryCatch;
-                        wrap = wrap.skip!; // continue right after the function
-                        continue;
-                    }
+            if (!isAsyncFunction(wrap.node)) {
+                wrap = wrap.next!;
+                continue;
             }
-            wrap = wrap.next!;
+            this.inTryCatch = false;
+            wrap.children.forEach(this.visitNode, this); // visit children recursively
+            this.inTryCatch = inTryCatch;
+            wrap = wrap.skip!; // continue right after the function
         } while (wrap !== end);
     }
 

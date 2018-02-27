@@ -1,5 +1,6 @@
 ---
 rules:
+  await-async-result: error
   await-promise: error
   deprecation: error
   generator-yield: error
