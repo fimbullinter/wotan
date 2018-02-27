@@ -7,6 +7,7 @@ rules:
   no-fallthrough: error
   no-inferred-empty-object: error
   no-return-await: error
+  no-nan-compare: error
   no-unsafe-finally: error
   no-unused-expression: error
   no-unused-label: error
@@ -14,4 +15,3 @@ rules:
   no-useless-initializer: error
   trailing-newline: error
   try-catch-return-await: error
-  use-isnan: error

@@ -52,13 +52,13 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `no-unsafe-finally` | Forbids control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
 `no-unused-expression` | Warns about side-effect free expressions whose value is not used | This one is a bit stricter than TSLint's `no-unused-expression` and checks `for` loops in addition.
 `no-unused-label` | Warns about labels that are never used or at the wrong position. | TSLint only has `label-position` which doesn't check for unused labels.
+`no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-useless-assertion` | Detects type assertions that don't change the type or are not necessary in the first place. *requires type information* | TSLint's `no-unnecessary-type-assertion` does not detect assertions needed to silence the compiler warning `Variable ... is used before being assigned.` The Wotan builtin rule also checks whether the assertion is necessary at all or the receiver accepts the original type.
 `no-useless-initializer` | Detects unnecessary initialization with `undefined`. | TSLint's rule `no-unnecessary-initializer` doesn't fix all parameter initializers and gives false positives for destructuring.
 `syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
 `try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. | TSLint has no similar rule.
 `typecheck` | TypeScript's compiler errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
-`use-isnan` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 
 ## Configuration
 
