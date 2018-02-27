@@ -22,15 +22,15 @@ class Foo {
 
 async function test() {
     isAsync();
-    ~~~~~~~~~~ [error no-floating-promises: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
     notAsync();
     returnsPromise();
-    ~~~~~~~~~~~~~~~~~ [error no-floating-promises: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    ~~~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
     returnsThenable();
-    ~~~~~~~~~~~~~~~~~~ [error no-floating-promises: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    ~~~~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
     let foo = new Foo();
     foo.isAsync();
-    ~~~~~~~~~~~~~~ [error no-floating-promises: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    ~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
     foo.notAsync();
 
     await isAsync();
