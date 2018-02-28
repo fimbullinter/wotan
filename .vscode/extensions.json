@@ -3,6 +3,7 @@
 	// for the documentation about the extensions.json format
 	"recommendations": [
     "EditorConfig.editorconfig",
-    "eg2.tslint"
+    "eg2.tslint",
+    "bierner.markdown-preview-github-styles"
 	]
 }

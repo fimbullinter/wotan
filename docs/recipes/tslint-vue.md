@@ -32,8 +32,11 @@ Linting Vue files with a combination of Webpack, vue-loader, ts-loader and tslin
     wotan -p tsconfig.json -c tslint.json --fix # lint the whole project with tslint.json and fix failures
     ```
 4. Further Reading
+
     [Wotan](../../packages/wotan#readme) - CLI and configuration
+
     [Valtýr](../../packages/valtyr#readme) - plugin for TSLint rules and formatters - "the TSLint runtime that's better than TSLint"
+
     [Vé](../../packages/ve#readme) - processor for Vue single file components
 
 Note that the above configuration will load the `@fimbul/valtyr` plugin module everytime you execute `wotan`.
