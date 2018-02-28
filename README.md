@@ -40,6 +40,12 @@ Allows authors of TSLint rules and formatters to provide their package for the u
 * [Writing Shareable Configurations](https://github.com/fimbullinter/wotan/blob/master/docs/shareable-config.md)
 * [Using the API](https://github.com/fimbullinter/wotan/blob/master/docs/api.md)
 
+### Recipes
+
+* [Linting Vue files with TSLint rules](https://github.com/fimbullinter/wotan/blob/master/docs/recipes/tslint-vue.md)
+* [Replacement for `tslint --type-check`](https://github.com/fimbullinter/wotan/blob/master/docs/recipes/tslint-type-check.md)
+* [Detect Unused Variables](https://github.com/fimbullinter/wotan/blob/master/docs/recipes/no-unused-locals.md)
+
 ## What is this all about?
 
 ### What's up with those names?
