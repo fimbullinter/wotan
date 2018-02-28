@@ -56,6 +56,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-useless-assertion` | Detects type assertions that don't change the type or are not necessary in the first place. *requires type information* | TSLint's `no-unnecessary-type-assertion` does not detect assertions needed to silence the compiler warning `Variable ... is used before being assigned.` The Wotan builtin rule also checks whether the assertion is necessary at all or the receiver accepts the original type.
 `no-useless-initializer` | Detects unnecessary initialization with `undefined`. | TSLint's rule `no-unnecessary-initializer` doesn't fix all parameter initializers and gives false positives for destructuring.
+`prefer-number-isnan` | Prefer ES2015's `Number.isNaN` over the global `isNaN` mainly for performance. *requires type information* | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. | Performance, and better handling of parens in fixer.
 `syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
