@@ -282,7 +282,7 @@ function parseOptionalBooleanOrNumber(args: string[], index: number): {index: nu
                 return {index: index + 1, argument: false};
             default: {
                 const num = parseInt(args[index + 1], 10);
-                if (!isNaN(num))
+                if (!Number.isNaN(num))
                     return {index: index + 1, argument: num};
             }
         }

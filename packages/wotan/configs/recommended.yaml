@@ -14,6 +14,7 @@ rules:
   no-unused-label: error
   no-useless-assertion: error
   no-useless-initializer: error
+  prefer-number-isnan: error
   prefer-object-spread: error
   trailing-newline: error
   try-catch-return-await: error
