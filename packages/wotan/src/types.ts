@@ -76,8 +76,14 @@ export type Severity = 'error' | 'warning';
 export interface RuleConstructor {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?(sourceFile: ts.SourceFile, options: any, settings: Settings): boolean;
+    supports?(sourceFile: ts.SourceFile, context: RuleSupportsContext): boolean;
     new(context: RuleContext): AbstractRule;
+}
+
+export interface RuleSupportsContext {
+    readonly program?: ts.Program;
+    readonly settings: Settings;
+    readonly options: {} | null | undefined;
 }
 
 export interface RuleContext {
@@ -101,7 +107,7 @@ export type Settings = ReadonlyMap<string, {} | null | undefined>;
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
-    public static supports: ((sourceFile: ts.SourceFile, options: any, settings: Settings) => boolean) | undefined = undefined;
+    public static supports?: (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean = undefined;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;

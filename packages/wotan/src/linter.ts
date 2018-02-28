@@ -123,7 +123,7 @@ export class Linter {
                 this.logger.warn(`Rule '${ruleName}' requires type information.`);
                 continue;
             }
-            if (ctor.supports !== undefined && !ctor.supports(sourceFile, options, config.settings)) {
+            if (ctor.supports !== undefined && !ctor.supports(sourceFile, {program, options, settings: config.settings})) {
                 log(`Rule %s does not support this file`, ruleName);
                 continue;
             }

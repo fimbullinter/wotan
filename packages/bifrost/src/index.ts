@@ -1,4 +1,11 @@
-import { AbstractRule, RuleContext, AbstractFormatter, FileSummary, RuleConstructor, FormatterConstructor } from '@fimbul/wotan';
+import {
+    AbstractRule,
+    RuleContext,
+    AbstractFormatter,
+    FileSummary,
+    RuleConstructor,
+    FormatterConstructor,
+} from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
 import getCaller = require('get-caller-file');
@@ -15,11 +22,9 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
 
-        public static supports(sourceFile: ts.SourceFile) {
-            if (Rule.metadata && Rule.metadata.typescriptOnly)
-                return /\.tsx?$/.test(sourceFile.fileName);
-            return true;
-        }
+        public static supports = Rule.metadata && Rule.metadata.typescriptOnly
+            ? (sourceFile: ts.SourceFile) => /\.tsx?$/.test(sourceFile.fileName)
+            : undefined;
 
         private delegate: TSLint.IRule;
 
