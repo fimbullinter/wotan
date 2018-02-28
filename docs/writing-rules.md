@@ -1,19 +1,25 @@
 # Writing Rules
 
-## Important Conventions
+## Requirements
 
-* the file name of a rule should be kebab-case to match the name used in the configuration, e.g. `do-something-cool` is implemented in `do-something-cool.ts`.
+* the file name of a rule is kebab-case to match the name used in the configuration, e.g. `do-something-cool` is implemented in `do-something-cool.ts`
+* rule names must match `/^[\w-]+$/`
 * the file needs to export a class named `Rule` that extends `AbstractRule` (or any subclass thereof)
+* replacements of a fix must not overlap, see [Adding Fixes](#adding-fixes) for more information
 
-## Best Practices
+## Important Conventions
 
 * rules should not have side effects
 * rules should not rely on the order of the linted files
 * rules should not make assumptions about the execution environment, for example accessing the file system is not guaranteed to work
+
+## Best Practices
+
 * the failure message should begin with an uppercase letter (unless it starts with `'`), end with a dot and wrap keywords and code snippets in single quotes.
 * fixes should not introduce any syntax or type errors
 * fixes should not alter the runtime semantics
 * fixes should replace the minimum amount of text necessary to avoid overlapping fixes
+* rules should not produce contradicting failures when run with and without type information
 
 ## Implementing the Rule
 
@@ -137,5 +143,55 @@ export class Rule extends AbstractRule {
         }
     }
 }
+```
 
+## Adding Fixes
+
+Now that the rule finds all failures it would be nice to provide users the ability to automatically fix these failures.
+For academic purposes we add fixes for our `no-any` rule, although there is no safe way to replace `any`. Keep in mind that you should not add fixes that might break at compile or runtime.
+
+Let's pretend replacing `any` with the empty object type `{}` is correct.
+
+```ts
+declare let node: ts.Token<ts.SyntaxKind.AnyKeyword>; // this is the node we want to replace
+const end = node.end;
+const start = end - 3;
+
+// adding a single replacement as fix
+this.addFailure(start, end, "Type 'any' is forbidden.", Replacement.replace(start, end, '{}'));
+
+/* OR */
+
+// adding multiple replacements as fix, either all of them are applied or none, the order doesn't matter
+this.addFailure(start, end, "Type 'any' is forbidden.", [
+    Replacement.delete(start, end),
+    Replacement.append(start, '{}'),
+]);
+```
+
+Both fixes above are treated the same internally. But there are certain restrictions:
+While overlapping replacements of different fixes are filtered out and applied in a subsequent iteration, replacements of the same fix must not overlap.
+
+* No `replace` or `delete` of the same character more than once.
+* No `replace` or `append` at the same position more than once.
+* You are allowed to `delete` and `append` at the same position as they get merged internally.
+
+Some examples of invalid fixes:
+
+```ts
+[
+  Replacement.delete(start, end),
+  Replacement.append(start, '{'),
+  Replacement.append(start, '}'), // overlaps with the previous replacement
+];
+
+[
+  Replacement.replace(start, end, '{'),
+  Replacement.append(start, '}'), // overlaps with the previous replacement
+];
+
+[
+  Replacement.delete(start, end),
+  Replacement.replace(start, end, '{}'), // deletes twice ... why would you even want to do that?
+];
 ```
