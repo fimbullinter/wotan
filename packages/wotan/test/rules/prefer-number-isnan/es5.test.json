@@ -1,4 +1,4 @@
 {
   "project": "tsconfig.es5.json",
-  "files": ["test.ts"]
+  "files": ["test.ts", "declaration.d.ts"]
 }
