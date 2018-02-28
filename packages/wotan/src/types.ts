@@ -100,8 +100,8 @@ export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
-    public static deprecated?: boolean | string;
-    public static supports?(sourceFile: ts.SourceFile, options: any, settings: Settings): boolean;
+    public static deprecated: boolean | string = false;
+    public static supports: ((sourceFile: ts.SourceFile, options: any, settings: Settings) => boolean) | undefined = undefined;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
