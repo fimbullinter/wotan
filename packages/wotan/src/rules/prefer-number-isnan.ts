@@ -1,4 +1,4 @@
-import { TypedRule, Replacement } from '../types';
+import { TypedRule, Replacement, RuleSupportsContext } from '../types';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, isTypeVariable, isUnionType } from 'tsutils';
 import * as path from 'path';
@@ -7,13 +7,18 @@ import debug = require('debug');
 const log = debug('wotan:rule:prefer-number-isnan');
 
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
+    public static supports(sourceFile: ts.SourceFile, context: RuleSupportsContext) {
+        if (sourceFile.isDeclarationFile)
+            return false;
+        const libFileDir = path.dirname(ts.getDefaultLibFilePath(context.program!.getCompilerOptions()));
+        if (context.program!.getSourceFile(path.join(libFileDir, 'lib.es2015.core.d.ts')) === undefined) {
+            log("Project does not contain 'lib.es2015.core.d.ts'");
+            return false;
+        }
+        return true;
     }
 
     public apply() {
-        if (!this.supportsNumberIsNaN())
-            return;
         const re = /\bisNaN\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
@@ -42,14 +47,5 @@ export class Rule extends TypedRule {
         if (type.flags & ts.TypeFlags.NumberLike)
             return true;
         return isUnionType(type) && type.types.every(this.isNumberLikeType, this);
-    }
-
-    private supportsNumberIsNaN(): boolean {
-        const libFileDir = path.dirname(ts.getDefaultLibFilePath(this.program.getCompilerOptions()));
-        if (this.program.getSourceFile(path.join(libFileDir, 'lib.es2015.core.d.ts')) === undefined) {
-            log("Project does not contain 'lib.es2015.core.d.ts'");
-            return false;
-        }
-        return true;
     }
 }
