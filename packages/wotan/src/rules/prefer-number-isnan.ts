@@ -21,18 +21,15 @@ export class Rule extends TypedRule {
             if (!isIdentifier(node) || node.end !== re.lastIndex || node.text !== 'isNaN')
                 continue;
             const parent = node.parent!;
-            if (isCallExpression(parent) && parent.expression === node && parent.arguments.length === 1)
-                this.checkCall(parent);
+            if (isCallExpression(parent) && parent.expression === node && parent.arguments.length === 1 &&
+                this.isNumberLikeType(this.checker.getTypeAtLocation(parent.arguments[0])))
+                this.addFailure(
+                    match.index,
+                    re.lastIndex,
+                    "Prefer 'Number.isNaN' over 'isNaN'.",
+                    Replacement.append(match.index, 'Number.'),
+                );
         }
-    }
-
-    private checkCall(node: ts.CallExpression) {
-        const arg = node.arguments[0];
-        // don't complain if parameter is not a number because of the different semantics of Number.isNaN
-        if (!this.isNumberLikeType(this.checker.getTypeAtLocation(arg)))
-            return;
-        const start = node.getStart(this.sourceFile);
-        this.addFailure(start, node.expression.end, "Prefer 'Number.isNaN' over 'isNaN'.", Replacement.append(start, 'Number.'));
     }
 
     private isNumberLikeType(type: ts.Type): boolean {
