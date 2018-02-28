@@ -13,8 +13,7 @@ test('correctly wraps rule', (t) => {
     let rule = wrapTslintRule(RegularRule, 'regular');
     t.false(rule.requiresTypeInformation);
     t.false(rule.deprecated);
-    t.true(rule.supports!(ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest), undefined, new Map()));
-    t.true(rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), undefined, new Map()));
+    t.is(rule.supports, undefined);
 
     class TypescriptOnlyRule extends TSLint.Rules.AbstractRule {
         public static metadata = <any>{
@@ -28,8 +27,9 @@ test('correctly wraps rule', (t) => {
     rule = wrapTslintRule(TypescriptOnlyRule, 'ts-only');
     t.false(rule.requiresTypeInformation);
     t.true(rule.deprecated);
-    t.true(rule.supports!(ts.createSourceFile('foo.tsx', '', ts.ScriptTarget.Latest), undefined, new Map()));
-    t.false(rule.supports!(ts.createSourceFile('foo.jsx', '', ts.ScriptTarget.Latest), undefined, new Map()));
+    t.truthy(rule.supports);
+    t.true(rule.supports!(ts.createSourceFile('foo.tsx', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
+    t.false(rule.supports!(ts.createSourceFile('foo.jsx', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
 
     class TypescriptOnlyTypedRule extends TSLint.Rules.AbstractRule {
         public static metadata = <any>{
@@ -43,8 +43,9 @@ test('correctly wraps rule', (t) => {
     rule = wrapTslintRule(TypescriptOnlyTypedRule, 'ts-only-typed');
     t.true(rule.requiresTypeInformation);
     t.false(rule.deprecated);
-    t.true(rule.supports!(ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest), undefined, new Map()));
-    t.false(rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), undefined, new Map()));
+    t.truthy(rule.supports);
+    t.true(rule.supports!(ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
+    t.false(rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
 
     class TypedRule extends TSLint.Rules.TypedRule {
         public static metadata = <any>{
@@ -57,8 +58,7 @@ test('correctly wraps rule', (t) => {
     rule = wrapTslintRule(TypedRule, 'typed');
     t.true(rule.requiresTypeInformation);
     t.is(rule.deprecated, 'foo');
-    t.true(rule.supports!(ts.createSourceFile('foo.tsx', '', ts.ScriptTarget.Latest), undefined, new Map()));
-    t.true(rule.supports!(ts.createSourceFile('foo.jsx', '', ts.ScriptTarget.Latest), undefined, new Map()));
+    t.is(rule.supports, undefined);
 });
 
 test('applies rules correctly', (t) => {
