@@ -1,17 +1,36 @@
+interface Empty {}
 class Foo {
-    spreadTypeParam<T extends object>(param: T) {
-        return {...param}; // requires TypeChecker
+    dontSpreadTypeParam<T extends object>(param: T, param2: T | undefined) {
+        Object.assign({}, param);
+        Object.assign({}, param2);
     }
-    spreadNonObject(param: number | boolean) {
-        return {...param}; // requires TypeChecker
+    dontSpreadNonObject(param: number | boolean) {
+        return Object.assign({}, param);
     }
-    spreadObjectFalsyUnion(param: object | undefined | '' | 0 | false | null) {
-        return {...param}; // this could be spreaded
+    spreadObjectFalsyUnion(param: object | undefined | '' | 0 | false | null | void) {
+        return {...param};
     }
-    spreadObjectTruthyUnion(param: object | boolean) {
-        return {...param}; // requires TypeChecker
+    dontSpreadObjectTruthyUnion(param: object | true, param2: object | 1, param3: object | "foo") {
+        Object.assign({}, param);
+        Object.assign({}, param2);
+        Object.assign({}, param3);
     }
-    spreadThis() {
+    dontSpreadAllFalsyUnion(param: undefined | '' | null | 0 | false | void) {
+        return Object.assign({}, param);
+    }
+    spreadEmptyObject(param: {}) {
+        return {...param};
+    }
+    dontSpreadIntersection(param: object | (undefined & null)) {
+        return {...param};
+    }
+    spreadEmptyInterfaceType(param: Empty) {
+        return {...param};
+    }
+    spreadAny(param: any) {
+        return {...param};
+    }
+    dontSpreadThis() {
         return Object.assign({}, this);
     }
 }

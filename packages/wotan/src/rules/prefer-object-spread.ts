@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '../types';
+import { TypedRule, Replacement } from '../types';
 import * as ts from 'typescript';
 import {
     WrappedAst,
@@ -7,9 +7,11 @@ import {
     isPropertyAccessExpression,
     isCallExpression,
     isObjectLiteralExpression,
+    unionTypeParts,
+    isFalsyType,
 } from 'tsutils';
 
-export class Rule extends AbstractRule {
+export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
         return !sourceFile.isDeclarationFile;
     }
@@ -35,10 +37,29 @@ export class Rule extends AbstractRule {
                     "No need for 'Object.assign', use the object directly.",
                     createFix(grandParent, this.sourceFile),
                 );
-            } else if (grandParent.arguments.every(isSpreadableObject)) {
+            } else if (grandParent.arguments.every(this.isSpreadableObject, this)) {
                 this.addFailureAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
             }
         }
+    }
+
+    private isSpreadableObject(node: ts.Expression, i: number): boolean {
+        if (i === 0)
+            return true;
+        if (node.kind === ts.SyntaxKind.ThisKeyword || node.kind === ts.SyntaxKind.SpreadElement)
+            return false;
+        const type = this.checker.getTypeAtLocation(node);
+        if (type.flags & ts.TypeFlags.Any)
+            return true;
+        let seenObject = false;
+        for (const t of unionTypeParts(type)) {
+            if (t.flags & (ts.TypeFlags.Object | ts.TypeFlags.NonPrimitive)) {
+                seenObject = true;
+            } else if (!isFalsyType(t)) {
+                return false;
+            }
+        }
+        return seenObject;
     }
 }
 
@@ -80,15 +101,4 @@ function createFix(node: ts.CallExpression, sourceFile: ts.SourceFile) {
     }
 
     return fix;
-}
-
-function isSpreadableObject(node: ts.Expression): boolean {
-    switch (node.kind) {
-        case ts.SyntaxKind.ThisKeyword:
-        case ts.SyntaxKind.SpreadElement:
-            return false;
-        default:
-            // TODO in theory this needs type info to determine if `node is object` or a union containing only falsy types besides `object`
-            return true;
-    }
 }
