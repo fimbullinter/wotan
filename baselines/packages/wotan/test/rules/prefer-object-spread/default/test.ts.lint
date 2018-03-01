@@ -23,10 +23,6 @@ class Foo {
         return Object.assign({}, param);
                ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
     }
-    dontSpreadIntersection(param: object | (undefined & null)) {
-        return Object.assign({}, param);
-               ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
-    }
     spreadEmptyInterfaceType(param: Empty) {
         return Object.assign({}, param);
                ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]

@@ -21,9 +21,6 @@ class Foo {
     spreadEmptyObject(param: {}) {
         return Object.assign({}, param);
     }
-    dontSpreadIntersection(param: object | (undefined & null)) {
-        return Object.assign({}, param);
-    }
     spreadEmptyInterfaceType(param: Empty) {
         return Object.assign({}, param);
     }
