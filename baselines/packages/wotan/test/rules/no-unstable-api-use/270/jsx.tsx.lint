@@ -23,8 +23,8 @@ class BarComponent {
 class BazComponent extends BarComponent {}
 
 let foo = <FooComponent foo="a"/>;
-          ~~~~~~~~~~~~~~~~~~~~~~~  [error deprecation: CallSignature '(props: { foo: string; }): false' is deprecated.]
+          ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(props: { foo: string; }): false' is deprecated.]
 let foo2 = <FooComponent bar="1"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
-           ~~~~~~~~~~~~                  [error deprecation: Class 'BazComponent' is deprecated.]
+           ~~~~~~~~~~~~                  [error no-unstable-api-use: Class 'BazComponent' is deprecated.]

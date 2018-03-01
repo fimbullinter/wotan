@@ -47,13 +47,13 @@ export class Rule extends TypedRule {
     private checkObjectDestructuring(node: ts.Identifier) {
         const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
         if (symbol !== undefined)
-            return this.checkForDeprecation(symbol, node, node.text, describeWithName);
+            return this.checkStability(symbol, node, node.text, describeWithName);
     }
 
     private checkSignature(node: ts.CallLikeExpression) {
         const signature = this.checker.getResolvedSignature(node);
         if (signature !== undefined) // for compatibility with typescript@<2.6.0
-            return this.checkForDeprecation(signature, node, undefined, signatureToString);
+            return this.checkStability(signature, node, undefined, signatureToString);
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
@@ -65,13 +65,13 @@ export class Rule extends TypedRule {
                 const name = (<ts.Identifier>element.name).text;
                 const symbol = type.getProperty(name);
                 if (symbol !== undefined)
-                    this.checkForDeprecation(symbol, element.name, name, describeWithName);
+                    this.checkStability(symbol, element.name, name, describeWithName);
             } else {
                 const name = getPropertyName(element.propertyName);
                 if (name !== undefined) {
                     const symbol = type.getProperty(name);
                     if (symbol !== undefined)
-                        this.checkForDeprecation(symbol, element.propertyName, name, describeWithName);
+                        this.checkStability(symbol, element.propertyName, name, describeWithName);
                 } else {
                     const propType = this.checker.getTypeAtLocation((<ts.ComputedPropertyName>element.propertyName).expression);
                     this.checkDynamicPropertyAccess(type, propType, element.propertyName);
@@ -104,20 +104,20 @@ export class Rule extends TypedRule {
             symbol = this.checker.getAliasedSymbol(symbol);
         if ((symbol.flags & functionLikeSymbol) && isPartOfCall(node))
             return;
-        return this.checkForDeprecation(symbol, node, name, describeWithName);
+        return this.checkStability(symbol, node, name, describeWithName);
     }
 
-    private checkForDeprecation<T extends ts.Signature | ts.Symbol, U extends ts.Node, V>(
+    private checkStability<T extends ts.Signature | ts.Symbol, U extends ts.Node, V>(
         s: T,
         node: U,
         hint: V,
         descr: (s: T, node: U, checker: ts.TypeChecker, hint: V) => string,
     ) {
         for (const tag of s.getJsDocTags())
-            if (tag.name === 'deprecated')
+            if (tag.name === 'deprecated' || tag.name === 'experimental')
                 this.addFailureAtNode(
                     node,
-                    `${descr(s, node, this.checker, hint)} is deprecated${tag.text ? ': ' + tag.text : '.'}`,
+                    `${descr(s, node, this.checker, hint)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
                 );
     }
 }
