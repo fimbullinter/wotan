@@ -5,7 +5,7 @@ extends:
 overrides:
   - files: "packages/*/test/**"
     rules:
-      deprecation: off
+      no-unstable-api-use: off
       no-inferred-empty-object: off
   - files: "packages/**"
     rules:

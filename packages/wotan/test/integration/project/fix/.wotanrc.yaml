@@ -1,6 +1,6 @@
 rulesDirectories:
   local: "."
 rules:
-  deprecation: error
+  no-unstable-api-use: error
   local/foo: error
   no-unused-label: error

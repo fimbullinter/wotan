@@ -1,3 +1,3 @@
 import {bar as fn} from './other';
 fn();
-~~~~  [error deprecation: CallSignature '(): void' is deprecated: bar ]
+~~~~  [error no-unstable-api-use: CallSignature '(): void' is deprecated: bar ]

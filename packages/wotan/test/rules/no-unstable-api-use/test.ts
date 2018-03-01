@@ -346,3 +346,11 @@ namespace MyClass {
     myObj.fnA();
     myObj.fnB();
 }
+
+/** @experimental */
+let experimental = 1;
+/** @experimental reason */
+let experimentalReason = 1;
+
+experimental;
+experimentalReason;

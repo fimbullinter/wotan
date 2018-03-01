@@ -2,7 +2,6 @@
 rules:
   await-async-result: error
   await-promise: error
-  deprecation: error
   generator-yield: error
   no-debugger: error
   no-fallthrough: error
@@ -10,6 +9,7 @@ rules:
   no-return-await: error
   no-nan-compare: error
   no-unsafe-finally: error
+  no-unstable-api-use: error
   no-unused-expression: error
   no-unused-label: error
   no-useless-assertion: error
