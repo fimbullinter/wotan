@@ -3521,9 +3521,15 @@ tslint@^5.0.0:
     tslib "^1.8.0"
     tsutils "^2.12.1"
 
-tsutils@^2.12.1, tsutils@^2.20.0, tsutils@^2.21.0:
+tsutils@^2.12.1, tsutils@^2.21.0:
   version "2.21.2"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.21.2.tgz#902aa5987e1440c47673543d96752df8d44ab9c7"
+  dependencies:
+    tslib "^1.8.1"
+
+tsutils@^2.22.0:
+  version "2.22.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.22.0.tgz#26694814556a09bb5afd4802462931ad5294e3fa"
   dependencies:
     tslib "^1.8.1"
 
