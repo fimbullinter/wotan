@@ -10,8 +10,8 @@
     ":maintainLockFilesWeekly",
     "group:definitelyTyped"
   ],
-  "prHourlyLimit": 0,
   "timezone": "Europe/Berlin",
+  "schedule": "every day",
   "lockFileMaintenance": {
     "automerge": true
   },
