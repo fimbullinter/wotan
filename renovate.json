@@ -11,7 +11,10 @@
     "group:definitelyTyped"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": "every day",
+  "schedule": [
+    "after 10pm",
+    "before 5am"
+  ],
   "lockFileMaintenance": {
     "automerge": true
   },
