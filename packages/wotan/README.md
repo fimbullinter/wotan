@@ -43,7 +43,7 @@ wotan --fix # lint the whole project and fix all fixable errors
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
 `await-async-result` | Warns about not using the result of a call to an async function inside async functions. *requires type information* | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
-`await-promise` | Finds uses of `await` on non-Promise values. Also checks `for await` loops. *requires type information* | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
+`await-only-promise` | Finds uses of `await` on non-Promise values. Also checks `for await` loops. *requires type information* | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 `generator-yield` | Require at least one `yield` inside generator functions. | There's no similar TSLint rule.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
@@ -83,7 +83,7 @@ extends: wotan:recommended # use all recommended rules
     "extends": "../.wotanrc.yaml",
     "rules": {
         "no-useless-assertion": "off",
-        "await-promise": "warn"
+        "await-only-promise": "warn"
     }
 }
 ```
@@ -100,7 +100,7 @@ overrides:
   - files: "test/**" # override the following rules for all files in the `test` folder
     rules:
       no-useless-assertion: off
-      await-promise: warn
+      await-only-promise: warn
   - files: "*.spec.ts" # override the following rules for all *.spec.ts files in all directories
     rules:
       no-debugger: off

@@ -1,14 +1,14 @@
 <script lang="js"></script>
 export async function foo() {
     await 1;
-    ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     // JSDoc type annotations only work in JavaScript files
     /** @type {PromiseLike<string>} */
     let p = null;
     let v = null;
     await p;
-    ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await v;
-    ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await Promise.resolve();
 }

@@ -1,2 +1,2 @@
 rules:
-  await-promise: error
+  await-only-promise: error
