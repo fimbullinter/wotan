@@ -43,11 +43,14 @@ export class Rule extends TypedRule {
         }
     }
 
-    private isSpreadableObject(node: ts.Expression, i: number): boolean {
-        if (i === 0)
-            return true;
-        if (node.kind === ts.SyntaxKind.ThisKeyword || node.kind === ts.SyntaxKind.SpreadElement)
-            return false;
+    private isSpreadableObject(node: ts.Expression): boolean {
+        switch (node.kind) {
+            case ts.SyntaxKind.ThisKeyword:
+            case ts.SyntaxKind.SpreadElement:
+                return false;
+            case ts.SyntaxKind.ObjectLiteralExpression:
+                return true;
+        }
         const type = this.checker.getTypeAtLocation(node);
         if (type.flags & ts.TypeFlags.Any)
             return true;
