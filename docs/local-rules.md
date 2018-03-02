@@ -10,7 +10,7 @@ Let's create a sample `.wotanrc.yaml` with local rules:
 rulesDirectories:
   local: ./rules # every rule starting with the prefix 'local/' will be searched in './rules'
 rules:
-  await-promise: error # refers to a builtin rule
+  await-only-promise: error # refers to a builtin rule
   local/rule-one: error # refers to './rules/rule-one.js'
   local/rule-two: error # refers to './rules/rule-two.js'
 ```

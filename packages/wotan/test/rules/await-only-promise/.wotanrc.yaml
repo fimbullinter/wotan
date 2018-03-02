@@ -1,3 +1,2 @@
-processor: ../src
 rules:
   await-only-promise: error

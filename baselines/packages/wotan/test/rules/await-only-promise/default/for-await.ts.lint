@@ -3,7 +3,7 @@ async function testForAwait<T extends AsyncIterable<string>>(param?: T) {
         for await (const _ of param) {}
     } else {
         for await (const _ of param) {}
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     }
     for await (const _ of param) {} // don't care to add failure in positions where the compiler already complains
     for await (const _ of get<any>()) {}
@@ -19,17 +19,17 @@ async function testForAwait<T extends AsyncIterable<string>>(param?: T) {
     for await (const _ of get<{[Symbol.asyncIterator](): Iterator<string>}>()) {}
     for await (const _ of get<{[Symbol.asyncIterator](): string}>()) {}
     for await (const _ of get<{[Symbol.iterator](): Iterator<string>}>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<Iterable<string>>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<Array<Promise<IteratorResult<string>>>>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<string>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<string | Array<string>>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for await (const _ of get<AsyncIterator<string>>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
     for /* await */ await (const _ of get<string>()) {}
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error await-only-promise: Unnecessary 'for await' of a non-AsyncIterable value.]
 }

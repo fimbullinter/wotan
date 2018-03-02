@@ -7,7 +7,7 @@ rulesDirectories:
   local: .
 rules:
   custom/foo: warning
-  await-promise: error
+  await-only-promise: error
   local/baz: off
   a/my-alias: error
   a/alias: warn

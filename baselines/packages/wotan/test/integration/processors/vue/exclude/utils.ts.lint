@@ -4,5 +4,5 @@ export function doStuff() {
 
 export async function doOtherStuff() {
     await doStuff();
-    ~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
 }
