@@ -23,6 +23,7 @@ jsFn<number>(1);
 arrayFn();
 ~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 arrayFn(null as any);
+~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 arrayFn([]);
 arrayFn([1]);
 arrayFn([{}]);
@@ -79,6 +80,7 @@ inferParameter([{}]);
 ~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 inferParameter([null as any]);
 inferParameter(null as any);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 declare function withDefault<T = number, U = T>(one?: T, two?: U): void;
 
