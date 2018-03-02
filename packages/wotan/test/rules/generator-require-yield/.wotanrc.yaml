@@ -1,2 +1,2 @@
 rules:
-  generator-yield: error
+  generator-require-yield: error

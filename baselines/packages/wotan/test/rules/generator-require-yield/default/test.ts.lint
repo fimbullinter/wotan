@@ -4,22 +4,22 @@
             yield;
         }
         (function *() {})
-                  ~       [error generator-yield: Generator contains no 'yield'.]
+                  ~       [error generator-require-yield: Generator contains no 'yield'.]
     }
     function *bar() {
         (function *() {})
-                  ~       [error generator-yield: Generator contains no 'yield'.]
+                  ~       [error generator-require-yield: Generator contains no 'yield'.]
         yield;
     }
     function *baz() {
-             ~        [error generator-yield: Generator 'baz' contains no 'yield'.]
+             ~        [error generator-require-yield: Generator 'baz' contains no 'yield'.]
         (function *() {
             yield;
         })
     }
     function *bas() {
         yield function *() {};
-                       ~       [error generator-yield: Generator contains no 'yield'.]
+                       ~       [error generator-require-yield: Generator contains no 'yield'.]
     }
 });
 
@@ -27,17 +27,17 @@ const key = 'foo';
 class Foo {
     method() {}
     public *generator() {}
-           ~               [error generator-yield: Generator 'generator' contains no 'yield'.]
+           ~               [error generator-require-yield: Generator 'generator' contains no 'yield'.]
     private generatorProp = function *() {};
-                                     ~       [error generator-yield: Generator contains no 'yield'.]
+                                     ~       [error generator-require-yield: Generator contains no 'yield'.]
 }
 {
     let obj = {
         *[key]() {},
-        ~            [error generator-yield: Generator '[key]' contains no 'yield'.]
+        ~            [error generator-require-yield: Generator '[key]' contains no 'yield'.]
         *'name'() {},
-        ~             [error generator-yield: Generator '\'name\'' contains no 'yield'.]
+        ~             [error generator-require-yield: Generator '\'name\'' contains no 'yield'.]
         *"method'name"() {},
-        ~                    [error generator-yield: Generator '"method\'name"' contains no 'yield'.]
+        ~                    [error generator-require-yield: Generator '"method\'name"' contains no 'yield'.]
     };
 }
