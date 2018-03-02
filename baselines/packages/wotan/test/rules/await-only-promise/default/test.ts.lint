@@ -22,29 +22,28 @@ async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2
     const v = get<{then?: (cb: (v: string) => void) => void}>();
     if (hasThen(v)) {
         await v;
-        ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
     } else {
         await v;
-        ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+        ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     }
     await get;
-    ~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<{then: any}>();
-    ~~~~~~~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<{foo: string}>();
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<void>();
-    ~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<never>();
-    ~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<undefined>();
-    ~~~~~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<{[key: string]: (v: string) => void}>(); // no implicit `then` property
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                 [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                 [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     await get<number | boolean>();
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     /** await */ await get<number>();
-                 ~~~~~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+                 ~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
 }
 
 declare function hasThen(v: {}): v is {then: {}};

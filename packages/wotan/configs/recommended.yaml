@@ -1,7 +1,7 @@
 ---
 rules:
   await-async-result: error
-  await-promise: error
+  await-only-promise: error
   generator-require-yield: error
   no-debugger: error
   no-fallthrough: error

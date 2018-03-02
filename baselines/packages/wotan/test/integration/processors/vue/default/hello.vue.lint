@@ -30,11 +30,11 @@ export default Vue.extend({
             let p = null;
             let v = null;
             await p;
-            ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
             await v;
-            ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
             await doStuff();
-            ~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            ~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
         }
     },
     computed: {

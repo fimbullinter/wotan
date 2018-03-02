@@ -19,9 +19,9 @@ export default Vue.extend({
             let v = null;
             await p;
             await v;
-            ~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
             await doStuff();
-            ~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
+            ~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
         }
     },
 });
