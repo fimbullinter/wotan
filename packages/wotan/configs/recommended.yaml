@@ -15,6 +15,7 @@ rules:
   no-unused-label: error
   no-useless-assertion: error
   no-useless-initializer: error
+  prefer-dot-notation: error
   prefer-number-isnan: error
   prefer-object-spread: error
   trailing-newline: error
