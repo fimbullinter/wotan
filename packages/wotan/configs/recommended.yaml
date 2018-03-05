@@ -8,6 +8,7 @@ rules:
   no-inferred-empty-object: error
   no-return-await: error
   no-nan-compare: error
+  no-unreachable-code: error
   no-unsafe-finally: error
   no-unstable-api-use: error
   no-unused-expression: error
