@@ -1,0 +1,95 @@
+if (true) {
+    'foo';
+} else {
+    'bar';
+    ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+}
+
+if (true) {
+    'foo';
+}
+
+if (false) {}
+
+if (false) {
+    'foo';
+    ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+} else {
+    'bar';
+}
+
+while (false) {
+    {
+    }
+    {
+        ;
+        'foo';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+}
+
+for (;false;) 'foo';
+              ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+
+do 'foo'; while (false);
+
+function test() {
+    outer: while (true) {
+        inner: do {
+            break outer;
+        } while (true);
+        'bar';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+
+    outer: while (true) {
+        inner: do {
+            continue outer;
+        } while (true);
+        'foo';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+    var a;
+    let b;
+    ~~~    [error no-unreachable-code: Unreachable code detected.]
+}
+
+function test2() {
+    while (true)
+        break;
+    if (false) {
+        var a, b = 1;
+        ~~~           [error no-unreachable-code: Unreachable code detected.]
+    } else {
+        return;
+    }
+    type T = any;
+    var a, b: string;
+    function foo() {}
+    interface Foo {}
+    const enum E {}
+    enum E2 {}
+    ~~~~       [error no-unreachable-code: Unreachable code detected.]
+    return true;
+}
+
+function test3() {
+    const condition: true = true;
+    while (condition) {
+        'foo';
+    }
+    'bar';
+    if (condition) {
+        'baz';
+    } else {
+        'baz';
+    }
+
+    for (;;);
+    'foobar';
+    ~~~~~~~~  [error no-unreachable-code: Unreachable code detected.]
+}
+
+function test4() {
+    return;
+}

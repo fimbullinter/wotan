@@ -95,6 +95,7 @@ function isExecutableStatement(node: ts.Statement): boolean {
         case ts.SyntaxKind.FunctionDeclaration:
         case ts.SyntaxKind.InterfaceDeclaration:
         case ts.SyntaxKind.TypeAliasDeclaration:
+        case ts.SyntaxKind.EmptyStatement:
             return false;
         case ts.SyntaxKind.EnumDeclaration:
             return !hasModifier(node.modifiers, ts.SyntaxKind.ConstKeyword);
