@@ -33,6 +33,21 @@ for (;false;) 'foo';
 
 do 'foo'; while (false);
 
+switch (Boolean()) {
+    case true:
+        break;
+        'foo';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    case false:
+        'bar';
+        break;
+    default:
+        'baz';
+        break;
+        'bas';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+}
+
 function test() {
     outer: while (true) {
         inner: do {

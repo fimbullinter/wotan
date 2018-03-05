@@ -29,6 +29,19 @@ for (;false;) 'foo';
 
 do 'foo'; while (false);
 
+switch (Boolean()) {
+    case true:
+        break;
+        'foo';
+    case false:
+        'bar';
+        break;
+    default:
+        'baz';
+        break;
+        'bas';
+}
+
 function test() {
     outer: while (true) {
         inner: do {
