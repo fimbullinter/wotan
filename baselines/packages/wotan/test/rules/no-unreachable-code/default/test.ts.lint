@@ -49,6 +49,13 @@ switch (Boolean()) {
 }
 
 function test() {
+    blockLabel: {
+        'foo';
+        break blockLabel;
+        label: 'bar';
+               ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+
     outer: while (true) {
         inner: do {
             break outer;
@@ -76,7 +83,7 @@ function test() {
         'foo';
         ~~~~~  [error no-unreachable-code: Unreachable code detected.]
     }
-    var a;
+    label: var a;
     let b;
     ~~~    [error no-unreachable-code: Unreachable code detected.]
 }

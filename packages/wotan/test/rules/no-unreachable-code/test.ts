@@ -43,6 +43,12 @@ switch (Boolean()) {
 }
 
 function test() {
+    blockLabel: {
+        'foo';
+        break blockLabel;
+        label: 'bar';
+    }
+
     outer: while (true) {
         inner: do {
             break outer;
@@ -66,7 +72,7 @@ function test() {
         } while (true);
         'foo';
     }
-    var a;
+    label: var a;
     let b;
 }
 

@@ -59,11 +59,17 @@ export class Rule extends AbstractRule {
     }
 
     private report(node: ts.Statement) {
-        while (isBlock(node)) {
-            const next = node.statements.find(isExecutableStatement);
-            if (next === undefined)
-                return;
-            node = next;
+        while (true) {
+            if (isLabeledStatement(node)) {
+                node = node.statement;
+            } else if (isBlock(node)) {
+                const next = node.statements.find(isExecutableStatement);
+                if (next === undefined)
+                    return;
+                node = next;
+            } else {
+                break;
+            }
         }
         this.addFailureAtNode(node.getFirstToken(this.sourceFile), 'Unreachable code detected.');
     }
@@ -104,6 +110,8 @@ function isExecutableStatement(node: ts.Statement): boolean {
                 (<ts.VariableStatement>node).declarationList.declarations.some((d) => d.initializer !== undefined);
         case ts.SyntaxKind.Block:
             return (<ts.Block>node).statements.some(isExecutableStatement);
+        case ts.SyntaxKind.LabeledStatement:
+            return isExecutableStatement((<ts.LabeledStatement>node).statement);
         default:
             return true;
     }
