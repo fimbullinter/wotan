@@ -8,14 +8,12 @@
     "custom-typings",
     "packages/*/src",
     "packages/*/index.ts",
-    "packages/*/test/**/*.spec.ts"
+    "packages/*/test/*.spec.ts"
   ],
   "exclude": [
     "scripts/**/*.d.ts",
     "packages/**/*.d.ts",
     // avoid scanning into these directories
-    "packages/*/test/fixtures",
-    "packages/wotan/test/integration",
-    "packages/wotan/test/rules"
+    "packages/*/test/fixtures"
   ]
 }

@@ -1,17 +1,17 @@
 import { injectable } from 'inversify';
-import { FormatterLoaderHost, FormatterConstructor, Resolver } from '@fimbul/ymir';
+import { FormatterLoaderHost, FormatterConstructor, Resolver, BuiltinResolver } from '@fimbul/ymir';
 import { OFFSET_TO_NODE_MODULES } from '../../utils';
 
 @injectable()
 export class NodeFormatterLoader implements FormatterLoaderHost {
-    constructor(private resolver: Resolver) {}
+    constructor(private resolver: Resolver, private builtinResolver: BuiltinResolver) {}
 
     public loadCoreFormatter(name: string): FormatterConstructor | undefined {
-        name = `../../formatters/${name}.js`;
+        name = this.builtinResolver.resolveFormatter(name);
         try {
             return require(name).Formatter;
         } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && `Cannot find module '${name}'`)
+            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && e.message === `Cannot find module '${name}'`)
                 return;
             throw e;
         }

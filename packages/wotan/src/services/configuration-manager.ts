@@ -8,9 +8,9 @@ import {
     DirectoryService,
     ConfigurationProvider,
     EffectiveConfiguration,
+    ConfigurationError,
 } from '@fimbul/ymir';
 import * as path from 'path';
-import { ConfigurationError } from '../error';
 import { resolveCachedResult } from '../utils';
 import { Minimatch } from 'minimatch';
 import * as isNegated from 'is-negated-glob';

@@ -14,16 +14,6 @@ import * as path from 'path';
  */
 export const OFFSET_TO_NODE_MODULES = 3;
 
-export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
-}
-
-export function isStrictPropertyInitializationEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict
-        ? options.strictPropertyInitialization !== false && options.strictNullChecks !== false
-        : options.strictPropertyInitialization === true && options.strictNullChecks === true;
-}
-
 export function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
     return Array.isArray(maybeArr)
         ? maybeArr

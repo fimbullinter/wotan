@@ -1,0 +1,10 @@
+/test/
+/.*
+*.ts
+!*.d.ts
+/*.yml
+/*.md
+/*.json
+/yarn.lock
+/*.tgz
+tsconfig.json

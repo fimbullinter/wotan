@@ -1,8 +1,7 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import { LintOptions, Runner } from './runner';
-import { ConfigurationError } from './error';
-import { Format, MessageHandler, Failure, DirectoryService, GlobalOptions } from '@fimbul/ymir';
+import { Format, MessageHandler, Failure, DirectoryService, GlobalOptions, ConfigurationError } from '@fimbul/ymir';
 import { format, assertNever, unixifyPath, OFFSET_TO_NODE_MODULES } from './utils';
 import chalk from 'chalk';
 import { RuleTestHost, createBaseline, createBaselineDiff, RuleTester, BaselineKind } from './test';

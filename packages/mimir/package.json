@@ -1,0 +1,38 @@
+{
+  "name": "@fimbul/mimir",
+  "version": "0.3.0",
+  "description": "Core rules of the Fimbullinter project",
+  "main": "recommended.yaml",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fimbullinter/wotan.git"
+  },
+  "keywords": [
+    "wotan",
+    "fimbullinter",
+    "core",
+    "lint",
+    "linter",
+    "rules"
+  ],
+  "author": "Klaus Meinhardt",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/fimbullinter/wotan/issues"
+  },
+  "homepage": "https://github.com/fimbullinter/wotan#readme",
+  "dependencies": {
+    "@fimbul/ymir": "^0.3.0",
+    "chalk": "^2.3.2",
+    "debug": "^3.1.0",
+    "tslib": "^1.8.1",
+    "tsutils": "^2.22.2"
+  },
+  "peerDependencies": {
+    "typescript": "*"
+  },
+  "devDependencies": {}
+}

@@ -6,6 +6,7 @@ import {
     RuleConstructor,
     FormatterLoaderHost,
     RuleLoaderHost,
+    BuiltinResolver,
 } from '@fimbul/wotan';
 import { wrapTslintFormatter, wrapTslintRule } from '@fimbul/bifrost';
 import * as TSLint from 'tslint';
@@ -13,8 +14,8 @@ import { injectable, ContainerModule } from 'inversify';
 
 @injectable()
 export class TslintFormatterLoaderHost extends NodeFormatterLoader {
-    constructor(resolver: Resolver) {
-        super(resolver);
+    constructor(resolver: Resolver, builtinResolver: BuiltinResolver) {
+        super(resolver, builtinResolver);
     }
 
     public loadCustomFormatter(name: string, basedir: string): FormatterConstructor | undefined {
@@ -28,6 +29,10 @@ export class TslintFormatterLoaderHost extends NodeFormatterLoader {
 
 @injectable()
 export class TslintRuleLoaderHost extends NodeRuleLoader {
+    constructor(resolver: BuiltinResolver) {
+        super(resolver);
+    }
+
     public loadCustomRule(name: string, dir: string): RuleConstructor | undefined {
         const rule = super.loadCustomRule(name, dir);
         if (rule !== undefined)
