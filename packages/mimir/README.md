@@ -1,6 +1,6 @@
-# Ymir
+# Mímir
 
-Core rules of the Fimbullinter project.
+Core rules, formatters and configurations of the Fimbullinter project.
 
 [![npm version](https://img.shields.io/npm/v/@fimbul/ymir.svg)](https://www.npmjs.com/package/@fimbul/ymir)
 [![npm downloads](https://img.shields.io/npm/dm/@fimbul/ymir.svg)](https://www.npmjs.com/package/@fimbul/ymir)
@@ -14,7 +14,7 @@ Make sure to also read the [full documentation of all available modules](https:/
 
 ## Purpose
 
-This library contains all core rules of the Fimbullinter project. It's used internally by Wotan.
+This library contains all core rules, formatters and configuration presets of the Fimbullinter project. It's used internally by Wotan.
 
 ## Rules
 
@@ -42,6 +42,16 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
 `try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. | TSLint has no similar rule.
 `typecheck` | TypeScript's compiler errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
+
+## Formatters
+
+* `stylish`
+* `json`
+
+## Configuration Presets
+
+* `wotan:recommended` contains recommended builtin rules. This configuration only adds new rules in major versions.
+* `wotan:latest` contains recommended builtin rules and is updated in minor versions. Be aware that this might cause your build to break.
 
 ## License
 

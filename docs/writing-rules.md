@@ -31,7 +31,7 @@ We start with the simplest or most common implementation and optimize it while w
 
 ```ts
 import * as ts from 'typescript';
-import { AbstractRule } from '@fimbul/wotan';
+import { AbstractRule } from '@fimbul/ymir';
 
 export class Rule extends AbstractRule {
     public apply() {
@@ -50,6 +50,8 @@ export class Rule extends AbstractRule {
     }
 }
 ```
+
+Note that we import from `@fimbul/ymir` instead of `@fimbul/wotan`. While the latter would also work, it's not recommended for custom rules. To allow reusing rules with a different linter runtime you should avoid having a dependency in `@fimbul/wotan` and use the core library `@fimbul/ymir` instead.
 
 The rule above works, but we can do better. So we grab the low hanging fruit first:
 `addFailureAtNode` internally calls `node.getStart(sourceFile)` which is not as cheap as it looks. Computing the start of a node is rather expensive.
@@ -118,7 +120,7 @@ Finally, here's the complete code of our fully optimized rule:
 
 ```ts
 import * as ts from 'typescript';
-import { AbstractRule } from '@fimbul/wotan';
+import { AbstractRule } from '@fimbul/ymir';
 import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 
 export class Rule extends AbstractRule {

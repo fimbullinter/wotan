@@ -33,6 +33,14 @@ Make wotan behave almost like TSLint. Reuse your existing `tslint.json` without 
 
 Allows authors of TSLint rules and formatters to provide their package for the use inside Wotan. Rules and formatters that use Bifröst don't need Heimdall to function correctly.
 
+### Ymir [![docs](https://img.shields.io/badge/%40fimbul%2Fymir-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/ymir/README.md)
+
+Provides core types for custom rules and plugin authors.
+
+### Mímir [![docs](https://img.shields.io/badge/%40fimbul%2Fmimir-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/mimir/README.md)
+
+Contains all core rules, formatters and configuration presets.
+
 ## Further Documentation
 
 * [Writing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/writing-rules.md)
@@ -65,7 +73,11 @@ He is constantly striving for wisdom. From his throne he can see everything in t
 
 **Bifröst** is the burning rainbow bridge that connects the world of humans with the realm of gods.
 
-**Valtýr**, from 'valr' (the dead, slain in battle) and 'týr' (god), means God of the Slain and is often used to refer to Odin.
+**Valtýr**, from "valr" (the dead, slain in battle) and "týr" (god), means God of the Slain and is often used to refer to Odin.
+
+**Ymir** is the giant of whose body the whole world was created. He is the ancestor of all jötnar.
+
+**Mímir** ("The rememberer, the wise one") renowned for his knowledge and wisdom. The god Odin carries around Mímir's head and it recites secret knowledge and counsel to him.
 
 ### Why yet another linter?
 
