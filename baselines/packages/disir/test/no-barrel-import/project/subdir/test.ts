@@ -1,4 +1,4 @@
-import {foo} from '.';
-import {bar} from './index';
+import {foo} from '../other';
+import {bar} from '../other';
 import {baz} from '../other';
 import {bas} from '../other';

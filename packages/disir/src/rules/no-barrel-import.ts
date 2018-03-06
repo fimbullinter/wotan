@@ -2,19 +2,18 @@ import { AbstractRule } from '@fimbul/wotan';
 import { findImports, ImportKind } from 'tsutils';
 import * as ts from 'typescript';
 import * as path from 'path';
-import { getPackageName, splitPath, createDirectImportFix } from '../util';
+import { createDirectImportFix } from '../util';
 
 export class Rule extends AbstractRule {
     public apply() {
         const dirname = path.dirname(this.sourceFile.fileName);
-        const currentPackage = getPackageName(dirname);
         for (const name of findImports(this.sourceFile, ImportKind.AllStaticImports | ImportKind.ExportFrom)) {
             if (!ts.isExternalModuleNameRelative(name.text))
                 continue;
-            const parts = splitPath(path.resolve(dirname, name.text));
-            const packageIndex = parts.lastIndexOf('packages') + 1;
-            if (currentPackage === parts[packageIndex] &&
-                (parts.length === packageIndex + 1 || parts.length === packageIndex + 2 && parts[packageIndex + 1] === 'index')) {
+            let resolved = path.resolve(dirname, name.text);
+            if (path.basename(resolved) === 'index')
+                resolved = path.dirname(resolved);
+            if (!path.relative(resolved, this.sourceFile.fileName).startsWith('..')) {
                 const start = name.getStart(this.sourceFile);
                 this.addFailure(
                     start,
