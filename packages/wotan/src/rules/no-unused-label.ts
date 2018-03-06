@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { isLabeledStatement, isIterationStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
+import { isLabeledStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
 import { AbstractRule, Replacement } from '../types';
 
 interface Label {
@@ -33,10 +33,6 @@ export class Rule extends AbstractRule {
     private visitNode(wrap: NodeWrap): void {
         const {node} = wrap;
         if (isLabeledStatement(node)) {
-            if (!isIterationStatement(node.statement) && node.statement.kind !== ts.SyntaxKind.SwitchStatement) {
-                this.fail(node);
-                return this.visitNode(wrap.children[1]);
-            }
             this.labels.unshift({node, name: node.label.text, used: false});
             this.visitNode(wrap.children[1]);
             const label = this.labels.shift()!;
