@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { createCoreModule } from '../../src/di/core.module';
-import { createDefaultModule } from '../../src/di/default.module';
-import { Runner } from '../../src/runner';
+import { createCoreModule } from '../src/di/core.module';
+import { createDefaultModule } from '../src/di/default.module';
+import { Runner } from '../src/runner';
 import * as path from 'path';
-import { NodeFileSystem } from '../../src/services/default/file-system';
+import { NodeFileSystem } from '../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
 
 const directories: DirectoryService = {
@@ -48,7 +48,7 @@ test('throws error on file not included in project', (t) => {
                 'non-existent.ts', // does not exist
             ],
             exclude: ['*.js'],
-            project: 'test/integration/project/setup',
+            project: 'test/project/setup',
             fix: false,
             extensions: undefined,
         })),

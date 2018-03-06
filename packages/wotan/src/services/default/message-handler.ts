@@ -1,5 +1,4 @@
-import { MessageHandler } from '@fimbul/ymir';
-import { ConfigurationError } from '../../error';
+import { MessageHandler, ConfigurationError } from '@fimbul/ymir';
 import { injectable } from 'inversify';
 
 @injectable()

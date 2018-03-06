@@ -2,14 +2,14 @@ import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
 import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '@fimbul/ymir';
-import { runCommand, CommandName, ShowCommand, SaveCommand } from '../../src/commands';
-import { NodeFileSystem } from '../../src/services/default/file-system';
+import { runCommand, CommandName, ShowCommand, SaveCommand } from '../src/commands';
+import { NodeFileSystem } from '../src/services/default/file-system';
 import * as path from 'path';
-import { unixifyPath, format } from '../../src/utils';
+import { unixifyPath, format } from '../src/utils';
 import * as escapeRegex from 'escape-string-regexp';
-import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
-import { createCoreModule } from '../../src/di/core.module';
-import { createDefaultModule } from '../../src/di/default.module';
+import { DefaultCacheFactory } from '../src/services/default/cache-factory';
+import { createCoreModule } from '../src/di/core.module';
+import { createDefaultModule } from '../src/di/default.module';
 
 test('ShowCommand', async (t) => {
     const container = new Container();

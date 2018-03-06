@@ -1,4 +1,4 @@
-# Snapshot report for `packages/wotan/test/conformance/commands.spec.js`
+# Snapshot report for `packages/wotan/test/commands.spec.js`
 
 The actual snapshot is saved in `commands.spec.js.snap`.
 

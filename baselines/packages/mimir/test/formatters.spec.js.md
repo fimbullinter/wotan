@@ -1,4 +1,4 @@
-# Snapshot report for `packages/wotan/test/conformance/formatters.spec.js`
+# Snapshot report for `packages/mimir/test/formatters.spec.js`
 
 The actual snapshot is saved in `formatters.spec.js.snap`.
 

@@ -1,4 +1,4 @@
-# Snapshot report for `packages/wotan/test/conformance/test.spec.js`
+# Snapshot report for `packages/wotan/test/test.spec.js`
 
 The actual snapshot is saved in `test.spec.js.snap`.
 

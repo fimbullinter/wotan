@@ -10,20 +10,22 @@ import {
     Configuration,
     MessageHandler,
     LoadConfigurationContext,
+    ConfigurationError,
+    BuiltinResolver,
 } from '@fimbul/ymir';
 import { Container, injectable } from 'inversify';
-import { CachedFileSystem } from '../../src/services/cached-file-system';
-import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
-import { NodeResolver } from '../../src/services/default/resolver';
-import { unixifyPath } from '../../src/utils';
+import { CachedFileSystem } from '../src/services/cached-file-system';
+import { DefaultCacheFactory } from '../src/services/default/cache-factory';
+import { NodeResolver } from '../src/services/default/resolver';
+import { unixifyPath } from '../src/utils';
 import * as path from 'path';
-import { ConfigurationManager } from '../../src/services/configuration-manager';
-import { DefaultConfigurationProvider } from '../../src/services/default/configuration-provider';
-import { ConfigurationError } from '../../src/error';
-import { NodeFileSystem } from '../../src/services/default/file-system';
-import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
-import { createCoreModule } from '../../src/di/core.module';
-import { createDefaultModule } from '../../src/di/default.module';
+import { ConfigurationManager } from '../src/services/configuration-manager';
+import { DefaultConfigurationProvider } from '../src/services/default/configuration-provider';
+import { NodeFileSystem } from '../src/services/default/file-system';
+import { ConsoleMessageHandler } from '../src/services/default/message-handler';
+import { createCoreModule } from '../src/di/core.module';
+import { createDefaultModule } from '../src/di/default.module';
+import { DefaultBuiltinResolver } from '../src/services/default/builtin-resolver';
 
 // tslint:disable:no-null-keyword
 
@@ -243,6 +245,7 @@ test('DefaultConfigurationProvider.find', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
+    container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
 
     const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
 
@@ -341,19 +344,26 @@ test('DefaultConfigurationProvider.resolve', (t) => {
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
+    const builtinResolver: BuiltinResolver = {
+        resolveConfig(name) { return path.join(__dirname, '../../mimir', name + '.yaml'); },
+        resolveFormatter() { throw new Error(); },
+        resolveRule() { throw new Error(); },
+    };
+    container.bind(BuiltinResolver).toConstantValue(builtinResolver);
 
     const cp = container.resolve(DefaultConfigurationProvider);
     t.throws(
         () => cp.resolve('wotan:non-existent-preset', '.'),
         "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
     );
-    t.is(cp.resolve('wotan:recommended', ''), path.resolve('packages/wotan/configs/recommended.yaml'));
+    t.is(cp.resolve('wotan:recommended', ''), path.resolve('packages/mimir/recommended.yaml'));
 });
 
 test('DefaultConfigurationProvider.read', (t) => {
     const container = new Container();
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
+    container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
 
     const empty = {};
     const resolver: Resolver = {
@@ -417,6 +427,7 @@ test('ConfigurationProvider.parse', (t) => {
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
+    container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
 
     const cp = container.resolve(DefaultConfigurationProvider);
     const mockContext: LoadConfigurationContext = {

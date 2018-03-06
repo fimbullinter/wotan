@@ -10,6 +10,7 @@ import {
     DirectoryService,
     CachedFileSystem,
     ConfigurationError,
+    BuiltinResolver,
 } from '@fimbul/wotan';
 import * as TSLint from 'tslint';
 import * as path from 'path';
@@ -32,6 +33,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         private resolver: Resolver,
         private fs: CachedFileSystem,
         private cacheFactory: CacheFactory,
+        private builtinResolver: BuiltinResolver,
         private directories: DirectoryService,
         private options: GlobalOptions,
     ) {
@@ -121,7 +123,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
             return this.baseConfig = [];
         try {
             const fullPath = path.join(this.directories.getCurrentDirectory(), '.fimbullinter.yaml');
-            const configProvider = new DefaultConfigurationProvider(this.fs, this.resolver, this.cacheFactory);
+            const configProvider = new DefaultConfigurationProvider(this.fs, this.resolver, this.builtinResolver, this.cacheFactory);
             const config = configProvider.parse(this.options.valtyr, fullPath, {
                 stack: [],
                 load() {

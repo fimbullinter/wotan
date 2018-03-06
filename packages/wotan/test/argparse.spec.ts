@@ -1,6 +1,6 @@
 import test from 'ava';
-import { parseArguments, parseGlobalOptions } from '../../src/argparse';
-import { CommandName, Command } from '../../src/commands';
+import { parseArguments, parseGlobalOptions } from '../src/argparse';
+import { CommandName, Command } from '../src/commands';
 import { Format } from '@fimbul/ymir';
 
 test('parseGlobalOptions', (t) => {

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { test } from 'ava';
-import { applyFixes } from '../../src/fix';
+import { applyFixes } from '../src/fix';
 import { Replacement } from '@fimbul/ymir';
 
 test('Fixer', (t) => {

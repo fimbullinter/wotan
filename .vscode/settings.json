@@ -11,7 +11,7 @@
         "when": "$(basename).ts"
       },
       "packages/*/src/**/*.d.ts": true,
-      "packages/*/test/**/*.spec.d.ts": true,
+      "packages/*/test/*.spec.d.ts": true,
       "packages/*/index.d.ts": true,
       "scripts/*.d.ts": true,
       "**/*.js.map": true,

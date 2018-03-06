@@ -1,17 +1,17 @@
-import { RuleLoaderHost, RuleConstructor } from '@fimbul/ymir';
+import { RuleLoaderHost, RuleConstructor, BuiltinResolver } from '@fimbul/ymir';
 import * as debug from 'debug';
 import * as path from 'path';
 import { injectable } from 'inversify';
 
 const log = debug('wotan:ruleLoaderHost');
 
-const CORE_RULES_DIRECTORY = path.join(__dirname, '../../rules');
-
 @injectable()
 export class NodeRuleLoader implements RuleLoaderHost {
+    constructor(private resolver: BuiltinResolver) {}
+
     public loadCoreRule(name: string): RuleConstructor | undefined {
         try {
-            name = path.join(CORE_RULES_DIRECTORY, name + '.js');
+            name = this.resolver.resolveRule(name);
             const rule = require(name).Rule;
             log('Found %s', name);
             return rule;

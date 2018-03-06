@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import * as ts from 'typescript';
 import { WrappedAst } from 'tsutils';
 
+export class ConfigurationError extends Error {}
+
 export abstract class GlobalOptions {
     readonly [key: string]: {} | null | undefined;
 }
@@ -381,6 +383,13 @@ export interface Resolver {
     require(id: string, options?: {cache?: boolean}): any;
 }
 export abstract class Resolver {}
+
+export interface BuiltinResolver {
+    resolveConfig(name: string): string;
+    resolveRule(name: string): string;
+    resolveFormatter(name: string): string;
+}
+export abstract class BuiltinResolver {}
 
 export interface DirectoryService {
     getCurrentDirectory(): string;

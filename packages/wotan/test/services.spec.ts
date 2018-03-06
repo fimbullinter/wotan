@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { test } from 'ava';
-import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
+import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import {
     FileSystem,
     CacheFactory,
@@ -9,26 +9,27 @@ import {
     DeprecationTarget,
     FormatterLoaderHost,
     DirectoryService,
+    ConfigurationError,
+    BuiltinResolver,
 } from '@fimbul/ymir';
-import { NodeDirectoryService } from '../../src/services/default/directory-service';
+import { NodeDirectoryService } from '../src/services/default/directory-service';
 import * as os from 'os';
-import { NodeRuleLoader } from '../../src/services/default/rule-loader-host';
-import { Rule } from '../../src/rules/no-debugger';
+import { NodeRuleLoader } from '../src/services/default/rule-loader-host';
+import { Rule } from '@fimbul/mimir/src/rules/no-debugger'; // tslint:disable-line:no-submodule-imports
 import * as path from 'path';
-import { ConsoleMessageHandler } from '../../src/services/default/message-handler';
-import { ConfigurationError } from '../../src/error';
+import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { Container, injectable } from 'inversify';
-import { NodeResolver } from '../../src/services/default/resolver';
-import { NodeFileSystem } from '../../src/services/default/file-system';
-import { CachedFileSystem } from '../../src/services/cached-file-system';
-import { NodeFormatterLoader } from '../../src/services/default/formatter-loader-host';
-import { Formatter } from '../../src/formatters/json';
+import { NodeResolver } from '../src/services/default/resolver';
+import { NodeFileSystem } from '../src/services/default/file-system';
+import { CachedFileSystem } from '../src/services/cached-file-system';
+import { NodeFormatterLoader } from '../src/services/default/formatter-loader-host';
+import { Formatter } from '@fimbul/mimir/src/formatters/json'; // tslint:disable-line:no-submodule-imports
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
 import * as ts from 'typescript';
-import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
-import { FormatterLoader } from '../../src/services/formatter-loader';
-import { ProcessorLoader } from '../../src/services/processor-loader';
+import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
+import { FormatterLoader } from '../src/services/formatter-loader';
+import { ProcessorLoader } from '../src/services/processor-loader';
 
 test('CacheFactory', (t) => {
     const cm = new DefaultCacheFactory();
@@ -70,12 +71,20 @@ test('DirectoryService', (t) => {
 });
 
 test('RuleLoaderHost', (t) => {
-    const loader = new NodeRuleLoader();
+    const builtinResolver: BuiltinResolver = {
+        resolveConfig() { throw new Error(); },
+        resolveFormatter() { throw new Error(); },
+        resolveRule(name) {
+            return path.join(__dirname, '../../mimir/src/rules', name + '.js');
+        },
+    };
+    const loader = new NodeRuleLoader(builtinResolver);
     t.is(loader.loadCoreRule('no-debugger'), Rule);
     t.is(loader.loadCoreRule('fooBarBaz'), undefined);
-    t.throws(() => loader.loadCoreRule('../../test/fixtures/invalid'));
+    builtinResolver.resolveRule = (name) => path.join(__dirname, 'fixtures', name + '.js');
+    t.throws(() => loader.loadCoreRule('invalid'));
 
-    t.is(loader.loadCustomRule('no-debugger', path.resolve('packages/wotan/src/rules')), Rule);
+    t.is(loader.loadCustomRule('no-debugger', path.resolve('packages/mimir/src/rules')), Rule);
     t.is(loader.loadCustomRule('fooBarBaz', process.cwd()), undefined);
     t.throws(() => loader.loadCustomRule('invalid', path.resolve('packages/wotan/test/fixtures')));
 });
@@ -165,8 +174,8 @@ test('Resolver', (t) => {
     t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
     t.is(
-        resolver.resolve('./no-debugger', path.resolve('packages/wotan/src/rules'), ['.ts']),
-        path.resolve('packages/wotan/src/rules/no-debugger.ts'),
+        resolver.resolve('./no-debugger', path.resolve('packages/mimir/src/rules'), ['.ts']),
+        path.resolve('packages/mimir/src/rules/no-debugger.ts'),
     );
 
     const tslib = require('tslib');
@@ -181,16 +190,25 @@ test('FormatterLoaderHost', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
+    const builtinResolver: BuiltinResolver = {
+        resolveConfig() { throw new Error(); },
+        resolveRule() { throw new Error(); },
+        resolveFormatter(name) {
+            return path.join(__dirname, '../../mimir/src/formatters', name + '.js');
+        },
+    };
+    container.bind(BuiltinResolver).toConstantValue(builtinResolver);
     const loader = container.resolve(NodeFormatterLoader);
     t.is(loader.loadCoreFormatter('json'), Formatter);
     t.is(loader.loadCoreFormatter('fooBarBaz'), undefined);
-    t.throws(() => loader.loadCoreFormatter('../../test/fixtures/invalid'));
+    builtinResolver.resolveFormatter = (name) => path.join(__dirname, 'fixtures', name + '.js');
+    t.throws(() => loader.loadCoreFormatter('invalid'));
 
-    t.is(loader.loadCustomFormatter('./packages/wotan/src/formatters/json', process.cwd()), Formatter);
+    t.is(loader.loadCustomFormatter('./packages/mimir/src/formatters/json', process.cwd()), Formatter);
     t.is(loader.loadCustomFormatter('fooBarBaz', process.cwd()), undefined);
     t.is(
         loader.loadCustomFormatter('custom-formatter', path.resolve('packages/wotan/test/fixtures')),
-        require('../fixtures/node_modules/custom-formatter').Formatter,
+        require('./fixtures/node_modules/custom-formatter').Formatter,
     );
     t.throws(() => loader.loadCustomFormatter('./packages/wotan/test/fixtures/invalid', process.cwd()));
 });
@@ -221,14 +239,14 @@ test('FormatterLoader', (t) => {
         container.bind(DirectoryService).toConstantValue(directoryService);
         container.bind(FormatterLoaderHost).toConstantValue(host);
         const loader = container.resolve(FormatterLoader);
-        t.throws(() => loader.loadFormatter('foo'), "Could not find formatter 'foo' relative to '/'.");
+        t.throws(() => loader.loadFormatter('foo'), "Cannot find formatter 'foo' relative to '/'.");
         t.is(coreRequested, 1);
         t.is(customRequested, 1);
         cwd = '/foo';
-        t.throws(() => loader.loadFormatter('./foo'), "Could not find formatter './foo' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('./foo'), "Cannot find formatter './foo' relative to '/foo'.");
         t.is(coreRequested, 1);
         t.is(customRequested, 2);
-        t.throws(() => loader.loadFormatter('foo-bar'), "Could not find formatter 'foo-bar' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('foo-bar'), "Cannot find formatter 'foo-bar' relative to '/foo'.");
         t.is(coreRequested, 2);
         t.is(customRequested, 3);
     })();
@@ -258,7 +276,7 @@ test('FormatterLoader', (t) => {
         t.is(customRequested, 0);
         t.is(loader.loadFormatter('foo-bar'), Formatter);
         t.is(customRequested, 0);
-        t.throws(() => loader.loadFormatter('/foo/bar'), "Could not find formatter '/foo/bar' relative to '/'.");
+        t.throws(() => loader.loadFormatter('/foo/bar'), "Cannot find formatter '/foo/bar' relative to '/'.");
         t.is(customRequested, 1);
     })();
 

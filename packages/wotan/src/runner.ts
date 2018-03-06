@@ -1,11 +1,10 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService } from '@fimbul/ymir';
+import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService, ConfigurationError } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
 import { unixifyPath, hasSupportedExtension } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
-import { ConfigurationError } from './error';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
 import { CachedFileSystem, FileKind } from './services/cached-file-system';

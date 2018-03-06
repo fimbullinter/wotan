@@ -1,11 +1,9 @@
-import 'reflect-metadata';
 import test, { TestContext } from 'ava';
 import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '@fimbul/ymir';
-import { Formatter as JsonFormatter} from '../../src/formatters/json';
-import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
+import { Formatter as JsonFormatter} from '../src/formatters/json';
+import { Formatter as StylishFormatter } from '../src/formatters/stylish';
 import chalk, { Level } from 'chalk';
 import * as path from 'path';
-import { unixifyPath } from '../../src/utils';
 
 test.before(() => {
     chalk.enabled = true;
@@ -193,7 +191,7 @@ test('Stylish', (t) => {
     testFormatter(StylishFormatter, t, (output) => {
         return output
             .split('\n')
-            .map((line) => line.startsWith('\u001b[4m') ? unixifyPath(line) : line)
+            .map((line) => line.startsWith('\u001b[4m') ? line.replace(/\\/g, '/') : line)
             .join('\n');
     });
 });

@@ -8,7 +8,7 @@ import {
     isThenableType,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { isAsyncFunction } from '../rule-utils';
+import { isAsyncFunction } from '../utils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {

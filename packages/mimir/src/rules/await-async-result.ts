@@ -1,7 +1,7 @@
 import { TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { NodeWrap, isFunctionScopeBoundary, isExpressionStatement, isCallExpression, isThenableType } from 'tsutils';
-import { isAsyncFunction } from '../rule-utils';
+import { isAsyncFunction } from '../utils';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {

@@ -11,6 +11,7 @@ import {
     ConfigurationProvider,
     FailureFilterFactory,
     LineSwitchParser,
+    BuiltinResolver,
 } from '@fimbul/ymir';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
@@ -22,6 +23,7 @@ import { NodeDirectoryService } from '../services/default/directory-service';
 import { DefaultDeprecationHandler } from '../services/default/deprecation-handler';
 import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
 import { DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
+import { DefaultBuiltinResolver } from '../services/default/builtin-resolver';
 
 export function createDefaultModule() {
     return new ContainerModule((bind, _unbind, isBound) => {
@@ -47,5 +49,7 @@ export function createDefaultModule() {
             bind(FailureFilterFactory).to(LineSwitchFilterFactory);
         if (!isBound(LineSwitchParser))
             bind(LineSwitchParser).to(DefaultLineSwitchParser);
+        if (!isBound(BuiltinResolver))
+            bind(BuiltinResolver).to(DefaultBuiltinResolver);
     });
 }

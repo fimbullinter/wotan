@@ -1,6 +1,5 @@
 import { Command, CommandName, TestCommand, ShowCommand, ValidateCommand, BaseLintCommand } from './commands';
-import { ConfigurationError } from './error';
-import { Format, GlobalOptions } from '@fimbul/ymir';
+import { ConfigurationError, Format, GlobalOptions } from '@fimbul/ymir';
 import { LintOptions } from './runner';
 import debug = require('debug');
 

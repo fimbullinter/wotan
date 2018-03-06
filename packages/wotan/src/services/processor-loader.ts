@@ -1,8 +1,7 @@
-import { ProcessorConstructor, Resolver, CacheFactory, Cache } from '@fimbul/ymir';
+import { ProcessorConstructor, Resolver, CacheFactory, Cache, ConfigurationError } from '@fimbul/ymir';
 import { injectable } from 'inversify';
 import { resolveCachedResult } from '../utils';
 import bind from 'bind-decorator';
-import { ConfigurationError } from '../error';
 
 @injectable()
 export class ProcessorLoader {

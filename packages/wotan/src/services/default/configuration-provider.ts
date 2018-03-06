@@ -6,6 +6,7 @@ import {
     Configuration,
     CacheFactory,
     Cache,
+    BuiltinResolver,
 } from '@fimbul/ymir';
 import { CachedFileSystem } from '../cached-file-system';
 import * as path from 'path';
@@ -65,7 +66,7 @@ export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext)
 @injectable()
 export class DefaultConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
-    constructor(private fs: CachedFileSystem, private resolver: Resolver, cache: CacheFactory) {
+    constructor(private fs: CachedFileSystem, private resolver: Resolver, private builtinResolver: BuiltinResolver, cache: CacheFactory) {
         this.cache = cache.create();
     }
 
@@ -86,7 +87,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
 
     public resolve(name: string, basedir: string): string {
         if (name.startsWith('wotan:')) {
-            const fileName = path.join(__dirname, `../../../configs/${name.substr('wotan:'.length)}.yaml`);
+            const fileName = this.builtinResolver.resolveConfig(name.substr('wotan:'.length));
             if (!this.fs.isFile(fileName))
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
             return fileName;

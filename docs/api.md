@@ -18,6 +18,7 @@ There are several core services that are provided by Wotan through the Container
 These core services use other abstractions for the low level tasks. That enables you to change the behavior of certain services without the need to implement the whole thing.
 The default implementations (targeting the Node.js runtime environment) are provided throug the ContainerModule `DEFAULT_DI_MODULE`. The default implementation is only used if there is no binding for the identifier.
 
+* `BuiltinResolver` (`DefaultBuiltinResolver`) resolves the path to core rules, formatters and configs in `@fimbul/mimir`.
 * `CacheFactory` (`DefaultCacheFactory`) is responsible for creating cache objects that are used by other services to store their data.
 * `ConfigurationProvider` (`DefaultConfigurationProvider`) is responsible to find, resolve and load configuration files.
 * `DeprecationHandler` (`DefaultDeprecationHandler`) is notified everytime a deprecated rule, formatter of processor is used. This service can choose to inform the user or just swallow the event.

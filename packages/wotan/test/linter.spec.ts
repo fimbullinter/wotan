@@ -15,12 +15,12 @@ import {
     FailureFilterFactory,
     LineSwitchParser,
 } from '@fimbul/ymir';
-import { DefaultCacheFactory } from '../../src/services/default/cache-factory';
-import { RuleLoader } from '../../src/services/rule-loader';
-import { Linter } from '../../src/linter';
+import { DefaultCacheFactory } from '../src/services/default/cache-factory';
+import { RuleLoader } from '../src/services/rule-loader';
+import { Linter } from '../src/linter';
 import * as ts from 'typescript';
-import { DefaultDeprecationHandler } from '../../src/services/default/deprecation-handler';
-import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../../src/services/default/line-switches';
+import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
+import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../src/services/default/line-switches';
 
 class MyTypedRule extends TypedRule {
     public apply() {
