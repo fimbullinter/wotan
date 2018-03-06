@@ -50,6 +50,16 @@ function test() {
         'bar';
     }
 
+    outer: inner: while (true) {
+        break outer;
+        'bar';
+    }
+
+    outer: inner: while (true) {
+        break inner;
+        'bar';
+    }
+
     outer: while (true) {
         inner: do {
             continue outer;

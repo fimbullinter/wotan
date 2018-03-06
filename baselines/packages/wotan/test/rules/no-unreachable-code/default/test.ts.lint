@@ -57,6 +57,18 @@ function test() {
         ~~~~~  [error no-unreachable-code: Unreachable code detected.]
     }
 
+    outer: inner: while (true) {
+        break outer;
+        'bar';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+
+    outer: inner: while (true) {
+        break inner;
+        'bar';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+
     outer: while (true) {
         inner: do {
             continue outer;
