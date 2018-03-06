@@ -1,4 +1,4 @@
-# wotan
+# Wotan
 
 Pluggable TypeScript and JavaScript linter
 

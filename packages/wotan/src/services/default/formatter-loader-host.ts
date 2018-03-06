@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FormatterLoaderHost, FormatterConstructor, Resolver } from '../../types';
+import { FormatterLoaderHost, FormatterConstructor, Resolver } from '@fimbul/ymir';
 import { OFFSET_TO_NODE_MODULES } from '../../utils';
 
 @injectable()

@@ -1,4 +1,4 @@
-import { AbstractRule } from '@fimbul/wotan';
+import { AbstractRule } from '@fimbul/ymir';
 import { findImports, ImportKind } from 'tsutils';
 import { getPackageName, createDirectImportFix } from '../util';
 import * as path from 'path';

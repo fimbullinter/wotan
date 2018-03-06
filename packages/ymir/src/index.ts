@@ -1,5 +1,5 @@
+import 'reflect-metadata';
 import * as ts from 'typescript';
-import { memoizeGetter } from './utils';
 import { WrappedAst } from 'tsutils';
 
 export abstract class GlobalOptions {
@@ -22,18 +22,17 @@ export interface Replacement {
     readonly text: string;
 }
 
-export abstract class Replacement {
-    private constructor() {}
-    public static replace(start: number, end: number, text: string): Replacement {
+export const Replacement = {
+    replace(start: number, end: number, text: string): Replacement {
         return {start, end, text};
-    }
-    public static append(pos: number, text: string): Replacement {
+    },
+    append(pos: number, text: string): Replacement {
         return {start: pos, end: pos, text}; // tslint:disable-line:object-shorthand-properties-first
-    }
-    public static delete(start: number, end: number): Replacement {
+    },
+    delete(start: number, end: number): Replacement {
         return {start, end, text: ''};
-    }
-}
+    },
+};
 
 export interface Fix {
     readonly replacements: ReadonlyArray<Replacement>;
@@ -48,14 +47,15 @@ export interface Failure {
     readonly fix: Fix | undefined;
 }
 
-export namespace Failure {
-    export function compare(a: Failure, b: Failure): number {
+export const Failure = {
+    /** Compare two Failures. Intended to be used in `Array.prototype.sort`. */
+    compare(a: Failure, b: Failure): number {
         return a.start.position - b.start.position
             || a.end.position - b.end.position
             || compareStrings(a.ruleName, b.ruleName)
             || compareStrings(a.message, b.message);
-    }
-}
+    },
+};
 
 function compareStrings(a: string, b: string): number {
     return a < b
@@ -146,9 +146,10 @@ export abstract class TypedRule extends AbstractRule {
     public readonly program!: ts.Program;
 
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
-    @memoizeGetter
     public get checker() {
-        return this.program.getTypeChecker();
+        const checker = this.program.getTypeChecker();
+        Object.defineProperty(this, 'checker', {value: checker, writable: false});
+        return checker;
     }
 
     constructor(context: TypedRuleContext) {
@@ -276,7 +277,8 @@ export interface ProcessorUpdateResult {
 
 export abstract class AbstractProcessor {
     /**
-     * Returns the resulting file name.
+     * Returns a new primary extension that is appended to the file name, e.g. '.ts'.
+     * If the file should not get a new extension, just return an empty string.
      */
     public static getSuffixForFile(_context: ProcessorSuffixContext): string {
         return '';
@@ -398,6 +400,22 @@ export interface FailureFilterContext {
 }
 
 export interface FailureFilter {
-    /** @returns `true` if the failure should be used, false if it should be filtered out. */
+    /** @returns `true` if the failure should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(failure: Failure): boolean;
+}
+
+export interface LineSwitchParser {
+    parse(context: LineSwitchParserContext): ReadonlyMap<string, ReadonlyArray<RawLineSwitch>>;
+}
+export abstract class LineSwitchParser {}
+
+export interface LineSwitchParserContext {
+    sourceFile: ts.SourceFile;
+    ruleNames: ReadonlyArray<string>;
+    getCommentAtPosition(pos: number): ts.CommentRange | undefined;
+}
+
+export interface RawLineSwitch {
+    readonly enable: boolean;
+    readonly position: number;
 }

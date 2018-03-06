@@ -1,4 +1,4 @@
-import { Failure, AbstractFormatter, FileSummary, Severity } from '../types';
+import { Failure, AbstractFormatter, FileSummary, Severity } from '@fimbul/ymir';
 import chalk from 'chalk';
 import * as path from 'path';
 

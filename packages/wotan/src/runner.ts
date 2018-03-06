@@ -1,5 +1,5 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService } from './types';
+import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';

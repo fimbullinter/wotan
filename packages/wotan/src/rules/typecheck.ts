@@ -1,4 +1,4 @@
-import { TypedRule } from '../types';
+import { TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 
 export class Rule extends TypedRule {

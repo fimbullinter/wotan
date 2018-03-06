@@ -1,4 +1,4 @@
-import { TypedRule } from '../types';
+import { TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 
 // TODO Does not require type information once https://github.com/Microsoft/TypeScript/issues/21940 is resolved

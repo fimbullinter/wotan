@@ -1,4 +1,4 @@
-import { TypedRule, Replacement, RuleSupportsContext } from '../types';
+import { TypedRule, Replacement, RuleSupportsContext } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, isTypeVariable, isUnionType } from 'tsutils';
 import * as path from 'path';

@@ -6,7 +6,7 @@ import {
     Configuration,
     CacheFactory,
     Cache,
-} from '../../types';
+} from '@fimbul/ymir';
 import { CachedFileSystem } from '../cached-file-system';
 import * as path from 'path';
 import * as json5 from 'json5';

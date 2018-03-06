@@ -9,7 +9,7 @@ import {
     DeprecationTarget,
     FormatterLoaderHost,
     DirectoryService,
-} from '../../src/types';
+} from '@fimbul/ymir';
 import { NodeDirectoryService } from '../../src/services/default/directory-service';
 import * as os from 'os';
 import { NodeRuleLoader } from '../../src/services/default/rule-loader-host';

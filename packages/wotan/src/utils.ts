@@ -1,4 +1,4 @@
-import { Format, Cache } from './types';
+import { Format, Cache } from '@fimbul/ymir';
 import * as json5 from 'json5';
 import * as yaml from 'js-yaml';
 import * as ts from 'typescript';
@@ -23,17 +23,6 @@ export function isStrictPropertyInitializationEnabled(options: ts.CompilerOption
         ? options.strictPropertyInitialization !== false && options.strictNullChecks !== false
         : options.strictPropertyInitialization === true && options.strictNullChecks === true;
 }
-
-export const memoizeGetter: MethodDecorator = (_target, property, descriptor) => {
-    if (descriptor.get === undefined)
-        throw new Error('@memoizeGetter can only be used with get accessors.');
-    const originalGetter = descriptor.get;
-    descriptor.get = function() {
-        const value = originalGetter.call(this);
-        Object.defineProperty(this, property, {value, writable: false});
-        return value;
-    };
-};
 
 export function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
     return Array.isArray(maybeArr)

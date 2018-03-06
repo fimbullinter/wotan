@@ -2,7 +2,7 @@ import test from 'ava';
 import * as TSLint from 'tslint';
 import { wrapTslintRule } from '../src';
 import * as ts from 'typescript';
-import { RuleContext, Replacement } from '@fimbul/wotan';
+import { RuleContext, Replacement } from '@fimbul/ymir';
 
 test('correctly wraps rule', (t) => {
     class RegularRule extends TSLint.Rules.AbstractRule {

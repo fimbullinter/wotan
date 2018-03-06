@@ -13,7 +13,7 @@ import {
     DeprecationTarget,
     FailureFilterFactory,
     FailureFilter,
-} from './types';
+} from '@fimbul/ymir';
 import { applyFixes } from './fix';
 import * as debug from 'debug';
 import { injectable } from 'inversify';

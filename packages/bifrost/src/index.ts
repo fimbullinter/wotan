@@ -5,7 +5,7 @@ import {
     FileSummary,
     RuleConstructor,
     FormatterConstructor,
-} from '@fimbul/wotan';
+} from '@fimbul/ymir';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
 import getCaller = require('get-caller-file');

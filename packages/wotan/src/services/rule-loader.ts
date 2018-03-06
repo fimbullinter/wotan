@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheFactory, Cache } from '../types';
+import { RuleLoaderHost, RuleConstructor, MessageHandler, CacheFactory, Cache } from '@fimbul/ymir';
 import * as debug from 'debug';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';

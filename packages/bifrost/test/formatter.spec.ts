@@ -1,7 +1,7 @@
 import test from 'ava';
 import * as TSLint from 'tslint';
 import { wrapTslintFormatter } from '../src';
-import { Replacement } from '@fimbul/wotan';
+import { Replacement } from '@fimbul/ymir';
 
 test('returns expected output', (t) => {
     testFormatter(TSLint.Formatters.FileslistFormatter, `/bar.ts

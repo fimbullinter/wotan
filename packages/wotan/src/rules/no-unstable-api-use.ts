@@ -1,4 +1,4 @@
-import { TypedRule } from '../types';
+import { TypedRule } from '@fimbul/ymir';
 import {
     isElementAccessExpression,
     isIdentifier,

@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FormatterLoaderHost, FormatterConstructor, DirectoryService } from '../types';
+import { FormatterLoaderHost, FormatterConstructor, DirectoryService } from '@fimbul/ymir';
 import { ConfigurationError } from '../error';
 
 @injectable()

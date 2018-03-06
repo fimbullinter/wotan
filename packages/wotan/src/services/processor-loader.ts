@@ -1,4 +1,4 @@
-import { ProcessorConstructor, Resolver, CacheFactory, Cache } from '../types';
+import { ProcessorConstructor, Resolver, CacheFactory, Cache } from '@fimbul/ymir';
 import { injectable } from 'inversify';
 import { resolveCachedResult } from '../utils';
 import bind from 'bind-decorator';

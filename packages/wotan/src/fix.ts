@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Fix, Replacement } from './types';
+import { Fix, Replacement } from '@fimbul/ymir';
 
 export interface FixResult {
     result: string;

@@ -1,5 +1,5 @@
 // @ts-check
-const {AbstractProcessor} = require('../../../../src/types');
+const {AbstractProcessor} = require('@fimbul/ymir');
 
 class Processor extends AbstractProcessor {
     static getSuffixForFile() {

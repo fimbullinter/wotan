@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import * as path from 'path';
-import { Replacement } from '@fimbul/wotan';
+import { Replacement } from '@fimbul/ymir';
 import { isImportDeclaration } from 'tsutils';
 
 export function getPackageName(fileName: string): string {

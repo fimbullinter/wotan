@@ -1,4 +1,4 @@
-import { ConfigurableRule } from '../types';
+import { ConfigurableRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isNumericLiteral,

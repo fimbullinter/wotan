@@ -10,7 +10,8 @@ import {
     DeprecationHandler,
     ConfigurationProvider,
     FailureFilterFactory,
-} from '../types';
+    LineSwitchParser,
+} from '@fimbul/ymir';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
 import { NodeResolver } from '../services/default/resolver';
@@ -20,7 +21,7 @@ import { ConsoleMessageHandler } from '../services/default/message-handler';
 import { NodeDirectoryService } from '../services/default/directory-service';
 import { DefaultDeprecationHandler } from '../services/default/deprecation-handler';
 import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
-import { LineSwitchParser, DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
+import { DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
 
 export function createDefaultModule() {
     return new ContainerModule((bind, _unbind, isBound) => {

@@ -1,7 +1,7 @@
 import { ConfigurationError } from './error';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GlobalOptions } from './types';
+import { GlobalOptions } from '@fimbul/ymir';
 import debug = require('debug');
 
 const log = debug('wotan:cli');

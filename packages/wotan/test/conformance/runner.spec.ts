@@ -6,7 +6,7 @@ import { createDefaultModule } from '../../src/di/default.module';
 import { Runner } from '../../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../../src/services/default/file-system';
-import { FileSystem, MessageHandler, DirectoryService } from '../../src/types';
+import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },

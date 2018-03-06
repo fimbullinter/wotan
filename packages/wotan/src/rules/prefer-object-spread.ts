@@ -1,4 +1,4 @@
-import { TypedRule, Replacement } from '../types';
+import { TypedRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     WrappedAst,

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '../../src/types';
+import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '@fimbul/ymir';
 import { runCommand, CommandName, ShowCommand, SaveCommand } from '../../src/commands';
 import { NodeFileSystem } from '../../src/services/default/file-system';
 import * as path from 'path';

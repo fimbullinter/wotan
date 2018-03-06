@@ -1,7 +1,6 @@
 import test from 'ava';
 import {
     calculateChangeRange,
-    memoizeGetter,
     assertNever,
     resolveCachedResult,
     isStrictNullChecksEnabled,
@@ -47,71 +46,6 @@ test('calculateChangeRange', (t) => {
             },
         );
     }
-});
-
-test('memoizeGetter', (t) => {
-    class HasGetter {
-        constructor (private _foo: string, private _bar: string) {} // tslint:disable-line:naming-convention
-        private fooCalled = false;
-        @memoizeGetter
-        public get foo() {
-            t.false(this.fooCalled);
-            this.fooCalled = true;
-            return this._foo;
-        }
-
-        private barCalled = false;
-        @memoizeGetter
-        public get bar() {
-            t.false(this.barCalled);
-            this.barCalled = true;
-            return this._bar;
-        }
-    }
-    const obj = new HasGetter('foo', 'bar');
-    t.is(obj.foo, 'foo');
-    t.is(obj.foo, 'foo');
-    t.is(obj.bar, 'bar');
-    t.is(obj.bar, 'bar');
-
-    t.is(new HasGetter('baz', 'bas').foo, 'baz');
-
-    t.throws(
-        () => {
-            class Invalid {
-                @memoizeGetter
-                public getFoo() {
-                    return 'foo';
-                }
-            }
-            return Invalid;
-        },
-        '@memoizeGetter can only be used with get accessors.',
-    );
-
-    t.throws(
-        () => {
-            class Invalid {
-                @memoizeGetter
-                public set foo(_: string) {
-                }
-            }
-            return Invalid;
-        },
-        '@memoizeGetter can only be used with get accessors.',
-    );
-
-    t.throws(
-        () => {
-            class Invalid {
-                @memoizeGetter
-                public setFoo(_v: string) {
-                }
-            }
-            return Invalid;
-        },
-        '@memoizeGetter can only be used with get accessors.',
-    );
 });
 
 test('assertNever', (t) => {

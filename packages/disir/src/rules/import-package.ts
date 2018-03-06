@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '@fimbul/wotan';
+import { AbstractRule, Replacement } from '@fimbul/ymir';
 import { findImports, ImportKind } from 'tsutils';
 import * as ts from 'typescript';
 import * as path from 'path';

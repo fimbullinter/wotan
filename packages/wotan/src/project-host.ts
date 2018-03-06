@@ -3,7 +3,7 @@ import { resolveCachedResult, hasSupportedExtension } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
-import { Configuration, AbstractProcessor } from './types';
+import { Configuration, AbstractProcessor } from '@fimbul/ymir';
 import { bind } from 'bind-decorator';
 import { ConfigurationManager } from './services/configuration-manager';
 import debug = require('debug');

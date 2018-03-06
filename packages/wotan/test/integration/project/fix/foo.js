@@ -1,4 +1,4 @@
-const {AbstractRule, Replacement} = require('../../../../src/types');
+const {AbstractRule, Replacement} = require('@fimbul/ymir');
 
 exports.Rule = class extends AbstractRule {
     apply() {

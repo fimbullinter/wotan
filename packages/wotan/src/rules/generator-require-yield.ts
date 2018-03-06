@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { isFunctionScopeBoundary, NodeWrap } from 'tsutils';
-import { AbstractRule } from '../types';
+import { AbstractRule } from '@fimbul/ymir';
 
 export class Rule extends AbstractRule {
     private containsYield = false;
