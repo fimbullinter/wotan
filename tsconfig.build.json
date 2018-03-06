@@ -13,7 +13,7 @@
   "exclude": [
     "scripts/**/*.d.ts",
     "packages/**/*.d.ts",
-    // avoid scanning into these directories
-    "packages/*/test/fixtures"
+    // avoid scanning into test fixtures directories
+    "packages/*/test/*/**"
   ]
 }
