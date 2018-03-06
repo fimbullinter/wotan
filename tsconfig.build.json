@@ -14,6 +14,7 @@
     "scripts/**/*.d.ts",
     "packages/**/*.d.ts",
     // avoid scanning into test fixtures directories
-    "packages/*/test/*/**"
+    "packages/*/test/fixtures",
+    "packages/*/test/*/*"
   ]
 }
