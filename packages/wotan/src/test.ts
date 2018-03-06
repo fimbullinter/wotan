@@ -1,4 +1,4 @@
-import { Failure, FileSummary } from './types';
+import { Failure, FileSummary } from '@fimbul/ymir';
 import chalk from 'chalk';
 import * as diff from 'diff';
 import { Runner, LintOptions } from './runner';

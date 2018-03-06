@@ -1,4 +1,4 @@
-import { AbstractRule } from '../types';
+import { AbstractRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { getControlFlowEnd, WrappedAst, getWrappedNodeAtPosition, isTryStatement } from 'tsutils';
 

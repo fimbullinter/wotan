@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '../types';
+import { AbstractRule, Replacement } from '@fimbul/ymir';
 
 export class Rule extends AbstractRule {
     public apply() {

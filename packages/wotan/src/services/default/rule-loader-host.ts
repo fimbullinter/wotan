@@ -1,4 +1,4 @@
-import { RuleLoaderHost, RuleConstructor } from '../../types';
+import { RuleLoaderHost, RuleConstructor } from '@fimbul/ymir';
 import * as debug from 'debug';
 import * as path from 'path';
 import { injectable } from 'inversify';

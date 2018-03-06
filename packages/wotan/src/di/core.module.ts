@@ -7,7 +7,7 @@ import { Linter } from '../linter';
 import { Runner } from '../runner';
 import { ProcessorLoader } from '../services/processor-loader';
 import { RuleTester } from '../test';
-import { GlobalOptions } from '../types';
+import { GlobalOptions } from '@fimbul/ymir';
 
 export function createCoreModule(globalOptions: GlobalOptions) {
     return new ContainerModule((bind) => {

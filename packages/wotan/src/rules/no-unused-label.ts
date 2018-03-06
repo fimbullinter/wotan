@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { isLabeledStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
-import { AbstractRule, Replacement } from '../types';
+import { AbstractRule, Replacement } from '@fimbul/ymir';
 
 interface Label {
     node: ts.LabeledStatement;

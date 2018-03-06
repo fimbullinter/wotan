@@ -8,7 +8,7 @@ import {
     DirectoryService,
     ConfigurationProvider,
     EffectiveConfiguration,
-} from '../types';
+} from '@fimbul/ymir';
 import * as path from 'path';
 import { ConfigurationError } from '../error';
 import { resolveCachedResult } from '../utils';

@@ -1,4 +1,4 @@
-import { TypedRule } from '../types';
+import { TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { NodeWrap, isFunctionScopeBoundary, isExpressionStatement, isCallExpression, isThenableType } from 'tsutils';
 import { isAsyncFunction } from '../rule-utils';

@@ -1,4 +1,4 @@
-import { FileSystem, Stats, MessageHandler } from '../../types';
+import { FileSystem, Stats, MessageHandler } from '@fimbul/ymir';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 import { unixifyPath } from '../../utils';

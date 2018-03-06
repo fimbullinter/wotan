@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import test from 'ava';
 import { isCodeLine, createBaselineDiff, createBaseline, RuleTestHost, RuleTester, BaselineKind } from '../../src/test';
 import chalk, { Level } from 'chalk';
-import { Failure, FileSummary, LintResult } from '../../src/types';
+import { Failure, FileSummary, LintResult } from '@fimbul/ymir';
 import { Runner, LintOptions } from '../../src/runner';
 
 test.before(() => {

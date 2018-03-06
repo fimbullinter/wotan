@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { CacheFactory, Cache } from '../../types';
+import { CacheFactory, Cache } from '@fimbul/ymir';
 
 class WeakCache<K extends object, V> implements Cache<K, V> {
     private store = new WeakMap<K, V>();

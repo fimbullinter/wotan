@@ -1,25 +1,17 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { getCommentAtPosition, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
-import { FailureFilterFactory, FailureFilter, Failure, FailureFilterContext } from '../../types';
+import {
+    FailureFilterFactory,
+    FailureFilter,
+    Failure,
+    FailureFilterContext,
+    LineSwitchParser,
+    LineSwitchParserContext,
+    RawLineSwitch,
+} from '@fimbul/ymir';
 
 export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*$/;
-
-export interface LineSwitchParser {
-    parse(context: LineSwitchParserContext): ReadonlyMap<string, ReadonlyArray<RawLineSwitch>>;
-}
-export abstract class LineSwitchParser {}
-
-export interface LineSwitchParserContext {
-    sourceFile: ts.SourceFile;
-    ruleNames: ReadonlyArray<string>;
-    getCommentAtPosition(pos: number): ts.CommentRange | undefined;
-}
-
-export interface RawLineSwitch {
-    readonly enable: boolean;
-    readonly position: number;
-}
 
 @injectable()
 export class LineSwitchFilterFactory implements FailureFilterFactory {

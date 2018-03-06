@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { Resolver } from '../../types';
+import { Resolver } from '@fimbul/ymir';
 import { CachedFileSystem } from '../cached-file-system';
 import * as resolve from 'resolve';
 

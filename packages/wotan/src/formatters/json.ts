@@ -1,4 +1,4 @@
-import { AbstractFormatter, FileSummary } from '../types';
+import { AbstractFormatter, FileSummary } from '@fimbul/ymir';
 
 export class Formatter extends AbstractFormatter {
     public prefix = '[';

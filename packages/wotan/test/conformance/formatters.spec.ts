@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import test, { TestContext } from 'ava';
-import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '../../src/types';
+import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '@fimbul/ymir';
 import { Formatter as JsonFormatter} from '../../src/formatters/json';
 import { Formatter as StylishFormatter } from '../../src/formatters/stylish';
 import chalk, { Level } from 'chalk';

@@ -1,4 +1,4 @@
-const {AbstractRule} = require('../../../../src/types');
+const {AbstractRule} = require('@fimbul/ymir');
 const path = require('path');
 
 exports.Rule = class Rule extends AbstractRule {

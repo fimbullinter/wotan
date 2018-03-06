@@ -1,4 +1,4 @@
-import { DeprecationHandler, DeprecationTarget, MessageHandler } from '../../types';
+import { DeprecationHandler, DeprecationTarget, MessageHandler } from '@fimbul/ymir';
 import { injectable } from 'inversify';
 
 @injectable()

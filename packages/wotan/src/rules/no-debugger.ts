@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '../types';
+import { AbstractRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isIterationStatement, getWrappedNodeAtPosition, WrappedAst } from 'tsutils';
 

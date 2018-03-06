@@ -10,7 +10,7 @@ import {
     Configuration,
     MessageHandler,
     LoadConfigurationContext,
-} from '../../src/types';
+} from '@fimbul/ymir';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../../src/services/cached-file-system';
 import { DefaultCacheFactory } from '../../src/services/default/cache-factory';

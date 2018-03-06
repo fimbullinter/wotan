@@ -3,7 +3,7 @@ import test from 'ava';
 import * as ts from 'typescript';
 import { convertAst } from 'tsutils';
 import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../../src/services/default/line-switches';
-import { Failure } from '../../src/types';
+import { Failure } from '@fimbul/ymir';
 
 test('getDisabledRanges', (t) => {
     const source = `#! shebang

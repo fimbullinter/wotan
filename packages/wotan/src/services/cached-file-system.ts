@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FileSystem, CacheFactory, Cache } from '../types';
+import { FileSystem, CacheFactory, Cache } from '@fimbul/ymir';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
 import * as path from 'path';

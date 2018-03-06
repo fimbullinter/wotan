@@ -1,5 +1,4 @@
-import 'reflect-metadata';
-export * from './src/types';
+export * from '@fimbul/ymir';
 export * from './src/error';
 export * from './src/di/core.module';
 export * from './src/di/default.module';
