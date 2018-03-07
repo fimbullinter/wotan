@@ -113,6 +113,8 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     fn(two!, one!);
     foo(three!);
     takeUndefined(one!);
+    let initialized: T = one;
+    initialized!;
     let uninitialized: T;
     uninitialized!;
     let uninitialized2: U;
@@ -123,6 +125,12 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     uninitialized4!;
     let uninitialized5: U | undefined;
     uninitialized5!;
+    foo(initialized!);
+    takeUndefined(initialized!);
+    foo(uninitialized!);
+    takeUndefined(uninitialized!);
+    foo(uninitialized2!);
+    takeUndefined(uninitialized2!);
     foo(uninitialized5!);
     takeUndefined(uninitialized5!);
 }
@@ -138,7 +146,7 @@ function fn1<T extends I>(o: T, k: keyof I) {
 }
 
 function fn2<T extends I, K extends keyof T>(o: T, k: K) {
-    foo(o[k]!); // TODO https://github.com/Microsoft/TypeScript/issues/12991
+    foo(o[k]!);
     takeUndefined(o[k]!);
 }
 

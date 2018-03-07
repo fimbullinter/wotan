@@ -128,7 +128,7 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     foo(initialized!);
     takeUndefined(initialized);
     foo(uninitialized!);
-    takeUndefined(uninitialized!);
+    takeUndefined(uninitialized);
     foo(uninitialized2!);
     takeUndefined(uninitialized2!);
     foo(uninitialized5!);
