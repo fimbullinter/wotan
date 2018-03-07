@@ -57,12 +57,12 @@ test('ShowCommand', async (t) => {
     void t.throws(
         verify({
             command: CommandName.Show,
-            modules: ['./scripts/util'],
+            modules: ['./packages/wotan/test/fixtures/node_modules/my-config'],
             file: 'foo.ts',
             format: undefined,
             config: undefined,
         }),
-        `Module '${path.resolve('scripts/util.js')}' does not export a function 'createModule'.`,
+        `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
     );
 
     void t.throws(
