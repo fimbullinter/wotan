@@ -51,7 +51,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
-        "Could not find configuration for '../foo.ts'.",
+        "Cannot find configuration for '../foo.ts'.",
     );
 
     void t.throws(

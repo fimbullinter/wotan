@@ -5,6 +5,7 @@ import debug = require('debug');
 
 const log = debug('wotan:argparse');
 
+// @internal
 export function parseArguments(args: string[], globalOptions?: GlobalOptions): Command {
     args = args.map(trimSingleQuotes);
     const commandName = <CommandName>args[0];

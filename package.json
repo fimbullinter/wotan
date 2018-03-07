@@ -9,7 +9,7 @@
     "lint": "run-p \"lint:* {@}\" --",
     "check-dependencies": "depcruise -v .dependency-cruiser.json \"{scripts/*,packages/*/{src/**/*,index,test/*.spec}}.js\"",
     "test:unit": "ava \"packages/*/test/*.spec.js\" -v --snapshot-dir baselines",
-    "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
+    "test:integration": "wotan test 'packages/*/test/{,!(fixtures)/**/}{,*.}test.json' --exact",
     "test": "run-p \"test:* {@}\" --",
     "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
