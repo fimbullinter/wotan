@@ -181,8 +181,8 @@ function fn1<T extends I>(o: T, k: keyof I) {
 }
 
 function fn2<T extends I, K extends keyof T>(o: T, k: K) {
-    foo(o[k]!); // TODO https://github.com/Microsoft/TypeScript/issues/12991
-            ~                                                                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(o[k]!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(o[k]!);
                       ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 }

@@ -146,7 +146,7 @@ function fn1<T extends I>(o: T, k: keyof I) {
 }
 
 function fn2<T extends I, K extends keyof T>(o: T, k: K) {
-    foo(o[k]); // TODO https://github.com/Microsoft/TypeScript/issues/12991
+    foo(o[k]);
     takeUndefined(o[k]);
 }
 
