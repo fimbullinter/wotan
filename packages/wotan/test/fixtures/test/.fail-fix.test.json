@@ -1,0 +1,4 @@
+{
+  "files": ["*.ts"],
+  "config:": ".wotanrc.fail-fix.yaml"
+}

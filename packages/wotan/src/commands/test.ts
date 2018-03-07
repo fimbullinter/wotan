@@ -1,4 +1,4 @@
-import { injectable, ContainerModule } from 'inversify';
+import { injectable, ContainerModule, named } from 'inversify';
 import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Failure } from '@fimbul/ymir';
 import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
@@ -35,7 +35,7 @@ class TestCommandRunner extends AbstractCommandRunner {
         private runner: Runner,
         private fs: CachedFileSystem,
         private logger: MessageHandler,
-        private directoryService: FakeDirectoryService,
+        @named('test') private directoryService: FakeDirectoryService,
     ) {
         super();
     }
