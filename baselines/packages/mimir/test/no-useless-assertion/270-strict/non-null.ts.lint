@@ -134,24 +134,19 @@ functionOrAny!();
 
 function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
     one!;
-       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     two!;
        ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     fn(one!, two!);
-          ~         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
                 ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     foo(one!);
-           ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     fn(two!, one!);
           ~         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
-                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     foo(three!);
              ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(one!);
-                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
     let initialized: T = one;
     initialized!;
-               ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     let uninitialized: T;
     uninitialized!;
     let uninitialized2: U;
@@ -163,11 +158,11 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     let uninitialized5: U | undefined;
     uninitialized5!;
     foo(initialized!);
-                   ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(initialized!);
-                             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                             ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
     foo(uninitialized!);
     takeUndefined(uninitialized!);
+                               ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
     foo(uninitialized2!);
     takeUndefined(uninitialized2!);
     foo(uninitialized5!);

@@ -173,6 +173,9 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
              ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(one!);
                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    let initialized: T = one;
+    initialized!;
+               ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     let uninitialized: T;
     uninitialized!;
                  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
@@ -188,6 +191,18 @@ function fn<T extends string | undefined, U extends string, V>(one: T, two: U, t
     let uninitialized5: U | undefined;
     uninitialized5!;
                   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(initialized!);
+                   ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(initialized!);
+                             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(uninitialized!);
+                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(uninitialized!);
+                               ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(uninitialized2!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(uninitialized2!);
+                                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     foo(uninitialized5!);
                       ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeUndefined(uninitialized5!);
