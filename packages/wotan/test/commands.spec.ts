@@ -46,6 +46,28 @@ test('ShowCommand', async (t) => {
     void t.throws(
         verify({
             command: CommandName.Show,
+            modules: ['non-existent'],
+            file: 'foo.ts',
+            format: undefined,
+            config: undefined,
+        }),
+        `Cannot find module 'non-existent' from '${process.cwd()}'`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Show,
+            modules: ['./scripts/util'],
+            file: 'foo.ts',
+            format: undefined,
+            config: undefined,
+        }),
+        `Module '${path.resolve('scripts/util.js')}' does not export a function 'createModule'.`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Show,
             modules: [],
             file: '../foo.ts',
             format: undefined,
