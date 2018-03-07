@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
 import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '@fimbul/ymir';
-import { runCommand, CommandName, ShowCommand, SaveCommand } from '../src/commands';
+import { runCommand, CommandName, ShowCommand, SaveCommand, TestCommand } from '../src/commands';
 import { NodeFileSystem } from '../src/services/default/file-system';
 import * as path from 'path';
 import { unixifyPath, format } from '../src/utils';
@@ -10,6 +10,11 @@ import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
+import chalk from 'chalk';
+
+test.before(() => {
+    chalk.enabled = false;
+});
 
 test('ShowCommand', async (t) => {
     const container = new Container();
@@ -46,12 +51,34 @@ test('ShowCommand', async (t) => {
     void t.throws(
         verify({
             command: CommandName.Show,
+            modules: ['non-existent'],
+            file: 'foo.ts',
+            format: undefined,
+            config: undefined,
+        }),
+        `Cannot find module 'non-existent' from '${process.cwd()}'`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Show,
+            modules: ['./packages/wotan/test/fixtures/node_modules/my-config'],
+            file: 'foo.ts',
+            format: undefined,
+            config: undefined,
+        }),
+        `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Show,
             modules: [],
             file: '../foo.ts',
             format: undefined,
             config: undefined,
         }),
-        "Could not find configuration for '../foo.ts'.",
+        "Cannot find configuration for '../foo.ts'.",
     );
 
     void t.throws(
@@ -247,6 +274,78 @@ test('SaveCommand', async (t) => {
         return {
             log,
             content,
+        };
+    }
+});
+
+test('TestCommand', async (t) => {
+    const cwd = path.join(__dirname, 'fixtures');
+    const directories: DirectoryService = {
+        getCurrentDirectory() { return cwd; },
+    };
+
+    t.deepEqual(
+        await verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/.*.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        {
+            output: `
+${path.normalize('test/.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail-fix/2.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail-fix/3.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail-fix/3.ts MISSING')}
+${path.normalize('test/.fail.test.json')}
+  ${path.normalize('baselines/.fail/1.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail/2.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail/3.ts.lint MISSING')}
+${path.normalize('test/.success.test.json')}
+  ${path.normalize('baselines/.success/1.ts.lint MISSING')}
+  ${path.normalize('baselines/.success/2.ts.lint MISSING')}
+  ${path.normalize('baselines/.success/3.ts.lint MISSING')}
+`.trim(),
+            success: false,
+        },
+    );
+
+    t.deepEqual(
+        await verify({
+            command: CommandName.Test,
+            bail: true,
+            exact: false,
+            files: ['test/.*.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        {
+            output: `
+${path.normalize('test/.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint MISSING')}
+`.trim(),
+            success: false,
+        },
+    );
+
+    async function verify(command: TestCommand, parentContainer?: Container) {
+        const container = new Container();
+        if (parentContainer)
+            container.parent = parentContainer;
+        container.bind(DirectoryService).toConstantValue(directories);
+        const output: string[] = [];
+        container.bind(MessageHandler).toConstantValue({
+            log(message) { output.push(message); },
+            warn() { throw new Error(); },
+            error() { throw new Error(); },
+        });
+        const success = await runCommand(command, container);
+        return {
+            success,
+            output: output.join('\n'),
         };
     }
 });

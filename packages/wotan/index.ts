@@ -18,5 +18,6 @@ export * from './src/services/processor-loader';
 export * from './src/services/rule-loader';
 export * from './src/linter';
 export * from './src/runner';
-export * from './src/test';
+export * from './src/baseline';
 export * from './src/fix';
+export { parseGlobalOptions, ParsedGlobalOptions } from './src/argparse';
