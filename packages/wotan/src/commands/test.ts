@@ -1,4 +1,4 @@
-import { injectable, ContainerModule, named } from 'inversify';
+import { injectable, ContainerModule } from 'inversify';
 import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Failure } from '@fimbul/ymir';
 import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
@@ -24,8 +24,15 @@ interface RuleTestHost {
 @injectable()
 class FakeDirectoryService implements DirectoryService {
     public cwd!: string;
+
+    constructor(private realDirectorySerivce: DirectoryService) {}
+
     public getCurrentDirectory() {
         return this.cwd;
+    }
+
+    public getRealCurrentDirectory() {
+        return this.realDirectorySerivce.getCurrentDirectory();
     }
 }
 
@@ -35,14 +42,14 @@ class TestCommandRunner extends AbstractCommandRunner {
         private runner: Runner,
         private fs: CachedFileSystem,
         private logger: MessageHandler,
-        @named('test') private directoryService: FakeDirectoryService,
+        private directoryService: FakeDirectoryService,
     ) {
         super();
     }
 
     public run(options: TestCommand) {
         const currentTypescriptVersion = getNormalizedTypescriptVersion();
-        const basedir = process.cwd();
+        const basedir = this.directoryService.getRealCurrentDirectory();
         let baselineDir: string;
         let root: string;
         let baselinesSeen: string[];
@@ -100,6 +107,7 @@ class TestCommandRunner extends AbstractCommandRunner {
             realpathCache: {},
             statCache: {},
             symlinks: {},
+            cwd: basedir,
         };
         for (const pattern of options.files) {
             for (const testcase of glob.sync(pattern, globOptions)) {
@@ -227,7 +235,20 @@ function prettyCodeLine(line: string): string {
 }
 
 export const module = new ContainerModule((bind) => {
-    bind(FakeDirectoryService).toSelf();
-    bind(DirectoryService).toService(FakeDirectoryService);
+    bind(FakeDirectoryService).toSelf().inSingletonScope();
+    bind(DirectoryService).toDynamicValue((context) => {
+        return context.container.get(FakeDirectoryService);
+    }).inSingletonScope().when((request) => {
+        return request.parentRequest == undefined || request.parentRequest.target.serviceIdentifier !== FakeDirectoryService;
+    });
+    bind(DirectoryService).toDynamicValue(({container}) => {
+        if (container.parent && container.parent.isBound(DirectoryService))
+            return container.parent.get(DirectoryService);
+        return {
+            getCurrentDirectory() {
+                return process.cwd();
+            },
+        };
+    }).inSingletonScope().whenInjectedInto(FakeDirectoryService);
     bind(AbstractCommandRunner).to(TestCommandRunner);
 });

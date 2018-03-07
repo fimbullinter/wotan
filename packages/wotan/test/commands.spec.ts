@@ -295,21 +295,37 @@ test('TestCommand', async (t) => {
         }),
         {
             output: `
-${path.normalize('test/.success.test.json')}
-  ${path.normalize('baselines/.success/1.ts.lint MISSING')}
-  ${path.normalize('baselines/.success/2.ts.lint MISSING')}
-  ${path.normalize('baselines/.success/3.ts.lint MISSING')}
-${path.normalize('test/.fail.test.json')}
-  ${path.normalize('baselines/.fail/1.ts.lint MISSING')}
-  ${path.normalize('baselines/.fail/2.ts.lint MISSING')}
-  ${path.normalize('baselines/.fail/3.ts.lint MISSING')}
 ${path.normalize('test/.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint MISSING')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint MISSING')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint MISSING')}
-  ${path.normalize('baselines/.fail-fix/1.ts MISSING')}
-  ${path.normalize('baselines/.fail-fix/2.ts MISSING')}
   ${path.normalize('baselines/.fail-fix/3.ts MISSING')}
+${path.normalize('test/.fail.test.json')}
+  ${path.normalize('baselines/.fail/1.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail/2.ts.lint MISSING')}
+  ${path.normalize('baselines/.fail/3.ts.lint MISSING')}
+${path.normalize('test/.success.test.json')}
+  ${path.normalize('baselines/.success/1.ts.lint MISSING')}
+  ${path.normalize('baselines/.success/2.ts.lint MISSING')}
+  ${path.normalize('baselines/.success/3.ts.lint MISSING')}
+`.trim(),
+            success: false,
+        },
+    );
+
+    t.deepEqual(
+        await verify({
+            command: CommandName.Test,
+            bail: true,
+            exact: false,
+            files: ['test/.*.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        {
+            output: `
+${path.normalize('test/.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint MISSING')}
 `.trim(),
             success: false,
         },
