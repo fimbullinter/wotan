@@ -603,6 +603,69 @@ ${path.normalize('test/.fail-fix.test.json')}
         });
     }
 
+    {
+        const directoriesCreated: string[] = [];
+        const written: Record<string, string> = {};
+        const container = new Container();
+        @injectable()
+        class MockFileSystem extends NodeFileSystem {
+            constructor(logger: MessageHandler) {
+                super(logger);
+            }
+
+            public readFile(f: string) {
+                if (f.endsWith('/baselines/.success/1.ts.lint'))
+                    return '';
+                return super.readFile(f);
+            }
+
+            public writeFile(f: string, content: string) {
+                written[f] = content;
+            }
+
+            public createDirectory(d: string) {
+                directoriesCreated.push(d);
+                if (directoriesCreated.length === 1)
+                    throw new Error();
+            }
+        }
+        container.bind(FileSystem).to(MockFileSystem);
+        container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+        t.deepEqual(
+            await verify(
+                {
+                    command: CommandName.Test,
+                    bail: false,
+                    exact: false,
+                    files: ['test/.success.test.json'],
+                    updateBaselines: true,
+                    modules: [],
+                },
+                container),
+            {
+                output: `
+${path.normalize('test/.success.test.json')}
+  ${path.normalize('baselines/.success/1.ts.lint UPDATED')}
+  ${path.normalize('baselines/.success/2.ts.lint CREATED')}
+  ${path.normalize('baselines/.success/3.ts.lint CREATED')}
+`.trim(),
+                success: true,
+            },
+        );
+
+        t.deepEqual(written, {
+            [unixifyPath(path.resolve(cwd, 'baselines/.success/1.ts.lint'))]: 'export {};\n',
+            [unixifyPath(path.resolve(cwd, 'baselines/.success/2.ts.lint'))]: "export {};\n'foo';\n",
+            [unixifyPath(path.resolve(cwd, 'baselines/.success/3.ts.lint'))]: `"bar";\nlabel: 'baz';\n`,
+        });
+        t.deepEqual(directoriesCreated, [
+            unixifyPath(path.join(cwd, 'baselines/.success')),
+            unixifyPath(path.join(cwd, 'baselines')),
+            unixifyPath(path.join(cwd, 'baselines/.success')),
+        ]);
+    }
+
     async function verify(command: TestCommand, parentContainer?: Container) {
         const container = new Container();
         if (parentContainer)
