@@ -290,6 +290,135 @@ test('ValidateCommand', async (t) => {
     );
 });
 
+test('LintCommand', async (t) => {
+    const container = new Container();
+
+    let filesWritten: Record<string, string> = {};
+    @injectable()
+    class MockFileSystem extends NodeFileSystem {
+        constructor(logger: MessageHandler) {
+            super(logger);
+        }
+        public writeFile(f: string, content: string) {
+            filesWritten[f] = content;
+        }
+    }
+    container.bind(FileSystem).to(MockFileSystem);
+
+    let output: string[] = [];
+    container.bind(MessageHandler).toConstantValue({
+        log(m) { output.push(m); },
+        warn() { throw new Error(); },
+        error() { throw new Error(); },
+    });
+
+    const cwd = path.join(__dirname, 'fixtures/test').toLowerCase();
+    container.bind(DirectoryService).toConstantValue({
+        getCurrentDirectory() { return cwd; },
+    });
+
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.yaml',
+                project: undefined,
+                formatter: undefined,
+                fix: true,
+                extensions: undefined,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), '');
+
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.fail.yaml',
+                project: undefined,
+                formatter: undefined,
+                fix: true,
+                extensions: undefined,
+            },
+            container,
+        ),
+        false,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${unixifyPath(path.join(cwd, '2.ts'))}:2:1
+ERROR 2:1  no-unused-expression  This expression is unused. Did you mean to assign a value or call a function?
+
+${unixifyPath(path.join(cwd, '3.ts'))}:2:8
+ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assign a value or call a function?
+
+✖ 2 errors
+`.trim());
+
+    output = [];
+
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.fail-fix.yaml',
+                project: undefined,
+                formatter: undefined,
+                fix: true,
+                extensions: undefined,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {
+        [unixifyPath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
+    });
+    t.is(output.join('\n'), 'Automatically fixed 1 failure.');
+
+    output = [];
+    filesWritten = {};
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.fail-fix.yaml',
+                project: undefined,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+            },
+            container,
+        ),
+        false,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${unixifyPath(path.join(cwd, '3.ts'))}:2:1
+ERROR 2:1  no-unused-label  Unused label 'label'.
+
+✖ 1 error
+1 failure is potentially fixable with the '--fix' option.
+`.trim());
+
+});
+
 test('TestCommand', async (t) => {
     const cwd = path.join(__dirname, 'fixtures').toLowerCase();
     const directories: DirectoryService = {
