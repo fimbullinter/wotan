@@ -278,6 +278,17 @@ test('SaveCommand', async (t) => {
     }
 });
 
+test('ValidateCommand', async (t) => {
+    t.is(
+        await runCommand({
+            command: CommandName.Validate,
+            modules: [],
+            files: [],
+        }),
+        true,
+    );
+});
+
 test('TestCommand', async (t) => {
     const cwd = path.join(__dirname, 'fixtures');
     const directories: DirectoryService = {
