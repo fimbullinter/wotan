@@ -1,10 +1,11 @@
-import * as m from 'non-existent-module';
-                   ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+import mdefault, {m} from 'non-existent-module';
+                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
 console.clog(foo);
         ~~~~       [error typecheck: Property 'clog' does not exist on type 'Console'. Did you mean 'log'?]
+console.log(mdefault);
 
 let bar: Array<Map<number, [boolean, string]>>;
 let baz = foo;

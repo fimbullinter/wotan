@@ -1,7 +1,8 @@
-import * as m from 'non-existent-module';
+import mdefault, {m} from 'non-existent-module';
 let foo: string;
 foo = 1;
 console.clog(foo);
+console.log(mdefault);
 
 let bar: Array<Map<number, [boolean, string]>>;
 let baz = foo;
