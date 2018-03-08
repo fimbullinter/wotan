@@ -364,7 +364,7 @@ ${path.normalize('test/.fail-fix.test.json')}
 
             public readFile(f: string): string {
                 if (f.includes('/baselines/'))
-                    return '\uFEFF\t\r\n';
+                    return '\uFEFF\t\r\n~ [error foo: bar\tbaz]\n';
                 return super.readFile(f);
             }
 
@@ -396,23 +396,26 @@ ${path.normalize('test/.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint FAILED')}
 Expected
 Actual
-@@ -1,1 +1,1 @@
+@@ -1,2 +1,1 @@
 -<BOM>␉␍
+-~ [error foo: bar␉baz]
 +export {};
 
   ${path.normalize('baselines/.fail-fix/2.ts.lint FAILED')}
 Expected
 Actual
-@@ -1,1 +1,2 @@
+@@ -1,2 +1,2 @@
 -<BOM>␉␍
+-~ [error foo: bar␉baz]
 +export {};
 +'foo';
 
   ${path.normalize('baselines/.fail-fix/3.ts.lint FAILED')}
 Expected
 Actual
-@@ -1,1 +1,3 @@
+@@ -1,2 +1,3 @@
 -<BOM>␉␍
+-~ [error foo: bar␉baz]
 +"bar";
 +label: 'baz';
 +~~~~~         [error no-unused-label: Unused label 'label'.]
@@ -422,8 +425,9 @@ Actual
   ${path.normalize('baselines/.fail-fix/3.ts FAILED')}
 Expected
 Actual
-@@ -1,1 +1,2 @@
+@@ -1,2 +1,2 @@
 -<BOM>␉␍
+-~ [error foo: bar␉baz]
 +"bar";
 +'baz';
 `.trimLeft(),

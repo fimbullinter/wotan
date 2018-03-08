@@ -2,7 +2,7 @@ import { injectable, ContainerModule } from 'inversify';
 import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Failure } from '@fimbul/ymir';
 import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
-import { createBaseline, isCodeLine } from '../baseline';
+import { createBaseline } from '../baseline';
 import * as path from 'path';
 import chalk from 'chalk';
 import { unixifyPath } from '../utils';
@@ -217,17 +217,17 @@ function createBaselineDiff(actual: string, expected: string) {
                 line = chalk.blueBright(line);
                 break;
             case '+':
-                line = chalk.green(isCodeLine(line.substr(1)) ? '+' + prettyCodeLine(line.substr(1)) : line);
+                line = chalk.green('+' + prettyLine(line.substr(1)));
                 break;
             case '-':
-                line = chalk.red(isCodeLine(line.substr(1)) ? '-' + prettyCodeLine(line.substr(1)) : line);
+                line = chalk.red('-' + prettyLine(line.substr(1)));
         }
         result.push(line);
     }
     return result.join('\n');
 }
 
-function prettyCodeLine(line: string): string {
+function prettyLine(line: string): string {
     return line
         .replace(/\t/g, '\u2409') // ␉
         .replace(/\r$/, '\u240d') // ␍
