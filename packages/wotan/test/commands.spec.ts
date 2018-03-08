@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { Container, injectable } from 'inversify';
-import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions } from '@fimbul/ymir';
+import { MessageHandler, FileSystem, Format, DirectoryService, CacheFactory, GlobalOptions, Stats } from '@fimbul/ymir';
 import { runCommand, CommandName, ShowCommand, SaveCommand, TestCommand } from '../src/commands';
 import { NodeFileSystem } from '../src/services/default/file-system';
 import * as path from 'path';
@@ -11,6 +11,7 @@ import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import chalk from 'chalk';
+import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 
 test.before(() => {
     chalk.enabled = false;
@@ -290,7 +291,7 @@ test('ValidateCommand', async (t) => {
 });
 
 test('TestCommand', async (t) => {
-    const cwd = path.join(__dirname, 'fixtures');
+    const cwd = path.join(__dirname, 'fixtures').toLowerCase();
     const directories: DirectoryService = {
         getCurrentDirectory() { return cwd; },
     };
@@ -341,6 +342,133 @@ ${path.normalize('test/.fail-fix.test.json')}
             success: false,
         },
     );
+
+    {
+        const deleted: string[] = [];
+        const written: Record<string, string> = {};
+        const container = new Container();
+        @injectable()
+        class MockFileSystem extends NodeFileSystem {
+            constructor(logger: MessageHandler) {
+                super(logger);
+            }
+
+            public stat(f: string): Stats {
+                if (f.includes('/baselines/'))
+                    return {
+                        isFile() { return true; },
+                        isDirectory() { return false; },
+                    };
+                return super.stat(f);
+            }
+
+            public readFile(f: string): string {
+                if (f.includes('/baselines/'))
+                    return '\uFEFF\t\r\n';
+                return super.readFile(f);
+            }
+
+            public deleteFile(f: string) {
+                deleted.push(f);
+            }
+
+            public writeFile(f: string, content: string) {
+                written[f] = content;
+            }
+        }
+        container.bind(FileSystem).to(MockFileSystem);
+        container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+        t.deepEqual(
+            await verify(
+                {
+                    command: CommandName.Test,
+                    bail: false,
+                    exact: false,
+                    files: ['test/.fail-fix.test.json'],
+                    updateBaselines: false,
+                    modules: [],
+                },
+                container),
+            {
+                output: `
+${path.normalize('test/.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint FAILED')}
+Expected
+Actual
+@@ -1,1 +1,1 @@
+-<BOM>␉␍
++export {};
+
+  ${path.normalize('baselines/.fail-fix/2.ts.lint FAILED')}
+Expected
+Actual
+@@ -1,1 +1,2 @@
+-<BOM>␉␍
++export {};
++'foo';
+
+  ${path.normalize('baselines/.fail-fix/3.ts.lint FAILED')}
+Expected
+Actual
+@@ -1,1 +1,3 @@
+-<BOM>␉␍
++"bar";
++label: 'baz';
++~~~~~         [error no-unused-label: Unused label 'label'.]
+
+  ${path.normalize('baselines/.fail-fix/1.ts EXISTS')}
+  ${path.normalize('baselines/.fail-fix/2.ts EXISTS')}
+  ${path.normalize('baselines/.fail-fix/3.ts FAILED')}
+Expected
+Actual
+@@ -1,1 +1,2 @@
+-<BOM>␉␍
++"bar";
++'baz';
+`.trimLeft(),
+                success: false,
+            },
+        );
+        t.is(deleted.length, 0);
+        t.deepEqual(written, {});
+
+        t.deepEqual(
+            await verify(
+                {
+                    command: CommandName.Test,
+                    bail: false,
+                    exact: false,
+                    files: ['test/.fail-fix.test.json'],
+                    updateBaselines: true,
+                    modules: [],
+                },
+                container),
+            {
+                output: `
+${path.normalize('test/.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint UPDATED')}
+  ${path.normalize('baselines/.fail-fix/2.ts.lint UPDATED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.lint UPDATED')}
+  ${path.normalize('baselines/.fail-fix/1.ts REMOVED')}
+  ${path.normalize('baselines/.fail-fix/2.ts REMOVED')}
+  ${path.normalize('baselines/.fail-fix/3.ts UPDATED')}
+`.trim(),
+                success: true,
+            },
+        );
+        t.deepEqual(deleted, [
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts')),
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts')),
+        ]);
+        t.deepEqual(written, {
+            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n',
+            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
+            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
+                `"bar";\nlabel: 'baz';\n~~~~~         [error no-unused-label: Unused label 'label'.]\n`,
+            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts'))]: `"bar";\n'baz';\n`,
+        });
+    }
 
     async function verify(command: TestCommand, parentContainer?: Container) {
         const container = new Container();
