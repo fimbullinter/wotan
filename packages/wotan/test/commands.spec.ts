@@ -356,10 +356,10 @@ test('LintCommand', async (t) => {
     );
     t.deepEqual(filesWritten, {});
     t.is(output.join('\n'), `
-${unixifyPath(path.join(cwd, '2.ts'))}:2:1
+${path.join(cwd, '2.ts')}:2:1
 ERROR 2:1  no-unused-expression  This expression is unused. Did you mean to assign a value or call a function?
 
-${unixifyPath(path.join(cwd, '3.ts'))}:2:8
+${path.join(cwd, '3.ts')}:2:8
 ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assign a value or call a function?
 
 ✖ 2 errors
@@ -410,7 +410,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
     );
     t.deepEqual(filesWritten, {});
     t.is(output.join('\n'), `
-${unixifyPath(path.join(cwd, '3.ts'))}:2:1
+${path.join(cwd, '3.ts')}:2:1
 ERROR 2:1  no-unused-label  Unused label 'label'.
 
 ✖ 1 error
