@@ -5,16 +5,13 @@
   },
   "include": [
     "scripts",
-    "custom-typings",
+    "custom-typings/*.d.ts",
     "packages/*/src",
     "packages/*/index.ts",
     "packages/*/test/*.spec.ts"
   ],
   "exclude": [
-    "scripts/**/*.d.ts",
-    "packages/**/*.d.ts",
-    // avoid scanning into test fixtures directories
-    "packages/*/test/fixtures",
-    "packages/*/test/*/*"
+    "scripts/*.d.ts",
+    "packages/**/*.d.ts"
   ]
 }
