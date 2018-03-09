@@ -143,6 +143,7 @@ In theory every change to a rule can break users and could be considered a break
 ### Prereleases (nightly builds)
 
 * are not guaranteed to be stable
+* tagged as `next` on npm so you can install `@fimbul/wotan@next`
 * contains the latest changes intended for the next release
   * `x.0.0-dev*` contains all changes including breaking ones for the next major version
   * `x.y.0-dev*` contains all changes for the next minor version

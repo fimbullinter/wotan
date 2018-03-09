@@ -1,5 +1,34 @@
 # Change Log
 
+## v0.4.0
+
+This release contains a lot of refactoring and structural changes:
+
+* renamed `await-promise` to `await-only-promise`
+* renamed `deprecation` to `no-unstable-api-use`
+
+Two new packages were split from the `wotan` package:
+
+* `ymir` contains all base types and classes. This package can be used by extension and rule authors to not depend on the full `wotan` runtime.
+* `mimir` contains all rules, formatters and configuration presets. Together with `ymir` this package allows rules to be executed in a different runtime without depending on the whole `wotan` package
+
+**Features:**
+
+* Added recipes to Readme
+* new rule `await-async-result`
+* new rule `generator-require-yield`
+* new rule `no-nan-compare`
+* new rule `no-unreachable-code`
+* new rule `prefer-dot-notation`
+* new rule `prefer-number-isnan`
+* new rule `prefer-object-spread`
+* `no-unstable-api-use` (previously `deprecation`) also checks `@experimental` tag
+
+**Bugfixes:**
+
+`no-unused-label` no longer forbids labels on statements other than loops and switch
+
+
 ## v0.3.0
 
 **Features:**
