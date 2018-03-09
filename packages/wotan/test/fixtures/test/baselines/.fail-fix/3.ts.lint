@@ -1,0 +1,3 @@
+"bar";
+label: 'baz';
+~~~~~         [error no-unused-label: Unused label 'label'.]

@@ -420,7 +420,7 @@ ERROR 2:1  no-unused-label  Unused label 'label'.
 });
 
 test('TestCommand', async (t) => {
-    const cwd = path.join(__dirname, 'fixtures').toLowerCase();
+    let cwd = path.join(__dirname, 'fixtures').toLowerCase();
     const directories: DirectoryService = {
         getCurrentDirectory() { return cwd; },
     };
@@ -715,6 +715,102 @@ ${path.normalize('test/.success.test.json')}
             unixifyPath(path.join(cwd, 'baselines/.success')),
             unixifyPath(path.join(cwd, 'baselines')),
             unixifyPath(path.join(cwd, 'baselines/.success')),
+        ]);
+    }
+
+    // CWD changes here!
+    cwd = path.join(cwd, 'test');
+
+    t.deepEqual(
+        await verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: true,
+            files: ['.fail-fix.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        {
+            output: `
+${path.normalize('.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts UNCHECKED')}
+  ${path.normalize('baselines/.fail-fix/4.ts.lint UNCHECKED')}
+`.trim(),
+            success: false,
+        },
+    );
+
+    t.deepEqual(
+        await verify({
+            command: CommandName.Test,
+            bail: true,
+            exact: true,
+            files: ['.fail-fix.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        {
+            output: `
+${path.normalize('.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts UNCHECKED')}
+`.trim(),
+            success: false,
+        },
+    );
+
+    {
+        const deleted: string[] = [];
+        const container = new Container();
+        @injectable()
+        class MockFileSystem extends NodeFileSystem {
+            constructor(logger: MessageHandler) {
+                super(logger);
+            }
+
+            public deleteFile(f: string) {
+                deleted.push(f);
+            }
+        }
+        container.bind(FileSystem).to(MockFileSystem);
+        container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+        t.deepEqual(
+            await verify(
+                {
+                    command: CommandName.Test,
+                    bail: false,
+                    exact: true,
+                    files: ['.fail-fix.test.json'],
+                    updateBaselines: true,
+                    modules: [],
+                },
+                container,
+            ),
+            {
+                output: `
+${path.normalize('.fail-fix.test.json')}
+  ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
+  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts REMOVED')}
+  ${path.normalize('baselines/.fail-fix/4.ts.lint REMOVED')}
+`.trim(),
+                success: true,
+            },
+        );
+
+        t.deepEqual(deleted, [
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts')),
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
         ]);
     }
 
