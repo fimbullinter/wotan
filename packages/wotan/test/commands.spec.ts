@@ -425,7 +425,7 @@ test('TestCommand', async (t) => {
         getCurrentDirectory() { return cwd; },
     };
 
-    t.throws(
+    void t.throws(
         verify({
             command: CommandName.Test,
             bail: false,
