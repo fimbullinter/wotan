@@ -485,6 +485,46 @@ ${path.normalize('test/.fail-fix.test.json')}
     );
 
     {
+            const container = new Container();
+            @injectable()
+            class MockFileSystem extends NodeFileSystem {
+                constructor(logger: MessageHandler) {
+                    super(logger);
+                }
+
+                public normalizePath(f: string) {
+                    return super.normalizePath(f).replace(/\/baselines\/.success\/(\d).ts(.lint)?$/, '/test/$1.ts');
+                }
+            }
+            container.bind(FileSystem).to(MockFileSystem);
+            container.bind(MessageHandler).to(ConsoleMessageHandler);
+
+            t.deepEqual(
+                await verify(
+                    {
+                        command: CommandName.Test,
+                        bail: true,
+                        exact: false,
+                        files: ['test/.success.test.json'],
+                        updateBaselines: false,
+                        modules: [],
+                    },
+                    container,
+                ),
+                {
+                    output: `
+${path.normalize('test/.success.test.json')}
+  ${path.normalize('baselines/.success/1.ts.lint PASSED')}
+  ${path.normalize('baselines/.success/2.ts.lint PASSED')}
+  ${path.normalize('baselines/.success/3.ts.lint PASSED')}
+  ${path.normalize('baselines/.success/1.ts EXISTS')}
+`.trim(),
+                    success: false,
+                },
+            );
+    }
+
+    {
         const deleted: string[] = [];
         const written: Record<string, string> = {};
         const container = new Container();
