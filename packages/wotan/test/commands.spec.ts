@@ -425,6 +425,18 @@ test('TestCommand', async (t) => {
         getCurrentDirectory() { return cwd; },
     };
 
+    t.throws(
+        verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/subdir/.*.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${path.join(cwd, 'test/subdir')}'.`,
+    );
+
     t.deepEqual(
         await verify({
             command: CommandName.Test,
