@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/valtyr",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Wotan plugin to behave almost like TSLint",
   "author": "Klaus Meinhardt",
   "license": "Apache-2.0",
@@ -30,11 +30,11 @@
     "resolve": "^1.5.0"
   },
   "peerDependencies": {
-    "@fimbul/wotan": "^0.3.0",
+    "@fimbul/wotan": "^0.4.0",
     "typescript": "^2.4.1"
   },
   "dependencies": {
-    "@fimbul/bifrost": "^0.2.0",
+    "@fimbul/bifrost": "^0.4.0",
     "inversify": "^4.10.0",
     "tslib": "^1.8.1",
     "tslint": "^5.0.0",

@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/heimdall",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Wotan plugin to load and use TSLint rules and formatters",
   "main": "src/index",
   "types": "src/index",
@@ -26,10 +26,10 @@
     "formatters"
   ],
   "peerDependencies": {
-    "@fimbul/wotan": "^0.3.0"
+    "@fimbul/wotan": "^0.4.0"
   },
   "dependencies": {
-    "@fimbul/bifrost": "^0.2.0",
+    "@fimbul/bifrost": "^0.4.0",
     "inversify": "^4.10.0",
     "tslib": "^1.8.1",
     "tslint": "^5.0.0"
