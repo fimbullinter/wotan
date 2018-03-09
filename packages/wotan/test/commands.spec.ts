@@ -434,7 +434,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
-        `Testing file '${path.join(cwd, 'test/1.ts')}' outside of '${path.join(cwd, 'test/subdir')}'.`,
+        `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
     );
 
     t.deepEqual(
