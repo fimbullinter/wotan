@@ -24,7 +24,7 @@ export function loadConfig(dir: string) {
     const fileName = path.join(dir, '.fimbullinter.yaml');
     return new Promise<GlobalOptions>((resolve) => {
         return fs.readFile(fileName, {encoding: 'utf8'}, (err, content) => {
-            if (err) {
+            if (err) { // wotan-disable-line no-tautology
                 log("Not using '%s': %s", fileName, err.code);
                 return resolve({});
             }

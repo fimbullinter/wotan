@@ -37,7 +37,7 @@ function loadModule(moduleName: string, options: GlobalOptions) {
         throw new ConfigurationError(e.message);
     }
     log("Found module at '%s'.", moduleName);
-    const m = <{createModule?(options: GlobalOptions): ContainerModule}>require(moduleName);
+    const m = <{createModule?(options: GlobalOptions): ContainerModule} | null | undefined>require(moduleName);
     if (!m || typeof m.createModule !== 'function')
         throw new ConfigurationError(`Module '${moduleName}' does not export a function 'createModule'.`);
     return m.createModule(options);
