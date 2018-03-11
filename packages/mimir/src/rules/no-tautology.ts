@@ -169,7 +169,7 @@ export class Rule extends TypedRule {
                     case 'object':
                     case 'function':
                     case 'undefined':
-                        left = left.expression;
+                        left = unwrapParens(left.expression);
                         predicate = predicates[right.text];
                         break;
                     default:
