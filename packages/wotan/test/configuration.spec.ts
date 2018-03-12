@@ -415,7 +415,7 @@ test('DefaultConfigurationProvider.read', (t) => {
     t.is<{}>(cp.read('foo.js'), empty);
     t.deepEqual<{}>(cp.read('empty.json'), empty);
     t.is(cp.read('empty.yaml'), null);
-    t.throws(() => cp.read('invalid.json'), /unexpected/i);
+    t.throws(() => cp.read('invalid.json'));
     t.throws(() => cp.read('invalid.yaml'));
     t.throws(() => cp.read('non-existent.json5'), 'file not found');
 });
