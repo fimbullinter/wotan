@@ -16,7 +16,7 @@ do {} while (typeof get<Function>() === 'object');
 for (; typeof get<object>() === 'object';) ;
 while ('foo' !== undefined && 'bar' == null) {}
 while (get<number>() + get<number>());
-if (+1) {}
+
 +0;
 
 declare let v: number;

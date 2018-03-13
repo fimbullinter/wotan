@@ -27,8 +27,7 @@ while ('foo' !== undefined && 'bar' == null) {}
        ~~~~~~~~~~~~~~~~~~~                      [error no-useless-predicate: Expression is always falsy.]
                               ~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always falsy.]
 while (get<number>() + get<number>());
-if (+1) {}
-    ~~     [error no-useless-predicate: Expression is always truthy.]
+
 +0;
 
 declare let v: number;
