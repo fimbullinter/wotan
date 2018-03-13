@@ -11,13 +11,16 @@ while (typeof get<{}>() === 'number') ;
 while (typeof get<{}>() == 'object') ;
 while (typeof get<{}>() == 'undefined') ;
 while (typeof get<{toString(): string}>() == 'number') ; // TODO this is actually valid, but needs to check type assignability
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                          [error no-useless-predicate: Expression is always falsy.]
 while (typeof get<null>() == 'null');
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error no-useless-predicate: Expression is always falsy.]
 do {} while (typeof get<Function>() === 'object');
 for (; typeof get<object>() === 'object';) ;
 while ('foo' !== undefined && 'bar' == null) {}
 while (get<number>() + get<number>());
 
 true ? 'foo' : 'bar';
+~~~~                  [error no-useless-predicate: Expression is always truthy.]
 1 === undefined ? 'bar' : 'foo';
 
 +0;
@@ -33,7 +36,9 @@ typeof get<number | string>() === 'object';
 typeof get<number | string | Array<any>>() === 'object';
 typeof Math === 'object';
 typeof undefined === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
 typeof undefined == null;
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
 'foo' === undefined;
 'bar' === null;
 get<'foo' | undefined>() == null;
@@ -48,14 +53,22 @@ undefined == get<null>();
 get<undefined>() == null;
 
 !get<1>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !get<0>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
 !get<number>();
 !!get<boolean>();
 !get<string>();
 !!get<'foo'>();
+ ~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+  ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !!get<true>();
+ ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+  ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !get<{}>();
 !!get<false>()
+ ~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
+  ~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
 
 for (;;) break;
 while (true) break;
@@ -70,6 +83,7 @@ function test<T>(param: T) {
 function test2<T extends boolean, U extends any>(param?: T, param2?: U) {
     param === undefined;
     typeof param === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     typeof param === 'boolean';
     typeof param === 'object';
 
@@ -82,6 +96,7 @@ function test2<T extends boolean, U extends any>(param?: T, param2?: U) {
 function test3<T extends Record<'foo', string>, K extends keyof T>(v: T, k: K) {
     v[k] === undefined;
     typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     typeof v[k] === 'string';
     typeof v[k] === 'symbol';
     !v[k];
@@ -90,15 +105,19 @@ function test3<T extends Record<'foo', string>, K extends keyof T>(v: T, k: K) {
 function test4<T extends Record<'foo', string>>(v: T, k: 'foo') {
     v[k] === undefined;
     typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     typeof v[k] === 'string';
     typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     !v[k];
 }
 
 function test5<K extends 'foo'>(v: Record<'foo', string>, k: K) {
     v[k] === undefined;
     typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     typeof v[k] === 'string';
     typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     !v[k];
 }
