@@ -56,6 +56,7 @@ get<undefined>() == null;
 !!get<true>();
 !get<{}>();
 !!get<false>()
+!get<{foo: 'bar'}>();
 
 for (;;) break;
 while (true) break;

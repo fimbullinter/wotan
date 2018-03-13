@@ -69,6 +69,8 @@ get<undefined>() == null;
 !!get<false>()
  ~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
   ~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+!get<{foo: 'bar'}>();
+ ~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 
 for (;;) break;
 while (true) break;
