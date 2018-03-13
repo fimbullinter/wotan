@@ -18,7 +18,7 @@ export class Rule extends AbstractRule {
             if (wrap.kind === ts.SyntaxKind.Block && isGenerator(wrap.node.parent)) {
                 this.containsYield = false;
                 wrap.children.forEach(this.visitNode, this); // walk the function body recursively
-                if (!this.containsYield)
+                if (this.shouldFail()) // call as method so CFA doesn't infer `this.containsYield` as always false
                     this.fail(wrap.node.parent);
                 wrap = wrap.skip!; // continue right after the function body
             } else {
@@ -42,6 +42,10 @@ export class Rule extends AbstractRule {
             return;
         }
         return wrap.children.forEach(this.visitNode, this);
+    }
+
+    private shouldFail() {
+        return !this.containsYield;
     }
 
     private fail({asteriskToken, name}: GeneratorDeclaration) {

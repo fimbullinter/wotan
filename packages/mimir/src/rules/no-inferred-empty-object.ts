@@ -24,12 +24,14 @@ export class Rule extends TypedRule {
 
     private checkCallExpression(node: ts.CallExpression) {
         const signature = this.checker.getResolvedSignature(node);
+        // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined)
             return this.checkSignature(signature, signature.declaration, node);
     }
 
     private checkNewExpression(node: ts.NewExpression) {
         const signature = this.checker.getResolvedSignature(node);
+        // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined)
             // There is an explicitly declared construct signature
             return this.checkSignature(signature, signature.declaration, node);
@@ -44,6 +46,7 @@ export class Rule extends TypedRule {
             if (typeParameters === undefined)
                 continue;
             for (let i = 0; i < typeParameters.length; ++i)
+                // wotan-disable-next-line no-useless-predicate
                 if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
                     typeParameterResult[i] = typeParameters[i];
         }
