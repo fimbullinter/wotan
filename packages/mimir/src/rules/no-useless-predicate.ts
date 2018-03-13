@@ -9,6 +9,7 @@ import {
     isTypeOfExpression,
     isTextualLiteral,
     isIdentifier,
+    isEmptyObjectType,
 } from 'tsutils';
 import { isStrictNullChecksEnabled } from '../utils';
 
@@ -94,8 +95,11 @@ export class Rule extends TypedRule {
                     break;
                 }
                 case ts.SyntaxKind.BinaryExpression:
-                    if (isLogicalOperator((<ts.BinaryExpression>node).operatorToken.kind))
-                        this.checkNode((<ts.BinaryExpression>node).left);
+                    if (isLogicalOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
+                        this.checkCondition((<ts.BinaryExpression>node).left);
+                    } else if (isEqualityOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
+                        this.checkNode(<ts.BinaryExpression>node);
+                    }
                     break;
                 case ts.SyntaxKind.PrefixUnaryExpression:
                     if ((<ts.PrefixUnaryExpression>node).operator === ts.SyntaxKind.ExclamationToken)
@@ -105,12 +109,10 @@ export class Rule extends TypedRule {
     }
 
     private checkCondition(node: ts.Expression) {
-        if (node.kind === ts.SyntaxKind.PrefixUnaryExpression)
-            return;
-        if (!isBinaryExpression(node))
-            return this.checkNode(node);
-        if (isLogicalOperator(node.operatorToken.kind))
-            return this.checkNode(node.right);
+        if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken ||
+            isBinaryExpression(node) && isEqualityOperator(node.operatorToken.kind))
+            return; // checked later while checking into child nodes
+        return this.checkNode(node);
     }
 
     private checkNode(node: ts.Expression) {
@@ -124,13 +126,8 @@ export class Rule extends TypedRule {
 
     private isTruthyFalsy(node: ts.Expression): boolean | undefined {
         if (isBinaryExpression(node)) {
-            switch (node.operatorToken.kind) {
-                case ts.SyntaxKind.ExclamationEqualsEqualsToken:
-                case ts.SyntaxKind.ExclamationEqualsToken:
-                case ts.SyntaxKind.EqualsEqualsEqualsToken:
-                case ts.SyntaxKind.EqualsEqualsToken:
-                    return this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
-            }
+            if (isEqualityOperator(node.operatorToken.kind)) // TODO check <, >, <=, >= with literal types
+                return this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
         } else if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
             switch (this.isTruthyFalsy(node.operand)) {
                 case true:
@@ -141,7 +138,7 @@ export class Rule extends TypedRule {
                     return;
             }
         }
-        return executePredicate(this.checker.getTypeAtLocation(node), truthyFalsy);
+        return this.executePredicate(this.checker.getTypeAtLocation(node), truthyFalsy);
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
@@ -158,6 +155,7 @@ export class Rule extends TypedRule {
     }
 
     private checkEquals(left: ts.Expression, right: ts.Expression, equals: Equals): boolean | undefined {
+        // TODO maybe allow `arr[i] === undefined` and `arr[i] == null`
         let predicate: TypePredicate;
         if (isTypeOfExpression(left)) {
             if (isTextualLiteral(right)) {
@@ -178,10 +176,10 @@ export class Rule extends TypedRule {
             } else if (right.kind === ts.SyntaxKind.NullKeyword ||
                        isIdentifier(right) && right.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword) {
                 return equals.negated;
+            } else {
+                return;
             }
-            return;
-        }
-        if (right.kind === ts.SyntaxKind.NullKeyword) {
+        } else if (right.kind === ts.SyntaxKind.NullKeyword) {
             predicate = equals.strict ? predicates.null : predicates.nullOrUndefined;
         } else if (isIdentifier(right) && right.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword) {
             predicate = equals.strict ? predicates.undefined : predicates.nullOrUndefined;
@@ -194,41 +192,55 @@ export class Rule extends TypedRule {
     private nullAwarePredicate(type: ts.Type, predicate: TypePredicate): boolean | undefined {
         if (!this.strictNullChecks && predicate.nullable)
             return;
-        const result = executePredicate(type, predicate.check);
+        const result = this.executePredicate(
+            type,
+            // empty object type can contain anything but `null | undefined`
+            // TODO use assignability check to avoid false positives
+            predicate.nullable ? predicate.check : (t) => isEmptyObjectType(t) ? undefined : predicate.check(t),
+        );
         return result && !this.strictNullChecks
             ? undefined
             : result;
     }
+
+    private executePredicate(type: ts.Type, predicate: (type: ts.Type) => boolean | undefined) {
+        let result: boolean | undefined;
+        for (let t of unionTypeParts(type)) {
+            if (t.flags & ts.TypeFlags.TypeVariable) {
+                const constraint = this.checker.getBaseConstraintOfType(t);
+                if (constraint === undefined)
+                    return;
+                t = constraint;
+            }
+            if (t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
+                return;
+            switch (predicate(t)) {
+                case true:
+                    if (result === false)
+                        return;
+                    result = true;
+                    break;
+                case false:
+                    if (result === true)
+                        return;
+                    result = false;
+                    break;
+                default:
+                    return;
+            }
+        }
+        return result;
+    }
 }
 
 function truthyFalsy(type: ts.Type) {
-    if (type.flags & ts.TypeFlags.PossiblyFalsy)
-        return isFalsyType(type) ? false : undefined;
-    return true;
-}
-
-function executePredicate(type: ts.Type, predicate: (type: ts.Type) => boolean | undefined) {
-    if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
-        return;
-    // TODO Instantiable types
-    let result: boolean | undefined;
-    for (const t of unionTypeParts(type)) {
-        switch (predicate(t)) {
-            case true:
-                if (result === false)
-                    return;
-                result = true;
-                break;
-            case false:
-                if (result === true)
-                    return;
-                result = false;
-                break;
-            default:
-                return;
-        }
+    if (type.flags & ts.TypeFlags.PossiblyFalsy) {
+        if (isFalsyType(type))
+            return false;
+        return type.flags & ts.TypeFlags.Literal ? true : undefined;
     }
-    return result;
+    // TODO use assignability check
+    return isEmptyObjectType(type) ? undefined : true;
 }
 
 function unwrapParens(node: ts.Expression) {
@@ -241,6 +253,18 @@ function isLogicalOperator(kind: ts.BinaryOperator) {
     return kind === ts.SyntaxKind.AmpersandAmpersandToken || kind === ts.SyntaxKind.BarBarToken;
 }
 
+function isEqualityOperator(kind: ts.BinaryOperator): kind is ts.EqualityOperator {
+    switch (kind) {
+        case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+        case ts.SyntaxKind.ExclamationEqualsToken:
+        case ts.SyntaxKind.EqualsEqualsEqualsToken:
+        case ts.SyntaxKind.EqualsEqualsToken:
+            return true;
+        default:
+            return false;
+    }
+}
+
 function checkFlags(flags: ts.TypeFlags) {
     return (type: ts.Type) => (type.flags & flags) !== 0;
 }
@@ -248,5 +272,18 @@ function checkFlags(flags: ts.TypeFlags) {
 function isTypeofFunction(type: ts.Type) {
     if (type.getCallSignatures().length !== 0 || type.getConstructSignatures().length !== 0)
             return true;
-    return false; // TODO `Function`
+    // check if this could be the global `Function` type
+    return type.symbol !== undefined && type.symbol.name === 'Function' &&
+        hasPropertyOfKind(type, 'apply', ts.SymbolFlags.Method) &&
+        hasPropertyOfKind(type, 'arguments', ts.SymbolFlags.Property) &&
+        hasPropertyOfKind(type, 'bind', ts.SymbolFlags.Method) &&
+        hasPropertyOfKind(type, 'call', ts.SymbolFlags.Method) &&
+        hasPropertyOfKind(type, 'caller', ts.SymbolFlags.Property) &&
+        hasPropertyOfKind(type, 'length', ts.SymbolFlags.Property) &&
+        hasPropertyOfKind(type, 'prototype', ts.SymbolFlags.Property);
+}
+
+function hasPropertyOfKind(type: ts.Type, name: string, flag: ts.SymbolFlags) {
+    const property = type.getProperty(name);
+    return property !== undefined && (property.flags & flag) !== 0;
 }

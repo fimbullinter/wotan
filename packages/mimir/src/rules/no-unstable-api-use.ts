@@ -52,6 +52,7 @@ export class Rule extends TypedRule {
 
     private checkSignature(node: ts.CallLikeExpression) {
         const signature = this.checker.getResolvedSignature(node);
+        // wotan-disable-next-line no-useless-predicate
         if (signature !== undefined) // for compatibility with typescript@<2.6.0
             return this.checkStability(signature, node, undefined, signatureToString);
     }

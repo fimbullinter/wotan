@@ -94,6 +94,7 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
             const comment = context.getCommentAtPosition(match.index);
             if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
                 continue;
+            // wotan-disable-next-line no-useless-predicate
             const rules = match[3] === undefined ? undefined : new Set(match[3].trim().split(/\s*,\s*/g));
             const enable = match[1] === 'enable';
             switch (match[2]) {

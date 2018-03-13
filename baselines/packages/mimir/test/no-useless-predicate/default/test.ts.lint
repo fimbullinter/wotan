@@ -1,0 +1,135 @@
+export {};
+
+declare function get<T>(): T;
+
+if (typeof (get<Function>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (typeof (get<() => void>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (typeof (get<new() => any>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<any>() === 'symbol') {}
+while (typeof get<never>() === 'symbol') {}
+while (typeof get<{}>() === 'number') ;
+while (typeof get<{}>() == 'object') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{}>() == 'undefined') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{toString(): string}>() == 'number') ; // TODO this is actually valid, but needs to check type assignability
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                          [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<null>() == 'null');
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error no-useless-predicate: Expression is always falsy.]
+do {} while (typeof get<Function>() === 'object');
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error no-useless-predicate: Expression is always falsy.]
+for (; typeof get<object>() === 'object';) ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+while ('foo' !== undefined && 'bar' == null) {}
+       ~~~~~~~~~~~~~~~~~~~                      [error no-useless-predicate: Expression is always falsy.]
+                              ~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always falsy.]
+while (get<number>() + get<number>());
+if (+1) {}
+    ~~     [error no-useless-predicate: Expression is always truthy.]
++0;
+
+declare let v: number;
+if (v) {}
+if (+v) {}
+
+v = 1;
+
+typeof undefined === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof undefined == null;
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+'foo' === undefined;
+~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+'bar' === null;
+~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<'foo' | undefined>() == null;
+get<'foo' | null>() == null;
+get<'foo' | undefined>() == undefined;
+get<'foo' | null>() == undefined;
+get<'foo' | undefined>() === null;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<'foo' | null>() === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<undefined>() === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+null === get<null>();
+~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+undefined == get<null>();
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<undefined>() == null;
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+!get<1>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!get<0>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!get<number>();
+!get<boolean>();
+!get<string>();
+!!get<'foo'>();
+ ~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+  ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!!get<true>();
+ ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+  ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!get<{}>();
+
+for (;;) break;
+while (true) break;
+
+function test<T>(param: T) {
+    param === undefined;
+    typeof param === 'string';
+    typeof param === 'boolean';
+    typeof param === 'object';
+}
+
+function test2<T extends boolean, U extends any>(param?: T, param2?: U) {
+    param === undefined;
+    typeof param === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof param === 'boolean';
+    typeof param === 'object';
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+    param2 === undefined;
+    typeof param2 === 'string';
+    typeof param2 === 'boolean';
+    typeof param2 === 'object';
+}
+
+function test3<T extends Record<'foo', string>, K extends keyof T>(v: T, k: K) {
+    v[k] === undefined;
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    typeof v[k] === 'symbol';
+    !v[k];
+}
+
+function test4<T extends Record<'foo', string>>(v: T, k: 'foo') {
+    v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+    typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    !v[k];
+}
+
+function test5<K extends 'foo'>(v: Record<'foo', string>, k: K) {
+    v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+    typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    !v[k];
+}

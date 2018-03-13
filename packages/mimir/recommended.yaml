@@ -8,7 +8,6 @@ rules:
   no-inferred-empty-object: error
   no-return-await: error
   no-nan-compare: error
-  no-tautology: error
   no-unreachable-code: error
   no-unsafe-finally: error
   no-unstable-api-use: error
@@ -16,6 +15,7 @@ rules:
   no-unused-label: error
   no-useless-assertion: error
   no-useless-initializer: error
+  no-useless-predicate: error
   prefer-dot-notation: error
   prefer-number-isnan: error
   prefer-object-spread: error

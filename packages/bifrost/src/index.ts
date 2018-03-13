@@ -14,16 +14,16 @@ import * as path from 'path';
 // tslint:disable-next-line:naming-convention
 export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
     return class extends AbstractRule {
-        public static requiresTypeInformation = // wotan-disable-next-line no-tautology
+        public static requiresTypeInformation = // wotan-disable-next-line no-useless-predicate
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
 
-        // wotan-disable-next-line no-tautology
+        // wotan-disable-next-line no-useless-predicate
         public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
 
-        // wotan-disable-next-line no-tautology
+        // wotan-disable-next-line no-useless-predicate
         public static supports = Rule.metadata && Rule.metadata.typescriptOnly
             ? (sourceFile: ts.SourceFile) => /\.tsx?$/.test(sourceFile.fileName)
             : undefined;
@@ -66,7 +66,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
 }
 
 function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
-    if (Rule.metadata !== undefined && Rule.metadata.ruleName) // wotan-disable-line no-tautology
+    if (Rule.metadata !== undefined && Rule.metadata.ruleName) // wotan-disable-line no-useless-predicate
         return Rule.metadata.ruleName;
     const caller = getCaller(3);
     return path.basename(caller, path.extname(caller));

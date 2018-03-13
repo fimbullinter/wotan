@@ -44,7 +44,7 @@ export class Rule extends TypedRule {
             if (typeParameters === undefined)
                 continue;
             for (let i = 0; i < typeParameters.length; ++i)
-                // wotan-disable-next-line no-tautology
+                // wotan-disable-next-line no-useless-predicate
                 if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
                     typeParameterResult[i] = typeParameters[i];
         }
