@@ -68,10 +68,32 @@ export function getChangedPackageNames(startRev: string, packageNames: Iterable<
         {encoding: 'utf8'},
     ).stdout;
     const result = new Set<string>();
-    for (const file of diff.split('\0'))
-        if (file)
-            result.add(file.split(/[/\\]/)[1]);
+    for (const file of diff.split('\0').filter(filterFiles))
+        result.add(file.split(/[/\\]/)[1]);
     return result;
+}
+
+function filterFiles(file: string): boolean {
+    if (!file)
+        return false;
+    const parts = file.split(/[/\\]/);
+    switch (parts[2]) {
+        case 'test':
+        case 'tsconfig.json':
+        case '.npmignore':
+        case '.gitignore':
+        case '.gitkeep':
+        case 'LICENSE':
+        case 'NOTICE':
+        case 'README.md':
+            return false;
+    }
+    switch (parts[parts.length - 1]) {
+        case '.wotanrc.yaml':
+        case 'tslint.json':
+            return false;
+    }
+    return true;
 }
 
 export function writeManifest(path: string, content: PackageData) {
