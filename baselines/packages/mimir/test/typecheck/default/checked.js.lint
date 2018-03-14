@@ -16,7 +16,7 @@ let baz = foo;
 
 /**
  *
- * @param {Array<Map<string, [number, string]>>} [param]
+ * @param {Array<Map<string, [number, string]>>} param
  * @returns {boolean}
  */
 function fn(param) {
