@@ -16,6 +16,7 @@ rules:
   no-useless-assertion: error
   no-useless-initializer: error
   no-useless-predicate: error
+  prefer-const: error
   prefer-dot-notation: error
   prefer-number-isnan: error
   prefer-object-spread: error
