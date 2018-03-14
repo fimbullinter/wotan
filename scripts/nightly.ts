@@ -21,15 +21,27 @@ function markForRelease(name: string) {
     needsRelease.add(name);
     const manifest = packages.get(name)!;
     manifest.version = version;
+    updateDependency(manifest.name, version, markForRelease);
+}
+function updateDependency(name: string, newVersion: string, onchange: (name: string) => void) {
     for (const [k, v] of publicPackages) {
-        if (v.dependencies && v.dependencies[manifest.name]) {
-            v.dependencies[manifest.name] = version;
-            markForRelease(k);
+        if (v.dependencies && v.dependencies[name]) {
+            v.dependencies[name] = newVersion;
+            onchange(k);
         }
-        if (v.peerDependencies && v.peerDependencies[manifest.name]) {
-            v.peerDependencies[manifest.name] = version;
-            markForRelease(k);
+        if (v.peerDependencies && v.peerDependencies[name]) {
+            v.peerDependencies[name] = newVersion;
+            onchange(k);
         }
+    }
+}
+/** Update dependency of public packages that are not published today to the latest nightly (or stable) version. */
+function updatePublicPackageDependencies() {
+    for (const [name, manifest] of publicPackages) {
+        if (needsRelease.has(name))
+            continue; // this dependency will be released and is therefore already updated in all packages
+        const lastNightlyVersion = cp.execSync(`npm info ${manifest.name}@next version`, {encoding: 'utf8'}).trim();
+        updateDependency(manifest.name, lastNightlyVersion, () => {});
     }
 }
 
@@ -45,6 +57,7 @@ for (const name of getChangedPackageNames(diffStart, publicPackages.keys()))
     markForRelease(name);
 
 if (needsRelease.size !== 0) {
+    updatePublicPackageDependencies();
     for (const name of needsRelease) {
         writeManifest(`packages/${name}/package.json`, publicPackages.get(name)!);
         execAndLog(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`);
