@@ -44,6 +44,14 @@
   dependencies:
     arrify "^1.0.1"
 
+"@fimbul/bifrost@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/bifrost/-/bifrost-0.4.0.tgz#b6d852edc3bed8442967e750fa3ce88e17397e17"
+  dependencies:
+    "@fimbul/ymir" "^0.4.0"
+    get-caller-file "^1.0.2"
+    tslib "^1.8.1"
+
 "@ladjs/time-require@^0.1.4":
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/@ladjs/time-require/-/time-require-0.1.4.tgz#5c615d75fd647ddd5de9cf6922649558856b21a1"
