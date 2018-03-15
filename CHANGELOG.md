@@ -1,5 +1,17 @@
 # Change Log
 
+## v0.5.0
+
+**Features:**
+
+* new rule `prefer-const`
+* new rule `no-useless-predicate`
+
+**Bugfixes:**
+
+* fixed dependency versions of nightly releases for packages that were published in a previous nightly release
+* changes to tests and project setup no longer cause a package to be released
+
 ## v0.4.0
 
 This release contains a lot of refactoring and structural changes:
