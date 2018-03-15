@@ -2,6 +2,7 @@ import imported from 'foo';
 const imported = 0;
 
 var ns = {}, notMerged = '';
+             ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
 namespace ns {}
 
 var a;
@@ -32,14 +33,26 @@ typeof foobar;
 var foobar = 0;
 
 var {[v1]: v2, v1} = {v1: 0};
+           ~~                 [error prefer-const: Variable 'v2' is never reassigned. Prefer 'const' instead of 'var'.]
 const [v3] = [v3];
-var {foo: {} = v4, v4} = {v4: v2};
+var {foo: {} = v4, v4} = {v4: v2}, v5 = 0;
+                                   ~~      [error prefer-const: Variable 'v5' is never reassigned. Prefer 'const' instead of 'var'.]
 
 function test(a: string, {length}: any[]) {
     var a = '', d = 0;
+                ~      [error prefer-const: Variable 'd' is never reassigned. Prefer 'const' instead of 'var'.]
     var b = 0, c = 0;
+               ~      [error prefer-const: Variable 'c' is never reassigned. Prefer 'const' instead of 'var'.]
     var b: number;
 }
+
+for (let len = 10, i = 0; i < len; ++i);
+for (const len = 10, i = 0; i < len;);
+for (let [key, value] of new Map()) {
+               ~~~~~                  [error prefer-const: Variable 'value' is never reassigned. Prefer 'const' instead of 'let'.]
+    key = null!;
+}
+for (const key in {}) {}
 
 let uninitialized: number | undefined;
 

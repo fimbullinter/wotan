@@ -35,8 +35,13 @@ export class Rule extends ConfigurableRule<Options> {
     public apply() {
         interface ListInfo {
             fixable: boolean;
-            declarations: ts.Identifier[];
+            declarations: DeclarationInfo[];
         }
+        interface DeclarationInfo {
+            identifiers: ts.Identifier[];
+            fixable: boolean;
+        }
+        const declarationInfo = new Map<ts.VariableDeclaration, DeclarationInfo>();
         const listInfo = new Map<ts.VariableDeclarationList, ListInfo>();
         for (const [name, variableInfo] of collectVariableUsage(this.sourceFile)) {
             if (variableInfo.inGlobalScope || variableInfo.exported)
@@ -54,7 +59,7 @@ export class Rule extends ConfigurableRule<Options> {
                 if (kind === VariableDeclarationKind.Const)
                     continue;
                 const canBeConst = variableInfo.declarations.length === 1 &&
-                    declaration.initializer !== undefined &&
+                    (declaration.initializer !== undefined || isForInOrOfStatement(parent.parent!)) &&
                     variableInfo.uses.every(noReassignment) &&
                     (kind === VariableDeclarationKind.Let || !usedInOuterScopeOrTdz(name, variableInfo.uses));
                 let list = listInfo.get(parent);
@@ -65,23 +70,40 @@ export class Rule extends ConfigurableRule<Options> {
                     };
                     listInfo.set(parent, list);
                 }
+                let decl = declarationInfo.get(declaration);
+                if (decl === undefined) {
+                    decl = {
+                        identifiers: [],
+                        fixable: canBeConst,
+                    };
+                    list.declarations.push(decl);
+                }
                 if (canBeConst) {
-                    list.declarations.push(name);
+                    decl.identifiers.push(name);
                 } else {
+                    decl.fixable = false;
                     list.fixable = false;
                 }
             }
         }
-        for (const [list, meta] of listInfo) {
+        for (const [list, listMeta] of listInfo) {
             let fix: Replacement | undefined;
-            if (meta.fixable) {
+            if (listMeta.fixable) {
                 fix = Replacement.replace(list.declarations.pos - 3, list.declarations.pos, 'const');
-            } else if (this.options.destructuring === 'all' || isForLoop(list.parent!)) {
+            } else if (list.parent!.kind === ts.SyntaxKind.ForStatement) {
                 continue;
             }
             const keyword = this.sourceFile.text.substr(list.declarations.pos - 3, 3);
-            for (const name of meta.declarations)
-                this.addFailureAtNode(name, `Variable '${name.text}' is never reassigned. Prefer 'const' instead of '${keyword}'.`, fix);
+            for (const declaration of listMeta.declarations) {
+                if (declaration.identifiers.length === 0 || !declaration.fixable && this.options.destructuring === 'all')
+                    continue;
+                for (const name of declaration.identifiers)
+                    this.addFailureAtNode(
+                        name,
+                        `Variable '${name.text}' is never reassigned. Prefer 'const' instead of '${keyword}'.`,
+                        fix,
+                    );
+            }
         }
     }
 }
@@ -104,6 +126,7 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
     const functionScope = getFunctionScopeBoundary(declaredScope);
     for (const use of uses) {
         // TODO detect uses in intializer (for BindingElement all initializers up to declaration root)
+        // TODO used in for-of or for-in expression
         const valueUse = (use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value;
         if (valueUse && use.location.pos < declaration.pos)
             return true; // (maybe) used before declaration
@@ -116,10 +139,10 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
     return false;
 }
 
-function noReassignment(use: VariableUse) {
-    return (use.domain & UsageDomain.Value) === 0 || !isReassignmentTarget(use.location);
+function isForInOrOfStatement(node: ts.Node) {
+    return node.kind === ts.SyntaxKind.ForOfStatement || node.kind === ts.SyntaxKind.ForInStatement;
 }
 
-function isForLoop(node: ts.Statement) {
-    return node.kind === ts.SyntaxKind.ForStatement || node.kind === ts.SyntaxKind.ForOfStatement;
+function noReassignment(use: VariableUse) {
+    return (use.domain & UsageDomain.Value) === 0 || !isReassignmentTarget(use.location);
 }
