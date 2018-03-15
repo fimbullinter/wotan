@@ -1,2 +1,5 @@
 rules:
-  prefer-const: error
+  prefer-const:
+    severity: error
+    options:
+      destructuring: any

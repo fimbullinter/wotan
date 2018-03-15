@@ -15,10 +15,10 @@ foo;
 }
 
 bar;
-const bar = 0;
+var bar = 0;
 
 useBaz();
-const baz = 0;
+var baz = 0;
 function useBaz() {
     const local: typeof foo = baz;
 }
@@ -29,11 +29,11 @@ function useBaz() {
 bas;
 
 typeof foobar;
-const foobar = 0;
+var foobar = 0;
 
-const {[v1]: v2, v1} = {v1: 0};
+var {[v1]: v2, v1} = {v1: 0};
 const [v3] = [v3];
-const {foo: {} = v4, v4} = {v4: v2};
+var {foo: {} = v4, v4} = {v4: v2};
 
 function test(a: string, {length}: any[]) {
     var a = '', d = 0;

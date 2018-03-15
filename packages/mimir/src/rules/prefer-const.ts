@@ -25,7 +25,7 @@ export class Rule extends ConfigurableRule<Options> {
 
     protected parseOptions(options: {destructuring?: string} | null | undefined): Options {
         let destructuring: Options['destructuring'] = 'all';
-        if (options != undefined && 'destructuring' in options && options.destructuring === 'any')
+        if (options != undefined && options.destructuring === 'any')
             destructuring = 'any';
         return {
             destructuring,
@@ -104,19 +104,20 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
     const functionScope = getFunctionScopeBoundary(declaredScope);
     for (const use of uses) {
         // TODO detect uses in intializer (for BindingElement all initializers up to declaration root)
-        if (use.domain === UsageDomain.Value && use.location.pos < declaration.pos)
+        const valueUse = (use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value;
+        if (valueUse && use.location.pos < declaration.pos)
             return true; // (maybe) used before declaration
         const useScope = getScopeBoundary(use.location.parent!);
         if (useScope.pos < declaredScope.pos)
             return true;
-        if (use.domain === UsageDomain.Value && getFunctionScopeBoundary(useScope) !== functionScope)
+        if (valueUse && getFunctionScopeBoundary(useScope) !== functionScope)
             return true; // maybe used before declaration
     }
     return false;
 }
 
 function noReassignment(use: VariableUse) {
-    return use.domain !== UsageDomain.Value || !isReassignmentTarget(use.location);
+    return (use.domain & UsageDomain.Value) === 0 || !isReassignmentTarget(use.location);
 }
 
 function isForLoop(node: ts.Statement) {

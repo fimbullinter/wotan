@@ -19,11 +19,9 @@ foo;
 
 bar;
 var bar = 0;
-    ~~~      [error prefer-const: Variable 'bar' is never reassigned. Prefer 'const' instead of 'var'.]
 
 useBaz();
 var baz = 0;
-    ~~~      [error prefer-const: Variable 'baz' is never reassigned. Prefer 'const' instead of 'var'.]
 function useBaz() {
     let local: typeof foo = baz;
         ~~~~~                    [error prefer-const: Variable 'local' is never reassigned. Prefer 'const' instead of 'let'.]
@@ -36,15 +34,11 @@ bas;
 
 typeof foobar;
 var foobar = 0;
-    ~~~~~~      [error prefer-const: Variable 'foobar' is never reassigned. Prefer 'const' instead of 'var'.]
 
 var {[v1]: v2, v1} = {v1: 0};
-           ~~                 [error prefer-const: Variable 'v2' is never reassigned. Prefer 'const' instead of 'var'.]
-               ~~             [error prefer-const: Variable 'v1' is never reassigned. Prefer 'const' instead of 'var'.]
 var [v3] = [v3];
      ~~          [error prefer-const: Variable 'v3' is never reassigned. Prefer 'const' instead of 'var'.]
 var {foo: {} = v4, v4} = {v4: v2};
-                   ~~              [error prefer-const: Variable 'v4' is never reassigned. Prefer 'const' instead of 'var'.]
 
 function test(a: string, {length}: any[]) {
     var a = '', d = 0;

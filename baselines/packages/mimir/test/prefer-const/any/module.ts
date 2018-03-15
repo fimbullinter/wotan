@@ -2,6 +2,7 @@ import imported from 'foo';
 const imported = 0;
 
 var ns = {}, notMerged = '';
+             ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
 namespace ns {}
 
 var a;
@@ -15,10 +16,10 @@ foo;
 }
 
 bar;
-const bar = 0;
+var bar = 0;
 
 useBaz();
-const baz = 0;
+var baz = 0;
 function useBaz() {
     const local: typeof foo = baz;
 }
@@ -29,15 +30,18 @@ function useBaz() {
 bas;
 
 typeof foobar;
-const foobar = 0;
+var foobar = 0;
 
-const {[v1]: v2, v1} = {v1: 0};
+var {[v1]: v2, v1} = {v1: 0};
+           ~~                 [error prefer-const: Variable 'v2' is never reassigned. Prefer 'const' instead of 'var'.]
 const [v3] = [v3];
-const {foo: {} = v4, v4} = {v4: v2};
+var {foo: {} = v4, v4} = {v4: v2};
 
 function test(a: string, {length}: any[]) {
     var a = '', d = 0;
+                ~      [error prefer-const: Variable 'd' is never reassigned. Prefer 'const' instead of 'var'.]
     var b = 0, c = 0;
+               ~      [error prefer-const: Variable 'c' is never reassigned. Prefer 'const' instead of 'var'.]
     var b: number;
 }
 
