@@ -2,6 +2,12 @@ import imported from 'foo';
 let imported = 0;
     ~~~~~~~~      [error prefer-const: Variable 'imported' is never reassigned. Prefer 'const' instead of 'let'.]
 
+export let exported = 0;
+
+try {
+    throw 'foo';
+} catch (e) {}
+
 var ns = {}, notMerged = '';
              ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
 namespace ns {}

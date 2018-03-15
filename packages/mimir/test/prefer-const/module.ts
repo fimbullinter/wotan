@@ -1,6 +1,12 @@
 import imported from 'foo';
 let imported = 0;
 
+export let exported = 0;
+
+try {
+    throw 'foo';
+} catch (e) {}
+
 var ns = {}, notMerged = '';
 namespace ns {}
 
