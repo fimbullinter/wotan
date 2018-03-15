@@ -2,6 +2,10 @@ import imported from 'foo';
 let imported = 0;
 
 export let exported = 0;
+let exported2 = 0;
+export {
+    exported2,
+};
 
 try {
     throw 'foo';
@@ -9,6 +13,9 @@ try {
 
 var ns = {}, notMerged = '';
 namespace ns {}
+
+let ns2 = {};
+namespace ns2 {}
 
 var a;
 

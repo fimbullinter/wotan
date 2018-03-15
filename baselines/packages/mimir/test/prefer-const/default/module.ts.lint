@@ -3,6 +3,10 @@ let imported = 0;
     ~~~~~~~~      [error prefer-const: Variable 'imported' is never reassigned. Prefer 'const' instead of 'let'.]
 
 export let exported = 0;
+let exported2 = 0;
+export {
+    exported2,
+};
 
 try {
     throw 'foo';
@@ -11,6 +15,11 @@ try {
 var ns = {}, notMerged = '';
              ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
 namespace ns {}
+
+let ns2 = {};
+    ~~~       [error prefer-const: Variable 'ns2' is never reassigned. Prefer 'const' instead of 'let'.]
+namespace ns2 {}
+          ~~~    [error prefer-const: Variable 'ns2' is never reassigned. Prefer 'const' instead of 'let'.]
 
 var a;
 

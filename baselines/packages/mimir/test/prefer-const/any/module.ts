@@ -2,6 +2,10 @@ import imported from 'foo';
 const imported = 0;
 
 export let exported = 0;
+let exported2 = 0;
+export {
+    exported2,
+};
 
 try {
     throw 'foo';
@@ -10,6 +14,9 @@ try {
 var ns = {}, notMerged = '';
              ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
 namespace ns {}
+
+const ns2 = {};
+namespace ns2 {}
 
 var a;
 

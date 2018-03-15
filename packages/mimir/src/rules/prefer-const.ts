@@ -58,10 +58,10 @@ export class Rule extends ConfigurableRule<Options> {
                 const kind = getVariableDeclarationKind(parent);
                 if (kind === VariableDeclarationKind.Const)
                     continue;
-                const canBeConst = variableInfo.declarations.length === 1 &&
-                    (declaration.initializer !== undefined || isForInOrOfStatement(parent.parent!)) &&
+                const canBeConst = (declaration.initializer !== undefined || isForInOrOfStatement(parent.parent!)) &&
                     variableInfo.uses.every(noReassignment) &&
-                    (kind === VariableDeclarationKind.Let || !usedInOuterScopeOrTdz(name, variableInfo.uses));
+                    (kind === VariableDeclarationKind.Let ||
+                        variableInfo.declarations.length === 1 && !usedInOuterScopeOrTdz(name, variableInfo.uses));
                 let list = listInfo.get(parent);
                 if (list === undefined) {
                     list = {
