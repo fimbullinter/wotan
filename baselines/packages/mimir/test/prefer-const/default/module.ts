@@ -35,6 +35,13 @@ function useBaz() {
 }
 bas;
 
+{
+    var nested = 0;
+}
+{
+    nested;
+}
+
 typeof foobar;
 var foobar = 0;
 

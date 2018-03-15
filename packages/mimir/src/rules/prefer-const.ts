@@ -134,15 +134,16 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
     if (varDeclaration.initializer !== undefined) {
         deadZones.push({pos: varDeclaration.initializer.pos, end: varDeclaration.initializer.end});
     } else {
-        const parent = varDeclaration.parent!.parent!;
-        if (isForInOrOfStatement(parent))
-            deadZones.push({pos: parent.expression.pos, end: parent.expression.end});
+        deadZones.push({
+            pos: (<ts.ForInOrOfStatement>varDeclaration.parent!.parent).expression.pos,
+            end: (<ts.ForInOrOfStatement>varDeclaration.parent!.parent).expression.end},
+        );
     }
-    const declaredScope = getScopeBoundary(declaration);
+    const declaredScope = getScopeBoundary(declaration.parent!);
     const functionScope = getFunctionScopeBoundary(declaredScope);
     for (const use of uses) {
         const useScope = getScopeBoundary(use.location.parent!);
-        if (useScope.pos < declaredScope.pos)
+        if (useScope.pos < declaredScope.pos || useScope.end > declaredScope.end)
             return true;
         if ((use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value) {
             if (getFunctionScopeBoundary(useScope) !== functionScope)
