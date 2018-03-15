@@ -36,7 +36,7 @@ var [v3] = [v3];
 var {foo: {} = v4, v4} = {v4: v2}, v5 = 0;
 
 function test(a: string, {length}: any[]) {
-    var a = '', d = 0;
+    var a = '', d = 0, {p1 = p1, foo: [{p3, p4, p5, ...p6} = p3, ...p2] = [p2, p5] } = {p4} as any;
     var b = 0, c = 0;
     var b: number;
 }
@@ -47,6 +47,7 @@ for (let [key, value] of new Map()) {
     key = null!;
 }
 for (let key in {}) {}
+for (var arr of arr) {}
 
 let uninitialized: number | undefined;
 

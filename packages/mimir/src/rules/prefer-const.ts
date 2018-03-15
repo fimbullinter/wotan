@@ -122,24 +122,39 @@ function getFunctionScopeBoundary(node: ts.Node) {
 }
 
 function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
+    const deadZones: ts.TextRange[] = [{pos: 0, end: declaration.pos}];
+    declaration = declaration.parent!;
+    while (isBindingElement(declaration)) {
+        if (declaration.initializer !== undefined)
+            deadZones.push({pos: declaration.initializer.pos, end: declaration.initializer.end});
+        declaration = declaration.parent!.parent!;
+    }
+    const varDeclaration = <ts.VariableDeclaration>declaration;
+    if (varDeclaration.initializer !== undefined) {
+        deadZones.push({pos: varDeclaration.initializer.pos, end: varDeclaration.initializer.end});
+    } else {
+        const parent = varDeclaration.parent!.parent!;
+        if (isForInOrOfStatement(parent))
+            deadZones.push({pos: parent.expression.pos, end: parent.expression.end});
+    }
     const declaredScope = getScopeBoundary(declaration);
     const functionScope = getFunctionScopeBoundary(declaredScope);
     for (const use of uses) {
-        // TODO detect uses in intializer (for BindingElement all initializers up to declaration root)
-        // TODO used in for-of or for-in expression
-        const valueUse = (use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value;
-        if (valueUse && use.location.pos < declaration.pos)
-            return true; // (maybe) used before declaration
         const useScope = getScopeBoundary(use.location.parent!);
         if (useScope.pos < declaredScope.pos)
             return true;
-        if (valueUse && getFunctionScopeBoundary(useScope) !== functionScope)
-            return true; // maybe used before declaration
+        if ((use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value) {
+            if (getFunctionScopeBoundary(useScope) !== functionScope)
+                return true; // maybe used before declaration
+            for (const deadZone of deadZones)
+                if (use.location.pos >= deadZone.pos && use.location.pos < deadZone.end)
+                    return true; // used in temporal dead zone
+        }
     }
     return false;
 }
 
-function isForInOrOfStatement(node: ts.Node) {
+function isForInOrOfStatement(node: ts.Node): node is ts.ForOfStatement | ts.ForInStatement {
     return node.kind === ts.SyntaxKind.ForOfStatement || node.kind === ts.SyntaxKind.ForInStatement;
 }
 
