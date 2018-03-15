@@ -77,6 +77,7 @@ export class Rule extends ConfigurableRule<Options> {
                         fixable: canBeConst,
                     };
                     list.declarations.push(decl);
+                    declarationInfo.set(declaration, decl);
                 }
                 if (canBeConst) {
                     decl.identifiers.push(name);
