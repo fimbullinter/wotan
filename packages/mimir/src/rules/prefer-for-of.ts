@@ -16,6 +16,7 @@ import {
     isIntersectionType,
     isTypeReference,
 } from 'tsutils';
+import * as path from 'path';
 
 export class Rule extends TypedRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -84,8 +85,8 @@ export class Rule extends TypedRule {
     }
 
     private isDeclaredInDefaultLib(node: ts.Node): boolean {
-        // only relevant for lib.es5.d.ts and lib.d.ts which both contain Array, ConcatArray and ReadonlyArray
-        return node.getSourceFile().fileName === ts.getDefaultLibFilePath(this.program.getCompilerOptions());
+        // we assume it's the global array type if it comes from any lib.xxx.d.ts file
+        return path.dirname(node.getSourceFile().fileName) === path.dirname(ts.getDefaultLibFilePath(this.program.getCompilerOptions()));
     }
 }
 
