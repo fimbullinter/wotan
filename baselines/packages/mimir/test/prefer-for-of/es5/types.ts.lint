@@ -54,14 +54,25 @@ for (let i = 0; i < anyValue.length; ++i) {
     anyValue[i]
 }
 
-function test<T extends any[]>(param: T) {
+function test<T extends any[], U>(param: T, param2: U) {
     for (let i = 0; i < param.length; ++i) {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
         param[i]
     }
+
+    let v: T | ReadonlyArray<string> = [];
+    for (let i = 0; i < v.length; ++i) {
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
+        v[i]
+    }
+
+    for (let i = 0; i < param2.length; ++i) {
+        param2[i]
+    }
 }
 
 for (let i = 0; i < "foo".length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     "foo"[i]
 }
 

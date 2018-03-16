@@ -126,3 +126,28 @@ for (let i = 0; i < arr.length;) {
     arr[i]
     ++i;
 }
+
+declare function condition(i: number, len: number): boolean
+// some other condition
+for (let i = 0; condition(i, arr.length); ++i) {
+    arr[i]
+    ++i;
+}
+
+// other comparison
+for (let i = 0; i != arr.length; ++i) {
+    arr[i]
+    ++i;
+}
+
+// wrong incrementor
+for (let i = 0; i < arr.length; arr.shift()) {
+    arr[i]
+    ++i;
+}
+
+// wrong incrementor
+for (let i = 0; i < arr.length; i <<= 1) {
+    arr[i]
+    ++i;
+}

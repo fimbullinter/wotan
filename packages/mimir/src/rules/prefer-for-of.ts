@@ -48,7 +48,7 @@ export class Rule extends TypedRule {
             return;
         if (!isReadonlyArrayAccess(this.usage.get(indexVariable)!.uses, arrayVariable.getText(this.sourceFile), node, this.sourceFile))
             return;
-        if (this.isIterationPossible(this.checker.getApparentType(this.checker.getTypeAtLocation(arrayVariable))))
+        if (this.isIterationPossible(this.checker.getTypeAtLocation(arrayVariable)))
             this.addFailure(
                 node.getStart(this.sourceFile),
                 node.statement.pos,
@@ -59,6 +59,7 @@ export class Rule extends TypedRule {
     private isIterationPossible(type: ts.Type): boolean {
         if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
             return false;
+        type = this.checker.getBaseConstraintOfType(type) || type;
         return unionTypeParts(type).every(this.isIterationProtocolAvailable() ? isIterable : this.isArray, this);
     }
 

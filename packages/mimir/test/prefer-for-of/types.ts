@@ -50,9 +50,18 @@ for (let i = 0; i < anyValue.length; ++i) {
     anyValue[i]
 }
 
-function test<T extends any[]>(param: T) {
+function test<T extends any[], U>(param: T, param2: U) {
     for (let i = 0; i < param.length; ++i) {
         param[i]
+    }
+
+    let v: T | ReadonlyArray<string> = [];
+    for (let i = 0; i < v.length; ++i) {
+        v[i]
+    }
+
+    for (let i = 0; i < param2.length; ++i) {
+        param2[i]
     }
 }
 
