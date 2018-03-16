@@ -57,7 +57,6 @@ export class Rule extends TypedRule {
     }
 
     private isIterationPossible(type: ts.Type): boolean {
-        debugger;
         if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
             return false;
         return unionTypeParts(type).every(this.isIterationProtocolAvailable() ? isIterable : this.isArray, this);
@@ -78,7 +77,7 @@ export class Rule extends TypedRule {
             type.symbol.declarations !== undefined && type.symbol.declarations.some(this.isDeclaredInDefaultLib, this))
             return true;
         if (isIntersectionType(type))
-            return type.types.some((t) => unionTypeParts(t).every(this.isArray, this));
+            return type.types.some(this.isArray, this);
         const baseTypes = type.getBaseTypes();
         return baseTypes !== undefined && baseTypes.some(this.isArray, this);
     }

@@ -59,3 +59,26 @@ function test<T extends any[]>(param: T) {
 for (let i = 0; i < "foo".length; ++i) {
     "foo"[i]
 }
+
+declare let weirdArray: (MyArray<number> | ReadonlyArray<string>) & {foo: string} | Array<boolean>;
+
+for (let i = 0; i < weirdArray.length; ++i) {
+    weirdArray[i]
+}
+
+declare let arrayUnion: Array<any> | ArrayLike;
+
+for (let i = 0; i < arrayUnion.length; ++i) {
+    arrayUnion[i]
+}
+
+{
+    interface Array<T> {
+        [index: number]: T;
+        length: number;
+    }
+    let shadowedArray: Array<any> = [];
+    for (let i = 0; i < shadowedArray.length; ++i) {
+        shadowedArray[i]
+    }
+}
