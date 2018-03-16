@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true
+  },
+  "files": [
+    "types.ts"
+  ]
+}
