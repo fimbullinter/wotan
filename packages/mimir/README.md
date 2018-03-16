@@ -2,8 +2,8 @@
 
 Core rules, formatters and configurations of the Fimbullinter project.
 
-[![npm version](https://img.shields.io/npm/v/@fimbul/ymir.svg)](https://www.npmjs.com/package/@fimbul/ymir)
-[![npm downloads](https://img.shields.io/npm/dm/@fimbul/ymir.svg)](https://www.npmjs.com/package/@fimbul/ymir)
+[![npm version](https://img.shields.io/npm/v/@fimbul/mimir.svg)](https://www.npmjs.com/package/@fimbul/mimir)
+[![npm downloads](https://img.shields.io/npm/dm/@fimbul/mimir.svg)](https://www.npmjs.com/package/@fimbul/mimir)
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovateapp.com/)
 [![CircleCI](https://circleci.com/gh/fimbullinter/wotan/tree/master.svg?style=shield)](https://circleci.com/gh/fimbullinter/wotan/tree/master)
 [![Build status](https://ci.appveyor.com/api/projects/status/a28dpupxvjljibq3/branch/master?svg=true)](https://ci.appveyor.com/project/ajafff/wotan/branch/master)
