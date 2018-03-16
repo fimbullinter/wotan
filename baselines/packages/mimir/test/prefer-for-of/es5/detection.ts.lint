@@ -1,7 +1,7 @@
 export {};
 
 declare let arr: Array<any>;
-declare let other: Array<any>;
+declare let other: any[][];
 declare let j: number;
 
 for (var index = 0; index < arr.length; ++index) {
@@ -10,29 +10,36 @@ for (var index = 0; index < arr.length; ++index) {
 arr[index]; // used outside loop body
 
 for (let i = 0; i < arr.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 }
 
 for (let i = 0; i < arr.length; ++i)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 
 for (let i = 0; arr.length > i; i++) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 }
 
 for (let i = 0; i < arr.length; i += 1) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 }
 
 for (let i = 0; i < arr.length; i = i + 1) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 }
 
 for (let i = 0; i < arr.length; i = 1 + i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     arr[i]
 }
 
 for (let i = 0; i < other[0].length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     other[0][i]
 }
 

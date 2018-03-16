@@ -3,12 +3,14 @@ export {};
 declare let array: Array<any>;
 
 for (let i = 0; i < array.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     array[i]
 }
 
 declare let readonlyArray: ReadonlyArray<any>;
 
 for (let i = 0; i < readonlyArray.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     readonlyArray[i]
 }
 
@@ -18,12 +20,14 @@ interface MyArray<T = any> extends Array<T> {
 declare let myArray: MyArray;
 
 for (let i = 0; i < myArray.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     myArray[i]
 }
 
 declare let myArray2: MyArray<string>;
 
 for (let i = 0; i < myArray2.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     myArray2[i]
 }
 
@@ -52,6 +56,7 @@ for (let i = 0; i < anyValue.length; ++i) {
 
 function test<T extends any[]>(param: T) {
     for (let i = 0; i < param.length; ++i) {
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
         param[i]
     }
 }

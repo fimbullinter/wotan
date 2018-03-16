@@ -1,7 +1,7 @@
 export {};
 
 declare let arr: Array<any>;
-declare let other: Array<any>;
+declare let other: any[][];
 declare let j: number;
 
 for (var index = 0; index < arr.length; ++index) {

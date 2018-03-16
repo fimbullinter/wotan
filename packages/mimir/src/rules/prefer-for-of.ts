@@ -57,6 +57,7 @@ export class Rule extends TypedRule {
     }
 
     private isIterationPossible(type: ts.Type): boolean {
+        debugger;
         if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
             return false;
         return unionTypeParts(type).every(this.isIterationProtocolAvailable() ? isIterable : this.isArray, this);
@@ -84,7 +85,7 @@ export class Rule extends TypedRule {
 
     private isDeclaredInDefaultLib(node: ts.Node): boolean {
         // only relevant for lib.es5.d.ts and lib.d.ts which both contain Array, ConcatArray and ReadonlyArray
-        return node.getSourceFile().fileName === ts.getDefaultLibFileName(this.program.getCompilerOptions());
+        return node.getSourceFile().fileName === ts.getDefaultLibFilePath(this.program.getCompilerOptions());
     }
 }
 
@@ -163,7 +164,7 @@ function isIncrementedByOne(node: ts.Expression, name: string): boolean {
             return isVariable(node.left, name) &&
                 isBinaryExpression(node.right) && node.right.operatorToken.kind === ts.SyntaxKind.PlusToken &&
                 (
-                    isVariable(node.right.left, name) && isNumber(node.right.left, 1) ||
+                    isVariable(node.right.left, name) && isNumber(node.right.right, 1) ||
                     isNumber(node.right.left, 1) && isVariable(node.right.right, name)
                 );
         default:
