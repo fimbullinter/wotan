@@ -14,6 +14,7 @@ import {
     isReassignmentTarget,
     unionTypeParts,
     isIntersectionType,
+    isTypeReference,
 } from 'tsutils';
 
 export class Rule extends TypedRule {
@@ -47,8 +48,7 @@ export class Rule extends TypedRule {
             return;
         if (!isReadonlyArrayAccess(this.usage.get(indexVariable)!.uses, arrayVariable.getText(this.sourceFile), node, this.sourceFile))
             return;
-        const type = this.checker.getTypeAtLocation(arrayVariable);
-        if (this.isIterationPossible(type))
+        if (this.isIterationPossible(this.checker.getApparentType(this.checker.getTypeAtLocation(arrayVariable))))
             this.addFailure(
                 node.getStart(this.sourceFile),
                 node.statement.pos,
@@ -67,15 +67,17 @@ export class Rule extends TypedRule {
     }
 
     private isArray(type: ts.Type): boolean {
+        if (isTypeReference(type))
+            type = type.target;
         if (type.getNumberIndexType() === undefined)
             return false;
         if (type.flags & ts.TypeFlags.StringLike)
-            return true;
+            return this.sourceFile.languageVersion >= ts.ScriptTarget.ES5; // iterating string is only possible starting from ES5
         if (type.symbol !== undefined && /^(Concat|Readonly)?Array$/.test(type.symbol.name) &&
             type.symbol.declarations !== undefined && type.symbol.declarations.some(this.isDeclaredInDefaultLib, this))
             return true;
         if (isIntersectionType(type))
-            return type.types.some(this.isArray, this);
+            return type.types.some((t) => unionTypeParts(t).every(this.isArray, this));
         const baseTypes = type.getBaseTypes();
         return baseTypes !== undefined && baseTypes.some(this.isArray, this);
     }
