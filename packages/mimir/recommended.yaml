@@ -3,6 +3,7 @@ rules:
   await-async-result: error
   await-only-promise: error
   generator-require-yield: error
+  new-parens: error
   no-debugger: error
   no-fallthrough: error
   no-inferred-empty-object: error
