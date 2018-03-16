@@ -86,7 +86,8 @@ export class Rule extends TypedRule {
 
     private isDeclaredInDefaultLib(node: ts.Node): boolean {
         // we assume it's the global array type if it comes from any lib.xxx.d.ts file
-        return path.dirname(node.getSourceFile().fileName) === path.dirname(ts.getDefaultLibFilePath(this.program.getCompilerOptions()));
+        return path.normalize(path.dirname(node.getSourceFile().fileName))
+            === path.dirname(ts.getDefaultLibFilePath(this.program.getCompilerOptions()));
     }
 }
 
