@@ -18,6 +18,7 @@ rules:
   no-useless-predicate: error
   prefer-const: error
   prefer-dot-notation: error
+  prefer-for-of: error
   prefer-number-isnan: error
   prefer-object-spread: error
   trailing-newline: error
