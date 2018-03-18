@@ -103,3 +103,31 @@ function test5<K extends 'foo'>(v: Record<'foo', string>, k: K) {
     typeof v[k] === 'symbol';
     !v[k];
 }
+
+switch (get<boolean>()) {
+    case true:
+    case false:
+    case undefined:
+    case null:
+}
+
+switch (typeof get<boolean>()) {
+    case 'string':
+    case 'object':
+    case undefined:
+    case 'boolean':
+}
+
+switch (typeof get<boolean | string>()) {
+    case 'string':
+    case 'object':
+    case undefined:
+    case 'boolean':
+}
+
+switch ('string') {
+    case typeof '':
+    case typeof 1:
+    case typeof get<{}>():
+    default:
+}

@@ -98,9 +98,6 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
             const rules = match[3] === undefined ? undefined : new Set(match[3].trim().split(/\s*,\s*/g));
             const enable = match[1] === 'enable';
             switch (match[2]) {
-                case undefined:
-                    this.switch(result, ruleNames, rules, {enable, position: comment.pos});
-                    break;
                 case '-line': {
                     const lineStarts = sourceFile.getLineStarts();
                     let {line} = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos);
@@ -119,7 +116,10 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
                     ++line;
                     if (lineStarts.length > line) // no need to switch back if there is no next line
                         this.switch(result, ruleNames, rules, {enable: !enable, position: lineStarts[line]});
+                    break;
                 }
+                default:
+                    this.switch(result, ruleNames, rules, {enable, position: comment.pos});
             }
         }
         return result;
