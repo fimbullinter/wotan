@@ -14,6 +14,8 @@ switch (foo) {
             class NestedC {}
             enum NestedE {}
         }
+        type T = any;
+        interface I {}
     case 2: {
         let foobar = 1;
     }
