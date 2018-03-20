@@ -12,7 +12,7 @@ export class Rule extends AbstractRule {
             if (isBreakOrContinueStatement(node) && node.label !== undefined && !isLabelNecessary(node.label))
                 this.addFailureAtNode(
                     node.label,
-                    `Label '${node.label.text}' is unnecessary.`,
+                    `Jump label '${node.label.text}' is unnecessary.`,
                     Replacement.delete(node.label.pos, node.label.end),
                 );
     }
