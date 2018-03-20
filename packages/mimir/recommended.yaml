@@ -17,6 +17,7 @@ rules:
   no-unused-label: error
   no-useless-assertion: error
   no-useless-initializer: error
+  no-useless-jump-label: error
   no-useless-predicate: error
   prefer-const: error
   prefer-dot-notation: error
