@@ -1,6 +1,7 @@
 import { AbstractRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { hasModifier } from 'tsutils';
+import { switchStatements } from '../utils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -8,9 +9,8 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst())
-            if (node.kind === ts.SyntaxKind.CaseBlock)
-                for (const clause of (<ts.CaseBlock>node).clauses)
+        for (const {caseBlock: {clauses}} of switchStatements(this.context))
+                for (const clause of clauses)
                     for (const statement of clause.statements)
                         if (isForbiddenDeclaration(statement))
                             this.addFailureAtNode(statement, 'Unexpected lexical declaration in case block.');
