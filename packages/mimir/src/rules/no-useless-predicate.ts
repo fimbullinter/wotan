@@ -94,6 +94,9 @@ export class Rule extends TypedRule {
                         this.checkCondition(condition);
                     break;
                 }
+                case ts.SyntaxKind.SwitchStatement:
+                    this.checkSwitch(<ts.SwitchStatement>node);
+                    break;
                 case ts.SyntaxKind.BinaryExpression:
                     if (isLogicalOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
                         this.checkCondition((<ts.BinaryExpression>node).left);
@@ -108,6 +111,14 @@ export class Rule extends TypedRule {
         }
     }
 
+    private checkSwitch(node: ts.SwitchStatement) {
+        for (const clause of node.caseBlock.clauses) {
+            if (clause.kind === ts.SyntaxKind.DefaultClause)
+                continue;
+            this.maybeFail(clause, this.isConstantComparison(node.expression, clause.expression, ts.SyntaxKind.EqualsEqualsEqualsToken));
+        }
+    }
+
     private checkCondition(node: ts.Expression) {
         if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken ||
             isBinaryExpression(node) && isEqualityOperator(node.operatorToken.kind))
@@ -116,12 +127,12 @@ export class Rule extends TypedRule {
     }
 
     private checkNode(node: ts.Expression) {
-        switch (this.isTruthyFalsy(node)) {
-            case true:
-                return this.addFailureAtNode(node, 'Expression is always truthy.');
-            case false:
-                return this.addFailureAtNode(node, 'Expression is always falsy.');
-        }
+        return this.maybeFail(node, this.isTruthyFalsy(node));
+    }
+
+    private maybeFail(node: ts.Node, result: boolean | undefined) {
+        if (result !== undefined)
+            return this.addFailureAtNode(node, result ? 'Expression is always truthy.' : 'Expression is always falsy.');
     }
 
     private isTruthyFalsy(node: ts.Expression): boolean | undefined {

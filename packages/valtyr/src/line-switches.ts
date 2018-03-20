@@ -31,9 +31,6 @@ export class TslintLineSwitchParser implements LineSwitchParser {
             }
             const enable = match[1] === 'enable';
             switch (match[2]) {
-                default:
-                    this.switch(result, ruleNames, switchedRules, {enable, position: comment.pos});
-                    break;
                 case '-line': {
                     const lineStarts = sourceFile.getLineStarts();
                     let {line} = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos);
@@ -52,7 +49,10 @@ export class TslintLineSwitchParser implements LineSwitchParser {
                     ++line;
                     if (lineStarts.length > line) // no need to switch back if there is no next line
                         this.switch(result, ruleNames, switchedRules, {enable: !enable, position: lineStarts[line]});
+                    break;
                 }
+                default:
+                    this.switch(result, ruleNames, switchedRules, {enable, position: comment.pos});
             }
         }
         return result;

@@ -1,4 +1,4 @@
-import { AbstractProcessor, ProcessorUpdateResult, Failure, Replacement, ProcessorSuffixContext, ProcessorContext } from '@fimbul/wotan';
+import { AbstractProcessor, ProcessorUpdateResult, Failure, Replacement, ProcessorSuffixContext, ProcessorContext } from '@fimbul/ymir';
 import * as path from 'path';
 import * as parse5 from 'parse5/lib';
 import * as ts from 'typescript';

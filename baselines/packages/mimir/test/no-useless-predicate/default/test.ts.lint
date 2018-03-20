@@ -148,3 +148,41 @@ function test5<K extends 'foo'>(v: Record<'foo', string>, k: K) {
     ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
     !v[k];
 }
+
+switch (get<boolean>()) {
+    case true:
+    case false:
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case null:
+    ~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+}
+
+switch (typeof get<boolean>()) {
+    case 'string':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'object':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'boolean':
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
+}
+
+switch (typeof get<boolean | string>()) {
+    case 'string':
+    case 'object':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'boolean':
+}
+
+switch ('string') {
+    case typeof '':
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
+    case typeof 1:
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case typeof get<{}>():
+    default:
+}

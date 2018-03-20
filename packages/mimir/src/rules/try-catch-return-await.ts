@@ -1,11 +1,17 @@
 import { TypedRule, Replacement } from '@fimbul/ymir';
 import {
-    NodeWrap,
     isTryStatement,
     isFunctionScopeBoundary,
     isReturnStatement,
     isParenthesizedExpression,
     isThenableType,
+    WrappedAst,
+    getWrappedNodeAtPosition,
+    isIfStatement,
+    isIterationStatement,
+    isSwitchStatement,
+    isBlock,
+    isLabeledStatement,
 } from 'tsutils';
 import * as ts from 'typescript';
 import { isAsyncFunction } from '../utils';
@@ -15,48 +21,50 @@ export class Rule extends TypedRule {
         return !sourceFile.isDeclarationFile;
     }
 
-    private inTryCatch = false;
+    private reported: ts.TryStatement[] = [];
 
     public apply() {
-        return this.iterate(this.context.getWrappedAst().next, undefined, false);
-    }
-
-    private iterate(wrap: NodeWrap, end: NodeWrap | undefined, inTryCatch: boolean) {
-        do { // iterate as linked list until we find an async function / method
-            if (!isAsyncFunction(wrap.node)) {
-                wrap = wrap.next!;
-                continue;
+        const re = /\btry\s*[/{]/g;
+        let wrappedAst: WrappedAst | undefined;
+        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (
+                isTryStatement(node) &&
+                match.index === node.tryBlock.pos - 'try'.length &&
+                !this.reported.includes(node) &&
+                isInAsyncFunction(node)
+            ) {
+                node.tryBlock.statements.forEach(this.visitStatement, this);
+                // special handling for catchClause only if finallyBlock is present
+                if (node.catchClause !== undefined && node.finallyBlock !== undefined)
+                    node.catchClause.block.statements.forEach(this.visitStatement, this);
             }
-            this.inTryCatch = false;
-            wrap.children.forEach(this.visitNode, this); // visit children recursively
-            this.inTryCatch = inTryCatch;
-            wrap = wrap.skip!; // continue right after the function
-        } while (wrap !== end);
-    }
-
-    private visitNode(wrap: NodeWrap) {
-        if (this.inTryCatch) {
-            if (isReturnStatement(wrap.node)) {
-                if (wrap.node.expression === undefined)
-                    return;
-                this.checkReturnExpression(wrap.node.expression);
-                return this.iterate(wrap.next!, wrap.skip, true);
-            }
-        } else if (isTryStatement(wrap.node)) {
-            this.inTryCatch = true;
-            wrap.children[0].children.forEach(this.visitNode, this); // Statements in tryBlock
-            if (wrap.node.catchClause !== undefined) {
-                this.inTryCatch = wrap.node.finallyBlock !== undefined; // special handling for catchClause only if finallyBlock is present
-                wrap.children[1].children.forEach(this.visitNode, this); // Children of catchClause
-            }
-            this.inTryCatch = false;
-            if (wrap.node.finallyBlock !== undefined)
-                wrap.children[wrap.children.length - 1].children.forEach(this.visitNode, this);
-            return;
         }
-        if (isFunctionScopeBoundary(wrap.node)) // no longer in async function -> iterate as linked list
-            return this.iterate(wrap, wrap.skip, this.inTryCatch);
-        return wrap.children.forEach(this.visitNode, this);
+    }
+
+    private visitStatement(node: ts.Statement): void {
+        if (isReturnStatement(node)) {
+            if (node.expression !== undefined)
+                return this.checkReturnExpression(node.expression);
+        } else if (isIfStatement(node)) {
+            if (node.elseStatement !== undefined)
+                this.visitStatement(node.elseStatement);
+            return this.visitStatement(node.thenStatement);
+        } else if (isIterationStatement(node) || isLabeledStatement(node)) {
+            return this.visitStatement(node.statement);
+        } else if (isSwitchStatement(node)) {
+            for (const clause of node.caseBlock.clauses)
+                clause.statements.forEach(this.visitStatement, this);
+        } else if (isBlock(node)) {
+            return node.statements.forEach(this.visitStatement, this);
+        } else if (isTryStatement(node)) {
+            this.reported.push(node);
+            if (node.catchClause !== undefined)
+                node.catchClause.block.statements.forEach(this.visitStatement, this);
+            if (node.finallyBlock !== undefined)
+                node.finallyBlock.statements.forEach(this.visitStatement, this);
+            return node.tryBlock.statements.forEach(this.visitStatement, this);
+        }
     }
 
     private checkReturnExpression(node: ts.Expression) {
@@ -79,6 +87,15 @@ export class Rule extends TypedRule {
                     : Replacement.append(pos, ' await'),
             );
     }
+}
+
+function isInAsyncFunction(node: ts.Node): boolean {
+    do {
+        node = node.parent!;
+        if (node.kind === ts.SyntaxKind.SourceFile)
+            return false;
+    } while (!isFunctionScopeBoundary(node));
+    return isAsyncFunction(node);
 }
 
 function needsParens(node: ts.Expression) {

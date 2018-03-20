@@ -25,10 +25,10 @@
     "lint"
   ],
   "peerDependencies": {
-    "@fimbul/wotan": "^0.5.0",
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
   "dependencies": {
+    "@fimbul/ymir": "^0.4.0",
     "parse5": "^4.0.0",
     "tslib": "^1.8.1",
     "void-elements": "^3.1.0"

@@ -1,0 +1,28 @@
+declare let foo: any;
+
+switch (foo) {
+    case 1:
+        const bar = 1;
+        var baz = 2;
+        let bas = 3;
+        ~~~~~~~~~~~~ [error no-case-declaration: Unexpected lexical declaration in case block.]
+        class C {}
+        ~~~~~~~~~~ [error no-case-declaration: Unexpected lexical declaration in case block.]
+        enum E {}
+        ~~~~~~~~~ [error no-case-declaration: Unexpected lexical declaration in case block.]
+        const enum CE {}
+        (class {});
+        function f() {}
+        if (Boolean()) {
+            class NestedC {}
+            enum NestedE {}
+        }
+        type T = any;
+        interface I {}
+    case 2: {
+        let foobar = 1;
+    }
+    default:
+        class Other {}
+        ~~~~~~~~~~~~~~ [error no-case-declaration: Unexpected lexical declaration in case block.]
+}
