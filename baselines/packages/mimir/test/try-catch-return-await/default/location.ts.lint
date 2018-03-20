@@ -1,4 +1,3 @@
-export {};
 declare let x: Promise<string>;
 function notAsync() {
     return;
@@ -17,7 +16,7 @@ async function test() {
         return;
         return x;
         ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
-        function nested() {
+        function nestedFn() {
             return x;
         }
         return await x;
@@ -115,4 +114,31 @@ async function test() {
             return x;
         }
     }
+}
+
+try {
+    return x;
+} catch {
+}
+
+async function testStatements() {
+    try {
+        label: if (Boolean())
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        switch (Boolean()) {
+            case true:
+                if (Boolean()) {
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+                } else {
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+                }
+            default:
+                while (true)
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+    } catch (e) {}
 }

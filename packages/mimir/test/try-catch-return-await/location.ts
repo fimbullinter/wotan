@@ -1,4 +1,3 @@
-export {};
 declare let x: Promise<string>;
 function notAsync() {
     return;
@@ -16,7 +15,7 @@ async function test() {
     try {
         return;
         return x;
-        function nested() {
+        function nestedFn() {
             return x;
         }
         return await x;
@@ -94,4 +93,27 @@ async function test() {
             return x;
         }
     }
+}
+
+try {
+    return x;
+} catch {
+}
+
+async function testStatements() {
+    try {
+        label: if (Boolean())
+            return x;
+        switch (Boolean()) {
+            case true:
+                if (Boolean()) {
+                    return x;
+                } else {
+                    return x;
+                }
+            default:
+                while (true)
+                    return x;
+        }
+    } catch (e) {}
 }
