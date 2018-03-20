@@ -10,5 +10,13 @@ new Array<string>();
 new Array();
 new Array(1);
 
+// new Array
+new Array;
+         ~nil [error new-parens: Expected parentheses on constructor call.]
+
 Array
 Array(1)
+
+interface FooConstructor {
+    new(): any;
+}

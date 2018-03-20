@@ -1,5 +1,6 @@
 import { AbstractRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
+import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -7,8 +8,16 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst())
-            if (node.kind === ts.SyntaxKind.NewExpression && this.sourceFile.text[node.end - 1] !== ')')
+        let wrappedAst: WrappedAst | undefined;
+        const {text} = this.sourceFile;
+        const re = /\bnew\b/g;
+
+        for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (node.kind === ts.SyntaxKind.NewExpression &&
+                text[node.end - 1] !== ')' &&
+                re.lastIndex === (<ts.NewExpression>node).expression.pos)
                 this.addFailure(node.end, node.end, 'Expected parentheses on constructor call.', Replacement.append(node.end, '()'));
+        }
     }
 }
