@@ -12,20 +12,18 @@ export class Rule extends TypedRule {
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
-            if (match.index !== node.getStart(this.sourceFile))
-                continue;
             if (isAwaitExpression(node)) {
-                if (!this.isPromiseLike(node.expression))
+                if (node.expression.pos === re.lastIndex && !this.isPromiseLike(node.expression))
                     this.addFailure(
                         match.index,
                         node.end,
                         "Unnecessary 'await' of a non-Promise value.",
                         Replacement.delete(match.index, node.expression.getStart(this.sourceFile)),
                     );
-            } else if (node.kind === ts.SyntaxKind.AwaitKeyword) {
+            } else if (node.kind === ts.SyntaxKind.AwaitKeyword && node.end === re.lastIndex) {
                 const parent = node.parent!;
                 if (isForOfStatement(parent) && !this.isAsyncIterable(parent.expression)) {
-                    const start = parent.getStart(this.sourceFile);
+                    const start = node.pos - 'for'.length;
                     this.addFailure(
                         start,
                         parent.statement.pos,
