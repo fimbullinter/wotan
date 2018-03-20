@@ -1,6 +1,7 @@
 import { AbstractRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier } from 'tsutils';
+import { switchStatements } from '../utils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -8,28 +9,24 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst())
-            if (node.kind === ts.SyntaxKind.CaseBlock)
-                this.checkCases(<ts.CaseBlock>node);
-    }
-
-    private checkCases({clauses}: ts.CaseBlock) {
-        const expressionsSeen = new Set<string>();
-        const valuesSeen = new Set<Primitive>();
-        for (const clause of clauses) {
-            if (clause.kind === ts.SyntaxKind.DefaultClause)
-                continue;
-            const text = clause.expression.getText(this.sourceFile);
-            if (expressionsSeen.has(text)) {
-                this.addFailureAtNode(clause.expression, `Duplicate 'case ${text}'.`);
-                continue;
+        for (const {caseBlock: {clauses}} of switchStatements(this.context)) {
+            const expressionsSeen = new Set<string>();
+            const valuesSeen = new Set<Primitive>();
+            for (const clause of clauses) {
+                if (clause.kind === ts.SyntaxKind.DefaultClause)
+                    continue;
+                const text = clause.expression.getText(this.sourceFile);
+                if (expressionsSeen.has(text)) {
+                    this.addFailureAtNode(clause.expression, `Duplicate 'case ${text}'.`);
+                    continue;
+                }
+                expressionsSeen.add(text);
+                this.getLiteralValue(clause.expression, (v) => {
+                    if (valuesSeen.has(v))
+                        return this.addFailureAtNode(clause.expression, `Duplicate 'case ${format(v)}'.`);
+                    valuesSeen.add(v);
+                });
             }
-            expressionsSeen.add(text);
-            this.getLiteralValue(clause.expression, (v) => {
-                if (valuesSeen.has(v))
-                    return this.addFailureAtNode(clause.expression, `Duplicate 'case ${format(v)}'.`);
-                valuesSeen.add(v);
-            });
         }
     }
 
