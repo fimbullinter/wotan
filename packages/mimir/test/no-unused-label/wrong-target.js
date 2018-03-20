@@ -12,3 +12,5 @@ foo: for(;;)
     foo: while(true)
         break foo;
 break foo;
+
+baz: break bas;
