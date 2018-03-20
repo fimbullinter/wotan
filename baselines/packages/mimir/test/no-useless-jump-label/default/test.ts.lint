@@ -50,3 +50,14 @@ outer: while (true)
     inner: do
         break outer;
     while (true);
+
+loop: for (_ of []) {
+    let loop;
+    break/**/loop;
+             ~~~~  [error no-useless-jump-label: Jump label 'loop' is unnecessary.]
+    continue
+        loop;
+    // continue loop
+    continue loop;
+             ~~~~  [error no-useless-jump-label: Jump label 'loop' is unnecessary.]
+}

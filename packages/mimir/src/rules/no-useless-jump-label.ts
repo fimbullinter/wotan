@@ -1,6 +1,13 @@
 import { AbstractRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isBreakOrContinueStatement, isFunctionScopeBoundary, isIterationStatement, isLabeledStatement } from 'tsutils';
+import {
+    isBreakOrContinueStatement,
+    isFunctionScopeBoundary,
+    isIterationStatement,
+    isLabeledStatement,
+    WrappedAst,
+    getWrappedNodeAtPosition,
+} from 'tsutils';
 
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
@@ -8,13 +15,23 @@ export class Rule extends AbstractRule {
     }
 
     public apply() {
-        for (const node of this.context.getFlatAst())
-            if (isBreakOrContinueStatement(node) && node.label !== undefined && !isLabelNecessary(node.label))
+        const {text} = this.sourceFile;
+        const re = /\b(break|continue)(?:\s|\/*)/gm;
+        let wrappedAst: WrappedAst | undefined;
+        for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (
+                isBreakOrContinueStatement(node) &&
+                node.label !== undefined &&
+                node.label.pos - match[1].length === match.index &&
+                !isLabelNecessary(node.label)
+            )
                 this.addFailureAtNode(
                     node.label,
                     `Jump label '${node.label.text}' is unnecessary.`,
                     Replacement.delete(node.label.pos, node.label.end),
                 );
+        }
     }
 }
 

@@ -47,3 +47,12 @@ outer: while (true)
     inner: do
         break outer;
     while (true);
+
+loop: for (_ of []) {
+    let loop;
+    break;
+    continue
+        loop;
+    // continue loop
+    continue;
+}
