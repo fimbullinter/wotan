@@ -13,18 +13,18 @@ export class Rule extends AbstractRule {
         for (const node of this.context.getFlatAst())
             if (isSignatureDeclaration(node) && node.typeParameters !== undefined)
                 for (const typeParameter of node.typeParameters)
-                    if (!this.isUsedInSignatureExceptReturnType(typeParameter, node))
+                    if (!this.isUsedInParameterTypes(typeParameter, node.parameters))
                         this.addFailureAtNode(
                             typeParameter,
                             `TypeParameter '${typeParameter.name.text}' cannot be inferred from any parameter.`,
                         );
     }
 
-    private isUsedInSignatureExceptReturnType(typeParameter: ts.TypeParameterDeclaration, signature: ts.SignatureDeclaration): boolean {
+    private isUsedInParameterTypes(typeParameter: ts.TypeParameterDeclaration, range: ts.TextRange): boolean {
         if (this.usage === undefined)
             this.usage = collectVariableUsage(this.sourceFile);
         for (const use of this.usage.get(typeParameter.name)!.uses)
-            if (use.location.pos < signature.parameters.end)
+            if (use.location.pos > range.pos && use.location.pos < range.end)
                 return true;
         return false;
     }
