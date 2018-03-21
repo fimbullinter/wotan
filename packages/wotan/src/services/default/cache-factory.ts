@@ -22,8 +22,10 @@ class WeakCache<K extends object, V> implements Cache<K, V> {
 
 @injectable()
 export class DefaultCacheFactory implements CacheFactory {
+    // wotan-disable no-misused-generics
     public create<K extends object, V = any>(weak: true): Cache<K, V>;
     public create<K = any, V = any>(weak?: false): Cache<K, V>;
+    // wotan-enable no-misused-generics
     public create(weak?: boolean): Cache<any, any> {
         return weak ? new WeakCache() : new Map();
     }

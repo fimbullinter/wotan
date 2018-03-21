@@ -363,11 +363,13 @@ export interface FormatterLoaderHost {
 }
 export abstract class FormatterLoaderHost {}
 
+// wotan-disable no-misused-generics
 export interface CacheFactory {
     /** Creates a new cache instance. */
     create<K extends object, V = any>(weak: true): Cache<K, V>;
     create<K = any, V = any>(weak?: false): Cache<K, V>;
 }
+// wotan-enable no-misused-generics
 export abstract class CacheFactory {}
 
 export interface Cache<K, V> {

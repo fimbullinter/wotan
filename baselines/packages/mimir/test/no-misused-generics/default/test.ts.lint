@@ -1,0 +1,32 @@
+declare function get(): void;
+declare function get<T>(): T;
+                     ~        [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+declare function get<T extends object>(): T;
+                     ~~~~~~~~~~~~~~~~        [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+declare function get<T, U = T>(param: U): U;
+                     ~                       [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+declare function get<T, U extends T = T>(param: T): U;
+                        ~~~~~~~~~~~~~~~                [error no-misused-generics: TypeParameter 'U' cannot be inferred from any parameter.]
+declare function get<T>(param: T[]): T;
+declare function get<T extends string, U>(param: Record<T, U>): boolean;
+declare function get<T>(param: <T, U>(param: T) => U): T
+                     ~                                   [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+                                   ~                     [error no-misused-generics: TypeParameter 'U' cannot be inferred from any parameter.]
+
+function fn<T>(param: string) {
+            ~                   [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+    let v: T = null!;
+    return v;
+}
+
+declare class C<V> {
+    method<T, U>(param: T): U;
+              ~                [error no-misused-generics: TypeParameter 'U' cannot be inferred from any parameter.]
+    prop: <T>() => T;
+           ~          [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+}
+
+<T>(param): T => null!;
+ ~                      [error no-misused-generics: TypeParameter 'T' cannot be inferred from any parameter.]
+
+get<string>();
