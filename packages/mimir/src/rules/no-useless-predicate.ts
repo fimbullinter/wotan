@@ -1,4 +1,4 @@
-import { TypedRule } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isBinaryExpression,
@@ -67,11 +67,8 @@ const predicates: Record<string, TypePredicate> = {
     },
 };
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
 
     public apply() {

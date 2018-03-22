@@ -1,12 +1,8 @@
-import { AbstractRule } from '@fimbul/ymir';
-import * as ts from 'typescript';
+import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import { getControlFlowEnd, WrappedAst, getWrappedNodeAtPosition, isTryStatement } from 'tsutils';
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         const re = /\bfinally\s*[/{]/g;
         let wrappedAst: WrappedAst | undefined;

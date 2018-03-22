@@ -1,13 +1,10 @@
-import { AbstractRule } from '@fimbul/ymir';
+import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { hasModifier } from 'tsutils';
 import { switchStatements } from '../utils';
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         for (const {caseBlock: {clauses}} of switchStatements(this.context))
                 for (const clause of clauses)

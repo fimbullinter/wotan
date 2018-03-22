@@ -1,15 +1,12 @@
-import { TypedRule } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles, typescriptOnly } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isTypeLiteralNode, getJsDoc } from 'tsutils';
 
 const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 
+@excludeDeclarationFiles
+@typescriptOnly // in .js files TypeParameters default to `any`
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile &&
-            /\.tsx?$/.test(sourceFile.fileName); // in .js files TypeParameters default to `any`
-    }
-
     private scanner: ts.Scanner | undefined = undefined;
 
     public apply() {

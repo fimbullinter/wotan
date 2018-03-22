@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '@fimbul/ymir';
+import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isBreakOrContinueStatement,
@@ -9,11 +9,8 @@ import {
     getWrappedNodeAtPosition,
 } from 'tsutils';
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         const {text} = this.sourceFile;
         const re = /\b(break|continue)(?:\s|\/*)/gm;

@@ -1,13 +1,9 @@
-import { TypedRule } from '@fimbul/ymir';
-import * as ts from 'typescript';
+import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import { NodeWrap, isFunctionScopeBoundary, isExpressionStatement, isCallExpression, isThenableType } from 'tsutils';
 import { isAsyncFunction } from '../utils';
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         return this.iterate(this.context.getWrappedAst().next, undefined);
     }

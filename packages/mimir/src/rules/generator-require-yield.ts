@@ -1,13 +1,10 @@
 import * as ts from 'typescript';
 import { isFunctionScopeBoundary, NodeWrap } from 'tsutils';
-import { AbstractRule } from '@fimbul/ymir';
+import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
     private containsYield = false;
-
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
 
     public apply() {
         return this.iterate(this.context.getWrappedAst().next, undefined);

@@ -1,4 +1,4 @@
-import { TypedRule, Replacement } from '@fimbul/ymir';
+import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     WrappedAst,
@@ -11,11 +11,8 @@ import {
     isFalsyType,
 } from 'tsutils';
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         const re = /(?:[.\n]|\*\/)\s*assign\b/g;
         let wrappedAst: WrappedAst | undefined;
