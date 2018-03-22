@@ -1,5 +1,13 @@
 import { Linter } from './linter';
-import { LintResult, FileSummary, Configuration, AbstractProcessor, DirectoryService, ConfigurationError } from '@fimbul/ymir';
+import {
+    LintResult,
+    FileSummary,
+    Configuration,
+    AbstractProcessor,
+    DirectoryService,
+    ConfigurationError,
+    MessageHandler,
+} from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
@@ -28,6 +36,7 @@ export class Runner {
         private linter: Linter,
         private processorLoader: ProcessorLoader,
         private directories: DirectoryService,
+        private logger: MessageHandler,
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
@@ -174,7 +183,7 @@ export class Runner {
             if (project === undefined)
                 throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
         }
-        const program = createProgram(project, host);
+        const program = this.createProgram(project, host);
         const files: string[] = [];
         const originalNames: string [] = [];
         const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
@@ -223,6 +232,22 @@ export class Runner {
             default:
                 return fileOrDirName;
         }
+    }
+
+    private createProgram(configFile: string, host: ProjectHost): ts.Program {
+        const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
+        if (config.error !== undefined)
+            this.logger.warn(ts.formatDiagnostics([config.error], host));
+        const parsed = ts.parseJsonConfigFileContent(
+            config.config,
+            createParseConfigHost(host),
+            path.dirname(configFile),
+            {noEmit: true},
+            configFile,
+        );
+        if (parsed.errors.length !== 0)
+            this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
+        return ts.createProgram(parsed.fileNames, parsed.options, host);
     }
 }
 
@@ -294,26 +319,6 @@ declare module 'typescript' {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
     }
-}
-
-function createProgram(configFile: string, host: ProjectHost): ts.Program {
-    const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
-    if (config.error !== undefined)
-        throw new ConfigurationError(ts.formatDiagnostics([config.error], host));
-    const parsed = ts.parseJsonConfigFileContent(
-        config.config,
-        createParseConfigHost(host),
-        path.dirname(configFile),
-        {noEmit: true},
-        configFile,
-    );
-    if (parsed.errors.length !== 0) {
-        // ignore 'TS18003: No inputs were found in config file ...'
-        const errors = parsed.errors.filter((d) => d.code !== 18003);
-        if (errors.length !== 0)
-            throw new ConfigurationError(ts.formatDiagnostics(errors, host));
-    }
-    return ts.createProgram(parsed.fileNames, parsed.options, host);
 }
 
 function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
