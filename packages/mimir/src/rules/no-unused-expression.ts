@@ -1,4 +1,4 @@
-import { ConfigurableRule } from '@fimbul/ymir';
+import { ConfigurableRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isNumericLiteral,
@@ -19,11 +19,8 @@ export interface Options {
 
 const FAIL_MESSAGE = 'This expression is unused. Did you mean to assign a value or call a function?';
 
+@excludeDeclarationFiles
 export class Rule extends  ConfigurableRule<Options> {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public parseOptions(input: Partial<Options> | {} | null | undefined): Options {
         return {
             allowNew: false,

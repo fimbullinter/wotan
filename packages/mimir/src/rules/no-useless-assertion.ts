@@ -1,4 +1,4 @@
-import { TypedRule, Replacement } from '@fimbul/ymir';
+import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled } from '../utils';
 import {
@@ -23,11 +23,9 @@ const typeFormat = ts.TypeFormatFlags.NoTruncation
     | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
     | ts.TypeFormatFlags.UseStructuralFallback;
 
+@excludeDeclarationFiles
+@typescriptOnly
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile && /\.tsx?$/.test(sourceFile.fileName);
-    }
-
     private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
 
     public apply(): void {

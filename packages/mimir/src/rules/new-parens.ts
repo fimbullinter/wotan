@@ -1,12 +1,9 @@
-import { AbstractRule, Replacement } from '@fimbul/ymir';
+import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         let wrappedAst: WrappedAst | undefined;
         const {text} = this.sourceFile;

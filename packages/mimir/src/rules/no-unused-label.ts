@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { isLabeledStatement, isBreakOrContinueStatement, isFunctionScopeBoundary, NodeWrap } from 'tsutils';
-import { AbstractRule, Replacement } from '@fimbul/ymir';
+import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 
 interface Label {
     node: ts.LabeledStatement;
@@ -8,12 +8,9 @@ interface Label {
     used: boolean;
 }
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
     private labels: Label[] = [];
-
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
 
     public apply() {
         return this.iterate(this.context.getWrappedAst().next, undefined);

@@ -1,12 +1,9 @@
-import { TypedRule, Replacement } from '@fimbul/ymir';
+import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition, unionTypeParts } from 'tsutils';
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         const re = /\bawait\b/g;
         let wrappedAst: WrappedAst | undefined;

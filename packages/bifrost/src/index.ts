@@ -5,6 +5,7 @@ import {
     FileSummary,
     RuleConstructor,
     FormatterConstructor,
+    isTypescriptFile,
 } from '@fimbul/ymir';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
@@ -25,7 +26,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
 
         // wotan-disable-next-line no-useless-predicate
         public static supports = Rule.metadata && Rule.metadata.typescriptOnly
-            ? (sourceFile: ts.SourceFile) => /\.tsx?$/.test(sourceFile.fileName)
+            ? isTypescriptFile
             : undefined;
 
         private delegate: TSLint.IRule;

@@ -78,7 +78,7 @@ export type Severity = 'error' | 'warning';
 export interface RuleConstructor {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?(sourceFile: ts.SourceFile, context: RuleSupportsContext): boolean;
+    supports?: RuleSupportsPredicate;
     new(context: RuleContext): AbstractRule;
 }
 
@@ -106,10 +106,30 @@ export abstract class TypedRuleContext {}
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
+function combinePredicates(existing: RuleSupportsPredicate | undefined, predicate: RuleSupportsPredicate): RuleSupportsPredicate {
+    if (existing === undefined)
+        return predicate;
+    return (sourceFile, context) => predicate(sourceFile, context) && existing(sourceFile, context);
+}
+
+export function isTypescriptFile(sourceFile: ts.SourceFile) {
+    return /\.tsx?$/.test(sourceFile.fileName);
+}
+
+export function typescriptOnly<T extends typeof AbstractRule>(target: T) {
+    target.supports = combinePredicates(target.supports, isTypescriptFile);
+}
+
+export function excludeDeclarationFiles<T extends typeof AbstractRule>(target: T) {
+    target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
+}
+
+export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
+
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
-    public static supports?: (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean = undefined;
+    public static supports?: RuleSupportsPredicate = undefined;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
