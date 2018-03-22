@@ -1,4 +1,4 @@
-import { AbstractRule } from '@fimbul/ymir';
+import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isBlockScopedVariableDeclarationList,
@@ -11,11 +11,8 @@ import {
 
 type ForDoWhileStatement = ts.ForStatement | ts.WhileStatement | ts.DoStatement;
 
+@excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     public apply() {
         for (const node of this.context.getFlatAst()) {
             switch (node.kind) {

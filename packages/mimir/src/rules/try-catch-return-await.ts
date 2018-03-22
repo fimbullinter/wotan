@@ -1,4 +1,4 @@
-import { TypedRule, Replacement } from '@fimbul/ymir';
+import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import {
     isTryStatement,
     isFunctionScopeBoundary,
@@ -16,11 +16,8 @@ import {
 import * as ts from 'typescript';
 import { isAsyncFunction } from '../utils';
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     private reported: ts.TryStatement[] = [];
 
     public apply() {

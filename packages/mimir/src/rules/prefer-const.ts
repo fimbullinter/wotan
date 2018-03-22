@@ -1,4 +1,4 @@
-import { ConfigurableRule, Replacement } from '@fimbul/ymir';
+import { ConfigurableRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     collectVariableUsage,
@@ -18,11 +18,8 @@ export interface Options {
     destructuring: 'all' | 'any';
 }
 
+@excludeDeclarationFiles
 export class Rule extends ConfigurableRule<Options> {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     protected parseOptions(options: {destructuring?: string} | null | undefined): Options {
         let destructuring: Options['destructuring'] = 'all';
         if (options != undefined && options.destructuring === 'any')

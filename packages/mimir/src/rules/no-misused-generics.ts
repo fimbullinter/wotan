@@ -1,12 +1,9 @@
-import { AbstractRule } from '@fimbul/ymir';
+import { AbstractRule, typescriptOnly } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isSignatureDeclaration, collectVariableUsage, VariableInfo } from 'tsutils';
 
+@typescriptOnly
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return /\.tsx?$/.test(sourceFile.fileName);
-    }
-
     private usage: Map<ts.Identifier, VariableInfo> | undefined;
 
     public apply() {
