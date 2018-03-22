@@ -236,8 +236,10 @@ export class Runner {
 
     private createProgram(configFile: string, host: ProjectHost): ts.Program {
         const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
-        if (config.error !== undefined)
+        if (config.error !== undefined) {
             this.logger.warn(ts.formatDiagnostics([config.error], host));
+            config.config = {};
+        }
         const parsed = ts.parseJsonConfigFileContent(
             config.config,
             createParseConfigHost(host),
