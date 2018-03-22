@@ -28,7 +28,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
 `no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
-`no-misused-generics` | Detects generic type parameters that cannot be inferred from the functions parameters. | There's no similar TSLint rule.
+`no-misused-generics` | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 `no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 `no-unreachable-code` | Warns about statements that will never be executed. Works like TypeScript's dead code detection but doesn't fail compilation because it's a lint error. | TSLint removed their `no-unreachable` rule in v4.0.0.
