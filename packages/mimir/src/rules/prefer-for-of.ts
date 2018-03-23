@@ -1,4 +1,4 @@
-import { TypedRule } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
     isVariableDeclarationList,
@@ -18,11 +18,8 @@ import {
 } from 'tsutils';
 import * as path from 'path';
 
+@excludeDeclarationFiles
 export class Rule extends TypedRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return !sourceFile.isDeclarationFile;
-    }
-
     private get usage() {
         const usage = collectVariableUsage(this.sourceFile);
         Object.defineProperty(this, 'usage', {

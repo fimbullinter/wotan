@@ -1,0 +1,2 @@
+rules:
+  no-misused-generics: error

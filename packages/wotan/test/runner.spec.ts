@@ -113,7 +113,7 @@ test('throws if no tsconfig.json can be found', (t) => {
     );
 });
 
-test('reports errors while parsing tsconfig.json', (t) => {
+test('reports warnings while parsing tsconfig.json', (t) => {
     const container = new Container();
     const files: {[name: string]: string | undefined} = {
         'invalid-config.json': '{',
@@ -121,18 +121,25 @@ test('reports errors while parsing tsconfig.json', (t) => {
         'invalid-files.json': '{"files": []}',
         'no-match.json': '{"include": ["non-existent"], "compilerOptions": {"noLib": true}}',
     };
+    function isLibraryFile(name: string) {
+        return /[\\/]typescript[\\/]lib[\\/]lib(\.es\d+(\.\w+)*)?\.d\.ts$/.test(name);
+    }
     @injectable()
     class MockFileSystem extends NodeFileSystem {
         constructor(logger: MessageHandler) {
             super(logger);
         }
         public stat(file: string) {
+            if (isLibraryFile(file))
+                return super.stat(file);
             return {
                 isFile() { return files[path.basename(file)] !== undefined; },
                 isDirectory() { return false; },
             };
         }
         public readFile(file: string) {
+            if (isLibraryFile(file))
+                return super.readFile(file);
             const basename = path.basename(file);
             const content = files[basename];
             if (content !== undefined)
@@ -144,51 +151,55 @@ test('reports errors while parsing tsconfig.json', (t) => {
         }
     }
     container.bind(FileSystem).to(MockFileSystem);
+    let warning = '';
+    container.bind(MessageHandler).toConstantValue({
+        log() {},
+        warn(message) { warning = message; },
+        error() { throw new Error('should not be called'); },
+    });
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
 
-    t.throws(
-        () => Array.from(runner.lintCollection({
-            config: undefined,
-            files: [],
-            exclude: [],
-            project: 'invalid-config.json',
-            fix: false,
-            extensions: undefined,
-        })),
-        /invalid-config.json/,
-    );
+    Array.from(runner.lintCollection({
+        config: undefined,
+        files: [],
+        exclude: [],
+        project: 'invalid-config.json',
+        fix: false,
+        extensions: undefined,
+    }));
+    t.regex(warning, /invalid-config.json/);
+    warning = '';
 
-    t.throws(
-        () => Array.from(runner.lintCollection({
-            config: undefined,
-            files: [],
-            exclude: [],
-            project: 'invalid-base.json',
-            fix: false,
-            extensions: undefined,
-        })),
-        /invalid-config.json/,
-    );
+    Array.from(runner.lintCollection({
+        config: undefined,
+        files: [],
+        exclude: [],
+        project: 'invalid-base.json',
+        fix: false,
+        extensions: undefined,
+    }));
+    t.regex(warning, /invalid-config.json/);
+    warning = '';
 
-    t.throws(
-        () => Array.from(runner.lintCollection({
-            config: undefined,
-            files: [],
-            exclude: [],
-            project: 'invalid-files.json',
-            fix: false,
-            extensions: undefined,
-        })),
-        `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`,
-    );
+    Array.from(runner.lintCollection({
+        config: undefined,
+        files: [],
+        exclude: [],
+        project: 'invalid-files.json',
+        fix: false,
+        extensions: undefined,
+    }));
+    t.is(warning, `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`);
+    warning = '';
 
-    t.notThrows(() => Array.from(runner.lintCollection({
+    Array.from(runner.lintCollection({
         config: undefined,
         files: [],
         exclude: [],
         project: 'no-match.json',
         fix: false,
         extensions: undefined,
-    })));
+    }));
+    t.regex(warning, /^error TS18003:/);
 });
