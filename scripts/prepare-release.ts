@@ -11,7 +11,11 @@ import {
 import * as semver from 'semver';
 
 ensureBranch('master');
-ensureCleanTree();
+ensureCleanTree(undefined, ['CHANGELOG.md']);
+
+execAndLog('yarn');
+execAndLog('yarn verify');
+ensureCleanTree(undefined, ['CHANGELOG.md', 'yarn.lock']);
 
 const rootManifest = require('../package.json');
 const releaseVersion = rootManifest.version;

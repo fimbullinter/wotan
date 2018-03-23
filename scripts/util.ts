@@ -14,9 +14,14 @@ export interface PackageData {
     peerDependencies?: Dependencies;
 }
 
-export function isTreeClean(directories: string[] = []) {
+export function isTreeClean(directories: string[] = [], exceptions: string[] = []) {
     cp.spawnSync('git', ['update-index', '-q', '--refresh'], {stdio: 'ignore'});
-    if (cp.spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--', ...directories], {stdio: 'ignore'}).status !== 0)
+    const modified = cp.spawnSync(
+        'git',
+        ['diff-index', '--exit-code', '-z', '--name-only', 'HEAD', '--', ...directories],
+        {encoding: 'utf8'},
+    );
+    if (modified.status !== 0 && splitNullDelimitedList(modified.stdout).some((changed) => !exceptions.includes(changed)))
         return false;
     const untracked = cp.spawnSync('git', ['ls-files', '--others', '--exclude-standard', '--', ...directories]);
     if (untracked.status !== 0)
@@ -24,8 +29,8 @@ export function isTreeClean(directories: string[] = []) {
     return untracked.stdout.length === 0;
 }
 
-export function ensureCleanTree(directories: string[] = []) {
-    if (isTreeClean(directories))
+export function ensureCleanTree(directories: string[] = [], exceptions?: string[]) {
+    if (isTreeClean(directories, exceptions))
         return;
     console.error('Working directory contains uncommited changes.');
     cp.spawnSync('git', ['status', '--', ...directories], {stdio: 'inherit'});
@@ -68,14 +73,12 @@ export function getChangedPackageNames(startRev: string, packageNames: Iterable<
         {encoding: 'utf8'},
     ).stdout;
     const result = new Set<string>();
-    for (const file of diff.split('\0').filter(filterFiles))
+    for (const file of splitNullDelimitedList(diff).filter(filterFiles))
         result.add(file.split(/[/\\]/)[1]);
     return result;
 }
 
 function filterFiles(file: string): boolean {
-    if (!file)
-        return false;
     const parts = file.split(/[/\\]/);
     switch (parts[2]) {
         case 'test':
@@ -102,5 +105,9 @@ export function writeManifest(path: string, content: PackageData) {
 
 export function execAndLog(command: string) {
     console.log(`> ${command}`);
-    console.log(cp.execSync(command, {encoding: 'utf8'}));
+    cp.execSync(command, {stdio: 'inherit'});
+}
+
+function splitNullDelimitedList(str: string): string[] {
+    return str.split('\0').slice(0, -1);
 }
