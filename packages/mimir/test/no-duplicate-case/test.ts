@@ -11,6 +11,7 @@ switch (foo) {
     case 0:
     case -0:
     case null:
+    default:
 }
 
 switch (foo) {
@@ -31,6 +32,7 @@ switch (foo) {
     case ~~'1.1':
     case true:
     case !false:
+    case ++bar:
 }
 
 declare function get<T>(): T;

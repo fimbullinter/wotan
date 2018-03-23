@@ -12,6 +12,7 @@ switch (foo) {
     case -0:
          ~~  [error no-duplicate-case: Duplicate 'case 0'.]
     case null:
+    default:
 }
 
 switch (foo) {
@@ -40,6 +41,7 @@ switch (foo) {
     case true:
     case !false:
          ~~~~~~  [error no-duplicate-case: Duplicate 'case true'.]
+    case ++bar:
 }
 
 declare function get<T>(): T;
