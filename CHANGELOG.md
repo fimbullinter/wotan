@@ -1,5 +1,23 @@
 # Change Log
 
+## v0.6.0
+
+**Features:**
+
+* new rule: `new-parens`
+* new rule: `no-case-declaration`
+* new rule: `no-duplicate-case`
+* new rule: `no-misused-generics`
+* new rule: `no-useless-jump-label`
+* new rule: `prefer-for-of`
+* optimized some of the existing rules for performance
+* added decorators to `ymir` for commonly used rule predicates: `@excludeDeclarationFiles` and `@typescriptOnly`
+
+**Bugfixes:**
+
+* Errors in `tsconfig.json` are now reported as warnings instead of errors. That allows the use of older versions of TypeScript while using compiler options introduced in a later version.
+* `no-useless-predicate` now also checks `case` clauses of `switch` statements
+
 ## v0.5.0
 
 **Features:**
