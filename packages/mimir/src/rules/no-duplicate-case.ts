@@ -1,6 +1,6 @@
 import { AbstractRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier } from 'tsutils';
+import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier, isLiteralType } from 'tsutils';
 import { switchStatements } from '../utils';
 
 export class Rule extends AbstractRule {
@@ -23,7 +23,10 @@ export class Rule extends AbstractRule {
                 expressionsSeen.add(text);
                 this.getLiteralValue(clause.expression, (v) => {
                     if (valuesSeen.has(v))
-                        return this.addFailureAtNode(clause.expression, `Duplicate 'case ${format(v)}'.`);
+                        return this.addFailureAtNode(
+                            clause.expression,
+                            `Duplicate 'case ${typeof v === 'string' ? `"${v}"` : String(v)}'.`,
+                        );
                     valuesSeen.add(v);
                 });
             }
@@ -51,6 +54,20 @@ export class Rule extends AbstractRule {
             return cb(prefixFn(true));
         if (node.kind === ts.SyntaxKind.FalseKeyword)
             return cb(prefixFn(false));
+
+        if (this.program === undefined)
+            return;
+        const checker = this.program.getTypeChecker();
+        let type = checker.getTypeAtLocation(node);
+        type = checker.getBaseConstraintOfType(type) || type;
+        if (isLiteralType(type))
+            return cb(prefixFn(type.value));
+        if (type.flags & ts.TypeFlags.BooleanLiteral)
+            return cb(prefixFn((<{intrinsicName: string}><{}>type).intrinsicName === 'true'));
+        if (type.flags & ts.TypeFlags.Undefined)
+            return cb(prefixFn(undefined));
+        if (type.flags & ts.TypeFlags.Null)
+            return cb(prefixFn(null)); // tslint:disable-line:no-null-keyword
     }
 }
 
@@ -75,12 +92,4 @@ function makePrefixFn(node: ts.PrefixUnaryExpression, next: ApplyPrefixFn): Appl
         default:
             return;
     }
-}
-
-function format(v: Primitive): string {
-    if (typeof v === 'string')
-        return '"' + v + '"';
-    if (Object.is(v, -0))
-        return '-0';
-    return String(v);
 }

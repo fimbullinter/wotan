@@ -61,26 +61,37 @@ switch (foo) {
     case get<number | never>():
     case 1:
     case get<1>():
+         ~~~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case +get<'1'>():
+         ~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case 'foo':
     case get<'foo'>():
+         ~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case "foo"'.]
     case get<'foo' | 1>():
     case true:
     case !true:
     case get<true>():
+         ~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case true'.]
     case get<false>():
+         ~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case false'.]
     case null:
     case undefined:
     case get<null>():
+         ~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case null'.]
     case get<void>():
     case get<undefined>():
+         ~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case undefined'.]
     case E.Foo:
+         ~~~~~  [error no-duplicate-case: Duplicate 'case "foo"'.]
     case E.Bar:
     case E.Baz:
+         ~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case get<E>():
     case get<E.Bar>():
+         ~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case "bar"'.]
     case E2.Foo:
     case E2.Bar:
+         ~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case E2.Baz:
 }
 
@@ -90,6 +101,7 @@ function test<T, U extends 1, V extends '1', W extends U | V>(param1: T, param2:
         case param2:
         case param3:
         case +param3:
+             ~~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
         case param4:
     }
 }
