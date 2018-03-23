@@ -131,3 +131,39 @@ switch ('string') {
     case typeof get<{}>():
     default:
 }
+
+enum E {
+    Foo,
+    Bar,
+    Baz,
+}
+
+const enum CE {
+    Foo,
+    Bar,
+    Baz,
+}
+
+const enum CSE {
+    Foo = '',
+    Bar = 'bar',
+}
+
+const enum E2 {
+    Bar = 1,
+    Baz = 2,
+}
+
+!E.Foo;
+!E.Bar;
+!E.Baz;
+!CE.Foo;
+!CE.Bar;
+!CE.Baz;
+!CSE.Foo;
+!CSE.Bar;
+
+!get<E.Foo | CE.Foo | CSE.Foo>();
+!get<E.Foo | CE.Foo | CSE.Bar>();
+!get<E.Bar | CE.Bar | CSE.Bar>();
+!get<E2>();
