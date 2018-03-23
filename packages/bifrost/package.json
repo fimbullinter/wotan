@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/bifrost",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Compatibility layer for TSLint rules",
   "main": "src/index",
   "types": "src/index",
@@ -29,7 +29,7 @@
     "typescript": "^2.4.1 || >= 2.8.0-dev"
   },
   "dependencies": {
-    "@fimbul/ymir": "^0.4.0",
+    "@fimbul/ymir": "^0.6.0",
     "get-caller-file": "^1.0.2",
     "tslib": "^1.8.1"
   },
