@@ -6,6 +6,7 @@ rules:
   new-parens: error
   no-case-declaration: error
   no-debugger: error
+  no-duplicate-case: error
   no-fallthrough: error
   no-inferred-empty-object: error
   no-return-await: error
