@@ -166,30 +166,34 @@ export class Rule extends TypedRule {
         // TODO maybe allow `arr[i] === undefined` and `arr[i] == null`
         let predicate: TypePredicate;
         if (isTypeOfExpression(left)) {
-            if (isTextualLiteral(right)) {
-                switch (right.text) {
-                    case 'number':
-                    case 'string':
-                    case 'boolean':
-                    case 'symbol':
-                    case 'object':
-                    case 'function':
-                    case 'undefined':
-                        left = unwrapParens(left.expression);
-                        predicate = predicates[right.text];
-                        break;
-                    default:
-                        return equals.negated;
-                }
-            } else if (right.kind === ts.SyntaxKind.NullKeyword ||
-                       isIdentifier(right) && right.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword) {
+            left = unwrapParens(left.expression);
+            if (right.kind === ts.SyntaxKind.NullKeyword || isUndefined(right))
                 return equals.negated;
+            let literal: string;
+            if (isTextualLiteral(right)) {
+                literal = right.text;
             } else {
-                return;
+                let type = this.checker.getTypeAtLocation(right);
+                type = this.checker.getBaseConstraintOfType(type) || type;
+                if ((type.flags & ts.TypeFlags.StringLiteral) === 0)
+                    return;
+                literal = (<ts.StringLiteralType>type).value;
+            }
+            switch (literal) {
+                default:
+                    return equals.negated;
+                case 'number':
+                case 'string':
+                case 'boolean':
+                case 'symbol':
+                case 'object':
+                case 'function':
+                case 'undefined':
+                    predicate = predicates[literal];
             }
         } else if (right.kind === ts.SyntaxKind.NullKeyword) {
             predicate = equals.strict ? predicates.null : predicates.nullOrUndefined;
-        } else if (isIdentifier(right) && right.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword) {
+        } else if (isUndefined(right)) {
             predicate = equals.strict ? predicates.undefined : predicates.nullOrUndefined;
         } else {
             return;
@@ -239,6 +243,10 @@ export class Rule extends TypedRule {
         }
         return result;
     }
+}
+
+function isUndefined(node: ts.Expression): node is ts.Identifier {
+    return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
 }
 
 function truthyFalsy(type: ts.Type) {
