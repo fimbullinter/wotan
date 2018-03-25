@@ -157,6 +157,6 @@ function fn3<K extends keyof I>(o: I, k: K) {
 
 function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
     const v = Boolean() ? param1 : param2;
-    takeObject(v!); // should be valid
+    takeObject(v!);
     function takeObject(o: {}) {}
 }
