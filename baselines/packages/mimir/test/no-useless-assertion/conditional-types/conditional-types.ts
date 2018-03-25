@@ -32,3 +32,22 @@ v as NonNullable<typeof s>;
 s as Nullable<string>;
 s;
 (Boolean() ? s : null) as NonNullable<string>;
+
+function test<T extends string | undefined>(a: T, b: NonNullable<T>, c: T extends number ? never : undefined) {
+    a!;
+    b;
+    nullable(a)!;
+    nonNullable(a);
+    takeString(b);
+    b;
+    c as never;
+}
+
+function test2<T extends string>(a: T, b: NonNullable<T>) {
+    a;
+    b;
+    nullable(a)!;
+    nonNullable(a);
+    takeString(b);
+    b;
+}

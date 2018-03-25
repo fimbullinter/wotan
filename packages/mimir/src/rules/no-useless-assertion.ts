@@ -84,9 +84,8 @@ export class Rule extends TypedRule {
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
             const flags = getNullableFlags(
-                !typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess
-                    ? this.checker.getApparentType(originalType)
-                    : originalType,
+                (!typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess) &&
+                    this.checker.getBaseConstraintOfType(originalType) || originalType,
             );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
@@ -108,9 +107,10 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
-        if ((targetType.flags & ts.TypeFlags.TypeParameter) === 0 && (sourceType.flags & ts.TypeFlags.Literal) === 0) {
-            targetType = this.checker.getApparentType(targetType);
-            sourceType = this.checker.getApparentType(sourceType);
+        // TODO remove assertion on update to typescript@2.8
+        if ((targetType.flags & (ts.TypeFlags.TypeVariable | (<any>ts.TypeFlags).Instantiable)) === 0) {
+            targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
+            sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
         }
         let message = FAIL_MESSAGE;
         if (!typesAreEqual(sourceType, targetType, this.checker)) {

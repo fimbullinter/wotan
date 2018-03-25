@@ -195,7 +195,6 @@ function fn3<K extends keyof I>(o: I, k: K) {
 
 function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
     const v = Boolean() ? param1 : param2;
-    takeObject(v!); // should be valid
-                ~                      [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeObject(v!);
     function takeObject(o: {}) {}
 }
