@@ -202,3 +202,19 @@ const enum E2 {
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !get<E2>();
  ~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+const TypeOfString = 'string';
+
+typeof 1 === TypeOfString;
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+const enum TypeOf {
+    String = 'string',
+    Number = 'number',
+}
+
+typeof 1 === TypeOf.Number;
+typeof 1 === TypeOf.String;
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+typeof true === get<TypeOf>();

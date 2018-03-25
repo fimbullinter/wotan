@@ -167,3 +167,17 @@ const enum E2 {
 !get<E.Foo | CE.Foo | CSE.Bar>();
 !get<E.Bar | CE.Bar | CSE.Bar>();
 !get<E2>();
+
+const TypeOfString = 'string';
+
+typeof 1 === TypeOfString;
+
+const enum TypeOf {
+    String = 'string',
+    Number = 'number',
+}
+
+typeof 1 === TypeOf.Number;
+typeof 1 === TypeOf.String;
+
+typeof true === get<TypeOf>();
