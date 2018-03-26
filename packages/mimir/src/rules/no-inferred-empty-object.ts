@@ -11,15 +11,21 @@ export class Rule extends TypedRule {
 
     public apply() {
         for (const node of this.context.getFlatAst()) {
-            if (node.kind === ts.SyntaxKind.CallExpression && (<ts.CallExpression>node).typeArguments === undefined) {
-                this.checkCallExpression(<ts.CallExpression>node);
-            } else if (node.kind === ts.SyntaxKind.NewExpression && (<ts.NewExpression>node).typeArguments === undefined) {
-                this.checkNewExpression(<ts.NewExpression>node);
+            if (node.kind === ts.SyntaxKind.CallExpression) {
+                if ((<ts.CallExpression>node).typeArguments === undefined)
+                    this.checkCallExpression(<ts.CallExpression>node);
+            } else if (node.kind === ts.SyntaxKind.NewExpression) {
+                if ((<ts.NewExpression>node).typeArguments === undefined)
+                    this.checkNewExpression(<ts.NewExpression>node);
+            } else if ((node.kind === ts.SyntaxKind.JsxOpeningElement || node.kind === ts.SyntaxKind.JsxSelfClosingElement) &&
+                        // TODO fix assertion on upgrade to typescript@2.9
+                       (<any>node).typeArguments === undefined) {
+                this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
             }
         }
     }
 
-    private checkCallExpression(node: ts.CallExpression) {
+    private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement) {
         const signature = this.checker.getResolvedSignature(node);
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined)
