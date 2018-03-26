@@ -19,7 +19,9 @@ function SFC<T>(props: Record<string, T>) {
 }
 
 let foo = <SFC></SFC>;
+          ~~~~~        [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <SFC/>;
+      ~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <SFC<string>/>;
 foo = <SFC<string>></SFC>;
 foo = <SFC<string> prop={1}></SFC>;
@@ -52,5 +54,6 @@ function MyFactoryComponent<T>(props: Record<string, T>) {
 }
 
 foo = <MyFactoryComponent></MyFactoryComponent>;
+      ~~~~~~~~~~~~~~~~~~~~                       [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <MyFactoryComponent prop="1"></MyFactoryComponent>;
 foo = <MyFactoryComponent<string>></MyFactoryComponent>;
