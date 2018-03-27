@@ -12,6 +12,7 @@ import {
     getDeclarationOfBindingElement,
     isScopeBoundary,
     isFunctionScopeBoundary,
+    isForInOrOfStatement,
 } from 'tsutils';
 
 export interface Options {
@@ -151,10 +152,6 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
         }
     }
     return false;
-}
-
-function isForInOrOfStatement(node: ts.Node): node is ts.ForOfStatement | ts.ForInStatement {
-    return node.kind === ts.SyntaxKind.ForOfStatement || node.kind === ts.SyntaxKind.ForInStatement;
 }
 
 function noReassignment(use: VariableUse) {

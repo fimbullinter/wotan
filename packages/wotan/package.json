@@ -62,7 +62,7 @@
     "resolve": "^1.5.0",
     "semver": "^5.4.1",
     "tslib": "^1.8.1",
-    "tsutils": "^2.22.0"
+    "tsutils": "^2.24.0"
   },
   "peerDependencies": {
     "typescript": "^2.4.1 || >= 2.8.0-dev"

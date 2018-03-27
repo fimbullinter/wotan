@@ -4009,9 +4009,15 @@ tslint@^5.0.0:
     tslib "^1.8.0"
     tsutils "^2.12.1"
 
-tsutils@^2.12.1, tsutils@^2.21.0, tsutils@^2.22.0, tsutils@^2.22.2:
+tsutils@^2.12.1, tsutils@^2.22.2:
   version "2.22.2"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.22.2.tgz#0b9f3d87aa3eb95bd32d26ce2b88aa329a657951"
+  dependencies:
+    tslib "^1.8.1"
+
+tsutils@^2.24.0:
+  version "2.24.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.24.0.tgz#a84134358e10c42039fed0a8f1548413f118aff7"
   dependencies:
     tslib "^1.8.1"
 
@@ -4029,9 +4035,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-typescript@^2.9.0-dev.20180323:
-  version "2.9.0-dev.20180323"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.0-dev.20180323.tgz#9b33b1366a2b9af88e5e4de9a8e502f1df8b5aad"
+typescript@^2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.8.1.tgz#6160e4f8f195d5ba81d4876f9c0cc1fbc0820624"
 
 uglify-js@^2.6:
   version "2.8.29"
