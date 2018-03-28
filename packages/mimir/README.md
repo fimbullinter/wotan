@@ -32,6 +32,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `no-misused-generics` | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 `no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
+`no-unassigned-variable` | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.
 `no-unreachable-code` | Warns about statements that will never be executed. Works like TypeScript's dead code detection but doesn't fail compilation because it's a lint error. | TSLint removed their `no-unreachable` rule in v4.0.0.
 `no-unsafe-finally` | Forbids control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
 `no-unstable-api-use` | Finds uses of deprecated and experimental variables, classes, properties, functions, signatures, ... *requires type information* | This rule checks element accesses (`foo[bar]`), JSX elements, chained function calls (`getFn()()`) in addition to what TSLint's `deprecation` rule does and has more useful error reporting.

@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { hasModifier, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
+import { hasModifier, WrappedAst, getWrappedNodeAtPosition, VariableUse, UsageDomain, isReassignmentTarget } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
 export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
@@ -36,4 +36,8 @@ export function isAsyncFunction(node: ts.Node): node is ts.FunctionLikeDeclarati
         default:
             return false;
     }
+}
+
+export function isVariableReassignment(use: VariableUse) {
+    return (use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value && isReassignmentTarget(use.location);
 }
