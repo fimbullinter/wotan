@@ -1,0 +1,70 @@
+export {};
+
+declare let foo: number;
+declare const bar: string;
+
+declare namespace ns {
+    let foo: number;
+    let bar: string;
+    export {foo};
+}
+
+namespace ns {
+    declare namespace sub {
+        var something: boolean;
+        namespace sub.sub {
+            var something: boolean;
+        }
+        namespace sub {
+            namespace sub2 {
+                var something: boolean;
+            }
+        }
+    }
+    namespace sub.sub {
+        var something: boolean;
+            ~~~~~~~~~           [error no-unassigned-variable: Variable 'something' is never assigned.]
+    }
+    namespace sub2 {
+        var something: boolean;
+            ~~~~~~~~~           [error no-unassigned-variable: Variable 'something' is never assigned.]
+        namespace sub2 {
+            var something: boolean;
+                ~~~~~~~~~           [error no-unassigned-variable: Variable 'something' is never assigned.]
+        }
+    }
+    var something: boolean;
+        ~~~~~~~~~           [error no-unassigned-variable: Variable 'something' is never assigned.]
+    export var exported: boolean;
+}
+
+declare global {
+    let globalVar: string;
+}
+
+let exported: boolean;
+export {exported};
+
+let {destructured} = {} as any, regularVariable: number, initialized = 0;
+                                ~~~~~~~~~~~~~~~                           [error no-unassigned-variable: Variable 'regularVariable' is never assigned.]
+
+regularVariable === 0;
+
+var initializedLater: typeof regularVariable;
+{
+    initializedLater = 1;
+}
+
+function fn(param, {d}) {
+    let fnLocal: string;
+        ~~~~~~~          [error no-unassigned-variable: Variable 'fnLocal' is never assigned.]
+    return fnLocal;
+}
+
+var merged: any;
+    ~~~~~~       [error no-unassigned-variable: Variable 'merged' is never assigned.]
+var merged: any = 1;
+namespace merged {}
+interface merged {}
+
+type T = typeof merged;

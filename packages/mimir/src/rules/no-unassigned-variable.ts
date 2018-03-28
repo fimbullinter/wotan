@@ -19,8 +19,8 @@ export class Rule extends AbstractRule {
             if (
                 !isVariableStatement(node) ||
                 getVariableDeclarationKind(node.declarationList) === VariableDeclarationKind.Const ||
-                hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword) ||
-                isAmbientVariableStatement(node)
+                hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword, ts.SyntaxKind.DeclareKeyword) ||
+                isAmbientModuleBlock(node.parent!)
             )
                 continue;
             for (const declaration of node.declarationList.declarations)
@@ -38,15 +38,14 @@ export class Rule extends AbstractRule {
     }
 }
 
-function isAmbientVariableStatement(node: ts.VariableStatement): boolean {
-    return hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword) ||
-        node.parent!.kind === ts.SyntaxKind.ModuleBlock && isAmbientModuleDeclaration(<ts.ModuleDeclaration>node.parent!.parent);
-}
-
-function isAmbientModuleDeclaration(node: ts.ModuleDeclaration): boolean {
-    while (node.flags & ts.NodeFlags.NestedNamespace)
-        node = <ts.ModuleDeclaration>node.parent;
-    if (hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword))
-        return true;
-    return node.parent!.kind === ts.SyntaxKind.ModuleDeclaration && isAmbientModuleDeclaration(<ts.ModuleDeclaration>node.parent);
+function isAmbientModuleBlock(node: ts.Node): boolean {
+    while (node.kind === ts.SyntaxKind.ModuleBlock) {
+        do
+            node = node.parent!;
+        while (node.flags & ts.NodeFlags.NestedNamespace);
+        if (hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword))
+            return true;
+        node = node.parent!;
+    }
+    return false;
 }
