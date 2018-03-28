@@ -7,13 +7,13 @@ import {
     VariableDeclarationKind,
     VariableUse,
     UsageDomain,
-    isReassignmentTarget,
     isBindingElement,
     getDeclarationOfBindingElement,
     isScopeBoundary,
     isFunctionScopeBoundary,
     isForInOrOfStatement,
 } from 'tsutils';
+import { isVariableReassignment } from '../utils';
 
 export interface Options {
     destructuring: 'all' | 'any';
@@ -57,7 +57,7 @@ export class Rule extends ConfigurableRule<Options> {
                 if (kind === VariableDeclarationKind.Const)
                     continue;
                 const canBeConst = (declaration.initializer !== undefined || isForInOrOfStatement(parent.parent!)) &&
-                    variableInfo.uses.every(noReassignment) &&
+                    !variableInfo.uses.some(isVariableReassignment) &&
                     (kind === VariableDeclarationKind.Let ||
                         variableInfo.declarations.length === 1 && !usedInOuterScopeOrTdz(name, variableInfo.uses));
                 let list = listInfo.get(parent);
@@ -152,8 +152,4 @@ function usedInOuterScopeOrTdz(declaration: ts.Node, uses: VariableUse[]) {
         }
     }
     return false;
-}
-
-function noReassignment(use: VariableUse) {
-    return (use.domain & UsageDomain.Value) === 0 || !isReassignmentTarget(use.location);
 }
