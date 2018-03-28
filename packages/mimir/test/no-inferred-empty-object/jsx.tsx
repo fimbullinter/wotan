@@ -1,5 +1,3 @@
-export {};
-
 declare namespace JSX {
     interface IntrinsicElements {
         [elemName: string]: any;
@@ -9,20 +7,22 @@ declare namespace JSX {
         render(): Element | string | false;
     }
 
-    interface ElementAttributesProperty<T = any> {
-        props: T;
+    interface ElementAttributesProperty {
+        props: any;
     }
 }
 
 function SFC<T>(props: Record<string, T>) {
-    return '';
+    return {
+        props: props,
+    };
 }
 
 let foo = <SFC></SFC>;
 foo = <SFC/>;
 foo = <SFC<string>/>;
 foo = <SFC<string>></SFC>;
-foo = <SFC<string> prop={1}></SFC>;
+foo = <SFC<string> prop="1"></SFC>;
 foo = <SFC prop="foo"/>;
 foo = <SFC prop="foo" other={1}></SFC>;
 
