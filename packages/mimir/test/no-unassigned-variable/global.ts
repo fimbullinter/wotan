@@ -7,3 +7,9 @@ var someOtherGlobal: number;
     let initializedLater: boolean;
     initializedLater = true;
 }
+
+declare module "foo" {
+    let foo: number;
+    let bar: string;
+    export {foo};
+}
