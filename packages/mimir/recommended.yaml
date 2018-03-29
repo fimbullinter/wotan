@@ -27,5 +27,6 @@ rules:
   prefer-for-of: error
   prefer-number-isnan: error
   prefer-object-spread: error
+  return-never-call: error
   trailing-newline: error
   try-catch-return-await: error

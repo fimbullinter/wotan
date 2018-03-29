@@ -3,7 +3,7 @@ import { getLastRelaseTag, getPackages, getChangedPackageNames, writeManifest, e
 
 if (process.argv.length < 3) {
     console.log('Usage: node scripts/nightly <rev> [<options>...]');
-    process.exit(1);
+    throw process.exit(1);
 }
 
 const {packages, publicPackages} = getPackages();

@@ -7,8 +7,4 @@ import { getChangedPackageNames, getLastRelaseTag, getPackages } from './util';
 const since = process.argv[2] || getLastRelaseTag();
 
 const result = Array.from(getChangedPackageNames(since, getPackages().publicPackages.keys()));
-if (result.length === 0) {
-    process.exit(1);
-} else {
-    console.log(result.join(' '));
-}
+console.log(result.join(' '));
