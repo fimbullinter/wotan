@@ -10,7 +10,7 @@ export class Rule extends TypedRule {
                 this.addFailureAtNode(
                     node,
                     `This call never returns. Consider ${
-                        isReturnAllowed(node) ? 'throw' : 'return'
+                        isReturnAllowed(node) ? 'return' : 'throw'
                     }ing the result for better control flow analysis and type inference.`,
                 );
     }
@@ -24,7 +24,7 @@ export class Rule extends TypedRule {
 function isReturnAllowed(node: ts.Node): boolean {
     while (true) {
         node = node.parent!;
-        if (node.kind !== ts.SyntaxKind.SourceFile)
+        if (node.kind === ts.SyntaxKind.SourceFile || node.kind === ts.SyntaxKind.ModuleBlock)
             return false;
         if (isFunctionScopeBoundary(node))
             return true;

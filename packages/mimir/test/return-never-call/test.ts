@@ -29,6 +29,8 @@ function thrown(fn: () => never) {
 
 function last(fn: () => never) {
     console.log('foo');
+    if (Boolean())
+        fn();
     fn();
 }
 
@@ -42,3 +44,10 @@ declare let obj: { neverReturns(): never; }
 
 obj.neverReturns;
 obj.neverReturns();
+
+namespace ns {
+    get<never>();
+    function fn() {
+        get<never>();
+    }
+}
