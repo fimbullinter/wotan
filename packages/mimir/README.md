@@ -26,9 +26,9 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `new-parens` | Require parentheses when invoking constructors. | Performance!
 `no-case-declaration` | Disallow `let`, `class` and `enum` in case blocks. These are visible within the whole switch statement body but not defined in other case clauses. The compiler currently doesn't warn about such uses. You should use a block to restrict the scope of the declarations. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
-`no-duplicate-case` | Detects `switch` statements where multiple `case` clauses check for the same value. | This implementation tries to infer the value instead of just comparing the source code.
+`no-duplicate-case` | Detects `switch` statements where multiple `case` clauses check for the same value. *uses type information if available* | This implementation tries to infer the value instead of just comparing the source code.
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
-`no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
+`no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. *requires type information* | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
 `no-misused-generics` | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 `no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
@@ -49,7 +49,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
 `syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
-`try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. | TSLint has no similar rule.
+`try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. *requires type information* | TSLint has no similar rule.
 `typecheck` | TypeScript's compiler errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
 
 ## Formatters
