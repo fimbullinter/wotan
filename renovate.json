@@ -22,5 +22,9 @@
   "node": {
     "enabled": true,
     "supportPolicy": ["current"]
+  },
+  "docker": {
+    "enabled": false,
+    "extends": "schedule:weekly"
   }
 }
