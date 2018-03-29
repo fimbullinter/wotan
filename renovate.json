@@ -25,7 +25,7 @@
     "supportPolicy": ["current"]
   },
   "docker": {
-    "enabled": false,
+    "enabled": true,
     "extends": "schedule:weekly"
   }
 }
