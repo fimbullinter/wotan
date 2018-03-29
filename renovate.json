@@ -5,6 +5,7 @@
     ":preserveSemverRanges",
     ":prNotPending",
     ":automergeMinor",
+    ":automergeDigest",
     ":automergeBranchPush",
     ":automergeRequireAllStatusChecks",
     ":maintainLockFilesWeekly",
