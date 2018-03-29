@@ -9,7 +9,8 @@
     ":automergeBranchPush",
     ":automergeRequireAllStatusChecks",
     ":maintainLockFilesWeekly",
-    "group:definitelyTyped"
+    "group:definitelyTyped",
+    "group:linters"
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
