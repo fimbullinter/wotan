@@ -37,3 +37,8 @@ if (Boolean()) {
 } else {
     get<never>();
 }
+
+declare let obj: { neverReturns(): never; }
+
+obj.neverReturns;
+obj.neverReturns();

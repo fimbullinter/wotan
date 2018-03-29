@@ -1,6 +1,9 @@
 export {};
 
 declare function get<T>(): T;
+declare let n: never;
+
+n;
 
 get<string>();
 get<number>();
@@ -43,3 +46,9 @@ if (Boolean()) {
     get<never>();
     ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
 }
+
+declare let obj: { neverReturns(): never; }
+
+obj.neverReturns;
+obj.neverReturns();
+~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
