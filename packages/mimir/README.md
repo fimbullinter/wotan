@@ -47,6 +47,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `prefer-for-of` | Prefer `for-of` loops over regular `for` loops where possible. *requires type information* | Avoids the false positives of TSLint's `prefer-for-of` rule.
 `prefer-number-isnan` | Prefer ES2015's `Number.isNaN` over the global `isNaN` mainly for performance. *requires type information* | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
+`return-never-call` | Prefer `return neverReturns();` or `throw neverReturns();` over plain calls to `neverReturns();` to enable better control flow analysis and type inference. | TSLint has no similar rule.
 `syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
 `try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. *requires type information* | TSLint has no similar rule.

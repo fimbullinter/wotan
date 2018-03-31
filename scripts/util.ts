@@ -34,7 +34,7 @@ export function ensureCleanTree(directories: string[] = [], exceptions?: string[
         return;
     console.error('Working directory contains uncommited changes.');
     cp.spawnSync('git', ['status', '--', ...directories], {stdio: 'inherit'});
-    process.exit(1);
+    throw process.exit(1);
 }
 
 export function getCurrentBranch() {
