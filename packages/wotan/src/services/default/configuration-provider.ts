@@ -148,7 +148,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
                 return yaml.safeLoad(this.fs.readFile(filename), {
                     schema: yaml.JSON_SCHEMA,
                     strict: true,
-                });
+                })!;
             default:
                 return this.resolver.require(filename, {cache: false});
         }
