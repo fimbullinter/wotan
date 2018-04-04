@@ -1,0 +1,21 @@
+console.log(...['a', ...['b', 1], 'c', ...arr], 'd');
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        [error no-useless-spread: Using the spread operator here is not necessary.]
+                     ~~~~~~~~~~~                      [error no-useless-spread: Using the spread operator here is not necessary.]
+
+console.log(...     ['a', ...  ['b', 1], 'c', ...arr], 'd');
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        [error no-useless-spread: Using the spread operator here is not necessary.]
+                          ~~~~~~~~~~~~~                      [error no-useless-spread: Using the spread operator here is not necessary.]
+
+[a, ...[b, , ...c]] = arr;
+    ~~~~~~~~~~~~~~         [error no-useless-spread: Using the spread operator here is not necessary.]
+
+let obj = {
+  foo: 1,
+  ...{ bar: 2, ...someObj },
+  ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+  baz: 3,
+  ...someOtherObject || { bas: 4 }
+};
+
+({foo, ...{bar, ...rest}} = obj);
+       ~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
