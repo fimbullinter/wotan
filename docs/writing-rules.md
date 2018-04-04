@@ -27,6 +27,8 @@ Let's start by implementing a simple rule that bans all uses of type `any` as ty
 This rule doesn't need type information and is not configurable, so we extend `AbstractRule`.
 If the rule needed type information, you would extend `TypedRule` instead. If the rule was configurable, you should prefer `ConfigurableRule` or `ConfigurableTypedRule`.
 
+### Initial Implementation
+
 We start with the simplest or most common implementation and optimize it while we progress.
 
 ```ts
@@ -53,7 +55,9 @@ export class Rule extends AbstractRule {
 
 Note that we import from `@fimbul/ymir` instead of `@fimbul/wotan`. While the latter would also work, it's not recommended for custom rules. To allow reusing rules with a different linter runtime you should avoid having a dependency in `@fimbul/wotan` and use the core library `@fimbul/ymir` instead.
 
-The rule above works, but we can do better. So we grab the low hanging fruit first:
+### Avoid scanning source text
+
+The implementation above works, but we can do better. So we grab the low hanging fruit first:
 `addFailureAtNode` internally calls `node.getStart(sourceFile)` which is not as cheap as it looks. Computing the start of a node is rather expensive.
 Fortunately we know the end of the token and in this case we also know that `any` always has 3 characters.
 
@@ -62,6 +66,9 @@ Fortunately we know the end of the token and in this case we also know that `any
 ```
 
 Now we avoid computing the start position of the node. But that's only relavant if there is a failure.
+
+### Prevent the rule from executing on certain files
+
 Let's try to optimize further: Since type annotations can only occur in `*.ts` and `*.tsx` files, we don't need to execute the rule in any other files.
 
 To disable the rule based on the linted file, you can implement the static `supports` method.
@@ -72,6 +79,18 @@ export class Rule extends AbstractRule {
         return /\.tsx?$/.test(sourceFile.fileName); // only apply this rule for *.ts and *.tsx files
     }
 ```
+
+The same functionality is already available as decorator `@typescriptOnly`, so you could just write:
+
+```ts
+@typescriptOnly
+export class Rule extends AbstractRule {
+    // public static supports is no longer necessary
+```
+
+There's a similar decorator to exclude declaration files: `@excludeDeclarationFiles`. These decorators can be used together. They also respect the `public static supports` method if present.
+
+### Avoid AST recursion
 
 The optimization above avoid unnecessary work. Unfortunately visiting each AST node by calling `ts.forEachChild` recursively is very expensive. This is where the `RuleContext` saves the day.
 The `RuleContext` provides two methods to get a converted version of the AST that is easier to iterate. `RuleContext` also provides some metadata about the current rule, but that's not beneficial for our use at the moment.
@@ -92,6 +111,8 @@ You could convert the AST to the flattened version on your own using `convertAst
 
 The latest optimization reduced the execution time of the rule by about 80% and greatly simplifies the code.
 For some rules this is best implementation possible. In this case however, it's only the second-best implementation.
+
+### Avoid visiting AST nodes
 
 Why iterate an array of thousands of nodes if the whole file doesn't contain a single `any`? So we decide to use a regular expression to scan the source code directly. That only works if you don't expect many false positives.
 
@@ -116,18 +137,17 @@ Why iterate an array of thousands of nodes if the whole file doesn't contain a s
 
 This is as fast as it gets. If you are willing to accept the increased complexity, you can adapt this pattern for your own rules.
 
+### Fully optimized Implementation
+
 Finally, here's the complete code of our fully optimized rule:
 
 ```ts
 import * as ts from 'typescript';
-import { AbstractRule } from '@fimbul/ymir';
+import { AbstractRule, typescriptOnly } from '@fimbul/ymir';
 import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 
+@typescriptOnly // only apply this rule for *.ts and *.tsx files
 export class Rule extends AbstractRule {
-    public static supports(sourceFile: ts.SourceFile) {
-        return /\.tsx?$/.test(sourceFile.fileName); // only apply this rule for *.ts and *.tsx files
-    }
-
     public apply() {
         const re = /\bany\b/g;
         let wrappedAst: WrappedAst | undefined
