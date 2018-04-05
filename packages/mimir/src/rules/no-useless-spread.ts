@@ -1,6 +1,15 @@
 import * as ts from 'typescript';
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
-import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
+import {
+    WrappedAst,
+    getWrappedNodeAtPosition,
+    isArrayLiteralExpression,
+    isOmittedExpression,
+    isSpreadElement,
+    isSpreadAssignment,
+    isReassignmentTarget,
+    isObjectLiteralExpression,
+} from 'tsutils';
 
 const FAILURE_STRING = 'Using the spread operator here is not necessary.';
 
@@ -15,19 +24,54 @@ export class Rule extends AbstractRule {
                 match.index,
             )!;
             if (
-                (node.kind === ts.SyntaxKind.SpreadElement &&
-                    (<ts.SpreadElement>node).expression.kind === ts.SyntaxKind.ArrayLiteralExpression) ||
-                (node.kind === ts.SyntaxKind.SpreadAssignment &&
-                    (<ts.SpreadAssignment>node).expression.kind === ts.SyntaxKind.ObjectLiteralExpression)
+                ((isSpreadElement(node) &&
+                    isArrayLiteralExpression(node.expression) &&
+                    (node.expression.elements.some(isOmittedExpression) ? isReassignmentTarget(node) : true)) ||
+                    (isSpreadAssignment(node) && isObjectLiteralExpression(node.expression))) &&
+                node.expression.pos - 3 === match.index
             )
-                this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(<ts.SpreadElement>node));
+                this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(node));
         }
     }
 }
 
-function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Replacement[] {
-    return [
+function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Replacement | Replacement[] {
+    /* Handles edge cases of spread on empty array literals */
+    if (
+        isSpreadElement(node) &&
+        isArrayLiteralExpression(node.expression) &&
+        node.expression.elements.length === 0 &&
+        node.parent &&
+        isArrayLiteralExpression(node.parent)
+    )
+        return removeUselessSpreadOfEmptyArray(node);
+
+    const replacements = [
         Replacement.delete(node.getStart(), node.expression.getStart() + 1),
         Replacement.delete(node.expression.end - 1, node.expression.end),
     ];
+
+    /* Handles trailing commas in array/object literals */
+    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && node.expression.elements.hasTrailingComma)
+        replacements.push(Replacement.delete(node.expression.elements.end - 1, node.expression.elements.end));
+
+    if (
+        isSpreadAssignment(node) &&
+        isObjectLiteralExpression(node.expression) &&
+        node.expression.properties.hasTrailingComma
+    )
+        replacements.push(Replacement.delete(node.expression.properties.end - 1, node.expression.properties.end));
+
+    return replacements;
+}
+
+function removeUselessSpreadOfEmptyArray(node: ts.SpreadElement): Replacement {
+    const parent = <ts.ArrayLiteralExpression>node.parent!;
+
+    if (parent.elements.length === 1) return Replacement.delete(parent.elements.pos, parent.elements.end);
+
+    const spreadElementIndex = parent.elements.findIndex((el) => el === node);
+    return spreadElementIndex === parent.elements.length - 1
+        ? Replacement.delete(node.getFullStart(), parent.elements.end)
+        : Replacement.delete(node.getFullStart(), parent.elements[spreadElementIndex + 1].pos);
 }

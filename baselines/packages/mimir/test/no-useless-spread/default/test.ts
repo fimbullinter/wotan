@@ -12,3 +12,33 @@ let obj = {
 };
 
 ({foo, bar, ...rest} = obj);
+
+obj = {
+    ...obj
+};
+
+console.log(/*.../*/);
+
+// Need to ignore this case
+let a = [...[,],];
+
+// But not this one. Should fix to [,a] = []
+[,a] = [];
+
+// Should fix to [1,]
+let a = [1,];
+
+// Should fix to ({foo: 'foo',})
+({foo: 'foo',});
+
+// Should fix to []
+let a = []
+
+// Should fix to [1, 2,]
+let a = [1, 2,]
+
+// Should fix to [1, 2,]
+let a = [1, 2,]
+
+// Should fix to [1, 2,]
+let a = [1, 2,]

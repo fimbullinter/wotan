@@ -17,5 +17,46 @@ let obj = {
   ...someOtherObject || { bas: 4 }
 };
 
-({foo, ...{bar, ...rest}} = obj);
-       ~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
+({foo, .../* comment */{bar, ...rest}} = obj);
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
+
+obj = {
+    ... // comment
+    ~~~~~~~~~~~~~~
+    {...obj}
+~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
+};
+
+console.log(/*.../*/...[]);
+                    ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Need to ignore this case
+let a = [...[,],];
+
+// But not this one. Should fix to [,a] = []
+[...[,a]] = [];
+ ~~~~~~~        [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to [1,]
+let a = [...[1,],];
+         ~~~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to ({foo: 'foo',})
+({...{foo: 'foo',},});
+  ~~~~~~~~~~~~~~~~     [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to []
+let a = [...[],]
+         ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to [1, 2,]
+let a = [1, ...[], 2,]
+            ~~~~~      [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to [1, 2,]
+let a = [1, 2, ...[]]
+               ~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// Should fix to [1, 2,]
+let a = [1, 2, ...[],]
+               ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]

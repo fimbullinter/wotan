@@ -11,4 +11,35 @@ let obj = {
   ...someOtherObject || { bas: 4 }
 };
 
-({foo, ...{bar, ...rest}} = obj);
+({foo, .../* comment */{bar, ...rest}} = obj);
+
+obj = {
+    ... // comment
+    {...obj}
+};
+
+console.log(/*.../*/...[]);
+
+// Need to ignore this case
+let a = [...[,],];
+
+// But not this one. Should fix to [,a] = []
+[...[,a]] = [];
+
+// Should fix to [1,]
+let a = [...[1,],];
+
+// Should fix to ({foo: 'foo',})
+({...{foo: 'foo',},});
+
+// Should fix to []
+let a = [...[],]
+
+// Should fix to [1, 2,]
+let a = [1, ...[], 2,]
+
+// Should fix to [1, 2,]
+let a = [1, 2, ...[]]
+
+// Should fix to [1, 2,]
+let a = [1, 2, ...[],]
