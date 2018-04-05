@@ -12,3 +12,9 @@ let obj = {
 };
 
 ({foo, bar, ...rest} = obj);
+
+obj = {
+    ...obj
+};
+
+console.log(/*.../*/);
