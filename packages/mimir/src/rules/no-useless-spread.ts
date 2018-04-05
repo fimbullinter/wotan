@@ -67,9 +67,6 @@ function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Repl
 
 function removeUselessSpreadOfEmptyArray(node: ts.SpreadElement): Replacement {
     const parent = <ts.ArrayLiteralExpression>node.parent!;
-
-    if (parent.elements.length === 1) return Replacement.delete(parent.elements.pos, parent.elements.end);
-
     const spreadElementIndex = parent.elements.findIndex((el) => el === node);
     return spreadElementIndex === parent.elements.length - 1
         ? Replacement.delete(node.getFullStart(), parent.elements.end)
