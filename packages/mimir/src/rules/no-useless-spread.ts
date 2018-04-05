@@ -26,7 +26,7 @@ export class Rule extends AbstractRule {
             if (
                 ((isSpreadElement(node) &&
                     isArrayLiteralExpression(node.expression) &&
-                    (node.expression.elements.some(isOmittedExpression) ? isReassignmentTarget(node) : true)) ||
+                    (!node.expression.elements.some(isOmittedExpression) || isReassignmentTarget(node))) ||
                     (isSpreadAssignment(node) && isObjectLiteralExpression(node.expression))) &&
                 node.expression.pos - 3 === match.index
             )
