@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
-import { WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
+import { WrappedAst, getWrappedNodeAtPosition, isSpreadElement, isSpreadAssignment } from 'tsutils';
 
 const FAILURE_STRING = 'Using the spread operator here is not necessary.';
 
@@ -15,12 +15,13 @@ export class Rule extends AbstractRule {
                 match.index,
             )!;
             if (
-                (node.kind === ts.SyntaxKind.SpreadElement &&
-                    (<ts.SpreadElement>node).expression.kind === ts.SyntaxKind.ArrayLiteralExpression) ||
-                (node.kind === ts.SyntaxKind.SpreadAssignment &&
-                    (<ts.SpreadAssignment>node).expression.kind === ts.SyntaxKind.ObjectLiteralExpression)
+                (
+                    isSpreadElement(node) && node.expression.kind === ts.SyntaxKind.ArrayLiteralExpression ||
+                    isSpreadAssignment(node) && node.expression.kind === ts.SyntaxKind.ObjectLiteralExpression
+                ) &&
+                node.expression.pos - 3 === match.index
             )
-                this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(<ts.SpreadElement>node));
+                this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(node));
         }
     }
 }

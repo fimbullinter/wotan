@@ -11,4 +11,11 @@ let obj = {
   ...someOtherObject || { bas: 4 }
 };
 
-({foo, ...{bar, ...rest}} = obj);
+({foo, .../* comment */{bar, ...rest}} = obj);
+
+obj = {
+    ... // comment
+    {...obj}
+};
+
+console.log(/*.../*/...[]);

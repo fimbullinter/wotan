@@ -17,5 +17,15 @@ let obj = {
   ...someOtherObject || { bas: 4 }
 };
 
-({foo, ...{bar, ...rest}} = obj);
-       ~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
+({foo, .../* comment */{bar, ...rest}} = obj);
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
+
+obj = {
+    ... // comment
+    ~~~~~~~~~~~~~~
+    {...obj}
+~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
+};
+
+console.log(/*.../*/...[]);
+                    ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
