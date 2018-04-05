@@ -1,0 +1,11 @@
+class Fail {
+    constructor(private propA: string) {}
+                ~~~~~~~~~~~~~~~~~~~~~     [error parameter-properties: Use of parameter properties has been disallowed.]
+}
+
+class Pass {
+    public propA: string;
+    constructor(propA: string) {
+        this.propA = propA;
+    }
+}

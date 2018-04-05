@@ -1,0 +1,5 @@
+rules:
+  parameter-properties:
+    severity: error
+    options:
+      never: true
