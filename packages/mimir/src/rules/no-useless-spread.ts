@@ -37,13 +37,7 @@ export class Rule extends AbstractRule {
 
 function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Replacement | Replacement[] {
     /* Handles edge cases of spread on empty array literals */
-    if (
-        isSpreadElement(node) &&
-        isArrayLiteralExpression(node.expression) &&
-        node.expression.elements.length === 0 &&
-        node.parent &&
-        isArrayLiteralExpression(node.parent)
-    )
+    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && node.expression.elements.length === 0)
         return removeUselessSpreadOfEmptyArray(node);
 
     const replacements = [
@@ -52,23 +46,36 @@ function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Repl
     ];
 
     /* Handles trailing commas in array/object literals */
-    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && node.expression.elements.hasTrailingComma)
-        replacements.push(Replacement.delete(node.expression.elements.end - 1, node.expression.elements.end));
-
     if (
+        isSpreadElement(node) &&
+        isArrayLiteralExpression(node.expression) &&
+        node.expression.elements.hasTrailingComma
+    ) {
+        replacements.push(Replacement.delete(node.expression.elements.end - 1, node.expression.elements.end));
+    } else if (
         isSpreadAssignment(node) &&
         isObjectLiteralExpression(node.expression) &&
         node.expression.properties.hasTrailingComma
-    )
+    ) {
         replacements.push(Replacement.delete(node.expression.properties.end - 1, node.expression.properties.end));
+    }
 
     return replacements;
 }
 
 function removeUselessSpreadOfEmptyArray(node: ts.SpreadElement): Replacement {
-    const parent = <ts.ArrayLiteralExpression>node.parent!;
-    const spreadElementIndex = parent.elements.findIndex((el) => el === node);
-    return spreadElementIndex === parent.elements.length - 1
-        ? Replacement.delete(node.getFullStart(), parent.elements.end)
-        : Replacement.delete(node.getFullStart(), parent.elements[spreadElementIndex + 1].pos);
+    const parent = node.parent!;
+    switch (parent.kind) {
+        case ts.SyntaxKind.ArrayLiteralExpression:
+            const elementIndex = parent.elements.findIndex((el) => el === node);
+            return elementIndex === parent.elements.length - 1
+                ? Replacement.delete(node.getFullStart(), parent.elements.end)
+                : Replacement.delete(node.getFullStart(), parent.elements[elementIndex + 1].pos);
+        case ts.SyntaxKind.NewExpression:
+        case ts.SyntaxKind.CallExpression:
+            const argIndex = parent.arguments!.findIndex((el) => el === node);
+            return argIndex === parent.arguments!.length - 1
+                ? Replacement.delete(node.getFullStart(), parent.arguments!.end)
+                : Replacement.delete(node.getFullStart(), parent.arguments![argIndex + 1].pos);
+    }
 }

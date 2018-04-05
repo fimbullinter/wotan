@@ -33,30 +33,42 @@ console.log(/*.../*/...[]);
 // Need to ignore this case
 let a = [...[,],];
 
-// But not this one. Should fix to [,a] = []
-[...[,a]] = [];
- ~~~~~~~        [error no-useless-spread: Using the spread operator here is not necessary.]
+// [,a] = [];
+   [...[,a]] = [];
+    ~~~~~~~        [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to [1,]
-let a = [...[1,],];
-         ~~~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+// let a = [1,]
+   let a = [...[1,],];
+            ~~~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to ({foo: 'foo',})
-({...{foo: 'foo',},});
-  ~~~~~~~~~~~~~~~~     [error no-useless-spread: Using the spread operator here is not necessary.]
+// ({foo: 'foo',});
+   ({...{foo: 'foo',},});
+     ~~~~~~~~~~~~~~~~     [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to []
-let a = [...[],]
-         ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
+// let a = [];
+   let a = [...[],];
+            ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to [1, 2,]
-let a = [1, ...[], 2,]
-            ~~~~~      [error no-useless-spread: Using the spread operator here is not necessary.]
+// let a = [1, 2,];
+   let a = [1, ...[], 2,];
+               ~~~~~       [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to [1, 2,]
-let a = [1, 2, ...[]]
-               ~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+// let a = [1, 2,];
+   let a = [1, 2, ...[]];
+                  ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
 
-// Should fix to [1, 2,]
-let a = [1, 2, ...[],]
-               ~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
+// let a = [1, 2,];
+   let a = [1, 2, ...[],];
+                  ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// new Foo('foo',);
+   new Foo('foo', ...[],);
+                  ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// let a = [];
+   let a = [...[],];
+            ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+
+// console.log();
+   console.log(...[],);
+               ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]

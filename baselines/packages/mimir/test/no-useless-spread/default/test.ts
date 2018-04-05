@@ -17,28 +17,37 @@ obj = {
     ...obj
 };
 
-console.log(/*.../*/);
+console.log();
 
 // Need to ignore this case
 let a = [...[,],];
 
-// But not this one. Should fix to [,a] = []
-[,a] = [];
+// [,a] = [];
+   [,a] = [];
 
-// Should fix to [1,]
-let a = [1,];
+// let a = [1,]
+   let a = [1,];
 
-// Should fix to ({foo: 'foo',})
-({foo: 'foo',});
+// ({foo: 'foo',});
+   ({foo: 'foo',});
 
-// Should fix to []
-let a = []
+// let a = [];
+   let a = [];
 
-// Should fix to [1, 2,]
-let a = [1, 2,]
+// let a = [1, 2,];
+   let a = [1, 2,];
 
-// Should fix to [1, 2,]
-let a = [1, 2,]
+// let a = [1, 2,];
+   let a = [1, 2,];
 
-// Should fix to [1, 2,]
-let a = [1, 2,]
+// let a = [1, 2,];
+   let a = [1, 2,];
+
+// new Foo('foo',);
+   new Foo('foo',);
+
+// let a = [];
+   let a = [];
+
+// console.log();
+   console.log();
