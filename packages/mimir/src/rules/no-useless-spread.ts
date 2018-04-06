@@ -36,8 +36,12 @@ export class Rule extends AbstractRule {
 }
 
 function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Replacement | Replacement[] {
+    const list = isArrayLiteralExpression(node.expression)
+        ? node.expression.elements
+        : (<ts.ObjectLiteralExpression>node.expression).properties;
+
     /* Handles edge cases of spread on empty array literals */
-    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && node.expression.elements.length === 0)
+    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && list.length === 0)
         return removeUselessSpreadOfEmptyArray(node);
 
     const replacements = [
@@ -45,37 +49,15 @@ function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Repl
         Replacement.delete(node.expression.end - 1, node.expression.end),
     ];
 
-    /* Handles trailing commas in array/object literals */
-    if (
-        isSpreadElement(node) &&
-        isArrayLiteralExpression(node.expression) &&
-        node.expression.elements.hasTrailingComma
-    ) {
-        replacements.push(Replacement.delete(node.expression.elements.end - 1, node.expression.elements.end));
-    } else if (
-        isSpreadAssignment(node) &&
-        isObjectLiteralExpression(node.expression) &&
-        node.expression.properties.hasTrailingComma
-    ) {
-        replacements.push(Replacement.delete(node.expression.properties.end - 1, node.expression.properties.end));
-    }
+    /* Check for trailing commas in array/obj literals */
+    if (list.hasTrailingComma) replacements.push(Replacement.delete(list.end - 1, list.end));
 
     return replacements;
 }
 
 function removeUselessSpreadOfEmptyArray(node: ts.SpreadElement): Replacement {
     const parent = node.parent!;
-    switch (parent.kind) {
-        case ts.SyntaxKind.ArrayLiteralExpression:
-            const elementIndex = parent.elements.findIndex((el) => el === node);
-            return elementIndex === parent.elements.length - 1
-                ? Replacement.delete(node.getFullStart(), parent.elements.end)
-                : Replacement.delete(node.getFullStart(), parent.elements[elementIndex + 1].pos);
-        case ts.SyntaxKind.NewExpression:
-        case ts.SyntaxKind.CallExpression:
-            const argIndex = parent.arguments!.findIndex((el) => el === node);
-            return argIndex === parent.arguments!.length - 1
-                ? Replacement.delete(node.getFullStart(), parent.arguments!.end)
-                : Replacement.delete(node.getFullStart(), parent.arguments![argIndex + 1].pos);
-    }
+    const list = parent.kind === ts.SyntaxKind.ArrayLiteralExpression ? parent.elements : parent.arguments!;
+    const index = list.findIndex((listItem) => listItem === node);
+    return Replacement.delete(node.pos, index === list.length - 1 ? list.end : list[index + 1].pos);
 }
