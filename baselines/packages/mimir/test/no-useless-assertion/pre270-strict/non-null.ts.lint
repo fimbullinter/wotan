@@ -79,6 +79,10 @@ let m: any;
 m!;
  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
+let n: string | void = null as any;
+n!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
 foobar!;
       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 

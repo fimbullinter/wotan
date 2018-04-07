@@ -63,6 +63,9 @@ let l: string | null;
 let m: any;
 m!;
 
+let n: string | void = null as any;
+n!;
+
 foobar!;
 
 declare let possiblyNull: string | null;
