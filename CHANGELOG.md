@@ -1,5 +1,19 @@
 # Change Log
 
+## v0.7.0
+
+**Features:**
+
+* new rule: `no-unassigned-variable`
+* new rule: `no-useless-spread` (contributed by @aervin)
+* new rule: `return-never-call`
+
+**Bugfixes:**
+
+* `no-inferred-empty-object`: check generic JSX elements (starting from typescript@2.9)
+* `no-useless-assertion`: correctly handle conditional types
+* `no-useless-predicate`: checks comparing `typeof` with a variable that has a literal type: `const str = 'string'; typeof 1 === str;`
+
 ## v0.6.0
 
 **Features:**
