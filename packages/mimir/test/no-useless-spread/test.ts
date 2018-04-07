@@ -19,3 +19,36 @@ obj = {
 };
 
 console.log(/*.../*/...[]);
+
+// Need to ignore this case
+let a = [...[,],];
+
+// [,a] = [];
+   [...[,a]] = [];
+
+// let a = [1,]
+   let a = [...[1,],];
+
+// ({foo: 'foo',});
+   ({...{foo: 'foo',},});
+
+// let a = [];
+   let a = [...[],];
+
+// let a = [1, 2,];
+   let a = [1, ...[], 2,];
+
+// let a = [1, 2,];
+   let a = [1, 2, ...[]];
+
+// let a = [1, 2,];
+   let a = [1, 2, ...[],];
+
+// new Foo('foo',);
+   new Foo('foo', ...[],);
+
+// let a = [];
+   let a = [...[],];
+
+// console.log();
+   console.log(...[],);
