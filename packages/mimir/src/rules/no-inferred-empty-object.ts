@@ -3,6 +3,7 @@ import * as ts from 'typescript';
 import { isTypeLiteralNode, getJsDoc } from 'tsutils';
 
 const typescriptPre270 = /^2\.[456]\./.test(ts.version);
+const typescriptPre290 = typescriptPre270 || /^2\.[78]\./.test(ts.version);
 
 @excludeDeclarationFiles
 @typescriptOnly // in .js files TypeParameters default to `any`
@@ -17,7 +18,8 @@ export class Rule extends TypedRule {
             } else if (node.kind === ts.SyntaxKind.NewExpression) {
                 if ((<ts.NewExpression>node).typeArguments === undefined)
                     this.checkNewExpression(<ts.NewExpression>node);
-            } else if ((node.kind === ts.SyntaxKind.JsxOpeningElement || node.kind === ts.SyntaxKind.JsxSelfClosingElement) &&
+            } else if (!typescriptPre290 && // passing type arguments to JSX elements is only possible starting from typescript@2.9.0
+                       (node.kind === ts.SyntaxKind.JsxOpeningElement || node.kind === ts.SyntaxKind.JsxSelfClosingElement) &&
                         // TODO fix assertion on upgrade to typescript@2.9
                        (<any>node).typeArguments === undefined) {
                 this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
