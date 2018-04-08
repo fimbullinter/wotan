@@ -69,11 +69,15 @@ declare function get<T>(): T;
 
     ({toString = () => 'foo'} = 2);
 
+    ({prop} = obj);
     ({prop = ''} = {prop: 'foo'});
     ({prop = ''} = obj);
+    ({'prop': prop = ''} = obj);
     ({prop = ''} = {});
-    ({prop = ''} = get<typeof obj>());
+    ({prop: prop = ''} = get<typeof obj>());
+    ({prop: prop} = get<typeof obj>());
     ({prop = ''} = get<{prop?: string}>());
+    ({...{}} = obj);
 }
 {
     let [one = '', two = '', , four = ''] = get<string[]>();

@@ -86,13 +86,17 @@ declare function get<T>(): T;
     ({toString = () => 'foo'} = 2);
                  ~~~~~~~~~~~        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
 
+    ({prop} = obj);
     ({prop = ''} = {prop: 'foo'});
     ({prop = ''} = obj);
              ~~          [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    ({'prop': prop = ''} = obj);
     ({prop = ''} = {});
-    ({prop = ''} = get<typeof obj>());
-             ~~                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    ({prop: prop = ''} = get<typeof obj>());
+                   ~~                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    ({prop: prop} = get<typeof obj>());
     ({prop = ''} = get<{prop?: string}>());
+    ({...{}} = obj);
 }
 {
     let [one = '', two = '', , four = ''] = get<string[]>();
