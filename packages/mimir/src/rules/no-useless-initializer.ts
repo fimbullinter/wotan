@@ -9,6 +9,8 @@ import {
     getNextToken,
     getPropertyName,
     unionTypeParts,
+    isReassignmentTarget,
+    isBinaryExpression,
 } from 'tsutils';
 import { isStrictNullChecksEnabled } from '../utils';
 
@@ -30,10 +32,47 @@ export class Rule extends AbstractRule {
                     if ((<ts.BindingElement>node).initializer !== undefined && this.isUselessBindingElementDefault(<ts.BindingElement>node))
                         this.failDestructuringDefault(<ts.BindingElement>node);
                     break;
+                case ts.SyntaxKind.ObjectLiteralExpression:
+                    if (isReassignmentTarget(<ts.ObjectLiteralExpression>node))
+                        this.checkObjectDestructuring(<ts.ObjectLiteralExpression>node);
+                    break;
                 default:
                     if (!isJs && isFunctionWithBody(node))
                         this.checkFunctionParameters(node.parameters);
             }
+        }
+    }
+
+    private checkObjectDestructuring(node: ts.ObjectLiteralExpression) {
+        if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
+            return;
+        const checker = this.program.getTypeChecker();
+        for (const property of node.properties) {
+            let name: ts.Identifier;
+            let errorNode: ts.Expression;
+            switch (property.kind) {
+                case ts.SyntaxKind.ShorthandPropertyAssignment:
+                    if (property.objectAssignmentInitializer === undefined)
+                        continue;
+                    name = property.name;
+                    errorNode = property.objectAssignmentInitializer;
+                    break;
+                case ts.SyntaxKind.PropertyAssignment:
+                    if (property.name.kind !== ts.SyntaxKind.Identifier || !isBinaryExpression(property.initializer))
+                        continue;
+                    name = property.name;
+                    errorNode = property.initializer.right;
+                    break;
+                default:
+                    continue;
+            }
+            const symbol = checker.getPropertySymbolOfDestructuringAssignment(name);
+            if (symbol !== undefined && !symbolMaybeUndefined(checker, symbol, name))
+                this.addFailureAtNode(
+                    errorNode,
+                    "Unnecessary default value as this property is never 'undefined'.",
+                    Replacement.delete(getChildOfKind(errorNode.parent!, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, errorNode.end),
+                );
         }
     }
 
@@ -46,10 +85,7 @@ export class Rule extends AbstractRule {
             return false;
         const type = checker.getApparentType(checker.getTypeAtLocation(node.parent!));
         const property = type.getProperty(name);
-        if (property === undefined || property.flags & ts.SymbolFlags.Optional)
-            return false;
-        return unionTypeParts(checker.getTypeOfSymbolAtLocation(property, node.parent!))
-            .every((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) === 0);
+        return property !== undefined && !symbolMaybeUndefined(checker, property, node);
     }
 
     private checkFunctionParameters(parameters: ReadonlyArray<ts.ParameterDeclaration>) {
@@ -102,6 +138,13 @@ export class Rule extends AbstractRule {
         }
         return;
     }
+}
+
+function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
+    if (symbol.flags & ts.SymbolFlags.Optional)
+        return true;
+    return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
+        .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) !== 0);
 }
 
 function isUndefined(node: ts.Expression) {

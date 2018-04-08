@@ -69,4 +69,21 @@ declare function get<T>(): T;
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
                                      ~~~~~~~~~~~~                                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
                                                      ~~~                                 [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    let {toString} = 1;
+
+    ({toString} = 2);
+
+    ({prop = ''} = {prop: 'foo'});
+    ({prop} = obj);
+    ({prop = ''} = {});
+    ({prop} = get<typeof obj>());
+    ({prop = ''} = get<{prop?: string}>());
+}
+{
+    let [one = '', two = '', , four = ''] = get<string[]>();
+    let [,, three = ''] = get<Array<string | undefined>>();
+    let [a = '', b = 1, c = true] = get<[string, number, boolean]>();
+    let [d = '', e = 1, f = true] = get<[string | undefined, number | undefined, boolean | undefined]>();
+    let [g = '', h = 1, i = true] = get<[string, number, boolean] | [undefined, undefined, undefined]>();
+    let [first = 2, second = 3] = [1, undefined];
 }
