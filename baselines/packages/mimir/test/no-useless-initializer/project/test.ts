@@ -1,7 +1,7 @@
 {
-    let foo = undefined;
+    let foo;
     const bar = undefined;
-    var baz = undefined;
+    var baz;
 }
 {
     // TODO these need more accurate types from the type checker
@@ -20,21 +20,21 @@
     const {a = null, b = "undefined"} = {};
 }
 
-function one(a: string | undefined = undefined, b: string, c: any = undefined, d?: number) {}
-(function two(a: undefined | string = undefined, b = 1, ...rest: string[]) {});
+function one(a: string | undefined, b: string, c?: any, d?: number) {}
+(function two(a?: string, b = 1, ...rest: string[]) {});
 
 type undef = undefined;
-function three(a: boolean | undef = undefined) {}
+function three(a?: boolean | undef) {}
 
-let fn: typeof three = (a = undefined) => {};
+let fn: typeof three = (a?) => {};
 
 class Foo {
     prop = undefined;
     prop2: string | undefined = undefined;
 
-    method(param = undefined) {}
+    method(param?) {}
 
-    constructor(private prop3: string | undefined = undefined) {}
+    constructor(private prop3?: string) {}
 }
 
 let obj = {
@@ -54,14 +54,19 @@ declare function get<T>(): T;
     let obj = {
         prop: 'foo',
     };
-    let {prop = 'foo'} = obj;
+    let {prop} = obj;
     let {foo = 'oof'} = get<{foo: 'foo'}>();
+               ~~~~~                         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {bar = 'bar'} = get<{bar?: 'bar'}>();
     let {baz = 'baz'} = get<{baz: 'baz'} | {baz: undefined}>();
     let {bas = 'bas'} = get<{bas: 'bas'} | {bas: 'foobas'}>();
+               ~~~~~                                           [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {something = 'something'} = get<{[key: string]: string}>();
     let {any = 'any'} = get<{any: any}>();
     let {'prop': renamed = 'renamed'} = obj;
+                           ~~~~~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {[get<'prop'>()]: computed = 'computed'} = obj;
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
+                                     ~~~~~~~~~~~~                                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+                                                     ~~~                                 [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
 }

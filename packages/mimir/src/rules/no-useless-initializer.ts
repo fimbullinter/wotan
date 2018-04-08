@@ -1,6 +1,16 @@
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isIdentifier, getChildOfKind, isFunctionWithBody, isUnionTypeNode, getPreviousToken, getNextToken } from 'tsutils';
+import {
+    isIdentifier,
+    getChildOfKind,
+    isFunctionWithBody,
+    isUnionTypeNode,
+    getPreviousToken,
+    getNextToken,
+    getPropertyName,
+    unionTypeParts,
+} from 'tsutils';
+import { isStrictNullChecksEnabled } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -9,16 +19,37 @@ export class Rule extends AbstractRule {
         for (const node of this.context.getFlatAst()) {
             switch (node.kind) {
                 case ts.SyntaxKind.VariableDeclaration:
-                    if ((node.parent!.flags & ts.NodeFlags.Const) === 0 &&
+                    if (
                         (<ts.VariableDeclaration>node).initializer !== undefined &&
-                        isUndefined((<ts.VariableDeclaration>node).initializer!))
+                        (node.parent!.flags & ts.NodeFlags.Const) === 0 &&
+                        isUndefined((<ts.VariableDeclaration>node).initializer!)
+                    )
                         this.fail(<ts.VariableDeclaration>node);
+                    break;
+                case ts.SyntaxKind.BindingElement:
+                    if ((<ts.BindingElement>node).initializer !== undefined && this.isUselessBindingElementDefault(<ts.BindingElement>node))
+                        this.failDestructuringDefault(<ts.BindingElement>node);
                     break;
                 default:
                     if (!isJs && isFunctionWithBody(node))
                         this.checkFunctionParameters(node.parameters);
             }
         }
+    }
+
+    private isUselessBindingElementDefault(node: ts.BindingElement): boolean {
+        if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
+            return false;
+        const checker = this.program.getTypeChecker();
+        const name = getPropertyName(node.propertyName === undefined ? <ts.Identifier>node.name : node.propertyName);
+        if (name === undefined)
+            return false;
+        const type = checker.getApparentType(checker.getTypeAtLocation(node.parent!));
+        const property = type.getProperty(name);
+        if (property === undefined || property.flags & ts.SymbolFlags.Optional)
+            return false;
+        return unionTypeParts(checker.getTypeOfSymbolAtLocation(property, node.parent!))
+            .every((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) === 0);
     }
 
     private checkFunctionParameters(parameters: ReadonlyArray<ts.ParameterDeclaration>) {
@@ -32,6 +63,18 @@ export class Rule extends AbstractRule {
                 allOptional = false;
             }
         }
+    }
+
+    private failDestructuringDefault(node: ts.BindingElement) {
+        const fix =
+            this.program!.getTypeChecker().getTypeAtLocation(node.propertyName || node.name).flags & (ts.TypeFlags.Union | ts.TypeFlags.Any)
+                // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
+                // destructured type. The type of the variable then includes the type of the initializer as well.
+                // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
+                // We try to prevent errors by checking if the resulting type is a union type.
+                ? undefined
+                : Replacement.delete(getChildOfKind(node, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, node.end);
+        this.addFailureAtNode(node.initializer!, "Unnecessary default value as this property is never 'undefined'.", fix);
     }
 
     private fail(node: ts.HasExpressionInitializer, makeOptional?: boolean) {
