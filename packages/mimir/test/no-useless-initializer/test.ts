@@ -54,6 +54,7 @@ declare function get<T>(): T;
     let obj = {
         prop: 'foo',
     };
+    let {['prop']: noDefault} = obj;
     let {prop = 'foo'} = obj;
     let {foo = 'oof'} = get<{foo: 'foo'}>();
     let {bar = 'bar'} = get<{bar?: 'bar'}>();
@@ -79,6 +80,6 @@ declare function get<T>(): T;
     let [,, three = ''] = get<Array<string | undefined>>();
     let [a = '', b = 1, c = true] = get<[string, number, boolean]>();
     let [d = '', e = 1, f = true] = get<[string | undefined, number | undefined, boolean | undefined]>();
-    let [g = '', h = 1, i = true] = get<[string, number, boolean] | [undefined, undefined, undefined]>();
-    let [first = 2, second = 3] = [1, undefined];
+    let [g = '', h = 1, i = true] = get<[string, number, boolean] | [number, undefined, undefined]>();
+    let [first = 2, second = 3, third = 1] = [1, undefined];
 }

@@ -54,6 +54,7 @@ declare function get<T>(): T;
     let obj = {
         prop: 'foo',
     };
+    let {['prop']: noDefault} = obj;
     let {prop} = obj;
     let {foo = 'oof'} = get<{foo: 'foo'}>();
                ~~~~~                         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
@@ -63,12 +64,9 @@ declare function get<T>(): T;
                ~~~~~                                           [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {something = 'something'} = get<{[key: string]: string}>();
     let {any = 'any'} = get<{any: any}>();
-    let {'prop': renamed = 'renamed'} = obj;
-                           ~~~~~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    let {'prop': renamed} = obj;
     let {[get<'prop'>()]: computed = 'computed'} = obj;
-    let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
-                                     ~~~~~~~~~~~~                                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
-                                                     ~~~                                 [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    let {nested: {prop: nestedProp}} = get<{nested: typeof obj}>();
     let {toString} = 1;
 
     ({toString} = 2);
@@ -84,6 +82,6 @@ declare function get<T>(): T;
     let [,, three = ''] = get<Array<string | undefined>>();
     let [a = '', b = 1, c = true] = get<[string, number, boolean]>();
     let [d = '', e = 1, f = true] = get<[string | undefined, number | undefined, boolean | undefined]>();
-    let [g = '', h = 1, i = true] = get<[string, number, boolean] | [undefined, undefined, undefined]>();
-    let [first = 2, second = 3] = [1, undefined];
+    let [g = '', h = 1, i = true] = get<[string, number, boolean] | [number, undefined, undefined]>();
+    let [first = 2, second = 3, third = 1] = [1, undefined];
 }

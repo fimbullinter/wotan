@@ -28,9 +28,12 @@ export class Rule extends AbstractRule {
                     )
                         this.fail(<ts.VariableDeclaration>node);
                     break;
-                case ts.SyntaxKind.BindingElement:
-                    if ((<ts.BindingElement>node).initializer !== undefined && this.isUselessBindingElementDefault(<ts.BindingElement>node))
-                        this.failDestructuringDefault(<ts.BindingElement>node);
+                case ts.SyntaxKind.ObjectBindingPattern:
+                    this.checkBindingPattern(<ts.ObjectBindingPattern>node, getObjectPropertyName);
+                    break;
+                case ts.SyntaxKind.ArrayBindingPattern:
+                    if (0 === 1 + 1) // TODO enable this check once we know for sure how long a fresh tuple initializer is
+                        this.checkBindingPattern(<ts.ArrayBindingPattern>node, getArrayPropertyName);
                     break;
                 case ts.SyntaxKind.ObjectLiteralExpression:
                     if (isReassignmentTarget(<ts.ObjectLiteralExpression>node))
@@ -76,16 +79,31 @@ export class Rule extends AbstractRule {
         }
     }
 
-    private isUselessBindingElementDefault(node: ts.BindingElement): boolean {
+    private checkBindingPattern(node: ts.BindingPattern, getPropName: (element: ts.BindingElement, index: number) => string | undefined) {
         if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
-            return false;
+            return;
         const checker = this.program.getTypeChecker();
-        const name = getPropertyName(node.propertyName === undefined ? <ts.Identifier>node.name : node.propertyName);
-        if (name === undefined)
-            return false;
-        const type = checker.getApparentType(checker.getTypeAtLocation(node.parent!));
-        const property = type.getProperty(name);
-        return property !== undefined && !symbolMaybeUndefined(checker, property, node);
+        const type = checker.getTypeAtLocation(node);
+        const apparentType = checker.getApparentType(type);
+        for (let i = 0; i < node.elements.length; ++i) {
+            const element = node.elements[i];
+            if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
+                continue;
+            const name = getPropName(element, i);
+            if (name === undefined)
+                continue;
+            const symbol = apparentType.getProperty(name);
+            if (symbol === undefined || symbolMaybeUndefined(checker, symbol, node))
+                continue;
+            const fix = checker.getTypeAtLocation(element.name).flags & (ts.TypeFlags.Union | ts.TypeFlags.Any)
+                // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
+                // destructured type. The type of the variable then includes the type of the initializer as well.
+                // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
+                // We try to prevent errors by checking if the resulting type is a union type.
+                ? undefined
+                : Replacement.delete(getChildOfKind(element, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, element.end);
+            this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.", fix);
+        }
     }
 
     private checkFunctionParameters(parameters: ReadonlyArray<ts.ParameterDeclaration>) {
@@ -99,18 +117,6 @@ export class Rule extends AbstractRule {
                 allOptional = false;
             }
         }
-    }
-
-    private failDestructuringDefault(node: ts.BindingElement) {
-        const fix =
-            this.program!.getTypeChecker().getTypeAtLocation(node.propertyName || node.name).flags & (ts.TypeFlags.Union | ts.TypeFlags.Any)
-                // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
-                // destructured type. The type of the variable then includes the type of the initializer as well.
-                // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
-                // We try to prevent errors by checking if the resulting type is a union type.
-                ? undefined
-                : Replacement.delete(getChildOfKind(node, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, node.end);
-        this.addFailureAtNode(node.initializer!, "Unnecessary default value as this property is never 'undefined'.", fix);
     }
 
     private fail(node: ts.HasExpressionInitializer, makeOptional?: boolean) {
@@ -138,6 +144,14 @@ export class Rule extends AbstractRule {
         }
         return;
     }
+}
+
+function getObjectPropertyName(property: ts.BindingElement) {
+    return getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
+}
+
+function getArrayPropertyName(_: ts.BindingElement, i: number) {
+    return String(i);
 }
 
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
