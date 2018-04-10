@@ -20,9 +20,7 @@ export class Rule extends TypedRule {
         const originalTypeParts = getLiteralsByType(unionTypeParts(originalType));
         if (isEmpty(originalTypeParts))
             return;
-        match(originalTypeParts, assertedTypes, 'string');
-        match(originalTypeParts, assertedTypes, 'number');
-        match(originalTypeParts, assertedTypes, 'boolean');
+        match(originalTypeParts, assertedTypes);
         if (!isEmpty(assertedTypes))
             this.addFailureAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedTypes)}'.`);
     }
@@ -30,23 +28,25 @@ export class Rule extends TypedRule {
 
 function format(literals: LiteralInfo) {
     const result = [];
-    if (literals.string.length !== 0)
+    if (literals.string !== undefined)
         result.push(`"${literals.string.join('" | "')}"`);
-    if (literals.number.length !== 0)
+    if (literals.number !== undefined)
         result.push(literals.number.join(' | '));
-    if (literals.boolean.length !== 0)
+    if (literals.boolean !== undefined)
         result.push(literals.boolean.join(' | '));
     return result.join(' | ');
 }
 
-function match<K extends keyof LiteralInfo, V extends LiteralInfo[K][number]>(a: Record<K, V[]>, b: Record<K, V[]>, key: K) {
-    if (intersects(a[key], b[key]))
-        a[key] = b[key] = [];
+function match(a: LiteralInfo, b: LiteralInfo) {
+    if (a.string === undefined || b.string === undefined || intersects(a.string, b.string))
+        a.string = b.string = undefined;
+    if (a.number === undefined || b.number === undefined || intersects(a.number, b.number))
+        a.number = b.number = undefined;
+    if (a.boolean === undefined || b.boolean === undefined || intersects(a.boolean, b.boolean))
+        a.boolean = b.boolean = undefined;
 }
 
 function intersects<T>(arr: T[], other: T[]): boolean {
-    if (arr.length === 0 || other.length === 0)
-        return true;
     for (const element of arr)
         if (other.includes(element))
             return true;
@@ -54,29 +54,36 @@ function intersects<T>(arr: T[], other: T[]): boolean {
 }
 
 function isEmpty(literals: LiteralInfo) {
-    return literals.string.length === 0 && literals.number.length === 0 && literals.boolean.length === 0;
+    return literals.string === undefined && literals.number === undefined && literals.boolean === undefined;
 }
 
 interface LiteralInfo {
-    string: string[];
-    number: number[];
-    boolean: boolean[];
+    string: string[] | undefined;
+    number: number[] | undefined;
+    boolean: boolean[] | undefined;
 }
 
 function getLiteralsByType(types: ReadonlyArray<ts.Type>) {
     const result: LiteralInfo = {
-        string: [],
-        number: [],
-        boolean: [],
+        string: undefined,
+        number: undefined,
+        boolean: undefined,
     };
     for (const type of types) {
         if (type.flags & ts.TypeFlags.StringLiteral) {
-            result.string.push((<ts.StringLiteralType>type).value);
+            result.string = append(result.string, (<ts.StringLiteralType>type).value);
         } else if (type.flags & ts.TypeFlags.NumberLiteral) {
-            result.number.push((<ts.NumberLiteralType>type).value);
+            result.number = append(result.number, (<ts.NumberLiteralType>type).value);
         } else if (type.flags & ts.TypeFlags.BooleanLiteral) {
-            result.boolean.push((<{intrinsicName: string}><{}>type).intrinsicName === 'true');
+            result.boolean = append(result.boolean, (<{intrinsicName: string}><{}>type).intrinsicName === 'true');
         }
     }
     return result;
+}
+
+function append<T>(arr: T[] | undefined, v: T) {
+    if (arr === undefined)
+        return [v];
+    arr.push(v);
+    return arr;
 }
