@@ -5,11 +5,11 @@ import { wrapTslintFormatter } from '@fimbul/bifrost';
 
 @injectable()
 export class TslintFormatterLoaderHost implements FormatterLoaderHost {
-    public loadCoreFormatter(name: string): FormatterConstructor | undefined {
-        const result = TSLint.findFormatter(name);
-        return result === undefined ? undefined : wrapTslintFormatter(result);
-    }
-    public loadCustomFormatter(): undefined {
-        return;
-    }
+    public loadCoreFormatter = loadFormatter;
+    public loadCustomFormatter = loadFormatter;
+}
+
+function loadFormatter(name: string): FormatterConstructor | undefined {
+    const result = TSLint.findFormatter(name);
+    return result === undefined ? undefined : wrapTslintFormatter(result);
 }
