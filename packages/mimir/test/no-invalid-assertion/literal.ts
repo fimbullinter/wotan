@@ -4,6 +4,7 @@ declare function get<T>(): T;
 
 'foo' as 'foo';
 'foo' as 'boo';
+'foo' as any;
 '1' as 1;
 1 as 1;
 1 as 2;

@@ -1,14 +1,18 @@
 import { excludeDeclarationFiles, typescriptOnly, TypedRule } from '@fimbul/ymir';
-import { isAssertionExpression, unionTypeParts } from 'tsutils';
+import { unionTypeParts } from 'tsutils';
 import * as ts from 'typescript';
 
 @excludeDeclarationFiles
 @typescriptOnly
 export class Rule extends TypedRule {
     public apply() {
-        for (const node of this.context.getFlatAst())
-            if (isAssertionExpression(node))
-                this.checkAssertion(node);
+        for (const node of this.context.getFlatAst()) {
+            switch (node.kind) {
+                case ts.SyntaxKind.AsExpression:
+                case ts.SyntaxKind.TypeAssertionExpression:
+                    this.checkAssertion(<ts.AssertionExpression>node);
+            }
+        }
     }
 
     private checkAssertion(node: ts.AssertionExpression) {

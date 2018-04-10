@@ -5,6 +5,7 @@ declare function get<T>(): T;
 'foo' as 'foo';
 'foo' as 'boo';
 ~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"boo"'.]
+'foo' as any;
 '1' as 1;
 1 as 1;
 1 as 2;
