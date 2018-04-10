@@ -88,7 +88,7 @@ declare function get<T>(): T;
     let [first = 2, second = 3, third = 1] = [1, undefined];
 }
 {
-    let {0: first = 1, 1: second = 2, length = 0} = [1];
+    let {0: first = 1, 1: second = 2, length = 1} = [1];
     let {0: a = 1, 1: b = 2} = get<[number]>();
     let {0: c = 1, 1: d = 2} = get<[number, number]>();
 }
