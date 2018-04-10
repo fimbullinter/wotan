@@ -12,17 +12,18 @@ export class Rule extends TypedRule {
     }
 
     private checkAssertion(node: ts.AssertionExpression) {
-        const assertedTypes = getLiteralsByType(unionTypeParts(this.checker.getTypeFromTypeNode(node.type)));
-        if (isEmpty(assertedTypes))
+        let assertedType = this.checker.getTypeFromTypeNode(node.type);
+        assertedType = this.checker.getBaseConstraintOfType(assertedType) || assertedType;
+        const assertedLiterals = getLiteralsByType(unionTypeParts(assertedType));
+        if (isEmpty(assertedLiterals))
             return;
-        let originalType = this.checker.getTypeAtLocation(node.expression);
-        originalType = this.checker.getBaseConstraintOfType(originalType) || originalType;
-        const originalTypeParts = getLiteralsByType(unionTypeParts(originalType));
+        // if expression is a type variable, the type checker already handles everything as expected
+        const originalTypeParts = getLiteralsByType(unionTypeParts(this.checker.getTypeAtLocation(node.expression)));
         if (isEmpty(originalTypeParts))
             return;
-        match(originalTypeParts, assertedTypes);
-        if (!isEmpty(assertedTypes))
-            this.addFailureAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedTypes)}'.`);
+        match(originalTypeParts, assertedLiterals);
+        if (!isEmpty(assertedLiterals))
+            this.addFailureAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedLiterals)}'.`);
     }
 }
 
