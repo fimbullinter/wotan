@@ -23,10 +23,12 @@ test('loads TSLint formatter', (t) => {
         fix: undefined,
     }]});
     t.is(instance.flush!(), 'foo.ts');
+
+    t.not(loader.loadCustomFormatter('fileslist'), undefined);
 });
 
 test('returns undefined if no formatter is found', (t) => {
     const loader = new TslintFormatterLoaderHost();
     t.is(loader.loadCoreFormatter('non-existent-formatter-name'), undefined);
-    t.is(loader.loadCustomFormatter(), undefined);
+    t.is(loader.loadCustomFormatter('./some-formatter'), undefined);
 });
