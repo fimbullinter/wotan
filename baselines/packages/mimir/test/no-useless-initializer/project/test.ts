@@ -89,3 +89,9 @@ declare function get<T>(): T;
     let [g = '', h = 1, i = true] = get<[string, number, boolean] | [number, undefined, undefined]>();
     let [first = 2, second = 3, third = 1] = [1, undefined];
 }
+{
+    let {0: first = 1, 1: second = 2, length = 0} = [1];
+                                               ~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    let {0: a = 1, 1: b = 2} = get<[number]>();
+    let {0: c = 1, 1: d = 2} = get<[number, number]>();
+}

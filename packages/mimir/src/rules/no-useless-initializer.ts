@@ -32,8 +32,7 @@ export class Rule extends AbstractRule {
                     this.checkBindingPattern(<ts.ObjectBindingPattern>node, getObjectPropertyName);
                     break;
                 case ts.SyntaxKind.ArrayBindingPattern:
-                    if (0 === 1 + 1) // TODO enable this check once we know for sure how long a fresh tuple initializer is
-                        this.checkBindingPattern(<ts.ArrayBindingPattern>node, getArrayPropertyName);
+                    this.checkBindingPattern(<ts.ArrayBindingPattern>node, getArrayPropertyName);
                     break;
                 case ts.SyntaxKind.ObjectLiteralExpression:
                     if (isReassignmentTarget(<ts.ObjectLiteralExpression>node))
@@ -155,7 +154,7 @@ function getArrayPropertyName(_: ts.BindingElement, i: number) {
 }
 
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
-    if (symbol.flags & ts.SymbolFlags.Optional)
+    if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.name) ? 0 : ts.SymbolFlags.Transient)))
         return true;
     return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
         .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) !== 0);
