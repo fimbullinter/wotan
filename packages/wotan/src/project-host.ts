@@ -132,8 +132,10 @@ export class ProjectHost implements ts.CompilerHost {
         return resolveCachedResult(this.fileContent, file, (f) => this.fs.readFile(f));
     }
 
-    private readProcessedFile(file: string): string {
-        const realFile = this.getFileSystemFile(file)!;
+    private readProcessedFile(file: string): string | undefined {
+        const realFile = this.getFileSystemFile(file);
+        if (realFile === undefined)
+            return;
         let content = this.fs.readFile(realFile);
         const config = this.config || this.tryFindConfig(realFile);
         if (config === undefined)
@@ -180,7 +182,10 @@ export class ProjectHost implements ts.CompilerHost {
         return resolveCachedResult(
             this.sourceFileCache,
             fileName,
-            () => ts.createSourceFile(fileName, this.readProcessedFile(fileName), languageVersion, true),
+            () => {
+                const content = this.readProcessedFile(fileName);
+                return content !== undefined ? ts.createSourceFile(fileName, content, languageVersion, true) : undefined;
+            },
         );
     }
 
