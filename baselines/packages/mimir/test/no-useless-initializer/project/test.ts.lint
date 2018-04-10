@@ -1,7 +1,9 @@
 {
     let foo = undefined;
+              ~~~~~~~~~  [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
     const bar = undefined;
     var baz = undefined;
+              ~~~~~~~~~  [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
 }
 {
     // TODO these need more accurate types from the type checker
@@ -21,20 +23,27 @@
 }
 
 function one(a: string | undefined = undefined, b: string, c: any = undefined, d?: number) {}
+                                     ~~~~~~~~~                                                [error no-useless-initializer: Unnecessary initialization with 'undefined'.]
+                                                                    ~~~~~~~~~                 [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 (function two(a: undefined | string = undefined, b = 1, ...rest: string[]) {});
+                                      ~~~~~~~~~                                 [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 
 type undef = undefined;
 function three(a: boolean | undef = undefined) {}
+                                    ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 
 let fn: typeof three = (a = undefined) => {};
+                            ~~~~~~~~~         [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 
 class Foo {
     prop = undefined;
     prop2: string | undefined = undefined;
 
     method(param = undefined) {}
+                   ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 
     constructor(private prop3: string | undefined = undefined) {}
+                                                    ~~~~~~~~~     [error no-useless-initializer: Unnecessary initialization with 'undefined'. Use an optional parameter instead.]
 }
 
 let obj = {
@@ -56,25 +65,35 @@ declare function get<T>(): T;
     };
     let {['prop']: noDefault} = obj;
     let {prop = 'foo'} = obj;
+                ~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {foo = 'oof'} = get<{foo: 'foo'}>();
+               ~~~~~                         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {bar = 'bar'} = get<{bar?: 'bar'}>();
     let {baz = 'baz'} = get<{baz: 'baz'} | {baz: undefined}>();
     let {bas = 'bas'} = get<{bas: 'bas'} | {bas: 'foobas'}>();
+               ~~~~~                                           [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {something = 'something'} = get<{[key: string]: string}>();
     let {any = 'any'} = get<{any: any}>();
     let {'prop': renamed = 'renamed'} = obj;
+                           ~~~~~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {[get<'prop'>()]: computed = 'computed'} = obj;
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
+                                     ~~~~~~~~~~~~                                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+                                                     ~~~                                 [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {toString = () => 'foo'} = 1;
+                    ~~~~~~~~~~~       [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
 
     ({toString = () => 'foo'} = 2);
+                 ~~~~~~~~~~~        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
 
     ({prop} = obj);
     ({prop = ''} = {prop: 'foo'});
     ({prop = ''} = obj);
+             ~~          [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     ({'prop': prop = ''} = obj);
     ({prop = ''} = {});
     ({prop: prop = ''} = get<typeof obj>());
+                   ~~                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     ({prop: prop} = get<typeof obj>());
     ({prop = ''} = get<{prop?: string}>());
     ({...{}} = obj);
@@ -89,6 +108,7 @@ declare function get<T>(): T;
 }
 {
     let {0: first = 1, 1: second = 2, length = 1} = [1];
+                                               ~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {0: a = 1, 1: b = 2} = get<[number]>();
     let {0: c = 1, 1: d = 2} = get<[number, number]>();
 }
