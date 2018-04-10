@@ -1,0 +1,45 @@
+export {};
+
+declare function get<T>(): T;
+
+get<'foo' | 'bar'>() as 'foo';
+get<'foo' | 'bar'>() as 'bar';
+get<'foo' | 'bar'>() as 'boo';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar"' cannot be converted to type '"boo"'.]
+
+get<'foo'>() as 'foo' | 'bar';
+get<'foo'>() as 'boo' | 'bar';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"boo" | "bar"'.]
+
+get<'foo'>() as 'foo' | 1;
+get<'foo'>() as 'boo' | 1;
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"boo"'.]
+
+get<'foo' | 1>() as 'foo';
+get<'foo' | 1>() as 'boo';
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"boo"'.]
+
+get<'foo' | 1>() as 1;
+get<'foo' | 1>() as 2;
+~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1' cannot be converted to type '2'.]
+
+get<'foo' | 'bar'>() as 'bar' | 'baz';
+get<'foo' | 'bar'>() as 'baz' | 'bas';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar"' cannot be converted to type '"baz" | "bas"'.]
+
+get<'foo' | 'bar' | 1 | 2 | true>() as 'foo';
+get<'foo' | 'bar' | 1 | 2 | true>() as 1;
+get<'foo' | 'bar' | 1 | 2 | true>() as 1 | 'foo';
+get<'foo' | 'bar' | 1 | 2 | true>() as 1 | 'foo' | false;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type 'true' cannot be converted to type 'false'.]
+get<'foo' | 'bar' | 1 | 2 | true>() as 3;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1 | 2' cannot be converted to type '3'.]
+get<'foo' | 'bar' | 1 | 2 | true>() as false;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type 'true' cannot be converted to type 'false'.]
+get<'foo' | 'bar' | 1 | 2 | true>() as 'boo';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar"' cannot be converted to type '"boo"'.]
+get<'foo' | 'bar' | 1 | 2 | true>() as 'boo' | 3 | false;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar" | 1 | 2 | true' cannot be converted to type '"boo" | 3 | false'.]
+
+get<'foo' | 'bar' | 1 | 2 | true | object>() as 'boo' | object;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar"' cannot be converted to type '"boo"'.]
