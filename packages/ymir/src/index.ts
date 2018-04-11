@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as ts from 'typescript';
 import { WrappedAst } from 'tsutils';
+import * as path from 'path';
 
 export class ConfigurationError extends Error {}
 
@@ -122,6 +123,17 @@ export function typescriptOnly<T extends typeof AbstractRule>(target: T) {
 
 export function excludeDeclarationFiles<T extends typeof AbstractRule>(target: T) {
     target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
+}
+
+export function requireLibraryFile(fileName: string) {
+    return <T extends typeof TypedRule>(target: T) => {
+        target.supports = combinePredicates(target.supports, (_, context) => programContainsLibraryFile(context.program!, fileName));
+    };
+}
+
+function programContainsLibraryFile(program: ts.Program, fileName: string) {
+    const libFileDir = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
+    return program.getSourceFile(path.join(libFileDir, fileName)) !== undefined;
 }
 
 export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;

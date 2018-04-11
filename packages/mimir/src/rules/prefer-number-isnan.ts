@@ -1,22 +1,10 @@
-import { TypedRule, Replacement, RuleSupportsContext, excludeDeclarationFiles } from '@fimbul/ymir';
+import { TypedRule, Replacement, excludeDeclarationFiles, requireLibraryFile } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, isTypeVariable, isUnionType } from 'tsutils';
-import * as path from 'path';
-import debug = require('debug');
-
-const log = debug('wotan:rule:prefer-number-isnan');
 
 @excludeDeclarationFiles
+@requireLibraryFile('lib.es2015.core.d.ts')
 export class Rule extends TypedRule {
-    public static supports(_sourceFile: ts.SourceFile, context: RuleSupportsContext) {
-        const libFileDir = path.dirname(ts.getDefaultLibFilePath(context.program!.getCompilerOptions()));
-        if (context.program!.getSourceFile(path.join(libFileDir, 'lib.es2015.core.d.ts')) === undefined) {
-            log("Project does not contain 'lib.es2015.core.d.ts'");
-            return false;
-        }
-        return true;
-    }
-
     public apply() {
         const re = /\bisNaN\b/g;
         let wrappedAst: WrappedAst | undefined;
