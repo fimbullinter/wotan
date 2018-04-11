@@ -1,12 +1,9 @@
 import { TypedRule, Replacement, excludeDeclarationFiles, requireLibraryFile } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, isTypeVariable, isUnionType } from 'tsutils';
-import debug = require('debug');
-
-const log = debug('wotan:rule:prefer-number-isnan');
 
 @excludeDeclarationFiles
-@requireLibraryFile('lib.es2015.core.d.ts', log)
+@requireLibraryFile('lib.es2015.core.d.ts')
 export class Rule extends TypedRule {
     public apply() {
         const re = /\bisNaN\b/g;

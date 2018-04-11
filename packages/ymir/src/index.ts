@@ -125,15 +125,9 @@ export function excludeDeclarationFiles<T extends typeof AbstractRule>(target: T
     target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
 }
 
-export function requireLibraryFile(fileName: string, log?: (...args: any[]) => void) {
+export function requireLibraryFile(fileName: string) {
     return <T extends typeof TypedRule>(target: T) => {
-        target.supports = combinePredicates(target.supports, (_, context) => {
-            if (programContainsLibraryFile(context.program!, fileName))
-                return true;
-            if (log !== undefined)
-                log("Project does not contain '%s'", fileName);
-            return false;
-        });
+        target.supports = combinePredicates(target.supports, (_, context) => programContainsLibraryFile(context.program!, fileName));
     };
 }
 
