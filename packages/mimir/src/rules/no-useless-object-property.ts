@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, getPropertyName, isObjectType, unionTypeParts } from 'tsutils';
+import { isReassignmentTarget, isObjectType, unionTypeParts } from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -19,7 +19,7 @@ export class Rule extends TypedRule {
     }
 
     private checkObject({properties}: ts.ObjectLiteralExpression) {
-        const propertiesSeen = new Set<string>();
+        const propertiesSeen = new Set<ts.__String>();
         for (let i = properties.length - 1; i >= 0; --i) {
             const info = this.getPropertyInfo(properties[i]);
             if (info.known && info.names.every((name) => propertiesSeen.has(name)))
@@ -36,12 +36,11 @@ export class Rule extends TypedRule {
             case ts.SyntaxKind.ShorthandPropertyAssignment:
                 return {
                     known: true,
-                    names: [property.name.text],
-                    assignedNames: [property.name.text],
+                    names: [property.name.escapedText],
+                    assignedNames: [property.name.escapedText],
                 };
             default: {
-                const name = getPropertyName(property.name) ||
-                    getNameOfSymbol(this.checker.getSymbolAtLocation(property.name));
+                const name = this.getPropertyName(property.name);
                 if (name === undefined)
                     return {
                         known: false,
@@ -57,8 +56,17 @@ export class Rule extends TypedRule {
         }
     }
 
+    private getPropertyName(node: ts.PropertyName): ts.__String | undefined {
+        const symbol = this.checker.getSymbolAtLocation(node);
+        return symbol && symbol.escapedName;
+    }
+
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
         const type = this.checker.getTypeAtLocation(node);
+        return unionTypeParts(type).map((t) => this.getPropertyInfoFromType(t, node)).reduce(combinePropertyInfo);
+    }
+
+    private getPropertyInfoFromType(type: ts.Type, node: ts.Expression): PropertyInfo {
         if (!isObjectType(type))
             return {
                 known: false,
@@ -73,23 +81,27 @@ export class Rule extends TypedRule {
         };
         for (const prop of type.getProperties()) {
             if (!unionTypeParts(this.checker.getTypeOfSymbolAtLocation(prop, node)).some(isOptionalType))
-                result.assignedNames.push(prop.name);
-            result.names.push(prop.name);
+                result.assignedNames.push(prop.escapedName);
+            result.names.push(prop.escapedName);
         }
         return result;
     }
+}
+
+function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
+    return {
+        known: a.known && b.known,
+        names: [...a.names, ...b.names],
+        assignedNames: a.assignedNames.filter((name) => b.assignedNames.includes(name)),
+    };
 }
 
 function isOptionalType(type: ts.Type) {
     return (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) !== 0;
 }
 
-function getNameOfSymbol(symbol: ts.Symbol | undefined) {
-    return symbol && symbol.name;
-}
-
 interface PropertyInfo {
     known: boolean;
-    names: string[];
-    assignedNames: string[];
+    names: ts.__String[];
+    assignedNames: ts.__String[];
 }

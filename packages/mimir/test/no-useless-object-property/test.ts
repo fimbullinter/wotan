@@ -22,6 +22,7 @@ const foo = 'foo';
 });
 
 ({
+    '__@iterator': 1,
     [Symbol.iterator]: 1,
     ...{[Symbol.iterator]: 2},
 });
@@ -48,5 +49,6 @@ const foo = 'foo';
     foo: 1,
     bar: 1,
     baz: 1,
-    ...get<{foo: string, bar: number} | {bar: number, baz: boolean}>(),
+    bas: 1,
+    ...get<{foo: string, bar: number, bas: number} | {bar: number, baz: boolean, bas?: number}>(),
 });
