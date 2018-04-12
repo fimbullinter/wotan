@@ -10,3 +10,4 @@
 /*.tgz
 tsconfig.json
 /src/commands/*.d.ts
+.DS_Store

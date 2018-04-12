@@ -8,3 +8,4 @@
 /yarn.lock
 /*.tgz
 tsconfig.json
+.DS_Store

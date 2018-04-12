@@ -8,3 +8,4 @@
 /*.json
 /yarn.lock
 /*.tgz
+.DS_Store
