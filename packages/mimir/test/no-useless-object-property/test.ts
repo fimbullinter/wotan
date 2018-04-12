@@ -42,7 +42,7 @@ const foo = 'foo';
     foo: 1,
     bar: 1,
     baz: 1,
-    ...get<{foo?: string, bar: number, baz: any}>(),
+    ...get<{foo?: string, bar: number, baz: boolean | undefined}>(),
 });
 
 ({
@@ -51,4 +51,5 @@ const foo = 'foo';
     baz: 1,
     bas: 1,
     ...get<{foo: string, bar: number, bas: number} | {bar: number, baz: boolean, bas?: number}>(),
+    ...Boolean() && {foo},
 });

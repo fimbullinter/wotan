@@ -2,8 +2,24 @@ import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isReassignmentTarget, isObjectType, unionTypeParts } from 'tsutils';
 
+interface PropertyInfo {
+    known: boolean;
+    names: ts.__String[];
+    assignedNames: ts.__String[];
+}
+
+const emptyPropertyInfo: PropertyInfo = {
+    known: false,
+    names: [],
+    assignedNames: [],
+};
+
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
+    public static supports() {
+        return !ts.version.startsWith('2.4.');
+    }
+
     public apply() {
         const checkedObjects = new Set<number>();
         for (const node of this.context.getFlatAst()) {
@@ -40,52 +56,39 @@ export class Rule extends TypedRule {
                     assignedNames: [property.name.escapedText],
                 };
             default: {
-                const name = this.getPropertyName(property.name);
-                if (name === undefined)
-                    return {
-                        known: false,
-                        names: [],
-                        assignedNames: [],
-                    };
+                const symbol = this.checker.getSymbolAtLocation(property.name);
+                if (symbol === undefined)
+                    return emptyPropertyInfo;
                 return {
                     known: true,
-                    names: [name],
-                    assignedNames: [name],
+                    names: [symbol.escapedName],
+                    assignedNames: [symbol.escapedName],
                 };
             }
         }
     }
 
-    private getPropertyName(node: ts.PropertyName): ts.__String | undefined {
-        const symbol = this.checker.getSymbolAtLocation(node);
-        return symbol && symbol.escapedName;
-    }
-
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
         const type = this.checker.getTypeAtLocation(node);
-        return unionTypeParts(type).map((t) => this.getPropertyInfoFromType(t, node)).reduce(combinePropertyInfo);
+        return unionTypeParts(type).map(getPropertyInfoFromType).reduce(combinePropertyInfo);
     }
 
-    private getPropertyInfoFromType(type: ts.Type, node: ts.Expression): PropertyInfo {
-        if (!isObjectType(type))
-            return {
-                known: false,
-                names: [],
-                assignedNames: [],
-            };
-        const result: PropertyInfo = {
-            known: (type.flags & ts.TypeFlags.Any) !== 0 ||
-                type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
-            names: [],
-            assignedNames: [],
-        };
-        for (const prop of type.getProperties()) {
-            if (!unionTypeParts(this.checker.getTypeOfSymbolAtLocation(prop, node)).some(isOptionalType))
-                result.assignedNames.push(prop.escapedName);
-            result.names.push(prop.escapedName);
-        }
-        return result;
+}
+function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
+    if (!isObjectType(type))
+        return emptyPropertyInfo;
+    const result: PropertyInfo = {
+        known: (type.flags & ts.TypeFlags.Any) !== 0 ||
+            type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
+        names: [],
+        assignedNames: [],
+    };
+    for (const prop of type.getProperties()) {
+        if ((prop.flags & ts.SymbolFlags.Optional) === 0)
+            result.assignedNames.push(prop.escapedName);
+        result.names.push(prop.escapedName);
     }
+    return result;
 }
 
 function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
@@ -94,14 +97,4 @@ function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
         names: [...a.names, ...b.names],
         assignedNames: a.assignedNames.filter((name) => b.assignedNames.includes(name)),
     };
-}
-
-function isOptionalType(type: ts.Type) {
-    return (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) !== 0;
-}
-
-interface PropertyInfo {
-    known: boolean;
-    names: ts.__String[];
-    assignedNames: ts.__String[];
 }
