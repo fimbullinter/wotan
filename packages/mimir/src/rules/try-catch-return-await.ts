@@ -7,18 +7,13 @@ import {
     isThenableType,
     WrappedAst,
     getWrappedNodeAtPosition,
-    isIfStatement,
-    isIterationStatement,
-    isSwitchStatement,
-    isBlock,
-    isLabeledStatement,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { isAsyncFunction } from '../utils';
+import { isAsyncFunction, getChildStatements } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
-    private reported: ts.TryStatement[] = [];
+    private reported = new Set<number>();
 
     public apply() {
         const re = /\btry\s*[/{]/g;
@@ -28,7 +23,7 @@ export class Rule extends TypedRule {
             if (
                 isTryStatement(node) &&
                 match.index === node.tryBlock.pos - 'try'.length &&
-                !this.reported.includes(node) &&
+                !this.reported.has(node.pos) &&
                 isInAsyncFunction(node)
             ) {
                 node.tryBlock.statements.forEach(this.visitStatement, this);
@@ -42,26 +37,13 @@ export class Rule extends TypedRule {
     private visitStatement(node: ts.Statement): void {
         if (isReturnStatement(node)) {
             if (node.expression !== undefined)
-                return this.checkReturnExpression(node.expression);
-        } else if (isIfStatement(node)) {
-            if (node.elseStatement !== undefined)
-                this.visitStatement(node.elseStatement);
-            return this.visitStatement(node.thenStatement);
-        } else if (isIterationStatement(node) || isLabeledStatement(node)) {
-            return this.visitStatement(node.statement);
-        } else if (isSwitchStatement(node)) {
-            for (const clause of node.caseBlock.clauses)
-                clause.statements.forEach(this.visitStatement, this);
-        } else if (isBlock(node)) {
-            return node.statements.forEach(this.visitStatement, this);
-        } else if (isTryStatement(node)) {
-            this.reported.push(node);
-            if (node.catchClause !== undefined)
-                node.catchClause.block.statements.forEach(this.visitStatement, this);
-            if (node.finallyBlock !== undefined)
-                node.finallyBlock.statements.forEach(this.visitStatement, this);
-            return node.tryBlock.statements.forEach(this.visitStatement, this);
+                this.checkReturnExpression(node.expression);
+            return;
         }
+        if (node.kind === ts.SyntaxKind.TryStatement)
+            this.reported.add(node.pos);
+        for (const statement of getChildStatements(node))
+            this.visitStatement(statement);
     }
 
     private checkReturnExpression(node: ts.Expression) {
