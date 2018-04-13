@@ -9,7 +9,7 @@ import {
     getWrappedNodeAtPosition,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { isAsyncFunction, getChildStatements } from '../utils';
+import { isAsyncFunction, childStatements } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -42,7 +42,7 @@ export class Rule extends TypedRule {
         }
         if (node.kind === ts.SyntaxKind.TryStatement)
             this.reported.add(node.pos);
-        for (const statement of getChildStatements(node))
+        for (const statement of childStatements(node))
             this.visitStatement(statement);
     }
 

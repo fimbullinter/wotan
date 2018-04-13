@@ -46,7 +46,7 @@ export function isVariableReassignment(use: VariableUse) {
     return (use.domain & (UsageDomain.Value | UsageDomain.TypeQuery)) === UsageDomain.Value && isReassignmentTarget(use.location);
 }
 
-export function* getChildStatements(node: ts.Statement) {
+export function* childStatements(node: ts.Statement) {
     switch (node.kind) {
         case ts.SyntaxKind.IfStatement:
             yield (<ts.IfStatement>node).thenStatement;

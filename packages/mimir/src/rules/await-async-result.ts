@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import { isExpressionStatement, isCallExpression, isThenableType, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
-import { isAsyncFunction, getChildStatements } from '../utils';
+import { isAsyncFunction, childStatements } from '../utils';
 import * as ts from 'typescript';
 
 @excludeDeclarationFiles
@@ -24,7 +24,7 @@ export class Rule extends TypedRule {
                 this.addFailureAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
             return;
         }
-        for (const statement of getChildStatements(node))
+        for (const statement of childStatements(node))
             this.visitStatement(statement);
     }
 }
