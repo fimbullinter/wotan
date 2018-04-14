@@ -1,0 +1,30 @@
+export class Hello {
+    constructor(private world: string) {}
+}
+
+export class Hello extends World {
+    constructor(private world: string) {
+        super();
+    }
+}
+
+export class Welcome {
+    constructor(private home: string = 'mom!') {}
+}
+
+export class Hello {
+    public hello: string;
+    constructor(hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Use parameter properties when possible]
+        this.hello = hello;
+    }
+}
+
+export class Hello extends World {
+    public hello: string;
+    constructor(hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Use parameter properties when possible]
+        super();
+        this.hello = hello;
+    }
+}
