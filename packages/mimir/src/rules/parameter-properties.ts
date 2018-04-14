@@ -104,9 +104,9 @@ function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.Co
             !isExpressionStatement(stmt) ||
             !isBinaryExpression(stmt.expression) ||
             !(stmt.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) ||
-            !isSimpleParamToPropAssignment(stmt, param) ||
-            hasSideEffects(stmt.expression.left) ||
-            hasSideEffects(stmt.expression.right)
+            (isPropertyAccessExpression(stmt.expression.left) &&
+                stmt.expression.left.name.text === param.name.getText() &&
+                !isSimpleParamToPropAssignment(stmt, param))
         )
             return false;
 
@@ -186,6 +186,8 @@ function isSimpleParamToPropAssignment(stmt: ts.ExpressionStatement, param: ts.P
         isPropertyAccessExpression(stmt.expression.left) &&
         stmt.expression.left.name.text === param.name.getText() &&
         isIdentifier(stmt.expression.right) &&
-        stmt.expression.right.text === param.name.getText()
+        stmt.expression.right.text === param.name.getText() &&
+        !hasSideEffects(stmt.expression.left) &&
+        !hasSideEffects(stmt.expression.right)
     );
 }
