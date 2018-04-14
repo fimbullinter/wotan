@@ -13,26 +13,26 @@ export class Welcome {
 }
 
 export class Hello {
-    
-    constructor(public hello: string = 'mom!') {
-        
+    public hello: string;
+    constructor(hello: string = 'mom!') {
+        this.hello = hello;
     }
 }
 
 export class Hello extends World {
-    
-    constructor(public hello: string = 'mom!') {
+    public hello: string;
+    constructor(hello: string = 'mom!') {
         super();
-        
+        this.hello = hello;
     }
 }
 
 /* Tests for multiple access modifiers */
 export class Hello extends World {
-    
-    constructor(private readonly hello: string = 'mom!') {
+    private readonly hello: string;
+    constructor(hello: string = 'mom!') {
         super();
-        
+        this.hello = hello;
     }
 }
 
@@ -71,8 +71,10 @@ class Foo {
 }
 
 class Foo {
-    
-    constructor(private bar: string, private fizz: boolean) {
-        
+    private bar: string;
+    private fizz: boolean;
+constructor(bar: string,fizz: boolean) {
+this.fizz = fizz;
+        this.bar = bar;
     }
 }

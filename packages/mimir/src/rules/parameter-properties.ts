@@ -16,7 +16,7 @@ import {
 } from 'tsutils';
 
 export interface Options {
-    mode: 'when-possible' | 'never';
+    mode: 'when-possible' | 'never' | 'consistent';
 }
 
 @excludeDeclarationFiles
@@ -35,67 +35,61 @@ export class Rule extends ConfigurableRule<Options> {
 
             return ts.forEachChild(node, checkClass);
         };
-        ts.forEachChild(this.sourceFile, checkClass);
+        ts.forEachChild(this.context.sourceFile, checkClass);
+    }
+
+    private get failureString(): string {
+        switch (this.options.mode) {
+            case 'never':
+                return 'Parameter properties have been disallowed.';
+            case 'when-possible':
+                return 'Use parameter properties when possible.';
+            default:
+                return 'Either all constructor parameters must be parameter properties, or none.';
+        }
     }
 
     private checkConstructorParameters(
         construct: ts.ConstructorDeclaration,
         classNode: ts.ClassDeclaration | ts.ClassExpression,
     ): void {
-        if (this.options.mode === 'never' && construct.parameters.some(isParameterProperty)) {
-            this.context.addFailure(
-                construct.parameters.pos,
-                construct.parameters.end,
-                this.failureString(),
-                this.getFixerForDisallowedParameterProps(construct),
-            );
-        } else if (this.options.mode === 'when-possible') {
-            for (const parameter of construct.parameters.filter(
-                (p: ts.ParameterDeclaration) => !isParameterProperty(p) && canBeParameterProperty(p, construct),
-            ))
-                this.addFailureAtNode(
-                    parameter,
-                    this.failureString(),
-                    getFixerForLonghandProp(parameter, construct, classNode),
-                );
+        switch (this.options.mode) {
+            case 'never':
+                for (const param of construct.parameters.filter(isParameterProperty))
+                    this.addFailureAtNode(
+                        param,
+                        this.failureString,
+                        getFixerForDisallowedParameterProp(
+                            construct,
+                            param,
+                            getLineBreakStyle(this.context.sourceFile),
+                        ),
+                    );
+                break;
+            case 'when-possible':
+                for (const param of construct.parameters.filter(
+                    (p: ts.ParameterDeclaration) => !isParameterProperty(p) && canBeParameterProperty(p, construct),
+                ))
+                    this.addFailureAtNode(
+                        param,
+                        this.failureString,
+                        getFixerForLonghandProp(param, construct, classNode),
+                    );
+                break;
+            default:
+                if (construct.parameters.some(isParameterProperty) && !construct.parameters.every(isParameterProperty))
+                    for (const param of construct.parameters.filter(isParameterProperty))
+                        this.addFailure(
+                            construct.parameters.pos,
+                            construct.parameters.end,
+                            this.failureString,
+                            getFixerForDisallowedParameterProp(
+                                construct,
+                                param,
+                                getLineBreakStyle(this.context.sourceFile),
+                            ),
+                        );
         }
-    }
-
-    private failureString(): string {
-        return this.options.mode === 'never'
-            ? 'Parameter properties have been disallowed.'
-            : 'Use parameter properties when possible';
-    }
-
-    private getFixerForDisallowedParameterProps(construct: ts.ConstructorDeclaration): Replacement[] {
-        const replacements: Replacement[] = [];
-        for (const paramProp of construct.parameters.filter(isParameterProperty)) {
-            /* Before adding assignments to the constructor body, check for a super() call */
-            const superCall = getSuperCall(construct);
-            replacements.push(
-                Replacement.append(
-                    superCall ? superCall.end : construct.body!.getStart() + 1,
-                    `${getLineBreakStyle(
-                        this.sourceFile,
-                    )}this.${paramProp.name.getText()} = ${paramProp.name.getText()};`,
-                ),
-            );
-
-            /* Add properties to class, trimming off default values if necessary */
-            const paramText =
-                paramProp.getText().indexOf('=') > -1
-                    ? paramProp.getText().substring(0, paramProp.getText().indexOf('=') - 1)
-                    : paramProp.getText();
-
-            replacements.push(
-                Replacement.append(construct.getStart() - 1, paramText + ';' + getLineBreakStyle(this.sourceFile)),
-            );
-
-            /* Finally, delete modifiers from the parameter prop */
-            replacements.push(Replacement.delete(paramProp.pos, paramProp.name.getFullStart()));
-        }
-
-        return replacements;
     }
 }
 
@@ -103,72 +97,95 @@ function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.Co
     const stmts = Array.from(construct.body!.statements);
     if (getSuperCall(construct)) stmts.shift();
     for (const stmt of stmts) {
+        /**
+         * See https://github.com/fimbullinter/wotan/issues/167#issuecomment-378945862 for details on this condition
+         */
         if (
             !isExpressionStatement(stmt) ||
             !isBinaryExpression(stmt.expression) ||
             !(stmt.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) ||
+            !isSimpleParamToPropAssignment(stmt, param) ||
             hasSideEffects(stmt.expression.left) ||
             hasSideEffects(stmt.expression.right)
         )
             return false;
 
-        if (
-            isPropertyAccessExpression(stmt.expression.left) &&
-            stmt.expression.left.name.text === param.name.getText() &&
-            isIdentifier(stmt.expression.right) &&
-            stmt.expression.right.text === param.name.getText()
-        )
-            return true;
+        if (isSimpleParamToPropAssignment(stmt, param)) return true;
     }
+
     return false;
 }
 
+function getFixerForDisallowedParameterProp(
+    construct: ts.ConstructorDeclaration,
+    param: ts.ParameterDeclaration,
+    lineBreak: string,
+): Replacement[] {
+    const superCall = getSuperCall(construct);
+    return [
+        /* Add assignment after super() call (if it exists) */
+        Replacement.append(
+            superCall ? superCall.end : construct.body!.getStart() + 1,
+            `${lineBreak}this.${param.name.getText()} = ${param.name.getText()};`,
+        ),
+
+        /* Add properties to class, trimming off default values if necessary */
+        Replacement.append(
+            construct.getStart(),
+            (param.getText().indexOf('=') > -1
+                ? param.getText().substring(0, param.getText().indexOf('=') - 1)
+                : param.getText()) +
+                ';' +
+                lineBreak,
+        ),
+
+        /* Finally, delete modifiers from the parameter prop */
+        Replacement.delete(param.pos, param.name.getStart()),
+    ];
+}
+
 function getFixerForLonghandProp(
-    parameter: ts.ParameterDeclaration,
+    param: ts.ParameterDeclaration,
     construct: ts.ConstructorDeclaration,
     classNode: ts.ClassDeclaration | ts.ClassExpression,
 ): Replacement[] {
-    const replacements: Replacement[] = [];
-
+    /* Class member and assignment to be removed */
     const member = classNode.members
         .filter(isPropertyDeclaration)
-        .find((prop) => prop.name.getText() === parameter.name.getText())!;
-
-    /* Remove the property declaration */
-    replacements.push(Replacement.delete(member.getStart(), member.end));
-
-    let modifiers = '';
-    if (member.modifiers) {
-        for (const modifier of member.modifiers) modifiers += modifier.getText() + ' ';
-    } else {
-        modifiers = 'public ';
-    }
-    /* Append access modifiers to parameter declaration */
-    replacements.push(Replacement.append(parameter.getStart(), modifiers));
-
+        .find((prop) => prop.name.getText() === param.name.getText())!;
     const assignment = construct
         .body!.statements.filter(isExpressionStatement)
-        .find(
-            (stmt) =>
-                isBinaryExpression(stmt.expression) &&
-                isPropertyAccessExpression(stmt.expression.left) &&
-                stmt.expression.left.name.text === parameter.name.getText() &&
-                isIdentifier(stmt.expression.right) &&
-                stmt.expression.right.text === parameter.name.getText(),
-        );
+        .find((stmt) => isSimpleParamToPropAssignment(stmt, param))!;
 
-    /* Remove assignment from the constructor body */
-    if (assignment) replacements.push(Replacement.delete(assignment.getStart(), assignment.end));
+    return [
+        Replacement.delete(member.getStart(), member.end),
+        Replacement.delete(assignment.getStart(), assignment.end),
 
-    return replacements;
+        /* Append access modifiers to parameter declaration */
+        Replacement.append(
+            param.getStart(),
+            member.modifiers ? member.modifiers.map((mod) => mod.getText()).join(' ') + ' ' : 'public ',
+        ),
+    ];
 }
 
 function getSuperCall(construct: ts.ConstructorDeclaration): ts.ExpressionStatement | undefined {
     const firstStmt = construct.body!.statements.length > 0 ? construct.body!.statements[0] : undefined;
+
     return firstStmt &&
         isExpressionStatement(firstStmt) &&
         isCallExpression(firstStmt.expression) &&
         firstStmt.expression.expression.kind === ts.SyntaxKind.SuperKeyword
         ? firstStmt
         : undefined;
+}
+
+function isSimpleParamToPropAssignment(stmt: ts.ExpressionStatement, param: ts.ParameterDeclaration): boolean {
+    return (
+        isBinaryExpression(stmt.expression) &&
+        isPropertyAccessExpression(stmt.expression.left) &&
+        stmt.expression.left.name.text === param.name.getText() &&
+        isIdentifier(stmt.expression.right) &&
+        stmt.expression.right.text === param.name.getText()
+    );
 }
