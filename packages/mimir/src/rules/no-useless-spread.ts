@@ -35,24 +35,19 @@ export class Rule extends AbstractRule {
     }
 }
 
-function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment): Replacement | Replacement[] {
-    const list = isArrayLiteralExpression(node.expression)
-        ? node.expression.elements
-        : (<ts.ObjectLiteralExpression>node.expression).properties;
+function removeUselessSpread(node: ts.SpreadElement | ts.SpreadAssignment) {
+    if (node.kind !== ts.SyntaxKind.SpreadElement)
+        return;
 
+    const list = (<ts.ArrayLiteralExpression>node.expression).elements;
     /* Handles edge cases of spread on empty array literals */
-    if (isSpreadElement(node) && isArrayLiteralExpression(node.expression) && list.length === 0)
+    if (list.length === 0)
         return removeUselessSpreadOfEmptyArray(node);
 
-    const replacements = [
+    return [
         Replacement.delete(node.getStart(), node.expression.getStart() + 1),
-        Replacement.delete(node.expression.end - 1, node.expression.end),
+        Replacement.delete(list[list.length - 1].end, node.expression.end),
     ];
-
-    /* Check for trailing commas in array/obj literals */
-    if (list.hasTrailingComma) replacements.push(Replacement.delete(list.end - 1, list.end));
-
-    return replacements;
 }
 
 function removeUselessSpreadOfEmptyArray(node: ts.SpreadElement): Replacement {
