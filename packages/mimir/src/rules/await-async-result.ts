@@ -1,34 +1,30 @@
 import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
-import { NodeWrap, isFunctionScopeBoundary, isExpressionStatement, isCallExpression, isThenableType } from 'tsutils';
-import { isAsyncFunction } from '../utils';
+import { isExpressionStatement, isCallExpression, isThenableType, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
+import { isAsyncFunction, childStatements } from '../utils';
+import * as ts from 'typescript';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        return this.iterate(this.context.getWrappedAst().next, undefined);
-    }
-
-    private iterate(wrap: NodeWrap, end: NodeWrap | undefined) {
-        do { // iterate as linked list until we find an async function / method
-            if (!isAsyncFunction(wrap.node)) {
-                wrap = wrap.next!;
+        const re = /\basync\b/g;
+        let wrappedAst: WrappedAst | undefined;
+        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
+            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            if (node.kind !== ts.SyntaxKind.AsyncKeyword || node.end !== re.lastIndex)
                 continue;
-            }
-            wrap.children.forEach(this.visitNode, this); // visit children recursively
-            wrap = wrap.skip!; // continue right after the function
-        } while (wrap !== end);
+            const parent = node.parent!;
+            if (isAsyncFunction(parent))
+                parent.body.statements.forEach(this.visitStatement, this);
+        }
     }
 
-    private visitNode(wrap: NodeWrap) {
-        if (isExpressionStatement(wrap.node)) {
-            if (isCallExpression(wrap.node.expression) && isThenableType(this.checker, wrap.node.expression))
-                this.addFailureAtNode(wrap.node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
-            // ExpressionStatement does not contain other statements (until DoExpressions land in the spec)
-            return this.iterate(wrap.next!, wrap.skip);
+    private visitStatement(node: ts.Statement) {
+        if (isExpressionStatement(node)) {
+            if (isCallExpression(node.expression) && isThenableType(this.checker, node.expression))
+                this.addFailureAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
+            return;
         }
-        if (isFunctionScopeBoundary(wrap.node)) // no longer in async function -> iterate as linked list
-            return this.iterate(wrap, wrap.skip);
-
-        return wrap.children.forEach(this.visitNode, this);
+        for (const statement of childStatements(node))
+            this.visitStatement(statement);
     }
 }

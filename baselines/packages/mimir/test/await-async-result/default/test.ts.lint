@@ -4,6 +4,11 @@ async function isAsync() {
     return 10;
 }
 
+async function async() {
+    async();
+    ~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+}
+
 function notAsync() {
     return 10;
 }
@@ -15,12 +20,22 @@ class Foo {
     async isAsync() {
         return 10;
     }
+
+    /* async */
+    public async anotherAsync() {
+        isAsync();
+        ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+        if (Boolean())
+            this.isAsync();
+            ~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    }
+
     notAsync() {
         return 10;
     }
 }
 
-async function test() {
+export async function test() {
     isAsync();
     ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
     notAsync();
@@ -57,3 +72,7 @@ returnsThenable();
 let foo = new Foo();
 foo.isAsync();
 foo.notAsync();
+
+async () => isAsync();
+async () => { isAsync(); };
+              ~~~~~~~~~~    [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
