@@ -72,3 +72,13 @@ let a = [...[,],];
 // console.log();
    console.log(...[],);
                ~~~~~    [error no-useless-spread: Using the spread operator here is not necessary.]
+
+const named = 'bar';
+// don't fix object spread because of possible duplicate key errors
+let myObj = {
+    ...{foo: 1},
+    ~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+    bar: 1,
+    ...{foo: 2, [named]: 2},
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+};

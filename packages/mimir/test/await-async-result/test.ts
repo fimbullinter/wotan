@@ -4,6 +4,10 @@ async function isAsync() {
     return 10;
 }
 
+async function async() {
+    async();
+}
+
 function notAsync() {
     return 10;
 }
@@ -15,12 +19,20 @@ class Foo {
     async isAsync() {
         return 10;
     }
+
+    /* async */
+    public async anotherAsync() {
+        isAsync();
+        if (Boolean())
+            this.isAsync();
+    }
+
     notAsync() {
         return 10;
     }
 }
 
-async function test() {
+export async function test() {
     isAsync();
     notAsync();
     returnsPromise();
@@ -53,3 +65,6 @@ returnsThenable();
 let foo = new Foo();
 foo.isAsync();
 foo.notAsync();
+
+async () => isAsync();
+async () => { isAsync(); };
