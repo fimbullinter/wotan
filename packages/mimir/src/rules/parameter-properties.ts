@@ -208,7 +208,7 @@ function getSuperCall(construct: ts.ConstructorDeclaration): ts.ExpressionStatem
     const finalDirective = getFinalDirective(construct);
     const firstNonDirectiveStmt = finalDirective
         ? /* It's possible that the body is comprised of directives only */
-          construct.body!.statements.length > construct.body!.statements.indexOf(finalDirective)
+          construct.body!.statements.length > construct.body!.statements.indexOf(finalDirective) + 1
             ? construct.body!.statements[construct.body!.statements.indexOf(finalDirective) + 1]
             : undefined
         : construct.body!.statements[0];
