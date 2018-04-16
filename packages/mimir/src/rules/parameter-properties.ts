@@ -24,10 +24,10 @@ export interface Options {
 const FAILURE_STRING = {
     never: 'Parameter properties have been disallowed.',
     whenPossible: 'Use parameter properties when possible.',
-    consistent: (canBeParamPropsOnly: boolean): string =>
-        canBeParamPropsOnly
-            ? 'All parameters can be parameter properties.'
-            : 'Only use parameter properties if all parameters can be parameter properties.',
+    consistent: {
+        canBeParamPropsOnly: 'All parameters can be parameter properties.',
+        cannotBeParamPropsOnly: 'Only use parameter properties if all parameters can be parameter properties.',
+    },
 };
 
 @excludeDeclarationFiles
@@ -87,7 +87,7 @@ export class Rule extends ConfigurableRule<Options> {
                         this.addFailure(
                             construct.parameters.pos,
                             construct.parameters.end,
-                            FAILURE_STRING.consistent(false),
+                            FAILURE_STRING.consistent.cannotBeParamPropsOnly,
                             getFixerForDisallowedParameterProp(
                                 construct,
                                 param,
@@ -99,7 +99,7 @@ export class Rule extends ConfigurableRule<Options> {
                         this.addFailure(
                             construct.parameters.pos,
                             construct.parameters.end,
-                            FAILURE_STRING.consistent(true),
+                            FAILURE_STRING.consistent.canBeParamPropsOnly,
                             getFixerForLonghandProp(param, construct),
                         );
                 }
