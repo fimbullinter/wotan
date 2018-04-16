@@ -34,7 +34,7 @@ const FAILURE_STRING = {
 @typescriptOnly
 export class Rule extends ConfigurableRule<Options> {
     protected parseOptions(options: Options | null | undefined): Options {
-        return options || { mode: 'when-possible' };
+        return options || { mode: 'consistent' };
     }
 
     public apply() {
@@ -46,15 +46,13 @@ export class Rule extends ConfigurableRule<Options> {
                 const construct = node.members.find(
                     (member) => isConstructorDeclaration(member) && member.body !== undefined,
                 );
-                if (construct) this.checkConstructorParameters(<ts.ConstructorDeclaration>construct, node);
+                if (construct && construct.parent)
+                    this.checkConstructorParameters(<ts.ConstructorDeclaration>construct);
             }
         }
     }
 
-    private checkConstructorParameters(
-        construct: ts.ConstructorDeclaration,
-        classNode: ts.ClassDeclaration | ts.ClassExpression,
-    ): void {
+    private checkConstructorParameters(construct: ts.ConstructorDeclaration): void {
         switch (this.options.mode) {
             case 'never':
                 for (const param of construct.parameters.filter(isParameterProperty))
@@ -70,11 +68,11 @@ export class Rule extends ConfigurableRule<Options> {
                 break;
             case 'when-possible':
                 for (const param of construct.parameters)
-                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct, classNode))
+                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
                         this.addFailureAtNode(
                             param,
                             FAILURE_STRING.whenPossible,
-                            getFixerForLonghandProp(param, construct, classNode),
+                            getFixerForLonghandProp(param, construct),
                         );
                 break;
             default:
@@ -82,7 +80,7 @@ export class Rule extends ConfigurableRule<Options> {
 
                 const allPropsCanBeParamProps = construct.parameters
                     .filter((param) => !isParameterProperty(param))
-                    .every((param) => canBeParameterProperty(param, construct, classNode));
+                    .every((param) => canBeParameterProperty(param, construct));
 
                 if (!allPropsCanBeParamProps && construct.parameters.some(isParameterProperty)) {
                     for (const param of construct.parameters.filter(isParameterProperty))
@@ -102,21 +100,17 @@ export class Rule extends ConfigurableRule<Options> {
                             construct.parameters.pos,
                             construct.parameters.end,
                             FAILURE_STRING.consistent(true),
-                            getFixerForLonghandProp(param, construct, classNode),
+                            getFixerForLonghandProp(param, construct),
                         );
                 }
         }
     }
 }
 
-function canBeParameterProperty(
-    param: ts.ParameterDeclaration,
-    construct: ts.ConstructorDeclaration,
-    classNode: ts.ClassDeclaration | ts.ClassExpression,
-): boolean {
+function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
     /* Exclude decorators */
     if (
-        classNode.members.find(
+        construct.parent!.members.find(
             (mem) =>
                 isPropertyDeclaration(mem) &&
                 mem.name.getText() === param.name.getText() &&
@@ -161,14 +155,10 @@ function getFixerForDisallowedParameterProp(
     ];
 }
 
-function getFixerForLonghandProp(
-    param: ts.ParameterDeclaration,
-    construct: ts.ConstructorDeclaration,
-    classNode: ts.ClassDeclaration | ts.ClassExpression,
-): Replacement[] {
+function getFixerForLonghandProp(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): Replacement[] {
     /* Class member and assignment to be removed */
-    const member = classNode.members
-        .filter(isPropertyDeclaration)
+    const member = construct
+        .parent!.members.filter(isPropertyDeclaration)
         .find((prop) => getPropertyName(prop.name) === param.name.getText())!;
     const assignment = construct
         .body!.statements.filter(isExpressionStatement)
@@ -186,6 +176,14 @@ function getFixerForLonghandProp(
     ];
 }
 
+/**
+ * @description
+ * If directive(s) such as 'use strict' exist in the constructor body, returns
+ * the last directive, otherwise undefined.
+ *
+ * @param ts.ConstructorDeclaration construct
+ * @returns ts.ExpressionStatement | undefined
+ */
 function getFinalDirective(construct: ts.ConstructorDeclaration): ts.ExpressionStatement | undefined {
     let finalDirectiveIndex = -1;
     for (const stmt of construct.body!.statements) {
@@ -200,11 +198,18 @@ function getFinalDirective(construct: ts.ConstructorDeclaration): ts.ExpressionS
         : undefined;
 }
 
+/**
+ * @description
+ * Returns the super call expression in the constructor body if it exists, otherwise undefined.
+ *
+ * @param ts.ConstructorDeclaration construct
+ * @returns ts.ExpressionStatement | undefined
+ */
 function getSuperCall(construct: ts.ConstructorDeclaration): ts.ExpressionStatement | undefined {
     const finalDirective = getFinalDirective(construct);
     const firstNonDirectiveStmt = finalDirective
-        /* It's possible that the body is comprised of directives only */
-        ? construct.body!.statements.length > construct.body!.statements.indexOf(finalDirective)
+        ? /* It's possible that the body is comprised of directives only */
+          construct.body!.statements.length > construct.body!.statements.indexOf(finalDirective)
             ? construct.body!.statements[construct.body!.statements.indexOf(finalDirective) + 1]
             : undefined
         : construct.body!.statements[0];
@@ -217,6 +222,14 @@ function getSuperCall(construct: ts.ConstructorDeclaration): ts.ExpressionStatem
         : undefined;
 }
 
+/**
+ * @description
+ * Checks if a statement assigns the parameter to a class member property.
+ *
+ * @param ts.Statement stmt
+ * @param ts.ParameterDeclaration param
+ * @returns boolean
+ */
 function isSimpleParamToPropAssignment(stmt: ts.Statement, param: ts.ParameterDeclaration): boolean {
     return (
         isExpressionStatement(stmt) &&
@@ -234,27 +247,35 @@ function isSimpleParamToPropAssignment(stmt: ts.Statement, param: ts.ParameterDe
  * We can only autofix longhand props -> param props if certain conditions are met within the constructor body.
  * See https://github.com/fimbullinter/wotan/issues/167#issuecomment-378945862 for more details on these conditions.
  *
- * @param {ts.Statement} stmt
- * @param {ts.ParameterDeclaration} param
- * @returns {boolean}
+ * @param ts.Statement stmt
+ * @param ts.ParameterDeclaration param
+ * @returns boolean
  */
 function isStatementThatCompromisesFixer(stmt: ts.Statement, param: ts.ParameterDeclaration): boolean {
     return (
         !isExpressionStatement(stmt) ||
         !isBinaryExpression(stmt.expression) ||
         stmt.expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
+        hasSideEffects(stmt.expression.left) ||
+        hasSideEffects(stmt.expression.right) ||
         /* This is the prop we care about */
         (isPropertyAccessExpression(stmt.expression.left) &&
             stmt.expression.left.expression.kind === ts.SyntaxKind.ThisKeyword &&
             stmt.expression.left.name.getText() === param.name.getText() &&
             /* But it's being assigned something else first */
             (!isIdentifier(stmt.expression.right) ||
-                (isIdentifier(stmt.expression.right) && stmt.expression.right.text !== param.name.getText()))) ||
-        hasSideEffects(stmt.expression.left) ||
-        hasSideEffects(stmt.expression.right)
+                (isIdentifier(stmt.expression.right) && stmt.expression.right.text !== param.name.getText())))
     );
 }
 
+/**
+ * @description
+ * Returns all statements in a constructor body with the exception of super calls
+ * and directives such as 'use strict'.
+ *
+ * @param ts.ConstructorDeclaration construct
+ * @returns ts.Statement[]
+ */
 function statementsMinusDirectivesAndSuper(construct: ts.ConstructorDeclaration): ts.Statement[] {
     const finalDirective = getFinalDirective(construct);
     const superCall = getSuperCall(construct);
