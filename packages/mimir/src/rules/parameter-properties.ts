@@ -107,14 +107,14 @@ export class Rule extends ConfigurableTypedRule<Options> {
     }
 
     private canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
-        const paramType = this.checker.getTypeAtLocation(param);
         const member = construct.parent!.members.find(
             (mem) =>
                 isPropertyDeclaration(mem) &&
                 mem.name.getText() === param.name.getText() &&
-                this.checker.typeToString(this.checker.getTypeAtLocation(mem)) === this.checker.typeToString(paramType),
+                this.checker.typeToString(this.checker.getTypeAtLocation(mem)) ===
+                    this.checker.typeToString(this.checker.getTypeAtLocation(param)),
         );
-        if (member && !member.decorators && this.checker.getTypeAtLocation(<ts.PropertyDeclaration>member)) {
+        if (member && !member.decorators) {
             for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
                 if (isStatementThatCompromisesFixer(stmt, param)) return false;
                 if (isSimpleParamToPropAssignment(stmt, param)) return true;
