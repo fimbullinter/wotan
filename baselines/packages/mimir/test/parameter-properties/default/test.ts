@@ -79,6 +79,10 @@ class Foo {
 }
 
 class Foo {
+    constructor() { 'use strict'; }
+}
+
+class Foo {
     private bar: string;
     private fizz: boolean;
 constructor(bar: string,fizz: boolean) {
@@ -138,5 +142,22 @@ constructor(bar: string,fizz?: boolean) {
         'use strict';
 this.fizz = fizz;
         this.bar = bar;
+    }
+}
+
+/* When-possible ought to ignore this case */
+export class AngularComponent {
+    @Input() public data: any;
+    constructor(data: any) {
+        this.data = data;
+    }
+}
+
+export class AngularComponent {
+    @Input() public data: any;
+    private foo: string;
+constructor(data: any,foo: string) {
+this.foo = foo;
+        this.data = data;
     }
 }

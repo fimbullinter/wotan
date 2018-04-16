@@ -70,7 +70,7 @@ export class Rule extends ConfigurableRule<Options> {
                 break;
             case 'when-possible':
                 for (const param of construct.parameters)
-                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
+                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct, classNode))
                         this.addFailureAtNode(
                             param,
                             FAILURE_STRING.whenPossible,
@@ -82,7 +82,7 @@ export class Rule extends ConfigurableRule<Options> {
 
                 const allPropsCanBeParamProps = construct.parameters
                     .filter((param) => !isParameterProperty(param))
-                    .every((param) => canBeParameterProperty(param, construct));
+                    .every((param) => canBeParameterProperty(param, construct, classNode));
 
                 if (!allPropsCanBeParamProps && construct.parameters.some(isParameterProperty)) {
                     for (const param of construct.parameters.filter(isParameterProperty))
@@ -109,10 +109,24 @@ export class Rule extends ConfigurableRule<Options> {
     }
 }
 
-function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
-    for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
-        if (isStatementThatCompromisesFixer(stmt, param)) return false;
-        if (isSimpleParamToPropAssignment(stmt, param)) return true;
+function canBeParameterProperty(
+    param: ts.ParameterDeclaration,
+    construct: ts.ConstructorDeclaration,
+    classNode: ts.ClassDeclaration | ts.ClassExpression,
+): boolean {
+    /* Exclude decorators */
+    if (
+        classNode.members.find(
+            (mem) =>
+                isPropertyDeclaration(mem) &&
+                mem.name.getText() === param.name.getText() &&
+                mem.decorators === undefined,
+        )
+    ) {
+        for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
+            if (isStatementThatCompromisesFixer(stmt, param)) return false;
+            if (isSimpleParamToPropAssignment(stmt, param)) return true;
+        }
     }
 
     return false;
@@ -189,7 +203,10 @@ function getFinalDirective(construct: ts.ConstructorDeclaration): ts.ExpressionS
 function getSuperCall(construct: ts.ConstructorDeclaration): ts.ExpressionStatement | undefined {
     const finalDirective = getFinalDirective(construct);
     const firstNonDirectiveStmt = finalDirective
-        ? construct.body!.statements[construct.body!.statements.indexOf(finalDirective) + 1]
+        /* It's possible that the body is comprised of directives only */
+        ? construct.body!.statements.length > construct.body!.statements.indexOf(finalDirective)
+            ? construct.body!.statements[construct.body!.statements.indexOf(finalDirective) + 1]
+            : undefined
         : construct.body!.statements[0];
 
     return firstNonDirectiveStmt &&
