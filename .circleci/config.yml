@@ -37,7 +37,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:latest@sha256:0d09a2abb1c6b27e8183aca6173f77bf4e56384c3260ded1214cb6e2809b1b28
+      - image: circleci/node:latest@sha256:7bb5fafd7490cf15fea443f057bdadb9f09f6104e9fc4a7d8995807441de92cf
     steps:
       - checkout
       - restore_cache:
@@ -69,7 +69,7 @@ jobs:
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:latest@sha256:0d09a2abb1c6b27e8183aca6173f77bf4e56384c3260ded1214cb6e2809b1b28
+      - image: circleci/node:latest@sha256:7bb5fafd7490cf15fea443f057bdadb9f09f6104e9fc4a7d8995807441de92cf
     <<: *base
   test@2.4:
     docker:
@@ -85,7 +85,7 @@ jobs:
     <<: *base
   test@next:
     docker:
-      - image: circleci/node:latest@sha256:0d09a2abb1c6b27e8183aca6173f77bf4e56384c3260ded1214cb6e2809b1b28
+      - image: circleci/node:latest@sha256:7bb5fafd7490cf15fea443f057bdadb9f09f6104e9fc4a7d8995807441de92cf
     environment:
       typescriptVersion: next
     <<: *base
