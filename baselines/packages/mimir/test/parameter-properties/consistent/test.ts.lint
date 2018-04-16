@@ -106,8 +106,8 @@ class Foo {
 /* Need to ignore directives */
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
-                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
+    constructor(bar: string, private fizz?: string) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
         'use strict';
         super();
         this.bar = bar + 'fizz';
@@ -117,8 +117,8 @@ class Foo extends Bar {
 
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
-                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
+    constructor(bar, private fizz?: string) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
         'use strict';
         super();
         this.bar = bar;

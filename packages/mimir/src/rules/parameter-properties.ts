@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { excludeDeclarationFiles, Replacement, typescriptOnly, ConfigurableRule } from '@fimbul/ymir';
+import { excludeDeclarationFiles, Replacement, typescriptOnly, ConfigurableTypedRule } from '@fimbul/ymir';
 import {
     getLineBreakStyle,
     isCallExpression,
@@ -32,7 +32,7 @@ const FAILURE_STRING = {
 
 @excludeDeclarationFiles
 @typescriptOnly
-export class Rule extends ConfigurableRule<Options> {
+export class Rule extends ConfigurableTypedRule<Options> {
     protected parseOptions(options: Options | null | undefined): Options {
         return options || { mode: 'consistent' };
     }
@@ -68,7 +68,7 @@ export class Rule extends ConfigurableRule<Options> {
                 break;
             case 'when-possible':
                 for (const param of construct.parameters)
-                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
+                    if (!isParameterProperty(param) && this.canBeParameterProperty(param, construct))
                         this.addFailureAtNode(
                             param,
                             FAILURE_STRING.whenPossible,
@@ -80,7 +80,7 @@ export class Rule extends ConfigurableRule<Options> {
 
                 const allPropsCanBeParamProps = construct.parameters
                     .filter((param) => !isParameterProperty(param))
-                    .every((param) => canBeParameterProperty(param, construct));
+                    .every((param) => this.canBeParameterProperty(param, construct));
 
                 if (!allPropsCanBeParamProps && construct.parameters.some(isParameterProperty)) {
                     for (const param of construct.parameters.filter(isParameterProperty))
@@ -105,25 +105,24 @@ export class Rule extends ConfigurableRule<Options> {
                 }
         }
     }
-}
 
-function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
-    /* Exclude decorators */
-    if (
-        construct.parent!.members.find(
+    private canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
+        const paramType = this.checker.getTypeAtLocation(param);
+        const member = construct.parent!.members.find(
             (mem) =>
                 isPropertyDeclaration(mem) &&
                 mem.name.getText() === param.name.getText() &&
-                mem.decorators === undefined,
-        )
-    ) {
-        for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
-            if (isStatementThatCompromisesFixer(stmt, param)) return false;
-            if (isSimpleParamToPropAssignment(stmt, param)) return true;
+                this.checker.typeToString(this.checker.getTypeAtLocation(mem)) === this.checker.typeToString(paramType),
+        );
+        if (member && !member.decorators && this.checker.getTypeAtLocation(<ts.PropertyDeclaration>member)) {
+            for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
+                if (isStatementThatCompromisesFixer(stmt, param)) return false;
+                if (isSimpleParamToPropAssignment(stmt, param)) return true;
+            }
         }
-    }
 
-    return false;
+        return false;
+    }
 }
 
 function getFixerForDisallowedParameterProp(

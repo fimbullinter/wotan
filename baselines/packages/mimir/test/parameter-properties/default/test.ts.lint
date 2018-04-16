@@ -107,8 +107,8 @@ class Foo {
 /* Need to ignore directives */
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
-                             ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+    constructor(bar: string, private fizz?: string) {
+                             ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
         'use strict';
         super();
         this.bar = bar + 'fizz';
@@ -118,8 +118,8 @@ class Foo extends Bar {
 
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
-                             ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+    constructor(bar, private fizz?: string) {
+                     ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
         'use strict';
         super();
         this.bar = bar;

@@ -100,7 +100,7 @@ class Foo {
 /* Need to ignore directives */
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
+    constructor(bar: string, private fizz?: string) {
         'use strict';
         super();
         this.bar = bar + 'fizz';
@@ -110,7 +110,7 @@ class Foo extends Bar {
 
 class Foo extends Bar {
     private bar: string;
-    constructor(bar: string, private fizz?: boolean) {
+    constructor(bar, private fizz?: string) {
         'use strict';
         super();
         this.bar = bar;

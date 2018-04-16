@@ -104,8 +104,8 @@ this.fizz = fizz;
 /* Need to ignore directives */
 class Foo extends Bar {
     private bar: string;
-    private fizz?: boolean;
-constructor(bar: string,fizz?: boolean) {
+    private fizz?: string;
+constructor(bar: string,fizz?: string) {
         'use strict';
         super();
 this.fizz = fizz;
@@ -115,11 +115,13 @@ this.fizz = fizz;
 }
 
 class Foo extends Bar {
-    
-    constructor(private bar: string, private fizz?: boolean) {
+    private bar: string;
+    private fizz?: string;
+constructor(bar,fizz?: string) {
         'use strict';
         super();
-        
+this.fizz = fizz;
+        this.bar = bar;
     }
 }
 
