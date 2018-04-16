@@ -76,3 +76,47 @@ class Foo {
         
     }
 }
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz: boolean) {
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+/* Need to ignore directives */
+class Foo extends Bar {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+        'use strict';
+        super();
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo extends Bar {
+    
+    constructor(private bar: string, private fizz?: boolean) {
+        'use strict';
+        super();
+        
+    }
+}
+
+class Foo {
+    
+    constructor(private bar: string, private fizz?: boolean) {
+        'use strict';
+        
+    }
+}

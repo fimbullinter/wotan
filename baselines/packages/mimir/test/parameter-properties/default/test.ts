@@ -86,3 +86,57 @@ this.fizz = fizz;
         this.bar = bar;
     }
 }
+
+class Foo {
+    private bar: string;
+    private fizz: boolean;
+constructor(bar: string,fizz: boolean) {
+this.fizz = fizz;
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+this.fizz = fizz;
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+/* Need to ignore directives */
+class Foo extends Bar {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+        'use strict';
+        super();
+this.fizz = fizz;
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo extends Bar {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+        'use strict';
+        super();
+this.fizz = fizz;
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+        'use strict';
+this.fizz = fizz;
+        this.bar = bar;
+    }
+}

@@ -15,6 +15,7 @@ export class Welcome {
 export class Hello {
     public hello: string;
     constructor(hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
         this.hello = hello;
     }
 }
@@ -22,6 +23,7 @@ export class Hello {
 export class Hello extends World {
     public hello: string;
     constructor(hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
         super();
         this.hello = hello;
     }
@@ -31,6 +33,7 @@ export class Hello extends World {
 export class Hello extends World {
     private readonly hello: string;
     constructor(hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
         super();
         this.hello = hello;
     }
@@ -73,7 +76,56 @@ class Foo {
 class Foo {
     private bar: string;
     constructor(bar: string, private fizz: boolean) {
-                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Either all constructor parameters must be parameter properties, or none.]
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz: boolean) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+/* Need to ignore directives */
+class Foo extends Bar {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Only use parameter properties if all parameters can be parameter properties.]
+        'use strict';
+        super();
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo extends Bar {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
+        'use strict';
+        super();
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: All parameters can be parameter properties.]
+        'use strict';
         this.bar = bar;
     }
 }

@@ -13,26 +13,26 @@ export class Welcome {
 }
 
 export class Hello {
-    public hello: string;
-    constructor(hello: string = 'mom!') {
-        this.hello = hello;
+    
+    constructor(public hello: string = 'mom!') {
+        
     }
 }
 
 export class Hello extends World {
-    public hello: string;
-    constructor(hello: string = 'mom!') {
+    
+    constructor(public hello: string = 'mom!') {
         super();
-        this.hello = hello;
+        
     }
 }
 
 /* Tests for multiple access modifiers */
 export class Hello extends World {
-    private readonly hello: string;
-    constructor(hello: string = 'mom!') {
+    
+    constructor(private readonly hello: string = 'mom!') {
         super();
-        this.hello = hello;
+        
     }
 }
 
@@ -71,10 +71,58 @@ class Foo {
 }
 
 class Foo {
+    
+    constructor(private bar: string, private fizz: boolean) {
+        
+    }
+}
+
+class Foo {
     private bar: string;
     private fizz: boolean;
 constructor(bar: string,fizz: boolean) {
 this.fizz = fizz;
+        this.bar = bar + 'fizz';
         this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+this.fizz = fizz;
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+/* Need to ignore directives */
+class Foo extends Bar {
+    private bar: string;
+    private fizz?: boolean;
+constructor(bar: string,fizz?: boolean) {
+        'use strict';
+        super();
+this.fizz = fizz;
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo extends Bar {
+    
+    constructor(private bar: string, private fizz?: boolean) {
+        'use strict';
+        super();
+        
+    }
+}
+
+class Foo {
+    
+    constructor(private bar: string, private fizz?: boolean) {
+        'use strict';
+        
     }
 }
