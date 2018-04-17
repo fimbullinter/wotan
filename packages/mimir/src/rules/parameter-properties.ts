@@ -229,7 +229,7 @@ function getSuperCallIndex(construct: ts.ConstructorDeclaration): number {
 }
 
 /**
- * Returns true when the statement is assigned any value other than the param identifier.
+ * Returns true when the prop is assigned any value other than the param identifier.
  */
 function isNonParamAssignmentToProp(stmt: ts.ExpressionStatement, param: ts.ParameterDeclaration): boolean {
     return (
