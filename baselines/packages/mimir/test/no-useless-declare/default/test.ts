@@ -1,0 +1,44 @@
+declare enum E {}
+export const enum CE {}
+type T = any;
+export interface I {}
+declare class C {}
+
+enum E2 {}
+const enum CE2 {}
+type T2 = any;
+interface I2 {}
+class C2 {}
+
+namespace ns {
+    declare enum E {}
+    const enum CE {}
+    type T = any;
+    interface I {}
+    declare class C {}
+}
+
+namespace ns.sub {
+    declare enum E {}
+    const enum CE {}
+    type T = any;
+    interface I {}
+    declare class C {}
+}
+
+declare namespace ambient {
+    declare type T = any;
+    interface I {}
+}
+
+declare module 'foo' {
+    declare type T = any;
+}
+
+declare module 'bar';
+
+module 'baz';
+
+declare global {
+    declare type T = any;
+}

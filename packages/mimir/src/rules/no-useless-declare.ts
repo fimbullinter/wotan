@@ -1,8 +1,7 @@
-import { excludeDeclarationFiles, typescriptOnly, AbstractRule, Replacement } from '@fimbul/ymir';
+import { typescriptOnly, AbstractRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { hasModifier, getModifier, getNextToken } from 'tsutils';
 
-@excludeDeclarationFiles
 @typescriptOnly
 export class Rule extends AbstractRule {
     public apply() {
@@ -11,7 +10,7 @@ export class Rule extends AbstractRule {
 
     private checkStatements(block: ts.BlockLike) {
         for (const statement of block.statements) {
-            if (shouldCheck(statement)) {
+            if (this.shouldCheck(statement)) {
                 const declareKeyword = getModifier(statement, ts.SyntaxKind.DeclareKeyword);
                 if (declareKeyword !== undefined) {
                     const start = declareKeyword.getStart(this.sourceFile);
@@ -33,19 +32,19 @@ export class Rule extends AbstractRule {
             return;
         if (node.body.kind === ts.SyntaxKind.ModuleDeclaration)
             return this.checkModule(node.body);
-        if (node.body.kind === ts.SyntaxKind.ModuleBlock)
-            return this.checkStatements(node.body);
+        return this.checkStatements(<ts.ModuleBlock>node.body);
     }
-}
 
-function shouldCheck(node: ts.Statement): boolean {
-    switch (node.kind) {
-        case ts.SyntaxKind.InterfaceDeclaration:
-        case ts.SyntaxKind.TypeAliasDeclaration:
-            return true;
-        case ts.SyntaxKind.EnumDeclaration:
-            return hasModifier(node.modifiers, ts.SyntaxKind.ConstKeyword);
-        default:
-            return false;
+    private shouldCheck(node: ts.Statement): boolean {
+        switch (node.kind) {
+            case ts.SyntaxKind.InterfaceDeclaration:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+                return true;
+            case ts.SyntaxKind.EnumDeclaration:
+                // allow 'declare const enum' in declaration files, because it's required in declaration files
+                return !this.sourceFile.isDeclarationFile && hasModifier(node.modifiers, ts.SyntaxKind.ConstKeyword);
+            default:
+                return false;
+        }
     }
 }

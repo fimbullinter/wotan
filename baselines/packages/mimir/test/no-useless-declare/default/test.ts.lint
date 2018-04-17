@@ -1,0 +1,53 @@
+declare enum E {}
+export declare const enum CE {}
+       ~~~~~~~                  [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+declare type T = any;
+~~~~~~~               [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+export declare interface I {}
+       ~~~~~~~                [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+declare class C {}
+
+enum E2 {}
+const enum CE2 {}
+type T2 = any;
+interface I2 {}
+class C2 {}
+
+namespace ns {
+    declare enum E {}
+    declare const enum CE {}
+    ~~~~~~~                  [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare type T = any;
+    ~~~~~~~               [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare interface I {}
+    ~~~~~~~                [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare class C {}
+}
+
+namespace ns.sub {
+    declare enum E {}
+    declare const enum CE {}
+    ~~~~~~~                  [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare type T = any;
+    ~~~~~~~               [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare interface I {}
+    ~~~~~~~                [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+    declare class C {}
+}
+
+declare namespace ambient {
+    declare type T = any;
+    interface I {}
+}
+
+declare module 'foo' {
+    declare type T = any;
+}
+
+declare module 'bar';
+
+module 'baz';
+
+declare global {
+    declare type T = any;
+}
