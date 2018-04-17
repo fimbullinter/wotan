@@ -161,3 +161,33 @@ this.foo = foo;
         this.data = data;
     }
 }
+
+/* If rest params exist and mode is 'consistent,' all other params should be made into longhand props */
+class RestParamClass {
+    private a: string;
+    public b: number;
+constructor(a: string,b: number, ...c) {
+this.b = b;
+        this.a = a;
+    }
+}
+
+/* never mode should leave the decorator but copy the rest of the param to the class body */
+class Car {
+    public engine: Engine;
+constructor(@Inject("MyEngine")engine: Engine) {
+this.engine = engine;}
+}
+
+class Car {
+    public engine: Engine;
+constructor(@Inject("MyEngine")engine: Engine = { engineType: 'V8' }) {
+this.engine = engine;}
+}
+
+class Car {
+    public engine: Engine;
+    constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
+        this.engine = engine;
+    }
+}

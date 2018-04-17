@@ -1,5 +1,4 @@
 {
   "files": ["*.ts"],
-  "config": ".wotanrc-consistent.yaml",
-  "project": "tsconfig.json"
+  "config": ".wotanrc-consistent.yaml"
 }

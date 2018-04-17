@@ -1,4 +1,3 @@
 {
-  "files": ["*.ts"],
-  "project": "tsconfig.json"
+  "files": ["*.ts"]
 }

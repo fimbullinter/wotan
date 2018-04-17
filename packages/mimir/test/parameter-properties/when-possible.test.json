@@ -1,5 +1,4 @@
 {
   "files": ["*.ts"],
-  "config": ".wotanrc-when-possible.yaml",
-  "project": "tsconfig.json"
+  "config": ".wotanrc-when-possible.yaml"
 }
