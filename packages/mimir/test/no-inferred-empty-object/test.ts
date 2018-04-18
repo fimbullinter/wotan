@@ -130,6 +130,20 @@ new Wrap<number>(1);
 
 wrapped = new Wrap();
 
+class MyWrap<T> {
+    constructor(public param?: T) {}
+}
+
+new MyWrap();
+new MyWrap<number>()
+new MyWrap(1);
+
+class MyOtherWrap<T> {
+    constructor() {}
+}
+new MyOtherWrap();
+new MyOtherWrap<number>();
+
 function getWrapper() {
     return Wrapper;
 }
