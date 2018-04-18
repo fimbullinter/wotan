@@ -270,7 +270,7 @@ function isSimpleParamToPropAssignment(stmt: ts.Statement, param: ts.ParameterDe
         isPropertyAccessExpression(stmt.expression.left) &&
         stmt.expression.left.expression.kind === ts.SyntaxKind.ThisKeyword &&
         isIdentifier(stmt.expression.right) &&
-        getPropertyName(stmt.expression.left.name) === param.name.getText() &&
+        stmt.expression.left.name.text === param.name.getText() &&
         stmt.expression.right.text === param.name.getText()
     );
 }
