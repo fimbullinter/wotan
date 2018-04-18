@@ -82,7 +82,7 @@ export class Rule extends ConfigurableRule<Options> {
                 break;
             case Mode.WhenPossible:
                 for (const param of construct.parameters)
-                    if (!isParameterProperty(param) && this.canBeParameterProperty(param, construct))
+                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
                         this.addFailureAtNode(
                             param,
                             FAILURE_STRINGS[Mode.WhenPossible],
@@ -94,7 +94,7 @@ export class Rule extends ConfigurableRule<Options> {
 
                 const allPropsCanBeParamProps = construct.parameters
                     .filter((param) => !isParameterProperty(param))
-                    .every((param) => this.canBeParameterProperty(param, construct));
+                    .every((param) => canBeParameterProperty(param, construct));
 
                 if (!allPropsCanBeParamProps && construct.parameters.some(isParameterProperty)) {
                     for (const param of construct.parameters.filter(isParameterProperty))
@@ -119,18 +119,18 @@ export class Rule extends ConfigurableRule<Options> {
                 }
         }
     }
+}
 
-    private canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
-        const member = construct.parent!.members.find((mem) => isPropertyMatchForParam(mem, param));
-        if (member && !member.decorators && param.dotDotDotToken === undefined) {
-            for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
-                if (isStatementWithPossibleSideEffects(stmt, param)) return false;
-                if (isSimpleParamToPropAssignment(stmt, param)) return true;
-            }
+function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
+    const member = construct.parent!.members.find((mem) => isPropertyMatchForParam(mem, param));
+    if (member && !member.decorators && param.dotDotDotToken === undefined) {
+        for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
+            if (isStatementWithPossibleSideEffects(stmt, param)) return false;
+            if (isSimpleParamToPropAssignment(stmt, param)) return true;
         }
-
-        return false;
     }
+
+    return false;
 }
 
 function getFixerForDisallowedParameterProp(
@@ -138,17 +138,14 @@ function getFixerForDisallowedParameterProp(
     param: ts.ParameterDeclaration,
     lineBreak: string,
 ): Replacement[] {
-    const finalDirectiveIndex = getFinalDirectiveIndex(construct);
-    const finalDirective = finalDirectiveIndex > -1 ? construct.body!.statements[finalDirectiveIndex] : undefined;
-    const superCallIndex = getSuperCallIndex(construct);
-    const superCall = superCallIndex > -1 ? construct.body!.statements[superCallIndex] : undefined;
     return [
         /* Add assignment after directives and super() call (if they exists) */
         Replacement.append(
-            superCall ? superCall.end : finalDirective ? finalDirective.end : construct.body!.getStart() + 1,
+            getEndOfDirectivesAndSuper(construct),
             `${lineBreak}this.${param.name.getText()} = ${param.name.getText()};`,
         ),
 
+        /* Add property to class */
         Replacement.append(construct.getStart(), getPropertyTextFromParam(param) + lineBreak),
 
         /* Finally, delete modifiers from the parameter prop */
@@ -175,6 +172,17 @@ function getFixerForLonghandProp(param: ts.ParameterDeclaration, construct: ts.C
             member.modifiers ? member.modifiers.map((mod) => mod.getText()).join(' ') + ' ' : 'public ',
         ),
     ];
+}
+
+function getEndOfDirectivesAndSuper(construct: ts.ConstructorDeclaration): number {
+    const superCallIndex = getSuperCallIndex(construct);
+    const finalDirectiveIndex = getFinalDirectiveIndex(construct);
+    if ((superCallIndex === -1 && finalDirectiveIndex === -1) || construct.body!.statements.length === 0)
+        return construct.body!.getStart() + 1;
+
+    if (superCallIndex === -1 && finalDirectiveIndex > -1) return construct.body!.statements[finalDirectiveIndex].end;
+
+    return construct.body!.statements[superCallIndex].end;
 }
 
 /**
@@ -262,7 +270,7 @@ function isSimpleParamToPropAssignment(stmt: ts.Statement, param: ts.ParameterDe
         isPropertyAccessExpression(stmt.expression.left) &&
         stmt.expression.left.expression.kind === ts.SyntaxKind.ThisKeyword &&
         isIdentifier(stmt.expression.right) &&
-        stmt.expression.left.name.getText() === param.name.getText() &&
+        getPropertyName(stmt.expression.left.name) === param.name.getText() &&
         stmt.expression.right.text === param.name.getText()
     );
 }
