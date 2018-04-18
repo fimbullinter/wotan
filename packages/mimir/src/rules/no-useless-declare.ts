@@ -13,7 +13,7 @@ export class Rule extends AbstractRule {
             if (this.shouldCheck(statement)) {
                 const declareKeyword = getModifier(statement, ts.SyntaxKind.DeclareKeyword);
                 if (declareKeyword !== undefined) {
-                    const start = declareKeyword.getStart(this.sourceFile);
+                    const start = declareKeyword.end - 'declare'.length;
                     this.addFailure(
                         start,
                         declareKeyword.end,

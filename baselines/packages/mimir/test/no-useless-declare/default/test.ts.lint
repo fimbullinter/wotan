@@ -51,3 +51,6 @@ module 'baz';
 declare global {
     declare type T = any;
 }
+
+type declare = any;
+let declare: declare;
