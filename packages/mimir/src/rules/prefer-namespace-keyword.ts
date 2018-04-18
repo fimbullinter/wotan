@@ -1,6 +1,5 @@
 import { typescriptOnly, AbstractRule, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { getChildOfKind } from 'tsutils';
 
 @typescriptOnly
 export class Rule extends AbstractRule {
@@ -16,13 +15,9 @@ export class Rule extends AbstractRule {
                 (statement.flags & (ts.NodeFlags.Namespace | ts.NodeFlags.GlobalAugmentation)) === 0 &&
                 (<ts.ModuleDeclaration>statement).name.kind === ts.SyntaxKind.Identifier
             ) {
-                const keyword = getChildOfKind(statement, ts.SyntaxKind.ModuleKeyword, this.sourceFile)!;
-                this.addFailure(
-                    keyword.end - 'module'.length,
-                    keyword.end,
-                    "Prefer 'namespace' over 'module'.",
-                    Replacement.replace(keyword.end - 'module'.length, keyword.end, 'namespace'),
-                );
+                const end = (<ts.ModuleDeclaration>statement).name.pos;
+                const start = end - 'module'.length;
+                this.addFailure(start, end, "Prefer 'namespace' over 'module'.", Replacement.replace(start, end, 'namespace'));
             }
             this.checkModule(<ts.ModuleDeclaration>statement);
         }
