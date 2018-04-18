@@ -13,6 +13,7 @@ rules:
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error
+  no-redundant-boolean-literal: error
   no-unassigned-variable: error
   no-unreachable-code: error
   no-unsafe-finally: error
