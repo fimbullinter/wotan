@@ -5,7 +5,7 @@ import { hasModifier, getModifier, getNextToken } from 'tsutils';
 @typescriptOnly
 export class Rule extends AbstractRule {
     public apply() {
-        this.checkStatements(this.sourceFile);
+        return this.checkStatements(this.sourceFile);
     }
 
     private checkStatements(block: ts.BlockLike) {
