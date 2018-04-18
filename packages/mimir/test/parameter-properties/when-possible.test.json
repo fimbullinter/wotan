@@ -1,4 +1,4 @@
 {
-  "files": ["*.ts"],
+  "files": ["*.ts", "*.js"],
   "config": ".wotanrc-when-possible.yaml"
 }
