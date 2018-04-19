@@ -93,6 +93,6 @@ try {
 
 async () => await {foo: 1};
 
-async function handleConditionalExpression() {
+async function parensWhenNecessary() {
     return await {foo: 1};
 }
