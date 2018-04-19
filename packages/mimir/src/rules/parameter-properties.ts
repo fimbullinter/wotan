@@ -149,7 +149,7 @@ function getFixerForDisallowedParameterProp(
         Replacement.append(construct.getStart(), getPropertyTextFromParam(param) + lineBreak),
 
         /* Finally, delete modifiers from the parameter prop */
-        Replacement.delete(param.decorators ? param.modifiers!.pos : param.pos, param.name.getStart()),
+        Replacement.delete(param.decorators ? param.modifiers![0].getStart() : param.pos, param.name.getStart()),
     ];
 }
 
@@ -212,7 +212,7 @@ function getPropertyTextFromParam(param: ts.ParameterDeclaration): string {
         ' ' +
         param.name.getText() +
         (param.questionToken ? '?' : '') +
-        (!!typeAnnotations ? ': ' + typeAnnotations : '') +
+        (typeAnnotations ? ': ' + typeAnnotations : '') +
         ';'
     );
 }
@@ -256,7 +256,7 @@ function isPropertyMatchForParam(mem: ts.ClassElement, param: ts.ParameterDeclar
         !mem.initializer &&
         (!mem.questionToken ? !param.questionToken : !!param.questionToken) &&
         getPropertyName(mem.name) === param.name.getText() &&
-        (!!mem.type ? !!param.type && param.type.getText() === mem.type.getText() : !param.type)
+        (mem.type ? (param.type && param.type.getText()) === mem.type.getText() : !param.type)
     );
 }
 

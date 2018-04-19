@@ -175,13 +175,13 @@ this.b = b;
 /* never mode should leave the decorator but copy the rest of the param to the class body */
 class Car {
     public engine: Engine;
-constructor(@Inject("MyEngine")engine: Engine) {
+constructor(@Inject("MyEngine") engine: Engine) {
 this.engine = engine;}
 }
 
 class Car {
     public engine: Engine;
-constructor(@Inject("MyEngine")engine: Engine = { engineType: 'V8' }) {
+constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
 this.engine = engine;}
 }
 
