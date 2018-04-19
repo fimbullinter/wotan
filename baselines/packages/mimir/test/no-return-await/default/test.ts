@@ -92,3 +92,7 @@ try {
 }
 
 async () => ({foo: 1});
+
+async function handleConditionalExpression() {
+    return {foo: 1};
+}

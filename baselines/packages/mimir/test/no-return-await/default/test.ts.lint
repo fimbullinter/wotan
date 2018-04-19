@@ -110,3 +110,8 @@ try {
 
 async () => await {foo: 1};
             ~~~~~           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+
+async function handleConditionalExpression() {
+    return await {foo: 1};
+           ~~~~~           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+}
