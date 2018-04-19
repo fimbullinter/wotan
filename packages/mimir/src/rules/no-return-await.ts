@@ -15,8 +15,7 @@ export class Rule extends AbstractRule {
                 const keywordStart = node.expression.pos - 'await'.length;
                 const replacements = [Replacement.delete(keywordStart, node.expression.getStart(this.sourceFile))];
 
-                /* If 'awaited' expression is an object literal, surround it w/ parens */
-                if (node.expression.kind === ts.SyntaxKind.ObjectLiteralExpression && isArrowFunction(node.parent!))
+                if (isArrowFunction(node.parent!) && node.expression.kind === ts.SyntaxKind.ObjectLiteralExpression)
                     replacements.push(
                         Replacement.append(node.expression.getStart(this.sourceFile), '('),
                         Replacement.append(node.expression.getEnd(), ')'),
