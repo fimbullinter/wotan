@@ -90,3 +90,9 @@ try {
 } catch {
     return foo();
 }
+
+async () => ({foo: 1});
+
+async function parensWhenNecessary() {
+    return {foo: 1};
+}
