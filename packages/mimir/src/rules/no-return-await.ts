@@ -13,11 +13,15 @@ export class Rule extends AbstractRule {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
             if (isAwaitExpression(node) && re.lastIndex === node.expression.pos && isUnnecessaryAwait(node)) {
                 const keywordStart = node.expression.pos - 'await'.length;
+                const replacement =
+                    (node.expression.kind === ts.SyntaxKind.ObjectLiteralExpression)
+                        ? Replacement.replace(keywordStart, node.expression.end, `(${node.expression.getText()})`)
+                        : Replacement.delete(keywordStart, node.expression.getStart(this.sourceFile));
                 this.addFailure(
                     keywordStart,
                     node.expression.pos,
                     FAIL_MESSAGE,
-                    Replacement.delete(keywordStart, node.expression.getStart(this.sourceFile)),
+                    replacement,
                 );
             }
         }
