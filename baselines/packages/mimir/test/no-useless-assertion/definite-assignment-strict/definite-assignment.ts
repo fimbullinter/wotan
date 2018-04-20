@@ -18,9 +18,9 @@ abstract class Foo {
     bar: number | undefined;
     abstract baz!: number;
     'bas': number;
-    ['foobar']!: number;
+    ['foobar']: number;
     ['foobaz']: number | undefined;
-    [key]!: number;
+    [key]: number;
     [key2]: number | undefined;
     uninitialized: number;
 
