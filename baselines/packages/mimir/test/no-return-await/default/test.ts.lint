@@ -107,6 +107,3 @@ try {
     return await foo();
            ~~~~~        [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
 }
-
-async () => await {foo: 1};
-            ~~~~~           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]

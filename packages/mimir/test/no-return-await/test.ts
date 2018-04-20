@@ -90,5 +90,3 @@ try {
 } catch {
     return await foo();
 }
-
-async () => await {foo: 1};

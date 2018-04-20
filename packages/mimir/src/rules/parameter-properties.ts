@@ -53,13 +53,9 @@ export class Rule extends ConfigurableRule<Options> {
 
     public apply() {
         for (const node of this.context.getFlatAst()) {
-            if (
-                (isClassDeclaration(node) || isClassExpression(node)) &&
-                node.members.filter(isConstructorDeclaration).length > 0
-            ) {
+            if (isClassDeclaration(node) || isClassExpression(node)) {
                 const construct = node.members.find(
-                    (member) =>
-                        isConstructorDeclaration(member) && member.body !== undefined && member.parent !== undefined,
+                    (member) => isConstructorDeclaration(member) && member.body !== undefined,
                 );
                 if (construct) this.checkConstructorParameters(<ts.ConstructorDeclaration>construct);
             }
@@ -122,8 +118,9 @@ export class Rule extends ConfigurableRule<Options> {
 }
 
 function canBeParameterProperty(param: ts.ParameterDeclaration, construct: ts.ConstructorDeclaration): boolean {
+    if (!isIdentifier(param.name) || param.dotDotDotToken) return false;
     const member = construct.parent!.members.find((mem) => isPropertyMatchForParam(mem, param));
-    if (member && !member.decorators && param.dotDotDotToken === undefined) {
+    if (member && !member.decorators) {
         for (const stmt of statementsMinusDirectivesAndSuper(construct)) {
             if (isStatementWithPossibleSideEffects(stmt, param)) return false;
             if (isSimpleParamToPropAssignment(stmt, param)) return true;
@@ -175,14 +172,10 @@ function getFixerForLonghandProp(param: ts.ParameterDeclaration, construct: ts.C
 }
 
 function getEndOfDirectivesAndSuper(construct: ts.ConstructorDeclaration): number {
-    const superCallIndex = getSuperCallIndex(construct);
-    const finalDirectiveIndex = getFinalDirectiveIndex(construct);
-    if ((superCallIndex === -1 && finalDirectiveIndex === -1) || construct.body!.statements.length === 0)
-        return construct.body!.getStart() + 1;
+    const firstStmtIndex = Math.max(getFinalDirectiveIndex(construct), getSuperCallIndex(construct));
+    if (firstStmtIndex === -1 || construct.body!.statements.length === 0) return construct.body!.getStart() + 1;
 
-    if (superCallIndex === -1 && finalDirectiveIndex > -1) return construct.body!.statements[finalDirectiveIndex].end;
-
-    return construct.body!.statements[superCallIndex].end;
+    return construct.body!.statements[firstStmtIndex].end;
 }
 
 /**
@@ -221,19 +214,11 @@ function getPropertyTextFromParam(param: ts.ParameterDeclaration): string {
  * Returns the super call expression index if it exists, otherwise -1.
  */
 function getSuperCallIndex(construct: ts.ConstructorDeclaration): number {
-    const finalDirectiveIndex = getFinalDirectiveIndex(construct);
-    const stmts = construct.body!.statements;
-
-    /* It's possible that the body is comprised of directives only */
-    const firstNonDirectiveStmtIndex =
-        finalDirectiveIndex > -1
-            ? construct.body!.statements.length > finalDirectiveIndex + 1
-                ? finalDirectiveIndex + 1
-                : -1
-            : 0;
-
-    const stmt = firstNonDirectiveStmtIndex > -1 ? stmts[firstNonDirectiveStmtIndex] : undefined;
-    return stmt && isStatementSuperCall(stmt) ? firstNonDirectiveStmtIndex : -1;
+    const statementIndex = getFinalDirectiveIndex(construct) + 1;
+    const statements = construct.body!.statements;
+    return statementIndex === statements.length || !isStatementSuperCall(statements[statementIndex])
+        ? -1
+        : statementIndex;
 }
 
 /**
@@ -303,11 +288,7 @@ function isStatementWithPossibleSideEffects(stmt: ts.Statement, param: ts.Parame
  * and directives such as 'use strict'.
  */
 function statementsMinusDirectivesAndSuper(construct: ts.ConstructorDeclaration): ts.Statement[] {
-    const finalDirectiveIndex = getFinalDirectiveIndex(construct);
-    const superCallIndex = getSuperCallIndex(construct);
-    return superCallIndex > -1
-        ? construct.body!.statements.slice(superCallIndex + 1)
-        : finalDirectiveIndex > -1
-            ? construct.body!.statements.slice(finalDirectiveIndex + 1)
-            : construct.body!.statements.slice();
+    return construct.body!.statements.slice(
+        Math.max(getFinalDirectiveIndex(construct), getSuperCallIndex(construct)) + 1,
+    );
 }
