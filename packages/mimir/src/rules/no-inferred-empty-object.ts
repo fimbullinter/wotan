@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles, typescriptOnly } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTypeLiteralNode, getJsDoc } from 'tsutils';
+import { isTypeLiteralNode } from 'tsutils';
 
 const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 const typescriptPre290 = typescriptPre270 || /^2\.[78]\./.test(ts.version);
@@ -30,16 +30,22 @@ export class Rule extends TypedRule {
     private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement) {
         const signature = this.checker.getResolvedSignature(node);
         // wotan-disable-next-line no-useless-predicate
-        if (signature.declaration !== undefined)
-            return this.checkSignature(signature, signature.declaration, node);
+        if (signature.declaration !== undefined) {
+            const typeParameters = getTypeParameters(signature.declaration);
+            if (typeParameters !== undefined)
+                return this.checkInferredTypeParameters(signature, typeParameters, node);
+        }
     }
 
     private checkNewExpression(node: ts.NewExpression) {
         const signature = this.checker.getResolvedSignature(node);
         // wotan-disable-next-line no-useless-predicate
-        if (signature.declaration !== undefined)
+        if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
-            return this.checkSignature(signature, signature.declaration, node);
+            const typeParameters = getTypeParameters(signature.declaration);
+            if (typeParameters !== undefined) // only check the signature if it declares type parameters
+                return this.checkInferredTypeParameters(signature, typeParameters, node);
+        }
 
         // Otherwise look up the TypeParameters of the ClassDeclaration
         const {symbol} = this.checker.getTypeAtLocation(node.expression);
@@ -47,7 +53,8 @@ export class Rule extends TypedRule {
             return;
         // collect all TypeParameters and their defaults from all merged declarations
         const typeParameterResult = [];
-        for (const {typeParameters} of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
+        for (const declaration of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
+            const typeParameters = getTypeParameters(declaration);
             if (typeParameters === undefined)
                 continue;
             for (let i = 0; i < typeParameters.length; ++i)
@@ -57,16 +64,6 @@ export class Rule extends TypedRule {
         }
         if (typeParameterResult.length !== 0)
             return this.checkInferredTypeParameters(signature, typeParameterResult, node);
-    }
-
-    private checkSignature(signature: ts.Signature, declaration: ts.SignatureDeclaration | ts.ClassLikeDeclaration, node: ts.Expression) {
-        const typeParameters = declaration.typeParameters !== undefined
-            ? declaration.typeParameters
-            : declaration.flags & ts.NodeFlags.JavaScriptFile
-                ? getTemplateTags(declaration)
-                : undefined;
-        if (typeParameters !== undefined)
-            return this.checkInferredTypeParameters(signature, typeParameters, node);
     }
 
     private checkInferredTypeParameters(
@@ -150,12 +147,10 @@ export class Rule extends TypedRule {
     }
 }
 
-function getTemplateTags(node: ts.HasJSDoc): ReadonlyArray<ts.TypeParameterDeclaration> | undefined {
-    // only the first @template tag is used
-    for (const jsDoc of getJsDoc(node))
-        if (jsDoc.tags !== undefined)
-            for (const tag of jsDoc.tags)
-                if (tag.kind === ts.SyntaxKind.JSDocTemplateTag)
-                    return (<ts.JSDocTemplateTag>tag).typeParameters;
-    return;
+function getTypeParameters(node: ts.DeclarationWithTypeParameters) {
+    if (node.flags & ts.NodeFlags.JavaScriptFile) {
+        const tag = ts.getJSDocTemplateTag(node);
+        return tag && tag.typeParameters;
+    }
+    return node.typeParameters;
 }

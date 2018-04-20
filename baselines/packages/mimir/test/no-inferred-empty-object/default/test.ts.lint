@@ -155,6 +155,22 @@ new Wrap<number>(1);
 
 wrapped = new Wrap();
 
+class MyWrap<T> {
+    constructor(public param?: T) {}
+}
+
+new MyWrap();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+new MyWrap<number>()
+new MyWrap(1);
+
+class MyOtherWrap<T> {
+    constructor() {}
+}
+new MyOtherWrap();
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+new MyOtherWrap<number>();
+
 function getWrapper() {
     return Wrapper;
 }
