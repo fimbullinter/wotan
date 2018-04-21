@@ -243,3 +243,16 @@ new Promise<object>((resolve, reject) => {
         }
     });
 });
+
+declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
+declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+
+myTagFn``;
+myTagFn`${''}`;
+myTagFn`${1}`;
+myTagFn`${1}${''}`;
+myTagFn<string | number>`${1}${''}`;
+
+myOtherTag``;
+myOtherTag`${''}`;
+myOtherTag<string>``;
