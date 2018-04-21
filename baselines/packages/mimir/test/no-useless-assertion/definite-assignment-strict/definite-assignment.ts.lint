@@ -23,9 +23,11 @@ abstract class Foo {
     'bas'!: number;
          ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     ['foobar']!: number;
+              ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     ['foobaz']!: number | undefined;
               ~                      [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     [key]!: number;
+         ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     [key2]!: number | undefined;
           ~                      [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     uninitialized: number;
