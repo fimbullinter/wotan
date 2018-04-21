@@ -51,7 +51,6 @@ new JsClass<number>();
 new JsClass<number>(1);
 
 new RealJsClass();
-~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new RealJsClass(1);
 new RealJsClass<number>();
 new RealJsClass<number>(1);

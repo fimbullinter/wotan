@@ -10,7 +10,7 @@ nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
 
-import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass} from './js';
+import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass, RealJsClass} from './js';
 
 nonGenericJs();
 
@@ -37,6 +37,11 @@ new JsClass();
 new JsClass(1);
 new JsClass<number>();
 new JsClass<number>(1);
+
+new RealJsClass();
+new RealJsClass(1);
+new RealJsClass<number>();
+new RealJsClass<number>(1);
 
 declare function fn<T, U>(one?: T, two?: U): void;
 

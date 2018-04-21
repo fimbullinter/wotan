@@ -1,5 +1,0 @@
-{
-  "files": ["jsx.tsx"],
-  "project": ".",
-  "typescriptVersion": "< 2.9.0"
-}
