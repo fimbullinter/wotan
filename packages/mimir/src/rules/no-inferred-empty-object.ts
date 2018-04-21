@@ -133,6 +133,9 @@ export class Rule extends TypedRule {
                     break;
                 case ts.SyntaxKind.LessThanToken:
                     ++level;
+                    break;
+                case ts.SyntaxKind.EndOfFileToken:
+                    return;
             }
             token = scanner.scan();
         }
