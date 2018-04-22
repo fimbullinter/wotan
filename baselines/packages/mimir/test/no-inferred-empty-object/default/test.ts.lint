@@ -244,3 +244,18 @@ new Promise<object>((resolve, reject) => {
         }
     });
 });
+
+declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
+declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+
+myTagFn``;
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+myTagFn`${''}`;
+myTagFn`${1}`;
+myTagFn`${1}${''}`;
+myTagFn<string | number>`${1}${''}`;
+
+myOtherTag``;
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+myOtherTag`${''}`;
+myOtherTag<string>``;
