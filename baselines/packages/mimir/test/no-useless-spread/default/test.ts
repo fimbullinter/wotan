@@ -7,19 +7,15 @@ console.log('a', 'b', 1, 'c', ...arr, 'd');
 let obj = {
   foo: 1,
   ...{ bar: 2, ...someObj },
-  ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
   baz: 3,
   ...someOtherObject || { bas: 4 }
 };
 
 ({foo, .../* comment */{bar, ...rest}} = obj);
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [error no-useless-spread: Using the spread operator here is not necessary.]
 
 obj = {
     ... // comment
-    ~~~~~~~~~~~~~~
     {...obj}
-~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
 };
 
 console.log();
@@ -35,7 +31,6 @@ let a = [...[,],];
 
 // ({foo: 'foo',});
    ({...{foo: 'foo',},});
-     ~~~~~~~~~~~~~~~~     [error no-useless-spread: Using the spread operator here is not necessary.]
 
 // let a = [];
    let a = [];
@@ -62,8 +57,6 @@ const named = 'bar';
 // don't fix object spread because of possible duplicate key errors
 let myObj = {
     ...{foo: 1},
-    ~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
     bar: 1,
     ...{foo: 2, [named]: 2},
-    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
 };

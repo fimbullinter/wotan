@@ -19,7 +19,6 @@ export default Vue.extend({
             let v = null;
             await p;
             v;
-            ~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
             await foo();
             await Promise.resolve();
         }

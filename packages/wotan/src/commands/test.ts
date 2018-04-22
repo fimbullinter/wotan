@@ -59,7 +59,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 const relative = path.relative(root, file);
                 if (relative.startsWith('..' + path.sep))
                     throw new ConfigurationError(`Testing file '${file}' outside of '${root}'.`);
-                const actual = createBaseline(summary);
+                const actual = kind === BaselineKind.Fix ? summary.content : createBaseline(summary);
                 const baselineFile = `${path.resolve(baselineDir, relative)}${kind === BaselineKind.Lint ? '.lint' : ''}`;
                 const end = (pass: boolean, text: string, baselineDiff?: string) => {
                     this.logger.log(`  ${chalk.grey.dim(path.relative(basedir, baselineFile))} ${chalk[pass ? 'green' : 'red'](text)}`);

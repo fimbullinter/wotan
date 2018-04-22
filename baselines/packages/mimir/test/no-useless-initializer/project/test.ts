@@ -57,11 +57,9 @@ declare function get<T>(): T;
     let {['prop']: noDefault} = obj;
     let {prop} = obj;
     let {foo = 'oof'} = get<{foo: 'foo'}>();
-               ~~~~~                         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {bar = 'bar'} = get<{bar?: 'bar'}>();
     let {baz = 'baz'} = get<{baz: 'baz'} | {baz: undefined}>();
     let {bas = 'bas'} = get<{bas: 'bas'} | {bas: 'foobas'}>();
-               ~~~~~                                           [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {something = 'something'} = get<{[key: string]: string}>();
     let {any = 'any'} = get<{any: any}>();
     let {'prop': renamed} = obj;
