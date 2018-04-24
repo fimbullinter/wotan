@@ -15,5 +15,11 @@
       "packages/*/index.d.ts": true,
       "scripts/*.d.ts": true,
       "**/*.js.map": true,
+    },
+    "files.associations": {
+      "*.js.fix": "javascript",
+      "*.jsx.fix": "javascriptreact",
+      "*.ts.fix": "typescript",
+      "*.tsx.fix": "typescriptreact"
     }
 }
