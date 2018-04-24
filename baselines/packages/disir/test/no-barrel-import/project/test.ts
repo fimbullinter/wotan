@@ -7,5 +7,4 @@ import {foo} from './subdir';
 import {bar} from './subdir/index';
 
 export * from '.';
-              ~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
 export * from '@fimbul/wotan';
