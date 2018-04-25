@@ -1,52 +1,38 @@
 export class Hello {
-    private world: string;
-constructor(world: string) {
-this.world = world;}
+    constructor(private world: string) {}
 }
 
 export class Hello extends World {
-    private world: string;
-constructor(world: string) {
+    constructor(private world: string) {
         super();
-this.world = world;
     }
 }
 
 export class Welcome {
-    private home: string;
-constructor(home: string = 'mom!') {
-this.home = home;}
+    constructor(private home: string = 'mom!') {}
 }
 
 export class Hello {
-    public hello: string;
-    constructor(hello: string = 'mom!') {
-        this.hello = hello;
+    constructor(public hello: string = 'mom!') {
     }
 }
 
 export class Hello extends World {
-    public hello: string;
-    constructor(hello: string = 'mom!') {
+    constructor(public hello: string = 'mom!') {
         super();
-        this.hello = hello;
     }
 }
 
 /* Tests for multiple access modifiers */
 export class Hello extends World {
-    private readonly hello: string;
-    constructor(hello: string = 'mom!') {
+    constructor(private readonly hello: string = 'mom!') {
         super();
-        this.hello = hello;
     }
 }
 
 export class Hello extends World {
-    private readonly hello: string;
-constructor(hello: string = 'mom!') {
+    constructor(private readonly hello: string = 'mom!') {
         super();
-this.hello = hello;
     }
 }
 
@@ -83,25 +69,17 @@ class Foo {
 }
 
 class Foo {
-    private hello: string;
-constructor(hello: string) { 'use strict';
-this.hello = hello; }
+    constructor(private hello: string) { 'use strict'; }
 }
 
 class Foo {
-    private bar: string;
-    private fizz: boolean;
-constructor(bar: string,fizz: boolean) {
-this.fizz = fizz;
-        this.bar = bar;
+    constructor(private bar: string, private fizz: boolean) {
     }
 }
 
 class Foo {
     private bar: string;
-    private fizz: boolean;
-constructor(bar: string,fizz: boolean) {
-this.fizz = fizz;
+    constructor(bar: string, private fizz: boolean) {
         this.bar = bar + 'fizz';
         this.bar = bar;
     }
@@ -109,9 +87,7 @@ this.fizz = fizz;
 
 class Foo {
     private bar: string;
-    private fizz?: boolean;
-constructor(bar: string,fizz?: boolean) {
-this.fizz = fizz;
+    constructor(bar: string, private fizz?: boolean) {
         this.bar = bar + 'fizz';
         this.bar = bar;
     }
@@ -120,34 +96,45 @@ this.fizz = fizz;
 /* Need to ignore directives */
 class Foo extends Bar {
     private bar: string;
-    private fizz?: string;
-constructor(bar: string,fizz?: string) {
+    constructor(bar: string, private fizz?: string) {
         'use strict';
         super();
-this.fizz = fizz;
         this.bar = bar + 'fizz';
         this.bar = bar;
     }
 }
 
+class Annotate {
+    private hello;
+    constructor(hello: string) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello: string;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    constructor(private hello) {
+    }
+}
+
 class Foo extends Bar {
     private bar: string;
-    private fizz?: string;
-constructor(bar,fizz?: string) {
+    constructor(bar, private fizz?: string) {
         'use strict';
         super();
-this.fizz = fizz;
         this.bar = bar;
     }
 }
 
 class Foo {
-    private bar: string;
-    private fizz?: boolean;
-constructor(bar: string,fizz?: boolean) {
+    constructor(private bar: string, private fizz?: boolean) {
         'use strict';
-this.fizz = fizz;
-        this.bar = bar;
     }
 }
 
@@ -161,47 +148,63 @@ export class AngularComponent {
 
 export class AngularComponent {
     @Input() public data: any;
-    private foo: string;
-constructor(data: any,foo: string) {
-this.foo = foo;
+    constructor(data: any, private foo: string) {
         this.data = data;
     }
 }
 
 /* If rest params exist and mode is 'consistent,' all other params should be made into longhand props */
 class RestParamClass {
-    private a: string;
-    public b: number;
-constructor(a: string,b: number, ...c) {
-this.b = b;
-        this.a = a;
+    constructor(private a: string, public b: number, ...c) {
     }
 }
 
 /* never mode should leave the decorator but copy the rest of the param to the class body */
 class Car {
-    public engine: Engine;
-constructor(@Inject("MyEngine") engine: Engine) {
-this.engine = engine;}
+    constructor(@Inject("MyEngine") public engine: Engine) {}
 }
 
 class Car {
-    public engine: Engine;
-constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
-this.engine = engine;}
+    constructor(@Inject("MyEngine") public engine: Engine = { engineType: 'V8' }) {}
 }
 
 class Car {
-    public engine: Engine;
-    constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
-        this.engine = engine;
+    constructor(@Inject("MyEngine") public engine: Engine = { engineType: 'V8' }) {
     }
 }
 
 class Overloaded {
-    private hello?: string;
-    constructor()
-    constructor(hello?: string) {
-        this.hello = hello;
+    private world: number = 42;
+    constructor(hello: string)
+    constructor(private hello: string, world?: number) {
+        this.world = world;
+    }
+}
+
+class Foo {
+    foo: string;
+    constructor(foo: 'foo') {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo?: string;
+    constructor(foo: string) {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo: string = 'bar';
+    constructor(foo: string) {
+      this.foo = foo;
+    }
+}
+
+class Foo {
+    public foo: string;
+    constructor({foo}: {foo: string}) {
+      this.foo = foo;
     }
 }

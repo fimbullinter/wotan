@@ -44,11 +44,11 @@ export class Rule extends ConfigurableRule<Options> {
             switch (options.mode) {
                 case 'consistent':
                     return { mode: Mode.Consistent };
-                case 'when-possible':
-                    return { mode: Mode.WhenPossible };
+                case 'never':
+                    return { mode: Mode.Never };
             }
         }
-        return { mode: Mode.Never };
+        return { mode: Mode.WhenPossible };
     }
 
     public apply() {
@@ -76,16 +76,7 @@ export class Rule extends ConfigurableRule<Options> {
                         ),
                     );
                 break;
-            case Mode.WhenPossible:
-                for (const param of construct.parameters)
-                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
-                        this.addFailureAtNode(
-                            param,
-                            FAILURE_STRINGS[Mode.WhenPossible],
-                            getFixerForLonghandProp(param, construct),
-                        );
-                break;
-            default:
+            case Mode.Consistent:
                 if (construct.parameters.every(isParameterProperty)) return;
 
                 const allPropsCanBeParamProps = construct.parameters
@@ -113,6 +104,15 @@ export class Rule extends ConfigurableRule<Options> {
                             getFixerForLonghandProp(param, construct),
                         );
                 }
+                break;
+            default:
+                for (const param of construct.parameters)
+                    if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
+                        this.addFailureAtNode(
+                            param,
+                            FAILURE_STRINGS[Mode.WhenPossible],
+                            getFixerForLonghandProp(param, construct),
+                        );
         }
     }
 }
@@ -160,12 +160,12 @@ function getFixerForLonghandProp(param: ts.ParameterDeclaration, construct: ts.C
         .find((stmt) => isSimpleParamToPropAssignment(stmt, param))!;
 
     return [
-        Replacement.delete(member.getStart(), member.end),
-        Replacement.delete(assignment.getStart(), assignment.end),
+        Replacement.delete(member.pos, member.end),
+        Replacement.delete(assignment.pos, assignment.end),
 
         /* Prepend access modifiers to parameter declaration */
         Replacement.append(
-            param.decorators ? param.decorators.end : param.getStart(),
+            param.name.getStart(),
             member.modifiers ? member.modifiers.map((mod) => mod.getText()).join(' ') + ' ' : 'public ',
         ),
     ];

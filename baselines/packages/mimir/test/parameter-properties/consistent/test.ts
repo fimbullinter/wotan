@@ -13,26 +13,20 @@ export class Welcome {
 }
 
 export class Hello {
-    
     constructor(public hello: string = 'mom!') {
-        
     }
 }
 
 export class Hello extends World {
-    
     constructor(public hello: string = 'mom!') {
         super();
-        
     }
 }
 
 /* Tests for multiple access modifiers */
 export class Hello extends World {
-    
     constructor(private readonly hello: string = 'mom!') {
         super();
-        
     }
 }
 
@@ -79,16 +73,14 @@ class Foo {
 }
 
 class Foo {
-    
     constructor(private bar: string, private fizz: boolean) {
-        
     }
 }
 
 class Foo {
     private bar: string;
     private fizz: boolean;
-constructor(bar: string,fizz: boolean) {
+constructor(bar: string, fizz: boolean) {
 this.fizz = fizz;
         this.bar = bar + 'fizz';
         this.bar = bar;
@@ -98,7 +90,7 @@ this.fizz = fizz;
 class Foo {
     private bar: string;
     private fizz?: boolean;
-constructor(bar: string,fizz?: boolean) {
+constructor(bar: string, fizz?: boolean) {
 this.fizz = fizz;
         this.bar = bar + 'fizz';
         this.bar = bar;
@@ -109,7 +101,7 @@ this.fizz = fizz;
 class Foo extends Bar {
     private bar: string;
     private fizz?: string;
-constructor(bar: string,fizz?: string) {
+constructor(bar: string, fizz?: string) {
         'use strict';
         super();
 this.fizz = fizz;
@@ -118,10 +110,29 @@ this.fizz = fizz;
     }
 }
 
+class Annotate {
+    private hello;
+    constructor(hello: string) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello: string;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    constructor(private hello) {
+    }
+}
+
 class Foo extends Bar {
     private bar: string;
     private fizz?: string;
-constructor(bar,fizz?: string) {
+constructor(bar, fizz?: string) {
         'use strict';
         super();
 this.fizz = fizz;
@@ -130,10 +141,8 @@ this.fizz = fizz;
 }
 
 class Foo {
-    
     constructor(private bar: string, private fizz?: boolean) {
         'use strict';
-        
     }
 }
 
@@ -148,7 +157,7 @@ export class AngularComponent {
 export class AngularComponent {
     @Input() public data: any;
     private foo: string;
-constructor(data: any,foo: string) {
+constructor(data: any, foo: string) {
 this.foo = foo;
         this.data = data;
     }
@@ -158,7 +167,7 @@ this.foo = foo;
 class RestParamClass {
     private a: string;
     public b: number;
-constructor(a: string,b: number, ...c) {
+constructor(a: string, b: number, ...c) {
 this.b = b;
         this.a = a;
     }
@@ -174,16 +183,44 @@ class Car {
 }
 
 class Car {
-    
     constructor(@Inject("MyEngine") public engine: Engine = { engineType: 'V8' }) {
-        
     }
 }
 
 class Overloaded {
-    
-    constructor()
-    constructor(private hello?: string) {
-        
+    private hello: string;
+    private world: number = 42;
+    constructor(hello: string)
+    constructor(hello: string, world?: number) {
+        this.hello = hello;
+        this.world = world;
+    }
+}
+
+class Foo {
+    foo: string;
+    constructor(foo: 'foo') {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo?: string;
+    constructor(foo: string) {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo: string = 'bar';
+    constructor(foo: string) {
+      this.foo = foo;
+    }
+}
+
+class Foo {
+    public foo: string;
+    constructor({foo}: {foo: string}) {
+      this.foo = foo;
     }
 }

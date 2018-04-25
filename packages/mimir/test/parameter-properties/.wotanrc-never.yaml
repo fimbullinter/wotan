@@ -2,4 +2,4 @@ rules:
   parameter-properties:
     severity: error
     options:
-      mode: when-possible
+      mode: never

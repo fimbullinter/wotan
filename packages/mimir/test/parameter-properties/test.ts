@@ -112,6 +112,27 @@ class Foo extends Bar {
     }
 }
 
+class Annotate {
+    private hello;
+    constructor(hello: string) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello: string;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
 class Foo extends Bar {
     private bar: string;
     constructor(bar, private fizz?: string) {
@@ -169,10 +190,12 @@ class Car {
 }
 
 class Overloaded {
-    private hello?: string;
-    constructor()
-    constructor(hello?: string) {
+    private hello: string;
+    private world: number = 42;
+    constructor(hello: string)
+    constructor(hello: string, world?: number) {
         this.hello = hello;
+        this.world = world;
     }
 }
 
@@ -180,5 +203,26 @@ class Foo {
     foo: string;
     constructor(foo: 'foo') {
         this.foo = foo;
+    }
+}
+
+class Foo {
+    foo?: string;
+    constructor(foo: string) {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo: string = 'bar';
+    constructor(foo: string) {
+      this.foo = foo;
+    }
+}
+
+class Foo {
+    public foo: string;
+    constructor({foo}: {foo: string}) {
+      this.foo = foo;
     }
 }
