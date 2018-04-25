@@ -18,8 +18,12 @@ export class Rule extends TypedRule {
             } else if (node.kind === ts.SyntaxKind.NewExpression) {
                 if ((<ts.NewExpression>node).typeArguments === undefined)
                     this.checkNewExpression(<ts.NewExpression>node);
-            } else if (!typescriptPre290 && // passing type arguments to JSX elements is only possible starting from typescript@2.9.0
-                       (node.kind === ts.SyntaxKind.JsxOpeningElement || node.kind === ts.SyntaxKind.JsxSelfClosingElement) &&
+            } else if (!typescriptPre290 && // type arguments on JSX elements and tagged templates was introduced in typescript@2.9.0
+                       (
+                           node.kind === ts.SyntaxKind.JsxOpeningElement ||
+                           node.kind === ts.SyntaxKind.JsxSelfClosingElement ||
+                           node.kind === ts.SyntaxKind.TaggedTemplateExpression
+                        ) &&
                         // TODO fix assertion on upgrade to typescript@2.9
                        (<any>node).typeArguments === undefined) {
                 this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
@@ -27,7 +31,7 @@ export class Rule extends TypedRule {
         }
     }
 
-    private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement) {
+    private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
         const signature = this.checker.getResolvedSignature(node);
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
@@ -133,6 +137,9 @@ export class Rule extends TypedRule {
                     break;
                 case ts.SyntaxKind.LessThanToken:
                     ++level;
+                    break;
+                case ts.SyntaxKind.EndOfFileToken:
+                    return;
             }
             token = scanner.scan();
         }

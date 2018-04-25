@@ -1,6 +1,6 @@
 rulesDirectories:
   local: "."
 rules:
-  no-unstable-api-use: error
+  no-useless-assertion: error
   local/foo: error
   no-unused-label: error
