@@ -1,4 +1,3 @@
 {
-  "files": ["*.{t,j}s"],
-  "project": "."
+  "typescriptVersion": ">= 2.9.0"
 }

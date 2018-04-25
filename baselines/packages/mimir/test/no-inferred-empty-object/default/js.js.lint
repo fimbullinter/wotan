@@ -59,3 +59,15 @@ export function JsClass(param) {
 JsClass.prototype.doStuff = function() {
     return this.value;
 }
+
+/**
+ * @template T
+ */
+export class RealJsClass {
+    /**
+     * @param {T} [value]
+     */
+    constructor(value) {
+        this.value = value;
+    }
+}
