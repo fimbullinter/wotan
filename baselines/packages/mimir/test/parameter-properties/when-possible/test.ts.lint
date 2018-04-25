@@ -78,6 +78,10 @@ class Foo {
 }
 
 class Foo {
+    constructor(private hello: string) { 'use strict'; }
+}
+
+class Foo {
     private bar: string;
     constructor(bar: string, private fizz: boolean) {
                 ~~~~~~~~~~~                           [error parameter-properties: Use parameter properties when possible.]
@@ -168,5 +172,14 @@ class Car {
     constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Use parameter properties when possible.]
         this.engine = engine;
+    }
+}
+
+class Overloaded {
+    private hello?: string;
+    constructor()
+    constructor(hello?: string) {
+                ~~~~~~~~~~~~~~    [error parameter-properties: Use parameter properties when possible.]
+        this.hello = hello;
     }
 }

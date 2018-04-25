@@ -75,6 +75,10 @@ class Foo {
 }
 
 class Foo {
+    constructor(private hello: string) { 'use strict'; }
+}
+
+class Foo {
     private bar: string;
     constructor(bar: string, private fizz: boolean) {
         this.bar = bar;
@@ -161,5 +165,20 @@ class Car {
     public engine: Engine;
     constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
         this.engine = engine;
+    }
+}
+
+class Overloaded {
+    private hello?: string;
+    constructor()
+    constructor(hello?: string) {
+        this.hello = hello;
+    }
+}
+
+class Foo {
+    foo: string;
+    constructor(foo: 'foo') {
+        this.foo = foo;
     }
 }

@@ -79,6 +79,11 @@ class Foo {
 }
 
 class Foo {
+    constructor(private hello: string) { 'use strict'; }
+                ~~~~~~~~~~~~~~~~~~~~~                    [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+class Foo {
     private bar: string;
     constructor(bar: string, private fizz: boolean) {
                              ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
@@ -175,5 +180,13 @@ class Car {
     public engine: Engine;
     constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
         this.engine = engine;
+    }
+}
+
+class Overloaded {
+    private hello?: string;
+    constructor()
+    constructor(hello?: string) {
+        this.hello = hello;
     }
 }

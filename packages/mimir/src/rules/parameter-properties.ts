@@ -146,7 +146,7 @@ function getFixerForDisallowedParameterProp(
         Replacement.append(construct.getStart(), getPropertyTextFromParam(param) + lineBreak),
 
         /* Finally, delete modifiers from the parameter prop */
-        Replacement.delete(param.decorators ? param.modifiers![0].getStart() : param.pos, param.name.getStart()),
+        Replacement.delete(param.modifiers!.pos, param.modifiers!.end),
     ];
 }
 
@@ -165,7 +165,7 @@ function getFixerForLonghandProp(param: ts.ParameterDeclaration, construct: ts.C
 
         /* Prepend access modifiers to parameter declaration */
         Replacement.append(
-            param.decorators ? param.decorators.end + 1 : param.getStart(),
+            param.decorators ? param.decorators.end : param.getStart(),
             member.modifiers ? member.modifiers.map((mod) => mod.getText()).join(' ') + ' ' : 'public ',
         ),
     ];
