@@ -36,3 +36,10 @@ function doStuff<K, V>(map: Map<K, V>, key: K) {
     map.set(key, v);
     return v; // signature has implicit return type `V`, but we cannot know that without type information
 }
+
+declare class Foo {
+    prop: string;
+    getProp<T>(this: Record<'prop', T>): T;
+    compare<T>(this: Record<'prop', T>, other: Record<'prop', T>): number;
+    foo<T>(this: T): void;
+}

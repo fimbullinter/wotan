@@ -1,0 +1,243 @@
+export class Hello {
+    constructor(private world: string) {}
+                ~~~~~~~~~~~~~~~~~~~~~     [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+export class Hello extends World {
+    constructor(private world: string) {
+                ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        super();
+    }
+}
+
+export class Welcome {
+    constructor(private home: string = 'mom!') {}
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+export class Hello {
+    public hello: string;
+    constructor(hello: string = 'mom!') {
+        this.hello = hello;
+    }
+}
+
+export class Hello extends World {
+    public hello: string;
+    constructor(hello: string = 'mom!') {
+        super();
+        this.hello = hello;
+    }
+}
+
+/* Tests for multiple access modifiers */
+export class Hello extends World {
+    private readonly hello: string;
+    constructor(hello: string = 'mom!') {
+        super();
+        this.hello = hello;
+    }
+}
+
+export class Hello extends World {
+    constructor(private readonly hello: string = 'mom!') {
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        super();
+    }
+}
+
+class Foo {
+    fizz: string;
+    constructor(fizz: string) {
+        this.fizz = fizz + ' buzz';
+    }
+}
+
+class Foo extends Bar {
+    fizz: string;
+    constructor(fizz: string) {
+        super();
+        this.fizz = fizz + ' buzz';
+    }
+}
+
+/* when-possible config should ignore this case because param is not the first thing to be assigned to the prop */
+class Foo {
+    fizz: string;
+    constructor(fizz: string) {
+        this.fizz = 'buzz';
+        this.fizz = fizz;
+    }
+}
+
+class Foo {
+    constructor() {}
+}
+
+class Foo {
+    constructor() { 'use strict'; }
+}
+
+class Foo {
+    constructor(private hello: string) { 'use strict'; }
+                ~~~~~~~~~~~~~~~~~~~~~                    [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz: boolean) {
+                             ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz: boolean) {
+                             ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                             ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+/* Need to ignore directives */
+class Foo extends Bar {
+    private bar: string;
+    constructor(bar: string, private fizz?: string) {
+                             ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        'use strict';
+        super();
+        this.bar = bar + 'fizz';
+        this.bar = bar;
+    }
+}
+
+class Annotate {
+    private hello;
+    constructor(hello: string) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello: string;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
+class Annotate {
+    private hello;
+    constructor(hello) {
+        this.hello = hello;
+    }
+}
+
+class Foo extends Bar {
+    private bar: string;
+    constructor(bar, private fizz?: string) {
+                     ~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        'use strict';
+        super();
+        this.bar = bar;
+    }
+}
+
+class Foo {
+    private bar: string;
+    constructor(bar: string, private fizz?: boolean) {
+                             ~~~~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        'use strict';
+        this.bar = bar;
+    }
+}
+
+/* When-possible ought to ignore this case */
+export class AngularComponent {
+    @Input() public data: any;
+    constructor(data: any) {
+        this.data = data;
+    }
+}
+
+export class AngularComponent {
+    @Input() public data: any;
+    constructor(data: any, private foo: string) {
+                           ~~~~~~~~~~~~~~~~~~~    [error parameter-properties: Parameter properties have been disallowed.]
+        this.data = data;
+    }
+}
+
+/* If rest params exist and mode is 'consistent,' all other params should be made into longhand props */
+class RestParamClass {
+    private a: string;
+    constructor(a: string, public b: number, ...c) {
+                           ~~~~~~~~~~~~~~~~          [error parameter-properties: Parameter properties have been disallowed.]
+        this.a = a;
+    }
+}
+
+/* never mode should leave the decorator but copy the rest of the param to the class body */
+class Car {
+    constructor(@Inject("MyEngine") public engine: Engine) {}
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+class Car {
+    constructor(@Inject("MyEngine") public engine: Engine = { engineType: 'V8' }) {}
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error parameter-properties: Parameter properties have been disallowed.]
+}
+
+class Car {
+    public engine: Engine;
+    constructor(@Inject("MyEngine") engine: Engine = { engineType: 'V8' }) {
+        this.engine = engine;
+    }
+}
+
+class Overloaded {
+    private hello: string;
+    private world: number = 42;
+    constructor(hello: string)
+    constructor(hello: string, world?: number) {
+        this.hello = hello;
+        this.world = world;
+    }
+}
+
+class Foo {
+    foo: string;
+    constructor(foo: 'foo') {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo?: string;
+    constructor(foo: string) {
+        this.foo = foo;
+    }
+}
+
+class Foo {
+    foo: string = 'bar';
+    constructor(foo: string) {
+      this.foo = foo;
+    }
+}
+
+class Foo {
+    public foo: string;
+    constructor({foo}: {foo: string}) {
+      this.foo = foo;
+    }
+}

@@ -9,6 +9,7 @@ rules:
   no-duplicate-case: error
   no-fallthrough: error
   no-inferred-empty-object: error
+  no-invalid-assertion: error
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error

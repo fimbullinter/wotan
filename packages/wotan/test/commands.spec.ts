@@ -454,7 +454,7 @@ ${path.normalize('test/.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint MISSING')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint MISSING')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint MISSING')}
-  ${path.normalize('baselines/.fail-fix/3.ts MISSING')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix MISSING')}
 ${path.normalize('test/.fail.test.json')}
   ${path.normalize('baselines/.fail/1.ts.lint MISSING')}
   ${path.normalize('baselines/.fail/2.ts.lint MISSING')}
@@ -495,7 +495,7 @@ ${path.normalize('test/.fail-fix.test.json')}
                 }
 
                 public normalizePath(f: string) {
-                    return super.normalizePath(f).replace(/\/baselines\/.success\/(\d).ts(.lint)?$/, '/test/$1.ts');
+                    return super.normalizePath(f).replace(/\/baselines\/.success\/(\d)\.ts\.(lint|fix)$/, '/test/$1.ts');
                 }
             }
             container.bind(FileSystem).to(MockFileSystem);
@@ -519,7 +519,7 @@ ${path.normalize('test/.success.test.json')}
   ${path.normalize('baselines/.success/1.ts.lint PASSED')}
   ${path.normalize('baselines/.success/2.ts.lint PASSED')}
   ${path.normalize('baselines/.success/3.ts.lint PASSED')}
-  ${path.normalize('baselines/.success/1.ts EXISTS')}
+  ${path.normalize('baselines/.success/1.ts.fix EXISTS')}
 `.trim(),
                     success: false,
                 },
@@ -603,9 +603,9 @@ Actual
 +label: 'baz';
 +~~~~~         [error no-unused-label: Unused label 'label'.]
 
-  ${path.normalize('baselines/.fail-fix/1.ts EXISTS')}
-  ${path.normalize('baselines/.fail-fix/2.ts EXISTS')}
-  ${path.normalize('baselines/.fail-fix/3.ts FAILED')}
+  ${path.normalize('baselines/.fail-fix/1.ts.fix EXISTS')}
+  ${path.normalize('baselines/.fail-fix/2.ts.fix EXISTS')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix FAILED')}
 Expected
 Actual
 @@ -1,2 +1,2 @@
@@ -637,23 +637,23 @@ ${path.normalize('test/.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint UPDATED')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint UPDATED')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint UPDATED')}
-  ${path.normalize('baselines/.fail-fix/1.ts REMOVED')}
-  ${path.normalize('baselines/.fail-fix/2.ts REMOVED')}
-  ${path.normalize('baselines/.fail-fix/3.ts UPDATED')}
+  ${path.normalize('baselines/.fail-fix/1.ts.fix REMOVED')}
+  ${path.normalize('baselines/.fail-fix/2.ts.fix REMOVED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix UPDATED')}
 `.trim(),
                 success: true,
             },
         );
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts')),
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts')),
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.fix')),
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.fix')),
         ]);
         t.deepEqual(written, {
             [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n',
             [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
             [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
                 `"bar";\nlabel: 'baz';\n~~~~~         [error no-unused-label: Unused label 'label'.]\n`,
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts'))]: `"bar";\n'baz';\n`,
+            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.fix'))]: `"bar";\n'baz';\n`,
         });
     }
 
@@ -738,8 +738,8 @@ ${path.normalize('.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
-  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
-  ${path.normalize('baselines/.fail-fix/4.ts UNCHECKED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts.fix UNCHECKED')}
   ${path.normalize('baselines/.fail-fix/4.ts.lint UNCHECKED')}
 `.trim(),
             success: false,
@@ -761,8 +761,8 @@ ${path.normalize('.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
-  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
-  ${path.normalize('baselines/.fail-fix/4.ts UNCHECKED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts.fix UNCHECKED')}
 `.trim(),
             success: false,
         },
@@ -802,8 +802,8 @@ ${path.normalize('.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/2.ts.lint PASSED')}
   ${path.normalize('baselines/.fail-fix/3.ts.lint PASSED')}
-  ${path.normalize('baselines/.fail-fix/3.ts PASSED')}
-  ${path.normalize('baselines/.fail-fix/4.ts REMOVED')}
+  ${path.normalize('baselines/.fail-fix/3.ts.fix PASSED')}
+  ${path.normalize('baselines/.fail-fix/4.ts.fix REMOVED')}
   ${path.normalize('baselines/.fail-fix/4.ts.lint REMOVED')}
 `.trim(),
                 success: true,
@@ -811,7 +811,7 @@ ${path.normalize('.fail-fix.test.json')}
         );
 
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts')),
+            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.fix')),
             unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
         ]);
     }
