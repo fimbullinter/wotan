@@ -6,29 +6,29 @@ const foo = 'foo';
 
 ({
     x: 1,
-    ~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...{x: 2, y: 2},
-    ~~~~~~~~~~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     y: 1,
     ...{x: 3},
 });
 
 ({
     foo,
-    ~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...{foo},
 });
 
 ({
     [foo]: 1,
-    ~~~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...{[foo]: 2},
 });
 
 ({
     '__@iterator': 1,
     [Symbol.iterator]: 1,
-    ~~~~~~~~~~~~~~~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...{[Symbol.iterator]: 2},
 });
 
@@ -40,23 +40,23 @@ const foo = 'foo';
 ({
     [get<'foo'>()]: 1,
     ...{[get<'foo'>()]: 2},
-    ~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...{[foo]: 3},
 });
 
 ({
     foo: 1,
     bar: 1,
-    ~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     baz: 1,
-    ~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     ...get<{foo?: string, bar: number, baz: boolean | undefined}>(),
 });
 
 ({
     foo: 1,
     bar: 1,
-    ~~~~~~  [error no-useless-object-property: Property is overridden later.]
+    ~~~~~~  [error no-duplicate-spread-property: Property is overridden later.]
     baz: 1,
     bas: 1,
     ...get<{foo: string, bar: number, bas: number} | {bar: number, baz: boolean, bas?: number}>(),

@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles, RuleSupportsContext } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, unionTypeParts } from 'tsutils';
+import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration } from 'tsutils';
 import { isStrictNullChecksEnabled } from '../utils';
 
 interface PropertyInfo {
@@ -85,11 +85,20 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
         assignedNames: [],
     };
     for (const prop of type.getProperties()) {
+        if (isClassMethod(prop))
+            continue;
         if ((prop.flags & ts.SymbolFlags.Optional) === 0)
             result.assignedNames.push(prop.escapedName);
         result.names.push(prop.escapedName);
     }
     return result;
+}
+function isClassMethod(prop: ts.Symbol): boolean | undefined {
+    if (prop.flags & ts.SymbolFlags.Method && prop.declarations !== undefined)
+        for (const declaration of prop.declarations)
+            if (isClassLikeDeclaration(declaration.parent!))
+                return true;
+    return false;
 }
 
 function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
