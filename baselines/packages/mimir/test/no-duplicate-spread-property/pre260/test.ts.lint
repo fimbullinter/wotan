@@ -2,6 +2,12 @@ export {};
 
 declare function get<T>(): T;
 
+declare class WithMethods {
+    foo(): void;
+    bar: () => void;
+    baz: string;
+}
+
 const foo = 'foo';
 
 ({
@@ -58,3 +64,38 @@ const foo = 'foo';
     let a, b;
     ({[foo]: a, foo: b, ...{}} = get<{foo: string}>());
 }
+
+({
+    foo: 1,
+    bar: 1,
+    baz: 1,
+    ...get<WithMethods>(),
+});
+
+({
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+    ...get<WithMethods>(),
+});
+
+({
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+    ...get<{foo(): void, bar: () => void, baz: number}>(),
+});
+
+({
+    ...get<WithMethods>(),
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+});
+
+({
+    ...get<{foo: number, bar: number, baz: number}>(),
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+});
