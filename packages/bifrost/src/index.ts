@@ -6,11 +6,13 @@ import {
     RuleConstructor,
     FormatterConstructor,
     isTypescriptFile,
+    Replacement,
 } from '@fimbul/ymir';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
 import getCaller = require('get-caller-file');
 import * as path from 'path';
+import { convertAst } from 'tsutils';
 
 // tslint:disable-next-line:naming-convention
 export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
@@ -98,7 +100,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
                         f.end.position,
                         f.message,
                         f.ruleName,
-                        f.fix && f.fix.replacements.map((r) => new TSLint.Replacement(r.start, r.end - r.start, r.text)));
+                        f.fix && f.fix.replacements.map(convertToTslintReplacement));
                     failure.setRuleSeverity(f.severity);
                     return failure;
                 }),
@@ -115,6 +117,75 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
             return this.delegate.format(this.failures, this.fixed).trim();
         }
     };
+}
+
+// tslint:disable-next-line:naming-convention
+export function wrapRuleForTslint(Rule: RuleConstructor): TSLint.RuleConstructor {
+    const metadata: TSLint.IRuleMetadata = {
+        ruleName: 'who-cares',
+        typescriptOnly: false,
+        description: '',
+        options: undefined,
+        optionsDescription: '',
+        type: 'functionality',
+        deprecationMessage: !Rule.deprecated ? undefined : Rule.deprecated === true ? '' : Rule.deprecated,
+    };
+
+    function apply(options: TSLint.IOptions, sourceFile: ts.SourceFile, program?: ts.Program): TSLint.RuleFailure[] {
+        const args = options.ruleArguments.length < 2 ? options.ruleArguments[0] : options.ruleArguments;
+        const failures: TSLint.RuleFailure[] = [];
+        if (Rule.supports !== undefined && !Rule.supports(sourceFile, {program, options: args, settings: new Map()}))
+            return failures;
+        const rule = new Rule({
+            sourceFile,
+            program,
+            options: args,
+            settings: new Map(),
+            getFlatAst() {
+                return convertAst(sourceFile).flat;
+            },
+            getWrappedAst() {
+                return convertAst(sourceFile).wrapped;
+            },
+            addFailure(start, end, message, fix) {
+                failures.push(
+                    new TSLint.RuleFailure(
+                        sourceFile,
+                        start,
+                        end,
+                        message,
+                        options.ruleName,
+                        fix && arrayify(fix).map(convertToTslintReplacement),
+                    ),
+                );
+            },
+        });
+        rule.apply();
+        return failures;
+    }
+
+    if (Rule.requiresTypeInformation)
+        return class extends TSLint.Rules.TypedRule {
+            public static metadata = metadata;
+
+            public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program) {
+                return apply(this.getOptions(), sourceFile, program);
+            }
+        };
+    return class extends TSLint.Rules.OptionallyTypedRule {
+        public static metadata = metadata;
+
+        public apply(sourceFile: ts.SourceFile) {
+            return apply(this.getOptions(), sourceFile);
+        }
+        public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program) {
+            return apply(this.getOptions(), sourceFile, program);
+        }
+    };
+}
+
+function convertToTslintReplacement(r: Replacement) {
+    return new TSLint.Replacement(r.start, r.end - r.start, r.text);
 }
 
 function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
