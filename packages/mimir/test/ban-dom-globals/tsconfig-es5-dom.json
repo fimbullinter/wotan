@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES5",
+    "lib": ["es5", "dom"]
+  }
+}
