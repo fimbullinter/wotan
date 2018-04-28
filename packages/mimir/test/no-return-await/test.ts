@@ -90,3 +90,9 @@ try {
 } catch {
     return await foo();
 }
+
+async () => await {foo: 1};
+
+async function parensWhenNecessary() {
+    return await {foo: 1};
+}
