@@ -4,11 +4,12 @@
     ":semanticCommitsDisabled",
     ":preserveSemverRanges",
     ":prNotPending",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimit10",
     ":automergeMinor",
     ":automergeDigest",
     ":automergeBranchPush",
     ":automergeRequireAllStatusChecks",
-    ":maintainLockFilesWeekly",
     "group:definitelyTyped",
     "group:linters"
   ],
@@ -18,6 +19,7 @@
     "before 5am"
   ],
   "lockFileMaintenance": {
+    "enabled": true,
     "automerge": true
   },
   "node": {
@@ -26,6 +28,6 @@
   },
   "docker": {
     "enabled": true,
-    "extends": "schedule:weekly"
+    "extends": "schedule:weekends"
   }
 }

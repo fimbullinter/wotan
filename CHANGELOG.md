@@ -1,5 +1,25 @@
 # Change Log
 
+## v0.8.0
+
+**Features:**
+
+* new rule: `no-invalid-assertion`
+* `no-inferred-empty-object` checks JSX elements and tagged templates starting from typescript@2.9.0
+* `no-useless-initializer` checks destructuring defaults
+
+**Bugfixes:**
+
+* `no-inferred-empty-object` correctly checks classes with constructor
+* `no-inferred-empty-object` correctly checks classes from JavaScript files that have type parameters in JSDoc
+* `no-useless-assertion` forbids definite assignment assertions on properties with computed name
+* `no-return-await` wraps object literals returned from shorthand arrow functions in parentheses to avoid syntax errors
+* `no-useless-spread` no longer autofixes object spread to avoid introducing duplicate key errors
+* `--project` flag no longer causes a crash when referencing non-existent files
+* `valtyr` correctly loads custom formatters
+
+Thanks to @aervin for contributing.
+
 ## v0.7.0
 
 **Features:**

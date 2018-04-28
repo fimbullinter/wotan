@@ -1,4 +1,6 @@
-/** @deprecated bar */
-export function bar() {}
-/** @deprecated foo */
-export function foo() {}
+export function bar(): string {
+    return 'bar';
+}
+export function foo(): string | number{
+    return 'foo';
+}

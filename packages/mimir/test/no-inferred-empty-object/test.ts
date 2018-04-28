@@ -10,7 +10,7 @@ nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
 
-import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass} from './js';
+import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass, RealJsClass} from './js';
 
 nonGenericJs();
 
@@ -37,6 +37,11 @@ new JsClass();
 new JsClass(1);
 new JsClass<number>();
 new JsClass<number>(1);
+
+new RealJsClass();
+new RealJsClass(1);
+new RealJsClass<number>();
+new RealJsClass<number>(1);
 
 declare function fn<T, U>(one?: T, two?: U): void;
 
@@ -130,6 +135,20 @@ new Wrap<number>(1);
 
 wrapped = new Wrap();
 
+class MyWrap<T> {
+    constructor(public param?: T) {}
+}
+
+new MyWrap();
+new MyWrap<number>()
+new MyWrap(1);
+
+class MyOtherWrap<T> {
+    constructor() {}
+}
+new MyOtherWrap();
+new MyOtherWrap<number>();
+
 function getWrapper() {
     return Wrapper;
 }
@@ -193,3 +212,16 @@ new Promise<object>((resolve, reject) => {
         }
     });
 });
+
+declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
+declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+
+myTagFn``;
+myTagFn`${''}`;
+myTagFn`${1}`;
+myTagFn`${1}${''}`;
+myTagFn<string | number>`${1}${''}`;
+
+myOtherTag``;
+myOtherTag`${''}`;
+myOtherTag<string>``;
