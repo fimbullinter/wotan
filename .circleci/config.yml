@@ -73,13 +73,13 @@ jobs:
     <<: *base
   test@2.4:
     docker:
-      - image: circleci/node:6@sha256:046e4f96f00ef8b58edfddcd57756118377fe641787f15350d18de61367264c0
+      - image: circleci/node:6@sha256:40d98dc8cf6f4e7f8a9649bf6434ae35818ac452130445f73310d4b964b225de
     environment:
       typescriptVersion: 2.4
     <<: *base
   test@2.6:
     docker:
-      - image: circleci/node:8@sha256:41517eb04d4fe284b93ae3a132a8dca0e2433ca7043d8a0bf809d3fb10a6a416
+      - image: circleci/node:8@sha256:844d7ccbba6a41d7b804f20d703229a34f91a6c98a1b160bece9cba54d3ae134
     environment:
       typescriptVersion: 2.6
     <<: *base
