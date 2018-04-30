@@ -1,10 +1,11 @@
 import test from 'ava';
 import * as TSLint from 'tslint';
-import { wrapTslintRule } from '../src';
+import { wrapTslintRule, wrapRuleForTslint } from '../src';
 import * as ts from 'typescript';
-import { RuleContext, Replacement } from '@fimbul/ymir';
+import { RuleContext, Replacement, AbstractRule, TypedRule, typescriptOnly } from '@fimbul/ymir';
+import { convertAst } from 'tsutils';
 
-test('correctly wraps rule', (t) => {
+test('correctly wraps TSLint rule', (t) => {
     class RegularRule extends TSLint.Rules.AbstractRule {
         public apply() {
             return [];
@@ -47,7 +48,7 @@ test('correctly wraps rule', (t) => {
     t.true(rule.supports!(ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
     t.false(rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
 
-    class TypedRule extends TSLint.Rules.TypedRule {
+    class MyTypedRule extends TSLint.Rules.TypedRule {
         public static metadata = <any>{
             deprecationMessage: 'foo',
         };
@@ -55,13 +56,13 @@ test('correctly wraps rule', (t) => {
             return [];
         }
     }
-    rule = wrapTslintRule(TypedRule, 'typed');
+    rule = wrapTslintRule(MyTypedRule, 'typed');
     t.true(rule.requiresTypeInformation);
     t.is(rule.deprecated, 'foo');
     t.is(rule.supports, undefined);
 });
 
-test('applies rules correctly', (t) => {
+test('applies TSLint rules correctly', (t) => {
     let expectedOptions: any;
     let fix: TSLint.Fix | undefined;
     let expectedReplacement: Replacement[] = [];
@@ -113,7 +114,7 @@ test('applies rules correctly', (t) => {
 
     let applyCalled = false;
     let applyWithProgramCalled = false;
-    class TypedRule extends TSLint.Rules.OptionallyTypedRule {
+    class MyTypedRule extends TSLint.Rules.OptionallyTypedRule {
         public apply() {
             applyCalled = true;
             applyWithProgramCalled = false;
@@ -126,7 +127,7 @@ test('applies rules correctly', (t) => {
         }
     }
 
-    ruleCtor = wrapTslintRule(TypedRule, 'my-typed');
+    ruleCtor = wrapTslintRule(MyTypedRule, 'my-typed');
     new ruleCtor(context).apply();
     t.true(applyWithProgramCalled);
 
@@ -186,5 +187,84 @@ test('applies rules correctly', (t) => {
     t.throws(
         () => new (wrapTslintRule(AnotherWrongFileFailureRule))(context).apply(),
         "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'some-name'.",
+    );
+});
+
+test('correctly wraps rule for TSLint', (t) => {
+    class RegularRule extends AbstractRule {
+        public apply() {
+        }
+    }
+    let rule = wrapRuleForTslint(RegularRule);
+    t.false(rule.metadata.typescriptOnly);
+    t.is(rule.metadata.deprecationMessage, undefined);
+    t.truthy(rule.prototype.apply);
+    t.truthy(rule.prototype.applyWithProgram);
+
+    class MyTypedRule extends TypedRule {
+        public static deprecated = true;
+        public apply() {
+        }
+    }
+    rule = wrapRuleForTslint(MyTypedRule);
+    t.truthy(rule.prototype.apply);
+    t.is(rule.prototype.apply, TSLint.Rules.TypedRule.prototype.apply);
+    t.is(rule.metadata.deprecationMessage, '');
+
+    class MyDeprecatedRule extends AbstractRule {
+        public static deprecated = "don't use this any longer";
+        public apply() {}
+    }
+    rule = wrapRuleForTslint(MyDeprecatedRule);
+    t.is(rule.metadata.deprecationMessage, "don't use this any longer");
+});
+
+test('correctly applies rule when wrapped for TSLint', (t) => {
+    @typescriptOnly
+    class TypeScriptOnlyRule extends AbstractRule {
+        public apply() {
+            t.is(this.context.options, 'foo');
+            if (this.context.program !== undefined)
+                t.is(this.context.program, <any>'bar');
+            this.addFailure(0, 0, 'test message');
+        }
+    }
+    let wrapped = wrapRuleForTslint(TypeScriptOnlyRule);
+    let rule = <TSLint.Rules.OptionallyTypedRule>new wrapped(
+        {ruleArguments: ['foo'], disabledIntervals: [], ruleName: 'some-name', ruleSeverity: 'error'},
+    );
+    t.deepEqual(
+        rule.apply(ts.createSourceFile('foo.js', ';', ts.ScriptTarget.ESNext)),
+        [],
+    );
+    t.deepEqual(
+        rule.applyWithProgram(ts.createSourceFile('foo.js', ';', ts.ScriptTarget.ESNext), <any>'bar'),
+        [],
+    );
+    const sourceFile = ts.createSourceFile('foo.ts', ';', ts.ScriptTarget.ESNext);
+    t.deepEqual(
+        rule.apply(sourceFile),
+        [new TSLint.RuleFailure(sourceFile, 0, 0, 'test message', 'some-name')],
+    );
+    t.deepEqual(
+        rule.applyWithProgram(sourceFile, <any>'bar'),
+        [new TSLint.RuleFailure(sourceFile, 0, 0, 'test message', 'some-name')],
+    );
+
+    class MyTypedRule extends TypedRule {
+        public apply() {
+            t.deepEqual(this.context.getFlatAst(), convertAst(sourceFile).flat);
+            t.deepEqual(this.context.getWrappedAst(), convertAst(sourceFile).wrapped);
+            t.deepEqual(this.context.options, ['foo', 'bar']);
+            this.addFailure(0, 0, 'message', Replacement.replace(0, 1, 'x'));
+        }
+    }
+    wrapped = wrapRuleForTslint(MyTypedRule);
+    rule = <TSLint.Rules.OptionallyTypedRule>new wrapped(
+        {ruleArguments: ['foo', 'bar'], disabledIntervals: [], ruleName: 'some-other-name', ruleSeverity: 'error'},
+    );
+    t.deepEqual(
+        rule.applyWithProgram(sourceFile, <any>'bar'),
+        [new TSLint.RuleFailure(sourceFile, 0, 0, 'message', 'some-other-name', [TSLint.Replacement.replaceFromTo(0, 1, 'x')])],
     );
 });

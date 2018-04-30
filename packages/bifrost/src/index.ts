@@ -120,7 +120,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
 }
 
 // tslint:disable-next-line:naming-convention
-export function wrapRuleForTslint(Rule: RuleConstructor): TSLint.RuleConstructor {
+export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T>): TSLint.RuleConstructor {
     const metadata: TSLint.IRuleMetadata = {
         ruleName: 'who-cares',
         typescriptOnly: false,
@@ -136,7 +136,7 @@ export function wrapRuleForTslint(Rule: RuleConstructor): TSLint.RuleConstructor
         const failures: TSLint.RuleFailure[] = [];
         if (Rule.supports !== undefined && !Rule.supports(sourceFile, {program, options: args, settings: new Map()}))
             return failures;
-        const rule = new Rule({
+        const context: RuleContext = {
             sourceFile,
             program,
             options: args,
@@ -159,7 +159,8 @@ export function wrapRuleForTslint(Rule: RuleConstructor): TSLint.RuleConstructor
                     ),
                 );
             },
-        });
+        };
+        const rule = new Rule(<T>context);
         rule.apply();
         return failures;
     }
