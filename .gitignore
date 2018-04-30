@@ -34,7 +34,6 @@ yarn-error.log*
 /scripts/*.js.map
 /scripts/*.d.ts
 # these are written as js file
-!/scripts/foreach.js
 !/scripts/last-travis-nightly.js
 
 !/baselines/**

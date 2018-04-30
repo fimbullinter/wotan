@@ -7,6 +7,7 @@ rules:
   no-case-declaration: error
   no-debugger: error
   no-duplicate-case: error
+  no-duplicate-spread-property: error
   no-fallthrough: error
   no-inferred-empty-object: error
   no-invalid-assertion: error
@@ -28,6 +29,7 @@ rules:
   prefer-const: error
   prefer-dot-notation: error
   prefer-for-of: error
+  prefer-namespace-keyword: error
   prefer-number-isnan: error
   prefer-object-spread: error
   return-never-call: error
