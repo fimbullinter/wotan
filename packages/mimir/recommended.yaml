@@ -21,6 +21,7 @@ rules:
   no-unused-expression: error
   no-unused-label: error
   no-useless-assertion: error
+  no-useless-declare: error
   no-useless-initializer: error
   no-useless-jump-label: error
   no-useless-predicate: error
