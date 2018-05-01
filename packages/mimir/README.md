@@ -22,6 +22,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
 `await-async-result` | Warns about not using the result of a call to an async function inside async functions. *requires type information* | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 `await-only-promise` | Finds uses of `await` on non-Promise values. Also checks `for await` loops. *requires type information* | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
+`ban-dom-globals` | Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
 `generator-require-yield` | Require at least one `yield` inside generator functions. | There's no similar TSLint rule.
 `new-parens` | Require parentheses when invoking constructors. | Performance!
 `no-case-declaration` | Disallow `let`, `class` and `enum` in case blocks. These are visible within the whole switch statement body but not defined in other case clauses. The compiler currently doesn't warn about such uses. You should use a block to restrict the scope of the declarations. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
