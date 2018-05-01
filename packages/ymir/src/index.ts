@@ -76,11 +76,11 @@ export interface FailurePosition {
 
 export type Severity = 'error' | 'warning';
 
-export interface RuleConstructor {
+export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
     supports?: RuleSupportsPredicate;
-    new(context: RuleContext): AbstractRule;
+    new(context: T): AbstractRule;
 }
 
 export interface RuleSupportsContext {
