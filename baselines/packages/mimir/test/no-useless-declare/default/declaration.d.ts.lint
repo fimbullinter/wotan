@@ -1,0 +1,35 @@
+declare enum E {}
+export declare const enum CE {}
+declare type T = any;
+~~~~~~~               [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+export declare interface I {}
+       ~~~~~~~                [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
+declare class C {}
+
+type T2 = any;
+interface I2 {}
+
+declare namespace ns.sub {
+    declare enum E {}
+    declare const enum CE {}
+    declare type T = any;
+    declare interface I {}
+    declare class C {}
+}
+
+declare namespace ambient {
+    declare type T = any;
+    interface I {}
+}
+
+declare module 'foo' {
+    declare type T = any;
+}
+
+declare module 'bar';
+
+declare module 'baz';
+
+declare global {
+    declare type T = any;
+}

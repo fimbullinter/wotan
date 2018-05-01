@@ -15,10 +15,10 @@ Make sure to also read the [full documentation of all available modules](https:/
 ## Purpose
 
 Allows TSLint rule authors to provide the same rules for Wotan without any refactoring.
-
 Although `@fimbul/heimdall` already allows users to use your rules and formatters in Wotan, they still need to remember to use `-m @fimbul/heimdall` when running Wotan.
-
 You can help these users by providing your rules in a format that Wotan understands without any plugin.
+
+It also provides the exact opposite functionality: using rules originally written for Fimbullinter (wotan) as TSLint rule.
 
 ## Installation
 
@@ -28,7 +28,9 @@ npm install --save @fimbul/bifrost
 yarn add @fimbul/bifrost
 ```
 
-## Rules
+## Using TSLint Rules and Formatters in Wotan
+
+### Rules
 
 Given a TSLint rule `my-foo` in a file `myFooRule.ts`, you simply create a file `my-foo.ts` with the following content:
 
@@ -42,7 +44,7 @@ export {Wrapped as Rule};
 
 If you want to use a different directory for your TSLint rules and their Wotan wrapper, you just need to adjust the paths in the above example.
 
-## Formatters
+### Formatters
 
 Given a TSLint formatter `my-foo` in a file `myFooFormatter.ts`, you simply create a file `my-foo.ts` with the following content:
 
@@ -52,6 +54,18 @@ import {Formatter} from './myFooFormatter.ts';
 
 const Wrapped = wrapTslintFormatter(Formatter);
 export {Wrapped as Formatter};
+```
+
+## Using Fimbullinter Rules in TSLint
+
+Given a Fimbullinter rule `my-foo` in a file `my-foo.ts`, you simply create a file `myFooRule.ts` with the following content:
+
+```ts
+import {wrapRuleForTslint} from '@fimbul/bifrost';
+import {Rule} from './my-foo.ts';
+
+const Wrapped = wrapRuleForTslint(Rule);
+export {Wrapped as Rule};
 ```
 
 ## License
