@@ -27,7 +27,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`new-parens`](docs/new-parens.md) | :wrench: Requires parentheses when invoking constructors. | Performance!
 [`no-case-declaration`](docs/no-case-declaration.md) | Disallows `let`, `class` and `enum` in case blocks. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
 [`no-debugger`](docs/no-debugger.md) | :wrench: Bans `debugger;` statements from your production code. | Performance!
-`no-duplicate-case` | Detects `switch` statements where multiple `case` clauses check for the same value. *uses type information if available* | This implementation tries to infer the value instead of just comparing the source code.
+[`no-duplicate-case`](docs/no-duplicate-case.md) | :mag_right: Detects `switch` statements where multiple `case` clauses check for the same value. | This implementation tries to infer the value instead of just comparing the source code.
 `no-duplicate-spread-property` | Detects properties in object literals that are overridden by a spreaded object. | TSLint has no such rule.
 `no-fallthrough` | Prevents unintentional fallthough in `switch` statements from one case to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`. | Allows more comment variants such as `fallthrough` or `fall through`.
 `no-inferred-empty-object` | Warns if a type parameter is inferred as `{}` because the compiler cannot find any inference site. *requires type information* | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
