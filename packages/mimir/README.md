@@ -24,8 +24,8 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`await-only-promise`](docs/await-only-promise.md) | :mag: :wrench: Finds uses of `await` on non-Promise values. Also checks `for await` loops. | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 [`ban-dom-globals`](docs/ban-dom-globals.md) | :mag: Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
 [`generator-require-yield`](docs/generator-require-yield.md) | Requires at least one `yield` inside generator functions. | There's no similar TSLint rule.
-[`new-parens`](docs/new-parens.md) | Requires parentheses when invoking constructors. | Performance!
-`no-case-declaration` | Disallow `let`, `class` and `enum` in case blocks. These are visible within the whole switch statement body but not defined in other case clauses. The compiler currently doesn't warn about such uses. You should use a block to restrict the scope of the declarations. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
+[`new-parens`](docs/new-parens.md) | :wrench: Requires parentheses when invoking constructors. | Performance!
+[`no-case-declaration`](docs/no-case-declaration.md) | Disallows `let`, `class` and `enum` in case blocks. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
 `no-debugger` | Ban `debugger;` statements from your production code. | Performance!
 `no-duplicate-case` | Detects `switch` statements where multiple `case` clauses check for the same value. *uses type information if available* | This implementation tries to infer the value instead of just comparing the source code.
 `no-duplicate-spread-property` | Detects properties in object literals that are overridden by a spreaded object. | TSLint has no such rule.
