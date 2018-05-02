@@ -1,6 +1,6 @@
 # no-duplicate-case
 
-:mag:_right: works better with type information
+:mag_right: works better with type information
 
 Detects identical `case` clauses within a single `switch` statement.
 
