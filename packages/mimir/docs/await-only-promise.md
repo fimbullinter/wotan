@@ -2,7 +2,7 @@
 
 :mag: requires type information :wrench: fixable
 
-Disallows `await`ing a non-Promise value. Also disallows `for-await-of` looping over an Iterable instead of AsyncIterable value.
+Disallows `await`ing a non-Promise value. Also enforces `for-await-of` to loop over an `AsyncIterable<any>` or an `Iterable<PromiseLike<any>>` value.
 
 ## Rationale
 
@@ -31,6 +31,7 @@ async function test(iterable: AsyncIterable<number>, promise?: Promise<number>) 
   }
   await promise; // awaiting `Promise | undefined`
 
-  for await (const e of iterable) {} // iterating `AsyncIterable`
+  for await (const e of iterable) {} // iterating `AsyncIterable<any>`
+  for await (const v of [Promise.resolve(promise)]) {} // iterating `Iterable<PromiseLike<any>>`
 }
 ```
