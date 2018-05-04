@@ -24,6 +24,8 @@ switch (v) {
   case 'foo':
   case "foo": // same as above
   case `foo`: // same as above
+  case someVariable:
+  case someVariable: // same as above
 }
 ```
 
@@ -37,5 +39,7 @@ switch (v) {
   case 'foo':
   case 'bar':
   case (condition ? 'bar' : 'baz'):
+  case someVariable:
+  case someOtherVariable:
 }
 ```
