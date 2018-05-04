@@ -73,9 +73,6 @@ export class Rule extends AbstractRule {
                 result.add(prefixFn(undefined));
             } else if (t.flags & ts.TypeFlags.Null) {
                 result.add(prefixFn(null)); // tslint:disable-line:no-null-keyword
-            } else if (t.flags & ts.TypeFlags.Boolean) {
-                result.add(prefixFn(true));
-                result.add(prefixFn(false));
             } else {
                 return [];
             }
