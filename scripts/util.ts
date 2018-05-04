@@ -82,6 +82,7 @@ function filterFiles(file: string): boolean {
     const parts = file.split(/[/\\]/);
     switch (parts[2]) {
         case 'test':
+        case 'docs':
         case 'tsconfig.json':
         case '.npmignore':
         case '.gitignore':
