@@ -103,7 +103,7 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 1);
 
-    t.deepEqual<Failure[]>(
+    t.deepEqual<ReadonlyArray<Failure>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -122,7 +122,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 2);
     t.is(warnings[1], "Rule 'my/alias' is deprecated.");
 
-    t.deepEqual<Failure[]>(
+    t.deepEqual<ReadonlyArray<Failure>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -143,7 +143,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 3);
     t.is(warnings[2], "Rule 'my/other/alias' is deprecated: Use that other rule instead.");
 
-    t.deepEqual<Failure[]>(
+    t.deepEqual<ReadonlyArray<Failure>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -155,7 +155,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 4);
     t.is(warnings[3], "Could not find core rule 'non-existent'.");
 
-    t.deepEqual<Failure[]>(
+    t.deepEqual<ReadonlyArray<Failure>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([

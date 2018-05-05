@@ -15,7 +15,7 @@ export type FileSummary = LintAndFixFileResult;
 
 export interface LintAndFixFileResult {
     content: string;
-    failures: Failure[];
+    failures: ReadonlyArray<Failure>;
     fixes: number;
 }
 
@@ -94,7 +94,7 @@ export interface RuleContext {
     readonly sourceFile: ts.SourceFile;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
-    addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]): void;
+    addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -154,11 +154,11 @@ export abstract class AbstractRule {
 
     public abstract apply(): void;
 
-    public addFailure(start: number, end: number, message: string, fix?: Replacement | Replacement[]) {
+    public addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
         return this.context.addFailure(start, end, message, fix);
     }
 
-    public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | Replacement[]) {
+    public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
         return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
     }
 }
@@ -332,7 +332,7 @@ export abstract class AbstractProcessor {
 
     public abstract preprocess(): string;
 
-    public abstract postprocess(failures: Failure[]): Failure[];
+    public abstract postprocess(failures: ReadonlyArray<Failure>): ReadonlyArray<Failure>;
 
     public abstract updateSource(newSource: string, changeRange: ts.TextChangeRange): ProcessorUpdateResult;
 }

@@ -14,7 +14,7 @@ export interface PackageData {
     peerDependencies?: Dependencies;
 }
 
-export function isTreeClean(directories: string[] = [], exceptions: string[] = []) {
+export function isTreeClean(directories: ReadonlyArray<string> = [], exceptions: ReadonlyArray<string> = []) {
     cp.spawnSync('git', ['update-index', '-q', '--refresh'], {stdio: 'ignore'});
     const modified = cp.spawnSync(
         'git',
@@ -29,7 +29,7 @@ export function isTreeClean(directories: string[] = [], exceptions: string[] = [
     return untracked.stdout.length === 0;
 }
 
-export function ensureCleanTree(directories: string[] = [], exceptions?: string[]) {
+export function ensureCleanTree(directories: ReadonlyArray<string> = [], exceptions?: ReadonlyArray<string>) {
     if (isTreeClean(directories, exceptions))
         return;
     console.error('Working directory contains uncommited changes.');

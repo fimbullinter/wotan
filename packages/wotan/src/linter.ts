@@ -29,7 +29,6 @@ export interface UpdateFileResult {
 }
 
 export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
-export type PostprocessCallback = (failures: Failure[]) => Failure[];
 
 @injectable()
 export class Linter {
@@ -40,7 +39,7 @@ export class Linter {
         private filterFactory: FailureFilterFactory,
     ) {}
 
-    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
+    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): ReadonlyArray<Failure> {
         return this.getFailures(file, config, program, undefined);
     }
 
@@ -140,7 +139,7 @@ export class Linter {
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | Replacement[]) => {
+        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
             const failure: Failure = {
                 ruleName,
                 severity,

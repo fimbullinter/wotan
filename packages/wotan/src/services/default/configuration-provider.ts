@@ -19,10 +19,10 @@ export interface RawConfiguration {
     aliases?: RawConfiguration.AliasMap;
     rules?: RawConfiguration.RuleMap;
     settings?: RawConfiguration.SettingsMap;
-    extends?: string | string[];
-    overrides?: RawConfiguration.Override[];
+    extends?: string | ReadonlyArray<string>;
+    overrides?: ReadonlyArray<RawConfiguration.Override>;
     rulesDirectories?: RawConfiguration.RulesDirectoryMap;
-    exclude?: string | string[];
+    exclude?: string | ReadonlyArray<string>;
     processor?: string | null | false;
 }
 
@@ -34,7 +34,7 @@ export namespace RawConfiguration {
     }
     export type RuleConfigValue = RuleSeverity | RuleConfig | null;
     export interface Override {
-        files: string | string[];
+        files: string | ReadonlyArray<string>;
         rules?: RuleMap;
         settings?: SettingsMap;
         processor?: string | null | false;

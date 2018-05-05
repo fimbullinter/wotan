@@ -189,7 +189,7 @@ function convertToTslintReplacement(r: Replacement) {
     return new TSLint.Replacement(r.start, r.end - r.start, r.text);
 }
 
-function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
+function arrayify<T>(maybeArr: T | ReadonlyArray<T> | undefined): ReadonlyArray<T> {
     return Array.isArray(maybeArr)
         ? maybeArr
         : maybeArr === undefined

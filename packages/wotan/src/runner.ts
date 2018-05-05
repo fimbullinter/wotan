@@ -174,7 +174,7 @@ export class Runner {
         patterns: string[],
         exclude: string[],
         host: ProjectHost,
-    ): {files: string[], program: ts.Program} {
+    ): {files: Iterable<string>, program: ts.Program} {
         const cwd = this.directories.getCurrentDirectory();
         if (project !== undefined) {
             project = this.checkConfigDirectory(path.resolve(cwd, project));
