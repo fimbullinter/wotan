@@ -28,7 +28,7 @@ declare let condition: boolean;
 
 'foo' as 'boo';
 (condition ? 'foo' : 'bar') as 'baz';
-<true>false
+<true>false;
 ```
 
 :thumbsup: Examples of correct code
@@ -46,6 +46,6 @@ String() as 'foo';
 false as boolean;
 
 // the following examples are already type errors
-1 as 'foo'
+1 as 'foo';
 <{foo: 'foo'}>{foo: 'bar'};
 ```
