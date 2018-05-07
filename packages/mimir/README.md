@@ -32,7 +32,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-fallthrough`](docs/no-fallthrough.md) | Prevents unintentional fallthough in `switch` statements from one case to another. | Allows more comment variants such as `fallthrough` or `fall through`.
 [`no-inferred-empty-object`](docs/no-inferred-empty-object.md) | :mag: Detects type parameters that are inferred as `{}` because the compiler cannot infer a type. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
 [`no-invalid-assertion`](docs/no-invalid-assertion.md) | :mag: Disallows asserting a literal type to a different literal type of the same widened type, e.g. `'foo' as 'bar'`.| TSLint has no similar rule.
-`no-misused-generics` | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
+[`no-misused-generics`](docs/no-misused-generics.md) | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 `no-nan-compare` | Don't compare with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 `no-return-await` | Warns for unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 `no-unassigned-variable` | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.

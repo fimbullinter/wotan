@@ -33,6 +33,7 @@ get() as string;
 type Identity = <T>(param: T) => T; // T is used in more than one position
 type Compare = <T>(param: T, param2: T) => boolean; // T is used in more than one position
 declare class MyClass {
-  method<T, U extends T>(param: T, param2: U): number; // T is used more than once, U is constrained by T
+  method(param: T): number; // replaced type parameter with its constraint
+  otherMethod<T, U extends T>(param: T, param2: U): number; // T is used more than once, U is constrained by T
 }
 ```
