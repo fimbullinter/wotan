@@ -25,6 +25,7 @@ declare function take<T>(param: T): void; // T not used as constraint -> could j
 declare function take<T extends object>(param: T): void; // could just use `object`
 declare function take<T, U = T>(param1: T, param2: U): void; // no constraint
 declare function take<T, U extends T>(param: T): U; // U is only used in the return type
+declare function take<T, U extends T>(param: U): U; // T cannot be inferred
 
 declare function identity<T>(param: T): T; // this is valid as it constrains the return type to the parameter type
 declare function compare<T>(param1: T, param2: T): boolean; // this is valid because it enforces comparable types for both parameters
