@@ -42,6 +42,8 @@ declare function take<T extends object>(param: T): void; // could just use `obje
 declare function take<T, U = T>(param1: T, param2: U): void; // no constraint
                       ~                                                       [error no-misused-generics: TypeParameter 'T' is not used to enforce a constraint between types and can be replaced with 'any'.]
                          ~~~~~                                                [error no-misused-generics: TypeParameter 'U' is not used to enforce a constraint between types and can be replaced with 'any'.]
+declare function take<T, U extends T>(param: T): U; // U is only used in the return type
+                         ~~~~~~~~~~~                                                     [error no-misused-generics: TypeParameter 'U' cannot be inferred from any parameter.]
 
 declare function identity<T>(param: T): T; // this is valid as it constrains the return type to the parameter type
 declare function compare<T>(param1: T, param2: T): boolean; // this is valid because it enforces comparable types for both parameters
@@ -50,7 +52,7 @@ declare function compare<T, U extends T>(param1: T, param2: U): boolean; // this
 // type parameters in implementations are always necessary, because they enforce type safety in the function body
 function doStuff<K, V>(map: Map<K, V>, key: K) {
     let v = map.get(key);
-    v = 1; // this error disappears if V is replaces with `any`
+    v = 1; // this error disappears if V is replaced with `any`
     map.set(key, v);
     return v; // signature has implicit return type `V`, but we cannot know that without type information
 }
