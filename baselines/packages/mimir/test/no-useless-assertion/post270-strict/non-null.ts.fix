@@ -163,3 +163,28 @@ function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
     takeObject(v!);
     function takeObject(o: {}) {}
 }
+
+let outer: number;
+(function useBeforeDeclare() {
+    outer!;
+    let inner: number;
+    inner!;
+    (() => outer! + inner! + function() {
+        return outer! + inner!;
+    }())();
+    (async function() {
+        outer;
+        inner;
+    })();
+    (function*(param) {
+        yield;
+        outer;
+        inner;
+    })(() => outer);
+    function nested() {
+        outer;
+        inner;
+        (() => outer + inner)();
+    }
+    (() => inner);
+})();
