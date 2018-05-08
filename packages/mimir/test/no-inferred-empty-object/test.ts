@@ -10,7 +10,7 @@ nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
 
-import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass, RealJsClass} from './js';
+import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass, RealJsClass, functionTyped} from './js';
 
 nonGenericJs();
 
@@ -32,6 +32,11 @@ multiParam(1, '2');
 multiParam(1, '2', true);
 
 weirdMultiParam();
+
+functionTyped();
+functionTyped(1);
+functionTyped<number>();
+functionTyped<number>(1);
 
 new JsClass();
 new JsClass(1);

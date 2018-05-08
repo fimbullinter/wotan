@@ -71,3 +71,6 @@ export class RealJsClass {
         this.value = value;
     }
 }
+
+/** @type {<T>(param?: T) => T} */
+export var functionTyped;
