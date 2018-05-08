@@ -4,6 +4,10 @@
 
 Detects properties that are always overridden in object literals containing object spread.
 
+## Requirements
+
+This rule requires the compiler option `strictNullChecks` to be enabled and TypeScript 2.5 or newer.
+
 ## Rationale
 
 If you override the property anyway you don't need to declare it in the first place.
