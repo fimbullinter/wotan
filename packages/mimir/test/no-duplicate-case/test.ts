@@ -75,6 +75,15 @@ switch (foo) {
     case E2.Foo:
     case E2.Bar:
     case E2.Baz:
+    case 'a':
+    case get<'a' | 'b'>():
+    case 'b':
+    case 'c':
+    case get<'a' | 'b' | 'c'>():
+    case get<'a' | boolean>():
+    case get<'a' | number>():
+    case +get<'1' | '1.0'>():
+    case get<'a' | undefined>():
 }
 
 function test<T, U extends 1, V extends '1', W extends U | V>(param1: T, param2: U, param3: V, param4: W) {

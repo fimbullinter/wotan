@@ -70,6 +70,7 @@ switch (foo) {
     case get<'foo'>():
          ~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case "foo"'.]
     case get<'foo' | 1>():
+         ~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case 1 | "foo"'.]
     case true:
     case !true:
     case get<true>():
@@ -89,12 +90,26 @@ switch (foo) {
     case E.Baz:
          ~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case get<E>():
+         ~~~~~~~~  [error no-duplicate-case: Duplicate 'case "foo" | "bar" | 1'.]
     case get<E.Bar>():
          ~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case "bar"'.]
     case E2.Foo:
     case E2.Bar:
          ~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
     case E2.Baz:
+    case 'a':
+    case get<'a' | 'b'>():
+    case 'b':
+    case 'c':
+    case get<'a' | 'b' | 'c'>():
+         ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case "a" | "b" | "c"'.]
+    case get<'a' | boolean>():
+         ~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case true | false | "a"'.]
+    case get<'a' | number>():
+    case +get<'1' | '1.0'>():
+         ~~~~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
+    case get<'a' | undefined>():
+         ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-case: Duplicate 'case undefined | "a"'.]
 }
 
 function test<T, U extends 1, V extends '1', W extends U | V>(param1: T, param2: U, param3: V, param4: W) {
@@ -105,5 +120,6 @@ function test<T, U extends 1, V extends '1', W extends U | V>(param1: T, param2:
         case +param3:
              ~~~~~~~  [error no-duplicate-case: Duplicate 'case 1'.]
         case param4:
+             ~~~~~~  [error no-duplicate-case: Duplicate 'case 1 | "1"'.]
     }
 }
