@@ -10,7 +10,10 @@ export class Rule extends TypedRule {
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
             if (isAwaitExpression(node)) {
-                if (node.expression.pos === re.lastIndex && !this.isPromiseLike(node.expression))
+                if (
+                    node.expression.pos === re.lastIndex &&
+                    !this.maybePromiseLike(this.checker.getTypeAtLocation(node.expression), node.expression)
+                )
                     this.addFailure(
                         match.index,
                         node.end,
@@ -32,8 +35,8 @@ export class Rule extends TypedRule {
         }
     }
 
-    private isPromiseLike(node: ts.Expression): boolean {
-        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
+    private maybePromiseLike(type: ts.Type, node: ts.Expression): boolean {
+        type = this.checker.getApparentType(type);
         if (type.flags & ts.TypeFlags.Any)
             return true;
         for (const t of unionTypeParts(type))
@@ -56,7 +59,8 @@ export class Rule extends TypedRule {
         if (type.flags & ts.TypeFlags.Any)
             return true;
         for (const t of unionTypeParts(type))
-            if (this.hasSymbolAsyncIterator(t))
+            // there must either be a `AsyncIterable` or `Iterable<PromiseLike<any>>`
+            if (this.hasSymbolAsyncIterator(t) || this.isIterableOfPromises(t, node))
                 return true;
         return false;
     }
@@ -67,6 +71,41 @@ export class Rule extends TypedRule {
      * But that's none of our business as the compiler already does the heavy lifting.
      */
     private hasSymbolAsyncIterator(type: ts.Type): boolean {
-        return type.getProperties().some((prop) => prop.name === '__@asyncIterator'); // TODO this may break in future typescript releases
+        return type.getProperties().some((prop) => symbolName(prop) === '__@asyncIterator');
     }
+
+    private isIterableOfPromises(type: ts.Type, node: ts.Expression): boolean {
+        const symbol = type.getProperties().find((prop) => symbolName(prop) === '__@iterator');
+        if (symbol === undefined)
+            return false;
+        const t = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(symbol, node));
+        if (t.flags & ts.TypeFlags.Any)
+            return true;
+        for (const signature of t.getCallSignatures()) {
+            const returnType = this.checker.getApparentType(signature.getReturnType());
+            if (returnType.flags & ts.TypeFlags.Any)
+                return true;
+            const next = returnType.getProperty('next');
+            if (next === undefined)
+                continue;
+            const nextType = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(next, node));
+            if (nextType.flags & ts.TypeFlags.Any)
+                return true;
+            for (const nextSignature of nextType.getCallSignatures()) {
+                const nextReturnType = this.checker.getApparentType(nextSignature.getReturnType());
+                if (nextReturnType.flags & ts.TypeFlags.Any)
+                    return true;
+                const value = nextReturnType.getProperty('value');
+                if (value !== undefined && this.maybePromiseLike(this.checker.getTypeOfSymbolAtLocation(value, node), node))
+                    return true;
+            }
+        }
+        return false;
+    }
+}
+
+// for compatibility with typescript@2.4
+function symbolName(s: ts.Symbol) {
+    // wotan-disable-next-line no-useless-predicate
+    return s.escapedName === undefined ? s.name : s.escapedName;
 }
