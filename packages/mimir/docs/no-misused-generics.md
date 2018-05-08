@@ -37,3 +37,8 @@ declare class MyClass {
   otherMethod<T, U extends T>(param: T, param2: U): number; // T is used more than once, U is constrained by T
 }
 ```
+
+## Further Reading
+
+* TypeScript Handbook: [Generics](https://www.typescriptlang.org/docs/handbook/generics.html)
+* [Union type inference](https://github.com/Microsoft/TypeScript/issues/23312#issuecomment-380218861)
