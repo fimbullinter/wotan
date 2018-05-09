@@ -45,7 +45,6 @@ weirdMultiParam();
 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 functionTyped();
-~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 functionTyped(1);
 functionTyped<number>();
 functionTyped<number>(1);
@@ -57,7 +56,6 @@ new JsClass<number>();
 new JsClass<number>(1);
 
 new RealJsClass();
-~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new RealJsClass(1);
 new RealJsClass<number>();
 new RealJsClass<number>(1);
@@ -255,13 +253,11 @@ declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string
 declare function myOtherTag<T>(parts: TemplateStringsArray): T;
 
 myTagFn``;
-~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myTagFn`${''}`;
 myTagFn`${1}`;
 myTagFn`${1}${''}`;
 myTagFn<string | number>`${1}${''}`;
 
 myOtherTag``;
-~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myOtherTag`${''}`;
 myOtherTag<string>``;

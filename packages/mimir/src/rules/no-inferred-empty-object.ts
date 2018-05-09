@@ -155,9 +155,11 @@ export class Rule extends TypedRule {
 }
 
 function getTypeParameters(node: ts.DeclarationWithTypeParameters) {
+    if (node.typeParameters !== undefined)
+        return node.typeParameters;
     if (node.flags & ts.NodeFlags.JavaScriptFile) {
         const tag = ts.getJSDocTemplateTag(node);
         return tag && tag.typeParameters;
     }
-    return node.typeParameters;
+    return;
 }
