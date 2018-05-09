@@ -45,6 +45,9 @@ updateManifest('package.json', rootManifest, semver.inc(version, 'minor')!); // 
 for (const [name, manifest] of packages)
     updateManifest(`packages/${name}/package.json`, manifest, needsRelease.has(name) ? releaseVersion : undefined);
 
+// install dependencies to update yarn.lock
+execAndLog('yarn');
+
 execAndLog(`git commit -a -m "v${releaseVersion}"`);
 execAndLog(`git tag v${releaseVersion}`);
 execAndLog(`git push origin master --tags`);

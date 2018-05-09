@@ -1,5 +1,5 @@
 {
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@fimbul/disir": "^0.0.1",
     "@fimbul/valtyr": "^0.8.0",
-    "@fimbul/wotan": "^0.8.0",
+    "@fimbul/wotan": "^0.9.0",
     "@types/cross-spawn": "^6.0.0",
     "@types/glob": "^5.0.35",
     "@types/node": "^9.4.0",

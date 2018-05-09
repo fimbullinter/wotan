@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/ymir",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Core library for the Fimbullinter project",
   "publishConfig": {
     "access": "public"

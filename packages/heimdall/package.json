@@ -26,10 +26,10 @@
     "formatters"
   ],
   "peerDependencies": {
-    "@fimbul/wotan": "^0.8.0"
+    "@fimbul/wotan": "^0.9.0"
   },
   "dependencies": {
-    "@fimbul/bifrost": "^0.6.0",
+    "@fimbul/bifrost": "^0.9.0",
     "inversify": "^4.10.0",
     "tslib": "^1.8.1",
     "tslint": "^5.0.0"

@@ -1,5 +1,25 @@
 # Change Log
 
+## v0.9.0
+
+**Features:**
+
+* new rule: `parameter-properties` (contributed by @aervin)
+* new rule: `no-duplicate-spread-property`
+* new rule: `prefer-namespace-keyword`
+* new rule: `no-useless-declare`
+* new rule: `ban-dom-globals`
+* `bifrost` added a function to wrap Fimbullinter rules for the use in TSLint
+* many rules now have a detailed documentation page
+* Node.js v10 is now officially supported
+
+**Bugfixes:**
+
+* `await-only-promise` now allows `for-await-of` with `Iterable<PromiseLike<any>>`, previously it only allowed `AsyncIterable<any>`
+* `no-duplicate-case` added check for unions of literal types
+* `no-inferred-empty-object` handles generic functions declared in JSDoc
+* `no-useless-assertion` fixed detection if variable may be used before being assigned and thus the non-null assertion is actually necessary
+
 ## v0.8.0
 
 **Features:**
