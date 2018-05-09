@@ -47,7 +47,7 @@ export function ensureBranch(name: string) {
         throw new Error(`Expected current branch to be ${name}, but it's actually ${branch}.`);
 }
 
-export function getLastRelaseTag() {
+export function getLastReleaseTag() {
     return cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*', '--abbrev=0'], {encoding: 'utf8'}).stdout.trim();
 }
 

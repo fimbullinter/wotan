@@ -1,5 +1,5 @@
 import * as cp from 'child_process';
-import { getLastRelaseTag, getPackages, getChangedPackageNames, writeManifest, execAndLog, ensureCleanTree } from './util';
+import { getLastReleaseTag, getPackages, getChangedPackageNames, writeManifest, execAndLog, ensureCleanTree } from './util';
 
 if (process.argv.length < 3) {
     console.log('Usage: node scripts/nightly <rev> [<options>...]');
@@ -46,7 +46,7 @@ function updatePublicPackageDependencies() {
 }
 
 const lastNightly = process.argv[2]; // revision of the last nightly
-const lastReleaseTag = getLastRelaseTag();
+const lastReleaseTag = getLastReleaseTag();
 console.log('last stable release tag', lastReleaseTag);
 // if there was a release since the last nightly, only get the diff since that release
 const diffStart = lastNightly && cp.execSync(`git rev-list ${lastReleaseTag}...${lastNightly}`, {encoding: 'utf8'}).split(/\r?\n/)[0]
