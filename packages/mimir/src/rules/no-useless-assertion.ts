@@ -9,6 +9,8 @@ import {
     isNewExpression,
     isCallExpression,
     unionTypeParts,
+    isFunctionExpression,
+    isArrowFunction,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -194,7 +196,12 @@ function maybeUsedBeforeBeingAssigned(node: ts.Expression, type: ts.Type, checke
         return false;
     if (!typesAreEqual(type, checker.getTypeFromTypeNode(declaration.type), checker))
         return false;
-    return findupFunction(node.parent!.parent!.parent!) === findupFunction(declaration.parent!.parent!.parent!);
+    const declaringFunctionScope = findupFunction(declaration.parent!.parent!.parent!);
+    let useFunctionScope = findupFunction(node.parent!.parent!);
+    while (useFunctionScope !== declaringFunctionScope && isIife(useFunctionScope))
+        // TypeScript inlines IIFEs, so we need to do as well
+        useFunctionScope = findupFunction(useFunctionScope.parent!.parent!);
+    return useFunctionScope === declaringFunctionScope;
 }
 
 /** Finds the nearest parent that has a function scope. */
@@ -202,6 +209,21 @@ function findupFunction(node: ts.Node) {
     while (!isFunctionScopeBoundary(node) && node.kind !== ts.SyntaxKind.SourceFile)
         node = node.parent!;
     return node;
+}
+
+function isIife(node: ts.Node): boolean {
+    if (
+        !isFunctionExpression(node) && !isArrowFunction(node) ||
+        node.asteriskToken !== undefined || // exclude generators
+        hasModifier(node.modifiers, ts.SyntaxKind.AsyncKeyword) // exclude async functions
+    )
+        return false;
+    let prev: ts.Node;
+    do {
+        prev = node;
+        node = node.parent!;
+    } while (node.kind === ts.SyntaxKind.ParenthesizedExpression);
+    return isCallExpression(node) && node.expression === prev;
 }
 
 /**

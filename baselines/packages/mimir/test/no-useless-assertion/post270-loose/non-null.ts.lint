@@ -245,3 +245,44 @@ function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
                 ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     function takeObject(o: {}) {}
 }
+
+let outer: number;
+(function useBeforeDeclare() {
+    outer!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    let inner: number;
+    inner!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    (() => outer! + inner! + function() {
+                ~                         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                         ~                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        return outer! + inner!;
+                    ~           [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    }())();
+    (async function() {
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    })();
+    (function*(param) {
+        yield;
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    })(() => outer!);
+                  ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    function nested() {
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        (() => outer! + inner!)();
+                    ~              [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                             ~     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    }
+    (() => inner!);
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+})();
