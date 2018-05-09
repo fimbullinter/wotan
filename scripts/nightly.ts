@@ -1,5 +1,13 @@
 import * as cp from 'child_process';
-import { getLastReleaseTag, getPackages, getChangedPackageNames, writeManifest, execAndLog, ensureCleanTree } from './util';
+import {
+    getLastReleaseTag,
+    getPackages,
+    getChangedPackageNames,
+    writeManifest,
+    execAndLog,
+    ensureCleanTree,
+    sortPackagesForPublishing,
+} from './util';
 
 if (process.argv.length < 3) {
     console.log('Usage: node scripts/nightly <rev> [<options>...]');
@@ -58,7 +66,7 @@ for (const name of getChangedPackageNames(diffStart, publicPackages.keys()))
 
 if (needsRelease.size !== 0) {
     updatePublicPackageDependencies();
-    for (const name of needsRelease) {
+    for (const name of sortPackagesForPublishing(needsRelease, (p) => publicPackages.get(p)!)) {
         writeManifest(`packages/${name}/package.json`, publicPackages.get(name)!);
         execAndLog(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`);
     }

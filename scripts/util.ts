@@ -112,3 +112,25 @@ export function execAndLog(command: string) {
 function splitNullDelimitedList(str: string): string[] {
     return str.split('\0').slice(0, -1);
 }
+
+/** Sort packages by their dependencies. That package with no to-be-published dependencies comes first, all of its dependencies follow. */
+export function sortPackagesForPublishing(packageNames: Iterable<string>, getPackageData: (name: string) => PackageData) {
+    const remaining = new Map<string, PackageData>();
+    for (const name of packageNames)
+        remaining.set(name, getPackageData(name));
+    const result = [];
+    while (remaining.size !== 0) {
+        let changed = false;
+        outer: for (const [key, manifest] of remaining) {
+            for (const {name} of remaining.values())
+                if (manifest.dependencies && manifest.dependencies[name] || manifest.peerDependencies && manifest.peerDependencies[name])
+                    continue outer;
+            result.push(key);
+            remaining.delete(key);
+            changed = true;
+        }
+        if (!changed)
+            throw new Error(`Circular dependency: ${Array.from(remaining.values(), ({name}) => name)}`);
+    }
+    return result;
+}
