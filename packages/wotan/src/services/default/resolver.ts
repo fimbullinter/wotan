@@ -7,7 +7,7 @@ import * as resolve from 'resolve';
 export class NodeResolver implements Resolver {
     constructor(private fs: CachedFileSystem) {}
 
-    public resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string {
+    public resolve(id: string, basedir: string, extensions: ReadonlyArray<string>, paths?: ReadonlyArray<string>): string {
         return resolve.sync(id, {
             basedir,
             extensions,

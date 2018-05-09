@@ -413,7 +413,7 @@ export interface Cache<K, V> {
 }
 
 export interface Resolver {
-    resolve(id: string, basedir: string, extensions: string[], paths?: string[]): string;
+    resolve(id: string, basedir: string, extensions: ReadonlyArray<string>, paths?: ReadonlyArray<string>): string;
     require(id: string, options?: {cache?: boolean}): any;
 }
 export abstract class Resolver {}
