@@ -1,6 +1,6 @@
 import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isBinaryExpression } from 'tsutils';
+import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isBinaryExpression, isPropertyAccessExpression } from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -11,7 +11,12 @@ export class Rule extends AbstractRule {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
             if (!isIdentifier(node) || node.text !== 'NaN' || node.end !== match.index + 3)
                 continue;
-            const parent = node.parent!;
+            let parent = node.parent!;
+            if (isPropertyAccessExpression(parent)) {
+                if (!isIdentifier(parent.expression) || parent.expression.text !== 'Number')
+                    continue;
+                parent = parent.parent!;
+            }
             if (parent.kind === ts.SyntaxKind.CaseClause || isBinaryExpression(parent) && isEqualityCheck(parent.operatorToken.kind))
                 this.addFailureAtNode(parent, "Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.");
         }
