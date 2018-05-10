@@ -35,3 +35,8 @@ async function test(iterable: AsyncIterable<number>, promise?: Promise<number>) 
   for await (const v of [Promise.resolve(promise)]) {} // iterating `Iterable<PromiseLike<any>>`
 }
 ```
+
+## Further Reading
+
+* [Promises/A+ Spec](https://promisesaplus.com/)
+* MDN: [await](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await)
