@@ -1,5 +1,6 @@
 import mdefault, {m} from 'non-existent-module';
                           ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+import {statSync} from 'fs';
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
@@ -29,9 +30,5 @@ function fn2(param1: string, param2): string {
 fn2();
 ~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
 
-type MyType<T> = string;
-export interface MyInterface {
-    prop: MyType<typeof fn>;
-          ~~~~~~             [error typecheck: Property 'prop' of exported interface has or is using private name 'MyType'.]
-                        ~~   [error typecheck: Property 'prop' of exported interface has or is using private name 'fn'.]
-}
+export const stats = statSync('foo');
+             ~~~~~                    [error typecheck: Exported variable 'stats' has or is using name 'Stats' from external module "fs" but cannot be named.]

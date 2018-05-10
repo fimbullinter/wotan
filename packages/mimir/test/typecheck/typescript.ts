@@ -1,4 +1,5 @@
 import mdefault, {m} from 'non-existent-module';
+import {statSync} from 'fs';
 let foo: string;
 foo = 1;
 console.clog(foo);
@@ -18,7 +19,4 @@ function fn2(param1: string, param2): string {
 
 fn2();
 
-type MyType<T> = string;
-export interface MyInterface {
-    prop: MyType<typeof fn>;
-}
+export const stats = statSync('foo');

@@ -1,6 +1,7 @@
 import mdefault, {m} from 'non-existent-module';
                   ~                              [error typecheck: 'm' is declared but never used.]
                           ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+import {statSync} from 'fs';
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
@@ -36,7 +37,4 @@ function fn2(param1: string, param2): string {
 fn2();
 ~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
 
-type MyType<T> = string;
-export interface MyInterface {
-    prop: MyType<typeof fn>;
-}
+export const stats = statSync('foo');
