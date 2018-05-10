@@ -36,7 +36,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-nan-compare`](docs/no-nan-compare.md) | Disallows comparing with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 [`no-return-await`](docs/no-return-await.md) | Disallows unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 [`no-unassigned-variable`](docs/no-unassigned-variable.md) | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.
-`no-unreachable-code` | Warns about statements that will never be executed. Works like TypeScript's dead code detection but doesn't fail compilation because it's a lint error. | TSLint removed their `no-unreachable` rule in v4.0.0.
+[`no-unreachable-code`](docs/no-unreachable-code.md) | Disallows statements that will never be executed. | TSLint removed their `no-unreachable` rule in v4.0.0.
 `no-unsafe-finally` | Forbids control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
 `no-unstable-api-use` | Finds uses of deprecated and experimental variables, classes, properties, functions, signatures, ... *requires type information* | This rule checks element accesses (`foo[bar]`), JSX elements, chained function calls (`getFn()()`) in addition to what TSLint's `deprecation` rule does and has more useful error reporting.
 `no-unused-expression` | Warns about side-effect free expressions whose value is not used | This one is a bit stricter than TSLint's `no-unused-expression` and checks `for` loops in addition.
