@@ -70,6 +70,7 @@ function isWhitelisted(name: string): boolean {
         case 'prompt':
         case 'atob':
         case 'btoa':
+        case 'fetch':
         case 'console':
         case 'sessionStorage':
         case 'localStorage':

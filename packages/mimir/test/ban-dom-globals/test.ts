@@ -18,6 +18,7 @@ window.location;
 navigator.geolocation;
 btoa(atob(''));
 console.log('foo');
+fetch('foo');
 
 sessionStorage;
 localStorage;
