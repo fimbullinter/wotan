@@ -32,4 +32,6 @@ fn2();
 type MyType<T> = string;
 export interface MyInterface {
     prop: MyType<typeof fn>;
+          ~~~~~~             [error typecheck: Property 'prop' of exported interface has or is using private name 'MyType'.]
+                        ~~   [error typecheck: Property 'prop' of exported interface has or is using private name 'fn'.]
 }
