@@ -1,6 +1,7 @@
 # no-useless-assertion
 
 :mag: requires type information
+:wrench: fixable
 
 Disallows type assertions that don't change the type or are not necessary in the first place.
 
