@@ -42,3 +42,8 @@ declare let obj: {
 
 let {prop = 'default'} = obj; // prop is optional
 ```
+
+## Further Reading
+
+* MDN: [Default parameters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters)
+* MDN: [Destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
