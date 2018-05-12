@@ -6,6 +6,7 @@ import {
     VariableDeclarationKind,
     VariableInfo,
     collectVariableUsage,
+    isAmbientModuleBlock,
 } from 'tsutils';
 import * as ts from 'typescript';
 import { isVariableReassignment } from '../utils';
@@ -36,16 +37,4 @@ export class Rule extends AbstractRule {
         if (!variableInfo.inGlobalScope && !variableInfo.exported && !variableInfo.uses.some(isVariableReassignment))
             this.addFailureAtNode(node, `Variable '${node.text}' is never assigned.`);
     }
-}
-
-function isAmbientModuleBlock(node: ts.Node): boolean {
-    while (node.kind === ts.SyntaxKind.ModuleBlock) {
-        do
-            node = node.parent!;
-        while (node.flags & ts.NodeFlags.NestedNamespace);
-        if (hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword))
-            return true;
-        node = node.parent!;
-    }
-    return false;
 }
