@@ -5,5 +5,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
-  }
+  },
+  "exclude": [
+    "external.d.ts"
+  ]
 }

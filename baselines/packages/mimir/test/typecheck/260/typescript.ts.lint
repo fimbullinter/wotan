@@ -1,7 +1,8 @@
 import mdefault, {m} from 'non-existent-module';
                   ~                              [error typecheck: 'm' is declared but its value is never read.]
                           ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
-import {statSync} from 'fs';
+import {create} from 'my-external-module';
+                     ~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'my-external-module'.]
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
@@ -36,4 +37,4 @@ function fn2(param1: string, param2): string {
 fn2();
 ~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
 
-export const stats = statSync('foo');
+export const cannotBeNamed = create();

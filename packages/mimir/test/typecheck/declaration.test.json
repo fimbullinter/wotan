@@ -1,3 +1,4 @@
 {
-  "project": "tsconfig-declaration.json"
+  "project": "tsconfig-declaration.json",
+  "files": ["typescript.ts"]
 }

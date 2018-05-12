@@ -1,5 +1,5 @@
 import mdefault, {m} from 'non-existent-module';
-import {statSync} from 'fs';
+import {create} from 'my-external-module';
 let foo: string;
 foo = 1;
 console.clog(foo);
@@ -19,4 +19,4 @@ function fn2(param1: string, param2): string {
 
 fn2();
 
-export const stats = statSync('foo');
+export const cannotBeNamed = create();
