@@ -86,3 +86,15 @@ obj = Object.assign({});
 
 obj = Object.assign({}, Boolean() && {prop: 1}, Boolean() ? {prop2: 1} : {prop3: 1});
       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+
+Object.assign({})! as {} + '';
+~~~~~~~~~~~~~~~~~              [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+Object.assign({method() {return [0];}}).method()[0]++ === 1 ? 'foo' : 'bar';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                      [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+(Object.assign({})).toString();
+ ~~~~~~~~~~~~~~~~~              [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+
+console.log(Object.assign({}));
+            ~~~~~~~~~~~~~~~~~   [error prefer-object-spread: No need for 'Object.assign', use the object directly.]
+obj.toString(), Object.assign({});
+                ~~~~~~~~~~~~~~~~~  [error prefer-object-spread: No need for 'Object.assign', use the object directly.]

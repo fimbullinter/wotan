@@ -1,6 +1,7 @@
 import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition, unionTypeParts } from 'tsutils';
+import { expressionNeedsParensWhenReplacingNode } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -11,15 +12,22 @@ export class Rule extends TypedRule {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
             if (isAwaitExpression(node)) {
                 if (
-                    node.expression.pos === re.lastIndex &&
-                    !this.maybePromiseLike(this.checker.getTypeAtLocation(node.expression), node.expression)
+                    node.expression.pos !== re.lastIndex ||
+                    this.maybePromiseLike(this.checker.getTypeAtLocation(node.expression), node.expression)
                 )
-                    this.addFailure(
-                        match.index,
-                        node.end,
-                        "Unnecessary 'await' of a non-Promise value.",
-                        Replacement.delete(match.index, node.expression.getStart(this.sourceFile)),
+                    continue;
+                const fix = [Replacement.delete(match.index, node.expression.getStart(this.sourceFile))];
+                if (expressionNeedsParensWhenReplacingNode(node.expression, node))
+                    fix.push(
+                        Replacement.append(match.index, '('),
+                        Replacement.append(node.expression.end, ')'),
                     );
+                this.addFailure(
+                    match.index,
+                    node.end,
+                    "Unnecessary 'await' of a non-Promise value.",
+                    fix,
+                );
             } else if (node.kind === ts.SyntaxKind.AwaitKeyword && node.end === re.lastIndex) {
                 const parent = node.parent!;
                 if (isForOfStatement(parent) && !this.isAsyncIterable(parent.expression)) {

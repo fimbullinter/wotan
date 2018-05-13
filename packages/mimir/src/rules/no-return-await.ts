@@ -1,6 +1,7 @@
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isFunctionScopeBoundary, isTryStatement, WrappedAst, getWrappedNodeAtPosition, isAwaitExpression, isArrowFunction } from 'tsutils';
+import { isFunctionScopeBoundary, isTryStatement, WrappedAst, getWrappedNodeAtPosition, isAwaitExpression } from 'tsutils';
+import { expressionNeedsParensWhenReplacingNode } from '../utils';
 
 const FAIL_MESSAGE = 'Awaiting the returned value is redundant as it is wrapped in a Promise anyway.';
 
@@ -15,10 +16,10 @@ export class Rule extends AbstractRule {
                 const keywordStart = node.expression.pos - 'await'.length;
                 const replacements = [Replacement.delete(keywordStart, node.expression.getStart(this.sourceFile))];
 
-                if (isArrowFunction(node.parent!) && node.expression.kind === ts.SyntaxKind.ObjectLiteralExpression)
+                if (expressionNeedsParensWhenReplacingNode(node.expression, node))
                     replacements.push(
-                        Replacement.append(node.expression.getStart(this.sourceFile), '('),
-                        Replacement.append(node.expression.getEnd(), ')'),
+                        Replacement.append(keywordStart, '('),
+                        Replacement.append(node.expression.end, ')'),
                     );
 
                 this.addFailure(
