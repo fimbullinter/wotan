@@ -1,6 +1,6 @@
 import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { WrappedAst, getWrappedNodeAtPosition, isAsExpression, isTypeAssertion } from 'tsutils';
+import { WrappedAst, getWrappedNodeAtPosition, isAsExpression, isTypeAssertion, isBinaryExpression } from 'tsutils';
 
 export interface Options {
     style: 'classic' | 'as';
@@ -41,12 +41,55 @@ function enforceClassicTypeAssertion(context: RuleContext) {
 function enforceAsTypeAssertion(context: RuleContext) {
     for (const node of context.getFlatAst()) {
         if (isTypeAssertion(node)) {
-            const needsParens = node.expression.kind === ts.SyntaxKind.YieldExpression || false /* TODO use parens detection logic*/;
+            const assertionParens = assertionNeedsParens(node);
+            const expressionParens = node.expression.kind === ts.SyntaxKind.YieldExpression ||
+                !assertionParens && false /* TODO use parens detection logic*/;
             const start = node.getStart(context.sourceFile);
             context.addFailure(start, node.expression.pos, "Use 'obj as T' instead.", [
-                Replacement.replace(start, node.expression.getStart(context.sourceFile), needsParens ? '(' : ''),
-                Replacement.append(node.end, `${needsParens ? ')' : ''} as ${node.type.getText(context.sourceFile)}`)
+                Replacement.replace(
+                    start,
+                    node.expression.getStart(context.sourceFile),
+                    charIf(expressionParens, '(') + charIf(assertionParens, '('),
+                ),
+                Replacement.append(
+                    node.end,
+                    `${charIf(expressionParens, ')')} as ${node.type.getText(context.sourceFile)}${charIf(assertionParens, ')')}`,
+                ),
             ]);
         }
     }
+}
+
+function charIf(condition: boolean, char: string) {
+    return condition ? char : '';
+}
+
+function assertionNeedsParens(node: ts.Expression) {
+    let parent = node.parent!;
+    // fixing unary expression like 'await <T>foo' to 'await foo as T' asserts the result of the entire expression, not just the operand
+    switch (parent.kind) {
+        case ts.SyntaxKind.PrefixUnaryExpression:
+        case ts.SyntaxKind.TypeOfExpression:
+        case ts.SyntaxKind.AwaitExpression:
+        case ts.SyntaxKind.VoidExpression:
+        case ts.SyntaxKind.DeleteExpression:
+        // fixing '<T>foo!' to 'foo as T!' parses 'T!' as JSDocNonNullableType
+        case ts.SyntaxKind.NonNullExpression:
+            return true;
+    }
+    // fixing '<T>foo & bar' to 'foo as T & bar' would parse 'T & bar' as intersection type, therefore we need to add parens
+    while (isBinaryExpression(parent)) {
+        if (node === parent.left) {
+            switch (parent.operatorToken.kind) {
+                case ts.SyntaxKind.AmpersandToken:
+                case ts.SyntaxKind.BarToken:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        node = parent;
+        parent = node.parent!;
+    }
+    return false;
 }
