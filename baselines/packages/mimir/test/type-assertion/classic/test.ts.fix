@@ -24,9 +24,6 @@ void (<T>foo);
 <T>void foo;
 <T>void foo;
 
-<T>foo ? bar : baz;
-<T>foo ? bar : baz;
-
 <T>foo && bar;
 <T>foo && bar;
 
@@ -38,6 +35,9 @@ foo & <T>bar;
 
 foo & <T>bar | baz;
 foo & (<T>bar) | baz;
+
+<T>+foo & bar;
+(<T>+foo) & bar;
 
 () => <T>{foo}.foo;
 () => <T>({foo}.foo);

@@ -31,10 +31,6 @@ void (foo as T);
 ~~~          [error type-assertion: Use 'obj as T' instead.]
 void foo as T;
 
-<T>foo ? bar : baz;
-~~~                 [error type-assertion: Use 'obj as T' instead.]
-foo as T ? bar : baz;
-
 <T>foo && bar;
 ~~~            [error type-assertion: Use 'obj as T' instead.]
 foo as T && bar;
@@ -50,6 +46,10 @@ foo & bar as T;
 foo & <T>bar | baz;
       ~~~           [error type-assertion: Use 'obj as T' instead.]
 foo & (bar as T) | baz;
+
+<T>+foo & bar;
+~~~            [error type-assertion: Use 'obj as T' instead.]
+(+foo as T) & bar;
 
 () => <T>{foo}.foo;
       ~~~           [error type-assertion: Use 'obj as T' instead.]

@@ -24,9 +24,6 @@ void (foo as T);
 <T>void foo;
 void foo as T;
 
-<T>foo ? bar : baz;
-foo as T ? bar : baz;
-
 <T>foo && bar;
 foo as T && bar;
 
@@ -38,6 +35,9 @@ foo & bar as T;
 
 foo & <T>bar | baz;
 foo & (bar as T) | baz;
+
+<T>+foo & bar;
+(+foo as T) & bar;
 
 () => <T>{foo}.foo;
 () => ({foo}.foo) as T;

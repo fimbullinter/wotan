@@ -24,9 +24,6 @@ void (foo as T);
 void foo as T;
 void foo as T;
 
-foo as T ? bar : baz;
-foo as T ? bar : baz;
-
 foo as T && bar;
 foo as T && bar;
 
@@ -38,6 +35,9 @@ foo & bar as T;
 
 foo & (bar as T) | baz;
 foo & (bar as T) | baz;
+
+(+foo as T) & bar;
+(+foo as T) & bar;
 
 () => ({foo}.foo) as T;
 () => ({foo}.foo) as T;
