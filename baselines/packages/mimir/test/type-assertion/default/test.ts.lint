@@ -1,0 +1,84 @@
+declare let foo: any;
+declare let bar: any;
+declare let baz: any;
+type T = any;
+
+<T>foo;
+~~~     [error type-assertion: Use 'obj as T' instead.]
+foo as T;
+
+<T['prop']>foo;
+~~~~~~~~~~~     [error type-assertion: Use 'obj as T' instead.]
+foo as T['prop'];
+
++<T>foo;
+ ~~~     [error type-assertion: Use 'obj as T' instead.]
++(foo as T);
+
+typeof <T>foo;
+       ~~~     [error type-assertion: Use 'obj as T' instead.]
+typeof (foo as T);
+
+<T>typeof foo;
+~~~            [error type-assertion: Use 'obj as T' instead.]
+typeof foo as T;
+
+void <T>foo;
+     ~~~     [error type-assertion: Use 'obj as T' instead.]
+void (foo as T);
+
+<T>void foo;
+~~~          [error type-assertion: Use 'obj as T' instead.]
+void foo as T;
+
+<T>foo ? bar : baz;
+~~~                 [error type-assertion: Use 'obj as T' instead.]
+foo as T ? bar : baz;
+
+<T>foo && bar;
+~~~            [error type-assertion: Use 'obj as T' instead.]
+foo as T && bar;
+
+<T>foo & bar;
+~~~           [error type-assertion: Use 'obj as T' instead.]
+(foo as T) & bar;
+
+foo & <T>bar;
+      ~~~     [error type-assertion: Use 'obj as T' instead.]
+foo & bar as T;
+
+foo & <T>bar | baz;
+      ~~~           [error type-assertion: Use 'obj as T' instead.]
+foo & (bar as T) | baz;
+
+() => <T>{foo}.foo;
+      ~~~           [error type-assertion: Use 'obj as T' instead.]
+() => ({foo}.foo) as T;
+
+() => <T>{foo}.foo & bar;
+      ~~~                 [error type-assertion: Use 'obj as T' instead.]
+() => ({foo}.foo as T) & bar;
+
+<T>() => foo;
+
+async function* test() {
+    <T> await foo;
+    ~~~            [error type-assertion: Use 'obj as T' instead.]
+    await foo as T;
+
+    await <T>foo;
+          ~~~     [error type-assertion: Use 'obj as T' instead.]
+    await (foo as T);
+
+    <T>(yield foo);
+    ~~~             [error type-assertion: Use 'obj as T' instead.]
+    (yield foo) as T;
+
+    yield <T>foo;
+          ~~~     [error type-assertion: Use 'obj as T' instead.]
+    yield foo as T;
+}
+
+/**<T>foo*/<T>foo;
+           ~~~     [error type-assertion: Use 'obj as T' instead.]
+foo /*as*/ as 'as';

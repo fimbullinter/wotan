@@ -1,0 +1,4 @@
+rules:
+  type-assertion:
+    options:
+      style: classic

@@ -1,6 +1,7 @@
 import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isAsExpression, isTypeAssertion, isBinaryExpression } from 'tsutils';
+import { expressionNeedsParensWhenReplacingNode } from '../utils';
 
 export interface Options {
     style: 'classic' | 'as';
@@ -15,7 +16,7 @@ export class Rule extends ConfigurableRule<Options> {
 
     public parseOptions(options: Partial<Options> | null | undefined): Options {
         return {
-            style: ((options && options.style) === 'classic') ? 'classic' : 'as',
+            style: options && options.style === 'classic' ? 'classic' : 'as',
         };
     }
 
@@ -32,7 +33,7 @@ function enforceClassicTypeAssertion(context: RuleContext) {
         if (!isAsExpression(node) || node.type.pos !== re.lastIndex)
             continue;
         context.addFailure(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
-            Replacement.append(node.getStart(context.sourceFile), node.expression.getText(context.sourceFile)),
+            Replacement.append(node.getStart(context.sourceFile), `<${node.type.getText(context.sourceFile)}>`),
             Replacement.delete(node.expression.end, node.end),
         ]);
     }
@@ -43,7 +44,7 @@ function enforceAsTypeAssertion(context: RuleContext) {
         if (isTypeAssertion(node)) {
             const assertionParens = assertionNeedsParens(node);
             const expressionParens = node.expression.kind === ts.SyntaxKind.YieldExpression ||
-                !assertionParens && false /* TODO use parens detection logic*/;
+                !assertionParens && expressionNeedsParensWhenReplacingNode(node.expression, node);
             const start = node.getStart(context.sourceFile);
             context.addFailure(start, node.expression.pos, "Use 'obj as T' instead.", [
                 Replacement.replace(
@@ -72,9 +73,6 @@ function assertionNeedsParens(node: ts.Expression) {
         case ts.SyntaxKind.TypeOfExpression:
         case ts.SyntaxKind.AwaitExpression:
         case ts.SyntaxKind.VoidExpression:
-        case ts.SyntaxKind.DeleteExpression:
-        // fixing '<T>foo!' to 'foo as T!' parses 'T!' as JSDocNonNullableType
-        case ts.SyntaxKind.NonNullExpression:
             return true;
     }
     // fixing '<T>foo & bar' to 'foo as T & bar' would parse 'T & bar' as intersection type, therefore we need to add parens

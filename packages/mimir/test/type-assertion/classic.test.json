@@ -1,0 +1,4 @@
+{
+  "files": ["*.ts?(x)"],
+  "config": ".wotanrc-classic.yaml"
+}
