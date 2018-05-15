@@ -2,6 +2,10 @@
 extends:
   - wotan:latest
   - "@fimbul/disir"
+rules:
+  parameter-properties:
+    options:
+      mode: when-possible
 overrides:
   - files: "packages/*/test/**"
     rules:
