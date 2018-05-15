@@ -110,8 +110,16 @@ try {
 
 async () => await {foo: 1};
             ~~~~~           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+async () => await {foo: 1}['foo'];
+            ~~~~~                  [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
 
 async function parensWhenNecessary() {
+    if (Boolean())
+        return await {prop: 1}.prop;
+               ~~~~~                 [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+    if (!Boolean())
+        return await function() {return 1;}();
+               ~~~~~                           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
     return await {foo: 1};
            ~~~~~           [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
 }

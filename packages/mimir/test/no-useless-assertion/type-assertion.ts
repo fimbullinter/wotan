@@ -1,5 +1,3 @@
-export {};
-
 <1>1;
 <number>1;
 <number>(1 + 1);
@@ -105,3 +103,11 @@ namespace B {
 
 declare let myObj: A.MyClass;
 <B.MyClass>myObj;
+
+<number>{prop: 1}.prop;
+<number>class {static prop: number}.prop;
+<number>function() { return 1; }();
+
+export default <number>class{static prop: number}.prop;
+export default <number>{prop: 1}.prop;
+export = <number>class{static prop: number}.prop;

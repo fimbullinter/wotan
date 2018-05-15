@@ -45,6 +45,8 @@ async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
     /** await */ await get<number>();
                  ~~~~~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
+    await {prop: 1};
+    ~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
 }
 
 declare function hasThen(v: {}): v is {then: {}};

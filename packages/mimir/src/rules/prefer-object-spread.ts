@@ -10,6 +10,7 @@ import {
     unionTypeParts,
     isFalsyType,
 } from 'tsutils';
+import { objectLiteralNeedsParens } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -65,7 +66,7 @@ export class Rule extends TypedRule {
 
 function createFix(node: ts.CallExpression, sourceFile: ts.SourceFile) {
     const args = node.arguments;
-    const objectNeedsParens = node.parent!.kind === ts.SyntaxKind.ArrowFunction || node.parent!.kind === ts.SyntaxKind.ExpressionStatement;
+    const objectNeedsParens = objectLiteralNeedsParens(node);
     const fix = [
         Replacement.replace(node.getStart(sourceFile), args[0].getStart(sourceFile), `${objectNeedsParens ? '(' : ''}{`),
         Replacement.replace(node.end - 1, node.end, `}${objectNeedsParens ? ')' : ''}`),

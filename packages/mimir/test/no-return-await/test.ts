@@ -92,7 +92,12 @@ try {
 }
 
 async () => await {foo: 1};
+async () => await {foo: 1}['foo'];
 
 async function parensWhenNecessary() {
+    if (Boolean())
+        return await {prop: 1}.prop;
+    if (!Boolean())
+        return await function() {return 1;}();
     return await {foo: 1};
 }

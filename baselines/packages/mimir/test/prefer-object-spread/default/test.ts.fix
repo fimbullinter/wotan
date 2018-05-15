@@ -62,3 +62,10 @@ obj = {prop: 1,prop: 2,...obj,}
 obj = {};
 
 obj = {...Boolean() && {prop: 1}, ...Boolean() ? {prop2: 1} : {prop3: 1}};
+
+({})! as {} + '';
+({method() {return [0];}}).method()[0]++ === 1 ? 'foo' : 'bar';
+({}).toString();
+
+console.log({});
+obj.toString(), {};

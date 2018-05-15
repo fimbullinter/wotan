@@ -65,3 +65,10 @@ obj = Object.assign({prop: 1}, {}, {}, {prop: 2}, {}, obj, {},)
 obj = Object.assign({});
 
 obj = Object.assign({}, Boolean() && {prop: 1}, Boolean() ? {prop2: 1} : {prop3: 1});
+
+Object.assign({})! as {} + '';
+Object.assign({method() {return [0];}}).method()[0]++ === 1 ? 'foo' : 'bar';
+(Object.assign({})).toString();
+
+console.log(Object.assign({}));
+obj.toString(), Object.assign({});
