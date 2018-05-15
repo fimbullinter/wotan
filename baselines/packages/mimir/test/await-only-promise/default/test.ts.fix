@@ -34,6 +34,7 @@ async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2
     get<{[key: string]: (v: string) => void}>(); // no implicit `then` property
     get<number | boolean>();
     /** await */ get<number>();
+    ({prop: 1});
 }
 
 declare function hasThen(v: {}): v is {then: {}};

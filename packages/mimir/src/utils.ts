@@ -77,3 +77,70 @@ export function* childStatements(node: ts.Statement) {
                 yield* ((<ts.TryStatement>node)).finallyBlock!.statements;
     }
 }
+
+function getLeadingExpressionWithPossibleParsingAmbiguity(expr: ts.Node): ts.Expression | undefined {
+    switch (expr.kind) {
+        case ts.SyntaxKind.PropertyAccessExpression:
+        case ts.SyntaxKind.ElementAccessExpression:
+        case ts.SyntaxKind.AsExpression:
+        case ts.SyntaxKind.CallExpression:
+        case ts.SyntaxKind.NonNullExpression:
+            return (
+                <ts.PropertyAccessExpression | ts.ElementAccessExpression | ts.AsExpression | ts.CallExpression | ts.NonNullExpression>expr
+            ).expression;
+        case ts.SyntaxKind.PostfixUnaryExpression:
+            return (<ts.PostfixUnaryExpression>expr).operand;
+        case ts.SyntaxKind.BinaryExpression:
+            return (<ts.BinaryExpression>expr).left;
+        case ts.SyntaxKind.ConditionalExpression:
+            return (<ts.ConditionalExpression>expr).condition;
+        default:
+            return;
+    }
+}
+
+export function expressionNeedsParensWhenReplacingNode(expr: ts.Expression, replaced: ts.Expression): boolean {
+    // this currently doesn't handle the following cases
+    // (yield) as any
+    // await (yield)
+    // (1).toString()
+    // ({foo} = {foo: 1});
+    // binary operator precendence
+    while (true) {
+        switch (expr.kind) {
+            case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.FunctionExpression:
+            case ts.SyntaxKind.ClassExpression:
+                return parentRequiresParensForNode(expr.kind, replaced);
+            default:
+                const current = getLeadingExpressionWithPossibleParsingAmbiguity(expr);
+                if (current === undefined)
+                    return false;
+                expr = current;
+        }
+    }
+}
+
+function parentRequiresParensForNode(
+    kind: ts.SyntaxKind.ObjectLiteralExpression | ts.SyntaxKind.FunctionExpression | ts.SyntaxKind.ClassExpression,
+    replaced: ts.Node,
+): boolean {
+    while (true) {
+        const parent = replaced.parent!;
+        switch (parent.kind) {
+            case ts.SyntaxKind.ArrowFunction:
+                return kind === ts.SyntaxKind.ObjectLiteralExpression;
+            case ts.SyntaxKind.ExpressionStatement:
+                return true;
+            case ts.SyntaxKind.ExportAssignment:
+                return !(<ts.ExportAssignment>parent).isExportEquals && kind !== ts.SyntaxKind.ObjectLiteralExpression;
+        }
+        if (getLeadingExpressionWithPossibleParsingAmbiguity(parent) !== replaced)
+            return false;
+        replaced = parent;
+    }
+}
+
+export function objectLiteralNeedsParens(replaced: ts.Expression): boolean {
+    return parentRequiresParensForNode(ts.SyntaxKind.ObjectLiteralExpression, replaced);
+}

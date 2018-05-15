@@ -1,6 +1,6 @@
 import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled } from '../utils';
+import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled, expressionNeedsParensWhenReplacingNode } from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -110,8 +110,7 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
-        // TODO remove assertion on update to typescript@2.8
-        if ((targetType.flags & (ts.TypeFlags.TypeVariable | (<any>ts.TypeFlags).Instantiable)) === 0) {
+        if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
         }
@@ -131,7 +130,13 @@ export class Rule extends TypedRule {
             );
         } else {
             const start = node.getStart(this.sourceFile);
-            this.addFailure(start, node.expression.pos, message, Replacement.delete(start, node.expression.getStart(this.sourceFile)));
+            const fix = [Replacement.delete(start, node.expression.getStart(this.sourceFile))];
+            if (expressionNeedsParensWhenReplacingNode(node.expression, node))
+                fix.push(
+                    Replacement.append(start, '('),
+                    Replacement.append(node.end, ')'),
+                );
+            this.addFailure(start, node.expression.pos, message, fix);
         }
     }
 
