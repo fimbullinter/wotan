@@ -6,6 +6,9 @@ rules:
   type-assertion:
     options:
       style: classic
+  parameter-properties:
+    options:
+      mode: when-possible
 overrides:
   - files: "packages/*/test/**"
     rules:

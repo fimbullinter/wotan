@@ -82,7 +82,8 @@ export class Rule extends TypedRule {
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        if (node.argumentExpression === undefined)
+        // compatibility with typescript@<2.9.0
+        if (node.argumentExpression === undefined) // wotan-disable-line no-useless-predicate
             return;
         const type = this.checker.getTypeAtLocation(node.expression);
         const keyType = this.checker.getTypeAtLocation(node.argumentExpression);
