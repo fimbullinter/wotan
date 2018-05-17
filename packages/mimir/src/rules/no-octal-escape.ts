@@ -21,7 +21,7 @@ export class Rule extends AbstractRule {
                         this.addFailure(
                             match.index + match[1].length,
                             re.lastIndex,
-                            'Octal escapes are deprecated and not allowed in strict mode.',
+                            'Octal escape sequences are deprecated and not allowed in strict mode.',
                             Replacement.replace(
                                 match.index + match[1].length + 1,
                                 re.lastIndex,
