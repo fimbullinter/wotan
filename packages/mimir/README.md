@@ -47,6 +47,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `no-useless-jump-label` | Detects `continue label;` and `break label;` where the label is not necessary. | There's no similar TSLint rule.
 `no-useless-predicate` | Detects redundant conditions that are either always true or always false. *requires type information* | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
 `no-useless-spread` | Detects redundant array and object spread which can safely be removed. | There's no similar TSLint rule.
+`parameter-properties` | Enforces or disallows the use of parameter properties. This rule is **not** enabled in `wotan:recommended`. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 `prefer-const` | Prefer `const` for variables that are never reassigned. Use option `{destructuring: "any"}` if you want to see failures for each identifier of a destructuring, even if not all of them can be constants. The default is `{destructuring: "all"}`. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used in before being declared which results in a compiler error after fixing.
 `prefer-dot-notation` | Prefer `obj.foo` over `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
 `prefer-for-of` | Prefer `for-of` loops over regular `for` loops where possible. *requires type information* | Avoids the false positives of TSLint's `prefer-for-of` rule.
