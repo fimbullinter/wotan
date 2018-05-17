@@ -26,6 +26,16 @@ export {};
  ~~        [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
    ~~      [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
       ~~   [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
+'\377';
+ ~~~~   [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
+'\378';
+ ~~~    [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
+'\777';
+ ~~~    [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
+'\400';
+ ~~~    [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
+'\300';
+ ~~~~   [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
 `\10`;
  ~~~   [error no-octal-escape: Octal escapes are deprecated and not allowed in strict mode.]
 `\251${1}\8${2}\7${3}a\6b`;

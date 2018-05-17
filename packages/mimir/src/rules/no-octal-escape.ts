@@ -5,7 +5,7 @@ import * as ts from 'typescript';
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
     public apply() {
-        const re = /(\\*)\\(?:[1-7][0-7]{0,2}|[0-7]{2,3})/g;
+        const re = /(\\*)\\(?:0[0-7]{1,2}|[1-3][0-7]{0,2}|[4-7][0-7]?)/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             if (match[1].length & 1) // only check if backslash is not escaped
@@ -25,7 +25,7 @@ export class Rule extends AbstractRule {
                             Replacement.replace(
                                 match.index + match[1].length + 1,
                                 re.lastIndex,
-                                `u${toUnicodeSequence(parseInt(match[0].substr(match[1].length + 1), 8))}`,
+                                `x${toHexSequence(parseInt(match[0].substr(match[1].length + 1), 8))}`,
                             ),
                         );
             }
@@ -33,7 +33,7 @@ export class Rule extends AbstractRule {
     }
 }
 
-function toUnicodeSequence(num: number): string {
+function toHexSequence(num: number): string {
     const result = num.toString(16);
-    return '0'.repeat(4 - result.length) + result;
+    return (result.length === 2  ? '' : '0') + result;
 }
