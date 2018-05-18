@@ -5,6 +5,7 @@ declare namespace JSX {
 
     interface Element {
         render(): Element | string | false;
+        props: any;
     }
 
     interface ElementAttributesProperty {
@@ -41,6 +42,7 @@ class MyComponent<T> {
 }
 
 foo = <MyComponentConstructor></MyComponentConstructor>;
+      ~~~~~~~~~~~~~~~~~~~~~~~~                           [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <MyComponentConstructor<string>></MyComponentConstructor>;
 foo = <MyComponentConstructor prop="1"></MyComponentConstructor>;
 foo = <MyComponent></MyComponent>;
@@ -49,7 +51,8 @@ foo = <MyComponent prop="1"></MyComponent>;
 
 function MyFactoryComponent<T>(props: Record<string, T>) {
     return {
-        render: () => false,
+        render() { return this; },
+        props,
     };
 }
 
