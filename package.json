@@ -35,6 +35,6 @@
     "semver": "^5.5.0",
     "travis-ci": "^2.1.1",
     "tslint-consistent-codestyle": "^1.11.1",
-    "typescript": "^2.0.0"
+    "typescript": "2.9.0-rc"
   }
 }
