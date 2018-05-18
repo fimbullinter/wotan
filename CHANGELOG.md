@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.10.0
+
+This release fixes a few bugs related to the release process:
+
+* packages are released in dependency order: a new version of a package will not be published before it's dependency
+* fixed SemVer version mismatch by publishing packages that depend on other published packages
+
+**Bugfixes:**
+
+* `no-nan-compare`: also detects comparing with `Number.NaN`
+
 ## v0.9.0
 
 **Features:**
