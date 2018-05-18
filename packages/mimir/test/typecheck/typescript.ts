@@ -1,5 +1,4 @@
 import mdefault, {m} from 'non-existent-module';
-import {create} from 'my-external-module';
 let foo: string;
 foo = 1;
 console.clog(foo);
@@ -19,4 +18,7 @@ function fn2(param1: string, param2): string {
 
 fn2();
 
-export const cannotBeNamed = create();
+export function usesPrivateName() {
+    class Foo {}
+    return new Foo();
+}
