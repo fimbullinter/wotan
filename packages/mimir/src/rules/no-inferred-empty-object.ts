@@ -24,8 +24,7 @@ export class Rule extends TypedRule {
                            node.kind === ts.SyntaxKind.JsxSelfClosingElement ||
                            node.kind === ts.SyntaxKind.TaggedTemplateExpression
                         ) &&
-                        // TODO fix assertion on upgrade to typescript@2.9
-                       (<any>node).typeArguments === undefined) {
+                       (<ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression>node).typeArguments === undefined) {
                 this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
             }
         }
