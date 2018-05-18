@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/ve",
-  "version": "0.6.0",
+  "version": "0.10.0",
   "description": "Vue processor for wotan",
   "main": "src/index",
   "author": "Klaus Meinhardt",
