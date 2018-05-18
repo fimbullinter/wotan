@@ -19,7 +19,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "devDependencies": {
+  "dependencies": {
     "@fimbul/disir": "^0.0.1",
     "@fimbul/valtyr": "^0.8.0",
     "@fimbul/wotan": "^0.9.0",

@@ -26,7 +26,7 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -D -W typescript@$typescriptVersion}
+          yarn ${typescriptVersion:+add -W typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |

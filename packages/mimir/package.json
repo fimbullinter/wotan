@@ -33,6 +33,5 @@
   },
   "peerDependencies": {
     "typescript": "*"
-  },
-  "devDependencies": {}
+  }
 }
