@@ -69,7 +69,7 @@ jobs:
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:9@sha256:bb437c7a3614a7c25d2005c3814d5e16bdea4dfe7750ca7e81b62921bef02c13
+      - image: circleci/node:9@sha256:a3922e45cd95fbe67016d63f0a874b6ea3deab29d788c17bcabca170bc968faf
     <<: *base
   test@2.4:
     docker:
