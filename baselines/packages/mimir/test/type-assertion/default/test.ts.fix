@@ -1,0 +1,65 @@
+declare let foo: any;
+declare let bar: any;
+declare let baz: any;
+type T = any;
+
+foo as T;
+foo as T;
+
+foo as T['prop'];
+foo as T['prop'];
+
++(foo as T);
++(foo as T);
+
+typeof (foo as T);
+typeof (foo as T);
+
+typeof foo as T;
+typeof foo as T;
+
+void (foo as T);
+void (foo as T);
+
+void foo as T;
+void foo as T;
+
+foo as T && bar;
+foo as T && bar;
+
+(foo as T) & bar;
+(foo as T) & bar;
+
+foo & bar as T;
+foo & bar as T;
+
+foo & (bar as T) | baz;
+foo & (bar as T) | baz;
+
+(+foo as T) & bar;
+(+foo as T) & bar;
+
+() => ({foo}.foo) as T;
+() => ({foo}.foo) as T;
+
+() => ({foo}.foo as T) & bar;
+() => ({foo}.foo as T) & bar;
+
+<T>() => foo;
+
+async function* test() {
+    await foo as T;
+    await foo as T;
+
+    await (foo as T);
+    await (foo as T);
+
+    (yield foo) as T;
+    (yield foo) as T;
+
+    yield foo as T;
+    yield foo as T;
+}
+
+/**<T>foo*/foo as T;
+foo /*as*/ as 'as';

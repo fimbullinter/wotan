@@ -3,6 +3,9 @@ extends:
   - wotan:latest
   - "@fimbul/disir"
 rules:
+  type-assertion:
+    options:
+      style: classic
   parameter-properties:
     options:
       mode: when-possible
