@@ -7,6 +7,7 @@ import {
     execAndLog,
     ensureBranch,
     ensureCleanTree,
+    Dependencies,
 } from './util';
 import * as semver from 'semver';
 
@@ -22,28 +23,56 @@ const releaseVersion = rootManifest.version;
 const version = new semver.SemVer(releaseVersion);
 const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease.length === 0 && version.build.length === 0;
 
-const {packages, publicPackages} = getPackages();
+const {packages} = getPackages();
 
-const needsRelease = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastReleaseTag(), publicPackages.keys());
+const changedPackages = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastReleaseTag(), packages.keys());
+const needsRelease = new Set<string>();
 
-function updateManifest(path: string, manifest: PackageData, toVersion: string | undefined) {
-    if (toVersion !== undefined)
-        manifest.version = toVersion;
-    for (const localName of needsRelease) {
-        const {name} = packages.get(localName)!;
-        if (manifest.dependencies && manifest.dependencies[name])
-            manifest.dependencies[name] = `^${releaseVersion}`;
-        if (manifest.peerDependencies && manifest.peerDependencies[name])
-            manifest.peerDependencies[name] = `^${releaseVersion}`;
-        if (manifest.devDependencies && manifest.devDependencies[name])
-            manifest.devDependencies[name] = `^${releaseVersion}`;
-    }
-    writeManifest(path, manifest);
+function markForRelease(name: string) {
+    if (needsRelease.has(name))
+        return;
+    needsRelease.add(name);
+    updateManifest(rootManifest);
+    for (const [localName, manifest] of packages)
+        if (updateManifest(manifest))
+            markForRelease(localName);
 }
 
-updateManifest('package.json', rootManifest, semver.inc(version, 'minor')!); // set root version to next minor version
-for (const [name, manifest] of packages)
-    updateManifest(`packages/${name}/package.json`, manifest, needsRelease.has(name) ? releaseVersion : undefined);
+function updateManifest(manifest: PackageData): boolean {
+    let updated = false;
+    for (const localName of packages.keys()) {
+        const changed = changedPackages.has(localName);
+        if (!changed && !needsRelease.has(localName))
+            continue;
+        const {name} = packages.get(localName)!;
+        update(manifest.dependencies, name, changed);
+        update(manifest.peerDependencies, name, changed);
+    }
+    return updated;
+
+    function update(dependencies: Dependencies | undefined, name: string, changed: boolean) {
+        if (!dependencies || !dependencies[name])
+            return;
+        const range = new semver.Range(dependencies[name]);
+        // make sure to publish a new version of a dependent package if the updated dependency wouldn't satisfy the constraint
+        if (changed || !semver.satisfies(version, range)) {
+            dependencies[name] = `^${releaseVersion}`;
+            updated = true;
+        }
+    }
+}
+
+for (const name of changedPackages)
+    markForRelease(name);
+
+rootManifest.version = semver.inc(version, 'minor');
+writeManifest('package.json', rootManifest);
+
+for (const name of needsRelease) {
+    const manifest = packages.get(name)!;
+    manifest.version = releaseVersion;
+    writeManifest(`packages/${name}/package.json`, manifest);
+}
 
 // install dependencies to update yarn.lock
 execAndLog('yarn');

@@ -4,7 +4,8 @@
     "target": "esnext",
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false
   },
   "exclude": [
     "external.d.ts"

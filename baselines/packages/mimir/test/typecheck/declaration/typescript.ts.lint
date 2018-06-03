@@ -1,6 +1,5 @@
 import mdefault, {m} from 'non-existent-module';
                           ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
-import {create} from 'my-external-module';
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
@@ -30,5 +29,8 @@ function fn2(param1: string, param2): string {
 fn2();
 ~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
 
-export const cannotBeNamed = create();
-             ~~~~~~~~~~~~~             [error typecheck: Exported variable 'cannotBeNamed' has or is using name 'Foo' from external module 'my-external-module' but cannot be named.]
+export function usesPrivateName() {
+                ~~~~~~~~~~~~~~~     [error typecheck: Return type of exported function has or is using private name 'Foo'.]
+    class Foo {}
+    return new Foo();
+}
