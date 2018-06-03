@@ -4,7 +4,8 @@ declare namespace JSX {
     }
 
     interface Element {
-        render(): Element | string | false;
+        render(): Element;
+        props: any;
     }
 
     interface ElementAttributesProperty {
@@ -35,7 +36,7 @@ declare const MyComponentConstructor: MyComponentConstructor;
 class MyComponent<T> {
     constructor(private props: Record<string, T>) {}
 
-    render() { return false; }
+    render() { return this; }
 }
 
 foo = <MyComponentConstructor></MyComponentConstructor>;
@@ -47,7 +48,8 @@ foo = <MyComponent prop="1"></MyComponent>;
 
 function MyFactoryComponent<T>(props: Record<string, T>) {
     return {
-        render: () => false,
+        render() { return this; },
+        props,
     };
 }
 

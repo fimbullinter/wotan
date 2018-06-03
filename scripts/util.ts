@@ -10,7 +10,6 @@ export interface PackageData {
     version: string;
     private?: boolean;
     dependencies?: Dependencies;
-    devDependencies?: Dependencies;
     peerDependencies?: Dependencies;
 }
 

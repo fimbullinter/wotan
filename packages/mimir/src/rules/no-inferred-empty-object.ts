@@ -24,8 +24,7 @@ export class Rule extends TypedRule {
                            node.kind === ts.SyntaxKind.JsxSelfClosingElement ||
                            node.kind === ts.SyntaxKind.TaggedTemplateExpression
                         ) &&
-                        // TODO fix assertion on upgrade to typescript@2.9
-                       (<any>node).typeArguments === undefined) {
+                       (<ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression>node).typeArguments === undefined) {
                 this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
             }
         }
@@ -154,9 +153,10 @@ export class Rule extends TypedRule {
     }
 }
 
-function getTypeParameters(node: ts.DeclarationWithTypeParameters) {
-    if (node.typeParameters !== undefined)
-        return node.typeParameters;
+function getTypeParameters(node: ts.DeclarationWithTypeParameters): ReadonlyArray<ts.TypeParameterDeclaration> | undefined {
+    // TODO remove assertion when https://github.com/Microsoft/TypeScript/issues/24248 is resolved
+    if ((<any>node).typeParameters !== undefined)
+        return (<any>node).typeParameters;
     if (node.flags & ts.NodeFlags.JavaScriptFile) {
         const tag = ts.getJSDocTemplateTag(node);
         return tag && tag.typeParameters;

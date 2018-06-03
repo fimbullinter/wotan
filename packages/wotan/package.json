@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/wotan",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Pluggable TypeScript and JavaScript linter",
   "bin": "bin/main.js",
   "publishConfig": {
@@ -45,7 +45,7 @@
     "rimraf": "^2.6.2"
   },
   "dependencies": {
-    "@fimbul/mimir": "^0.9.0",
+    "@fimbul/mimir": "^0.10.0",
     "@fimbul/ymir": "^0.9.0",
     "bind-decorator": "^1.0.11",
     "chalk": "^2.3.0",
@@ -65,6 +65,6 @@
     "tsutils": "^2.24.0"
   },
   "peerDependencies": {
-    "typescript": "^2.4.1 || >= 2.8.0-dev"
+    "typescript": "^2.4.1 || >= 2.9.0-dev || >= 2.9.1-insiders || >= 3.0.0-dev"
   }
 }
