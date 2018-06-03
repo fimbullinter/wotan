@@ -15,6 +15,7 @@ rules:
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error
+  no-octal-escape: error
   no-unassigned-variable: error
   no-unreachable-code: error
   no-unsafe-finally: error
