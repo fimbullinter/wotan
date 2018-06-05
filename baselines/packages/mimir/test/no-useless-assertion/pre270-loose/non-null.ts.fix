@@ -78,6 +78,7 @@ function takeNull(arg: string | null) {}
 function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
+function takeUnknown(arg: unknown) {}
 
 take<string | null>(possiblyNull, (p) => p);
 take(possiblyNull, (p: string) => p);
@@ -87,6 +88,11 @@ takeAny(possiblyNull);
 takeAny(possiblyUndefined);
 takeAny(possiblyBoth);
 takeAny(l);
+
+takeUnknown(possiblyNull);
+takeUnknown(possiblyUndefined);
+takeUnknown(possiblyBoth);
+takeUnknown(l);
 
 takeNull(possiblyNull);
 takeNull(possiblyUndefined);

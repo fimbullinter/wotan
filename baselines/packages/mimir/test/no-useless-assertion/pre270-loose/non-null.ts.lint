@@ -109,6 +109,7 @@ function takeNull(arg: string | null) {}
 function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
+function takeUnknown(arg: unknown) {}
 
 take<string | null>(possiblyNull!, (p) => p);
                                 ~             [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
@@ -125,6 +126,15 @@ takeAny(possiblyBoth!);
                     ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 takeAny(l!);
          ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+takeUnknown(possiblyNull!);
+                        ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeUnknown(possiblyUndefined!);
+                             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeUnknown(possiblyBoth!);
+                        ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeUnknown(l!);
+             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 takeNull(possiblyNull!);
                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]

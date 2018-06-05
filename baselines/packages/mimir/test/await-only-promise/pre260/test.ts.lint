@@ -10,6 +10,7 @@ async function test<T extends Promise<string>, U extends T | undefined>(p: T, p2
     await get<PromiseLike<string>>();
     await get<Promise<string> | PromiseLike<string>>();
     await get<any>();
+    await get<unknown>();
     await get<Promise<string> | string>();
     await get<ExtendsPromise<number>>();
     await get<Promise<string> & {done: boolean}>();
