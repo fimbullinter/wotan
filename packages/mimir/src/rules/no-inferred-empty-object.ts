@@ -88,7 +88,7 @@ export class Rule extends TypedRule {
         if (typeArguments === undefined)
             return;
 
-        for (let i = 0; i < typeArguments.length; ++i) {
+        for (let i = 0, len = Math.min(typeParameters.length, typeArguments.length); i < len; ++i) {
             const typeArgument = typeArguments[i];
             if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
                 this.handleEmptyTypeParameter(typeParameters[i], node);

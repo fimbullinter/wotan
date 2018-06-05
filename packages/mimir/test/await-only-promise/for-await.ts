@@ -38,13 +38,10 @@ async function testForAwaitIterable<T extends PromiseLike<any>, U extends Iterab
     for await (const _ of get<Array<string | PromiseLike<string>>>()) {}
     for await (const _ of get<Iterable<PromiseLike<string>>>()) {}
     for await (const _ of get<{[Symbol.iterator]: any}>()) {}
-    for await (const _ of get<{[Symbol.iterator]: unknown}>()) {}
     for await (const _ of get<{[Symbol.iterator](): any}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {}}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {next: any}}>()) {}
-    for await (const _ of get<{[Symbol.iterator](): {next: unknown}}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {next(): any}}>()) {}
-    for await (const _ of get<{[Symbol.iterator](): {next(): unknown}}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {next(): {value: any, done: boolean}}}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {next(): {value: PromiseLike<any>, done: boolean}}}>()) {}
     for await (const _ of get<{[Symbol.iterator](): {next(): {value: string, done: boolean}}}>()) {}

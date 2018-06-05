@@ -8,7 +8,11 @@ if (typeof (get<() => void>()) === 'function') {}
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
 if (typeof (get<new() => any>()) === 'function') {}
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (get<any>()) {}
+if (get<unknown>()) {}
+if (get<never>()) {}
 while (typeof get<any>() === 'symbol') {}
+while (typeof get<unknown>() === 'symbol') {}
 while (typeof get<never>() === 'symbol') {}
 while (typeof get<{}>() === 'number') ;
 while (typeof get<{}>() == 'object') ;

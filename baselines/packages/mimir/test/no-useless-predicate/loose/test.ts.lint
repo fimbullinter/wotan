@@ -5,7 +5,11 @@ declare function get<T>(): T;
 if (typeof (get<Function>()) === 'function') {}
 if (typeof (get<() => void>()) === 'function') {}
 if (typeof (get<new() => any>()) === 'function') {}
+if (get<any>()) {}
+if (get<unknown>()) {}
+if (get<never>()) {}
 while (typeof get<any>() === 'symbol') {}
+while (typeof get<unknown>() === 'symbol') {}
 while (typeof get<never>() === 'symbol') {}
 while (typeof get<{}>() === 'number') ;
 while (typeof get<{}>() == 'object') ;

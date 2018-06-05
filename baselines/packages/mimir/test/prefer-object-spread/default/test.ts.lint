@@ -34,6 +34,13 @@ class Foo {
     dontSpreadThis() {
         return Object.assign({}, this);
     }
+    spreadUnknown(param: unknown) {
+        return Object.assign({}, param);
+               ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    dontSpreadNever(param: never) {
+        return Object.assign({}, param);
+    }
 }
 
 declare let assign: any;

@@ -31,7 +31,7 @@ multiParam(1);
 multiParam(1, '2');
 multiParam(1, '2', true);
 
-weirdMultiParam();
+weirdMultiParam(); // TODO this one changes in TypeScript@3.0
 
 functionTyped();
 functionTyped(1);
