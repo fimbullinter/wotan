@@ -22,7 +22,7 @@ export class Rule extends TypedRule {
         if (isEmpty(assertedLiterals))
             return;
         // if expression is a type variable, the type checker already handles everything as expected
-        const originalTypeParts = getLiteralsByType(unionTypeParts(this.checker.getTypeAtLocation(node.expression)));
+        const originalTypeParts = getLiteralsByType(unionTypeParts(this.checker.getTypeAtLocation(node.expression)!));
         if (isEmpty(originalTypeParts))
             return;
         match(originalTypeParts, assertedLiterals);

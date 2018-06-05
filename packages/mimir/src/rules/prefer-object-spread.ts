@@ -49,8 +49,8 @@ export class Rule extends TypedRule {
             case ts.SyntaxKind.ObjectLiteralExpression:
                 return true;
         }
-        const type = this.checker.getTypeAtLocation(node);
-        if (type.flags & ts.TypeFlags.Any)
+        const type = this.checker.getTypeAtLocation(node)!;
+        if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
             return true;
         let seenObject = false;
         for (const t of unionTypeParts(type)) {

@@ -55,7 +55,7 @@ export class Rule extends TypedRule {
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined && (
                 !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
-                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlags(this.checker.getTypeAtLocation(node.name)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFailure(
                 node.exclamationToken.end - 1,
@@ -72,7 +72,7 @@ export class Rule extends TypedRule {
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
                 !isStrictPropertyInitializationEnabled(this.program.getCompilerOptions()) || // strictPropertyInitialization must be enabled
-                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlags(this.checker.getTypeAtLocation(node)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFailure(
                 node.exclamationToken.end - 1,
@@ -85,7 +85,7 @@ export class Rule extends TypedRule {
     private checkNonNullAssertion(node: ts.NonNullExpression) {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            const originalType = this.checker.getTypeAtLocation(node.expression);
+            const originalType = this.checker.getTypeAtLocation(node.expression)!;
             const flags = getNullableFlags(
                 (!typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess) &&
                     this.checker.getBaseConstraintOfType(originalType) || originalType,
@@ -105,11 +105,11 @@ export class Rule extends TypedRule {
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
-        let targetType = this.checker.getTypeAtLocation(node);
+        let targetType = this.checker.getTypeFromTypeNode(node.type);
         if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
-        let sourceType = this.checker.getTypeAtLocation(node.expression);
+        let sourceType = this.checker.getTypeAtLocation(node.expression)!;
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
@@ -159,7 +159,7 @@ function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
     let flags = 0;
     for (const t of unionTypeParts(type))
         flags |= t.flags;
-    return ((receiver && flags & ts.TypeFlags.Any) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+    return ((receiver && flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
 }
 
 function formatNullableFlags(flags: ts.TypeFlags) {

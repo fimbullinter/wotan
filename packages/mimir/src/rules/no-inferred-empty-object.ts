@@ -31,7 +31,7 @@ export class Rule extends TypedRule {
     }
 
     private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
-        const signature = this.checker.getResolvedSignature(node);
+        const signature = this.checker.getResolvedSignature(node)!;
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
             const typeParameters = getTypeParameters(signature.declaration);
@@ -41,7 +41,7 @@ export class Rule extends TypedRule {
     }
 
     private checkNewExpression(node: ts.NewExpression) {
-        const signature = this.checker.getResolvedSignature(node);
+        const signature = this.checker.getResolvedSignature(node)!;
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
@@ -51,7 +51,7 @@ export class Rule extends TypedRule {
         }
 
         // Otherwise look up the TypeParameters of the ClassDeclaration
-        const {symbol} = this.checker.getTypeAtLocation(node.expression);
+        const {symbol} = this.checker.getTypeAtLocation(node.expression)!;
         if (symbol === undefined || symbol.declarations === undefined)
             return;
         // collect all TypeParameters and their defaults from all merged declarations

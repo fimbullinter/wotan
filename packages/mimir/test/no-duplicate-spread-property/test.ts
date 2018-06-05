@@ -99,3 +99,10 @@ const foo = 'foo';
     bar: () => {},
     baz: get<() => void>(),
 });
+
+({
+    prop: 1,
+    ...get<unknown>(),
+    prop2: 2,
+    ...get<any>(),
+});

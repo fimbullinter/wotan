@@ -13,7 +13,7 @@ export class Rule extends TypedRule {
             if (isAwaitExpression(node)) {
                 if (
                     node.expression.pos !== re.lastIndex ||
-                    this.maybePromiseLike(this.checker.getTypeAtLocation(node.expression), node.expression)
+                    this.maybePromiseLike(this.checker.getTypeAtLocation(node.expression)!, node.expression)
                 )
                     continue;
                 const fix = [Replacement.delete(match.index, node.expression.getStart(this.sourceFile))];
@@ -45,7 +45,7 @@ export class Rule extends TypedRule {
 
     private maybePromiseLike(type: ts.Type, node: ts.Expression): boolean {
         type = this.checker.getApparentType(type);
-        if (type.flags & ts.TypeFlags.Any)
+        if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
             return true;
         for (const t of unionTypeParts(type))
             if (this.isThenable(t, node))
@@ -63,8 +63,8 @@ export class Rule extends TypedRule {
     }
 
     private isAsyncIterable(node: ts.Expression): boolean {
-        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node));
-        if (type.flags & ts.TypeFlags.Any)
+        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node)!);
+        if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
             return true;
         for (const t of unionTypeParts(type))
             // there must either be a `AsyncIterable` or `Iterable<PromiseLike<any>>`

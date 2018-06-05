@@ -16,7 +16,7 @@ export class Rule extends TypedRule {
     }
 
     private returnsNever(node: ts.CallExpression): boolean {
-        const returnType = this.checker.getApparentType(this.checker.getResolvedSignature(node).getReturnType());
+        const returnType = this.checker.getApparentType(this.checker.getResolvedSignature(node)!.getReturnType());
         return (returnType.flags & ts.TypeFlags.Never) !== 0;
     }
 }
