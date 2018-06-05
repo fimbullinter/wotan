@@ -82,10 +82,7 @@ export class Rule extends AbstractRule {
         if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
             return;
         const checker = this.program.getTypeChecker();
-        let type = checker.getTypeAtLocation(node);
-        if (type === undefined)
-            return;
-        type = checker.getApparentType(type);
+        const type = checker.getApparentType(checker.getTypeAtLocation(node)!);
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)

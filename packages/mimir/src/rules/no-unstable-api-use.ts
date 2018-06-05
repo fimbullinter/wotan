@@ -58,9 +58,7 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
-        const type = this.checker.getTypeAtLocation(node);
-        if (type === undefined)
-            return;
+        const type = this.checker.getTypeAtLocation(node)!;
         for (const element of node.elements) {
             if (element.dotDotDotToken !== undefined)
                 continue;
