@@ -96,6 +96,7 @@ function takeNull(arg: string | null) {}
 function takeUndefined(arg: string | undefined) {}
 function takeBoth(arg: string | null | undefined) {}
 function takeStringNumberUndefined(arg: string | number | undefined) {}
+function takeUnknown(arg: unknown) {}
 
 take<string | null>(possiblyNull!, (p) => p);
                                 ~             [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
@@ -109,6 +110,14 @@ takeAny(possiblyUndefined!);
 takeAny(possiblyBoth!);
                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
 takeAny(l!);
+
+takeUnknown(possiblyNull!);
+                        ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeUnknown(possiblyUndefined!);
+                             ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeUnknown(possiblyBoth!);
+                        ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+takeUnknown(l!);
 
 takeNull(possiblyNull!);
                      ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]

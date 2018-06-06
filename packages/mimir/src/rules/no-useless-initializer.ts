@@ -82,8 +82,7 @@ export class Rule extends AbstractRule {
         if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
             return;
         const checker = this.program.getTypeChecker();
-        const type = checker.getTypeAtLocation(node);
-        const apparentType = checker.getApparentType(type);
+        const type = checker.getApparentType(checker.getTypeAtLocation(node)!);
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
@@ -91,10 +90,10 @@ export class Rule extends AbstractRule {
             const name = getPropName(element, i);
             if (name === undefined)
                 continue;
-            const symbol = apparentType.getProperty(name);
+            const symbol = type.getProperty(name);
             if (symbol === undefined || symbolMaybeUndefined(checker, symbol, node))
                 continue;
-            const fix = checker.getTypeAtLocation(element.name).flags & (ts.TypeFlags.Union | ts.TypeFlags.Any)
+            const fix = checker.getTypeAtLocation(element.name)!.flags & (ts.TypeFlags.Union | ts.TypeFlags.Any | ts.TypeFlags.Unknown)
                 // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
                 // destructured type. The type of the variable then includes the type of the initializer as well.
                 // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
@@ -157,7 +156,7 @@ function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: 
     if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.name) ? 0 : ts.SymbolFlags.Transient)))
         return true;
     return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
-        .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any)) !== 0);
+        .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0);
 }
 
 function isUndefined(node: ts.Expression) {

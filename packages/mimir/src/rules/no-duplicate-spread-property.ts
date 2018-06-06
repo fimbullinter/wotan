@@ -76,7 +76,7 @@ export class Rule extends TypedRule {
     }
 
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
-        const type = this.checker.getTypeAtLocation(node);
+        const type = this.checker.getTypeAtLocation(node)!;
         return unionTypeParts(type).map(getPropertyInfoFromType).reduce(combinePropertyInfo);
     }
 
@@ -85,7 +85,7 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
     if (!isObjectType(type))
         return emptyPropertyInfo;
     const result: PropertyInfo = {
-        known: (type.flags & ts.TypeFlags.Any) !== 0 ||
+        known: (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0 ||
             type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
         names: [],
         assignedNames: [],

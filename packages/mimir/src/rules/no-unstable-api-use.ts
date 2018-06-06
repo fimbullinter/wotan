@@ -51,14 +51,14 @@ export class Rule extends TypedRule {
     }
 
     private checkSignature(node: ts.CallLikeExpression) {
-        const signature = this.checker.getResolvedSignature(node);
+        const signature = this.checker.getResolvedSignature(node)!;
         // wotan-disable-next-line no-useless-predicate
         if (signature !== undefined) // for compatibility with typescript@<2.6.0
             return this.checkStability(signature, node, undefined, signatureToString);
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
-        const type = this.checker.getTypeAtLocation(node);
+        const type = this.checker.getTypeAtLocation(node)!;
         for (const element of node.elements) {
             if (element.dotDotDotToken !== undefined)
                 continue;
@@ -74,7 +74,7 @@ export class Rule extends TypedRule {
                     if (symbol !== undefined)
                         this.checkStability(symbol, element.propertyName, name, describeWithName);
                 } else {
-                    const propType = this.checker.getTypeAtLocation((<ts.ComputedPropertyName>element.propertyName).expression);
+                    const propType = this.checker.getTypeAtLocation((<ts.ComputedPropertyName>element.propertyName).expression)!;
                     this.checkDynamicPropertyAccess(type, propType, element.propertyName);
                 }
             }
@@ -85,8 +85,8 @@ export class Rule extends TypedRule {
         // compatibility with typescript@<2.9.0
         if (node.argumentExpression === undefined) // wotan-disable-line no-useless-predicate
             return;
-        const type = this.checker.getTypeAtLocation(node.expression);
-        const keyType = this.checker.getTypeAtLocation(node.argumentExpression);
+        const type = this.checker.getTypeAtLocation(node.expression)!;
+        const keyType = this.checker.getTypeAtLocation(node.argumentExpression)!;
         this.checkDynamicPropertyAccess(type, keyType, node);
     }
 

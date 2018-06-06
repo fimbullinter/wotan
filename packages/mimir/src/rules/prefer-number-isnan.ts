@@ -1,6 +1,6 @@
 import { TypedRule, Replacement, excludeDeclarationFiles, requireLibraryFile } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, isTypeVariable, isUnionType } from 'tsutils';
+import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, unionTypeParts } from 'tsutils';
 
 @excludeDeclarationFiles
 @requireLibraryFile('lib.es2015.core.d.ts')
@@ -14,7 +14,7 @@ export class Rule extends TypedRule {
                 continue;
             const parent = node.parent!;
             if (isCallExpression(parent) && parent.expression === node && parent.arguments.length === 1 &&
-                this.isNumberLikeType(this.checker.getTypeAtLocation(parent.arguments[0])))
+                this.isCorrectArgumentType(parent.arguments[0]))
                 this.addFailure(
                     match.index,
                     re.lastIndex,
@@ -24,15 +24,8 @@ export class Rule extends TypedRule {
         }
     }
 
-    private isNumberLikeType(type: ts.Type): boolean {
-        if (isTypeVariable(type)) {
-            const base = this.checker.getBaseConstraintOfType(type);
-            if (base === undefined)
-                return false;
-            type = base;
-        }
-        if (type.flags & ts.TypeFlags.NumberLike)
-            return true;
-        return isUnionType(type) && type.types.every(this.isNumberLikeType, this);
+    private isCorrectArgumentType(arg: ts.Expression) {
+        const type = this.checker.getTypeAtLocation(arg)!;
+        return unionTypeParts(this.checker.getBaseConstraintOfType(type) || type).every((t) => (t.flags & ts.TypeFlags.NumberLike) !== 0);
     }
 }

@@ -41,8 +41,8 @@ multiParam(1, '2');
 ~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 multiParam(1, '2', true);
 
-weirdMultiParam();
-~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+weirdMultiParam(); // TODO this one changes in TypeScript@3.0
+~~~~~~~~~~~~~~~~~                                             [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 functionTyped();
 ~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]

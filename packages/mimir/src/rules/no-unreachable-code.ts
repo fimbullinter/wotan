@@ -68,7 +68,7 @@ export class Rule extends AbstractRule {
                 break;
             }
         }
-        this.addFailureAtNode(node.getFirstToken(this.sourceFile), 'Unreachable code detected.');
+        this.addFailureAtNode(node.getFirstToken(this.sourceFile)!, 'Unreachable code detected.');
     }
 }
 

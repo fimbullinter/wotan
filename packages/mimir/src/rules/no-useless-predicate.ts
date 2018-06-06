@@ -146,7 +146,7 @@ export class Rule extends TypedRule {
                     return;
             }
         }
-        return this.executePredicate(this.checker.getTypeAtLocation(node), truthyFalsy);
+        return this.executePredicate(this.checker.getTypeAtLocation(node)!, truthyFalsy);
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
@@ -173,7 +173,7 @@ export class Rule extends TypedRule {
             if (isTextualLiteral(right)) {
                 literal = right.text;
             } else {
-                let type = this.checker.getTypeAtLocation(right);
+                let type = this.checker.getTypeAtLocation(right)!;
                 type = this.checker.getBaseConstraintOfType(type) || type;
                 if ((type.flags & ts.TypeFlags.StringLiteral) === 0)
                     return;
@@ -198,7 +198,7 @@ export class Rule extends TypedRule {
         } else {
             return;
         }
-        return this.nullAwarePredicate(this.checker.getTypeAtLocation(left), predicate);
+        return this.nullAwarePredicate(this.checker.getTypeAtLocation(left)!, predicate);
     }
 
     private nullAwarePredicate(type: ts.Type, predicate: TypePredicate): boolean | undefined {
@@ -224,7 +224,7 @@ export class Rule extends TypedRule {
                     return;
                 t = constraint;
             }
-            if (t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
+            if (t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never | ts.TypeFlags.Unknown))
                 return;
             switch (predicate(t)) {
                 case true:

@@ -3,6 +3,8 @@ extends:
   - wotan:latest
   - "@fimbul/disir"
 rules:
+  no-useless-predicate: off # TODO enable ASAP
+  no-useless-assertion: off # TODO enable ASAP
   type-assertion:
     options:
       style: classic

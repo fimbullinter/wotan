@@ -30,6 +30,12 @@ class Foo {
     dontSpreadThis() {
         return Object.assign({}, this);
     }
+    spreadUnknown(param: unknown) {
+        return Object.assign({}, param);
+    }
+    dontSpreadNever(param: never) {
+        return Object.assign({}, param);
+    }
 }
 
 declare let assign: any;

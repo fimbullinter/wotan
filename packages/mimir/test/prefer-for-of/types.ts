@@ -50,7 +50,7 @@ for (let i = 0; i < anyValue.length; ++i) {
     anyValue[i]
 }
 
-function test<T extends any[], U>(param: T, param2: U) {
+function test<T extends any[], U, V extends any>(param: T, param2: U, param3: V) {
     for (let i = 0; i < param.length; ++i) {
         param[i]
     }
@@ -62,6 +62,10 @@ function test<T extends any[], U>(param: T, param2: U) {
 
     for (let i = 0; i < param2.length; ++i) {
         param2[i]
+    }
+
+    for (let i = 0; i < param3.length; ++i) {
+        param3[i]
     }
 }
 
