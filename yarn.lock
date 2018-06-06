@@ -4176,9 +4176,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-typescript@3.0.0-dev.20180605:
-  version "3.0.0-dev.20180605"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.0.0-dev.20180605.tgz#8ad9bd2421242c09624fab8a8390eb06cb7baef8"
+typescript@3.0.0-dev.20180606:
+  version "3.0.0-dev.20180606"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.0.0-dev.20180606.tgz#8fa79b16903f8383ad2cf5559c47dc468971fa0e"
 
 uglify-js@^2.6:
   version "2.8.29"
