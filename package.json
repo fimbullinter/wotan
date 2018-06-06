@@ -26,6 +26,7 @@
     "@types/cross-spawn": "^6.0.0",
     "@types/glob": "^5.0.35",
     "@types/node": "^10.0.8",
+    "@types/parse5-sax-parser": "^5.0.0",
     "ava": "^0.25.0",
     "codecov": "^3.0.0",
     "dependency-cruiser": "^4.0.0",
