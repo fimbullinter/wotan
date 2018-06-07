@@ -6,12 +6,11 @@ import {
     hasModifier,
     isFunctionScopeBoundary,
     isObjectType,
-    isNewExpression,
-    isCallExpression,
     unionTypeParts,
     isFunctionExpression,
     isArrowFunction,
     getIIFE,
+    removeOptionalityFromType,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -117,7 +116,16 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (!typesAreEqual(sourceType, targetType, this.checker)) {
             const contextualType = this.getSafeContextualType(node);
-            if (contextualType === undefined || !typesAreEqual(sourceType, contextualType, this.checker))
+            // TODO use assignability check once it's exposed from TypeChecker
+            if (
+                contextualType === undefined ||
+                contextualType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable) ||
+                (contextualType.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) === 0 &&
+                // contextual type is exactly the same
+                !typesAreEqual(sourceType, contextualType, this.checker) &&
+                // contextual type is an optional parameter or similar
+                !typesAreEqual(sourceType, removeOptionalityFromType(this.checker, contextualType), this.checker)
+            )
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
@@ -144,9 +152,19 @@ export class Rule extends TypedRule {
     private getSafeContextualType(node: ts.Expression): ts.Type | undefined {
         const parent = node.parent!;
         // If assertion is used as argument, check if the function accepts this expression without an assertion
-        // TODO expand this to TemplateExpression, JsxExpression, etc
-        if (!isCallExpression(parent) && !isNewExpression(parent) || node === parent.expression)
-            return;
+        // TODO expand this to VariableLike initializers and return expressions where a type declaration exists
+        switch (parent.kind) {
+            case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.NewExpression:
+                if (node === (<ts.CallExpression | ts.NewExpression>parent).expression)
+                    return;
+                break;
+            case ts.SyntaxKind.TemplateSpan: // TODO return 'any' for non-tagged template expressions
+            case ts.SyntaxKind.JsxExpression:
+                break;
+            default:
+                return;
+        }
         return this.checker.getContextualType(node);
     }
 }
