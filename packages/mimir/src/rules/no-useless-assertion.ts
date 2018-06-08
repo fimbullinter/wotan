@@ -248,7 +248,7 @@ function couldBeTupleType(type: ts.ObjectType): boolean {
         return false;
     let i = 0;
     for (; i < properties.length; ++i) {
-        const name = properties[i].name;
+        const name = properties[i].escapedName;
         if (String(i) !== name) {
             if (i === 0)
                 // if there are no integer properties, this is not a tuple
@@ -257,7 +257,7 @@ function couldBeTupleType(type: ts.ObjectType): boolean {
         }
     }
     for (; i < properties.length; ++i)
-        if (String(+properties[i].name) === properties[i].name)
+        if (String(+properties[i].escapedName) === properties[i].escapedName)
             return false;
     return true;
 }

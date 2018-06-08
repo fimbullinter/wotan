@@ -79,11 +79,11 @@ export class Rule extends TypedRule {
      * But that's none of our business as the compiler already does the heavy lifting.
      */
     private hasSymbolAsyncIterator(type: ts.Type): boolean {
-        return type.getProperties().some((prop) => symbolName(prop) === '__@asyncIterator');
+        return type.getProperties().some((prop) => prop.escapedName === '__@asyncIterator');
     }
 
     private isIterableOfPromises(type: ts.Type, node: ts.Expression): boolean {
-        const symbol = type.getProperties().find((prop) => symbolName(prop) === '__@iterator');
+        const symbol = type.getProperties().find((prop) => prop.name === '__@iterator');
         if (symbol === undefined)
             return false;
         const t = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(symbol, node));
@@ -110,10 +110,4 @@ export class Rule extends TypedRule {
         }
         return false;
     }
-}
-
-// for compatibility with typescript@2.4
-function symbolName(s: ts.Symbol) {
-    // wotan-disable-next-line no-useless-predicate
-    return s.escapedName === undefined ? s.name : s.escapedName;
 }

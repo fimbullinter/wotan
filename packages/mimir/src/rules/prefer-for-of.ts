@@ -70,7 +70,7 @@ export class Rule extends TypedRule {
             return false;
         if (type.flags & ts.TypeFlags.StringLike)
             return this.sourceFile.languageVersion >= ts.ScriptTarget.ES5; // iterating string is only possible starting from ES5
-        if (type.symbol !== undefined && /^(Concat|Readonly)?Array$/.test(type.symbol.name) &&
+        if (type.symbol !== undefined && /^(Concat|Readonly)?Array$/.test(<string>type.symbol.escapedName) &&
             type.symbol.declarations !== undefined && type.symbol.declarations.some(this.isDeclaredInDefaultLib, this))
             return true;
         if (isIntersectionType(type))
@@ -87,7 +87,7 @@ export class Rule extends TypedRule {
 }
 
 function isIterable(type: ts.Type) {
-    return type.getProperties().some((p) => p.name === '__@iterator');
+    return type.getProperties().some((p) => p.escapedName === '__@iterator');
 }
 
 function isReadonlyArrayAccess(uses: VariableUse[], arrayVariable: string, statement: ts.ForStatement, sourceFile: ts.SourceFile): boolean {
