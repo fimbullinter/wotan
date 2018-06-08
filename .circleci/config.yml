@@ -6,13 +6,13 @@ workflows:
       - test:
           requires:
             - build
-      - test@2.4:
+      - test@2.7:
           requires:
             - build
-      - test@2.6:
+      - test@2.8:
           requires:
             - build
-      - test@next:
+      - test@2.9:
           requires:
             - build
 
