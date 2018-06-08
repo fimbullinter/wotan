@@ -10,7 +10,6 @@ import {
     Dependencies,
 } from './util';
 import * as semver from 'semver';
-import rootManifest = require('../package.json');
 
 ensureBranch('master');
 ensureCleanTree(undefined, ['CHANGELOG.md']);
@@ -19,6 +18,7 @@ execAndLog('yarn');
 execAndLog('yarn verify');
 ensureCleanTree(undefined, ['CHANGELOG.md', 'yarn.lock']);
 
+const rootManifest = require('../package.json');
 const releaseVersion = rootManifest.version;
 const version = new semver.SemVer(releaseVersion);
 const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease.length === 0 && version.build.length === 0;
@@ -66,7 +66,7 @@ for (const name of changedPackages)
     markForRelease(name);
 
 const supportedTypescriptVersions = rootManifest.peerDependencies.typescript;
-rootManifest.version = semver.inc(version, 'minor')!;
+rootManifest.version = semver.inc(version, 'minor');
 writeManifest('package.json', rootManifest);
 
 for (const name of needsRelease) {
