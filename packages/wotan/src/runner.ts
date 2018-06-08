@@ -296,16 +296,6 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
 }
 
 declare module 'typescript' {
-    /** v2.4 */
-    export function matchFiles(
-        path: string,
-        extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string> | undefined,
-        includes: ReadonlyArray<string>,
-        useCaseSensitiveFileNames: boolean,
-        currentDirectory: string,
-        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
-    ): string[];
     export function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
@@ -327,8 +317,6 @@ function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
     return {
         useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
         readDirectory(rootDir, extensions, excludes, includes, depth) {
-            if (/^2\.4\./.test(ts.version)) // workaround for missing parameter in typescript@2.4
-                return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, getEntries);
             return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, getEntries);
         },
         fileExists(f) {

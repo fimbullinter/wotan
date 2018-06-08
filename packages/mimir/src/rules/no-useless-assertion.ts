@@ -19,7 +19,6 @@ const log = debug('wotan:rule:no-useless-assertion');
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
-const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 const typeFormat = ts.TypeFormatFlags.NoTruncation
     | ts.TypeFormatFlags.UseFullyQualifiedType
     | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
@@ -85,10 +84,7 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression)!;
-            const flags = getNullableFlags(
-                (!typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess) &&
-                    this.checker.getBaseConstraintOfType(originalType) || originalType,
-            );
+            const flags = getNullableFlags(this.checker.getBaseConstraintOfType(originalType) || originalType);
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
@@ -109,7 +105,7 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression)!;
-        if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
+        if ((targetType.flags & ts.TypeFlags.Instantiable) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
         }
@@ -119,7 +115,7 @@ export class Rule extends TypedRule {
             // TODO use assignability check once it's exposed from TypeChecker
             if (
                 contextualType === undefined ||
-                contextualType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable) ||
+                contextualType.flags & ts.TypeFlags.Instantiable ||
                 (contextualType.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) === 0 &&
                 // contextual type is exactly the same
                 !typesAreEqual(sourceType, contextualType, this.checker) &&

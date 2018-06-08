@@ -218,7 +218,7 @@ export class Rule extends TypedRule {
     private executePredicate(type: ts.Type, predicate: (type: ts.Type) => boolean | undefined) {
         let result: boolean | undefined;
         for (let t of unionTypeParts(type)) {
-            if (t.flags & ts.TypeFlags.TypeVariable) {
+            if (t.flags & ts.TypeFlags.Instantiable) {
                 const constraint = this.checker.getBaseConstraintOfType(t);
                 if (constraint === undefined)
                     return;
