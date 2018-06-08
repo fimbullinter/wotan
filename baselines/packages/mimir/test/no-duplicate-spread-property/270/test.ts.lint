@@ -1,0 +1,124 @@
+export {};
+
+declare function get<T>(): T;
+
+declare class WithMethods {
+    foo(): void;
+    bar: () => void;
+    baz: string;
+}
+
+const foo = 'foo';
+
+({
+    x: 1,
+    ~     [error no-duplicate-spread-property: Property 'x' is overridden later.]
+    ...{x: 2, y: 2},
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    y: 1,
+    ...{x: 3},
+});
+
+({
+    foo,
+    ~~~  [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+    ...{foo},
+});
+
+({
+    [foo]: 1,
+    ...{[foo]: 2},
+});
+
+({
+    '__@iterator': 1,
+    [Symbol.iterator]: 1,
+    ...{[Symbol.iterator]: 2},
+});
+
+({
+    [get<string>()]: 1,
+    ...{[get<string>()]: 2},
+});
+
+({
+    [get<'foo'>()]: 1,
+    ...{[get<'foo'>()]: 2},
+    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ...{[foo]: 3},
+});
+
+({
+    foo: 1,
+    bar: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    baz: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'baz' is overridden later.]
+    ...get<{foo?: string, bar: number, baz: boolean | undefined}>(),
+});
+
+({
+    foo: 1,
+    bar: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    baz: 1,
+    bas: 1,
+    ...get<{foo: string, bar: number, bas: number} | {bar: number, baz: boolean, bas?: number}>(),
+    ...Boolean() && {foo},
+});
+
+{
+    let a, b;
+    ({[foo]: a, foo: b, ...{}} = get<{foo: string}>());
+}
+
+({
+    foo: 1,
+    bar: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    baz: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'baz' is overridden later.]
+    ...get<WithMethods>(),
+});
+
+({
+    foo() {},
+    bar: () => {},
+    ~~~            [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    baz: get<() => void>(),
+    ~~~                     [error no-duplicate-spread-property: Property 'baz' is overridden later.]
+    ...get<WithMethods>(),
+});
+
+({
+    foo() {},
+    ~~~       [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+    bar: () => {},
+    ~~~            [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    baz: get<() => void>(),
+    ~~~                     [error no-duplicate-spread-property: Property 'baz' is overridden later.]
+    ...get<{foo(): void, bar: () => void, baz: number}>(),
+});
+
+({
+    ...get<WithMethods>(),
+    ~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+});
+
+({
+    ...get<{foo: number, bar: number, baz: number}>(),
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    foo() {},
+    bar: () => {},
+    baz: get<() => void>(),
+});
+
+({
+    prop: 1,
+    ...get<unknown>(),
+    prop2: 2,
+    ...get<any>(),
+});

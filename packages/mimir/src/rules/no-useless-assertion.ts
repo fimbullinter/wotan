@@ -105,7 +105,7 @@ export class Rule extends TypedRule {
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression)!;
-        if ((targetType.flags & ts.TypeFlags.Instantiable) === 0) {
+        if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
         }
@@ -115,7 +115,7 @@ export class Rule extends TypedRule {
             // TODO use assignability check once it's exposed from TypeChecker
             if (
                 contextualType === undefined ||
-                contextualType.flags & ts.TypeFlags.Instantiable ||
+                contextualType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable) ||
                 (contextualType.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) === 0 &&
                 // contextual type is exactly the same
                 !typesAreEqual(sourceType, contextualType, this.checker) &&
