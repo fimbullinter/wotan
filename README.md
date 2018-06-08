@@ -127,12 +127,11 @@ This one tries to avoid design decisions of other linters that turned out to be 
 
 ## Supported Environments
 
-This module runs on all actively supported versions of node.js starting from v6.12.3. Since node.js v4.x will be dumped in the first half of 2018 I didn't bother to support it.
+This project runs on all actively supported versions of Node.js.
 
-This package officially supports the latest stable version of TypeScript. We try to make it compatible all the way back to v2.4.1 although some rules might behave differently due to changes in the type system.
-We try to support TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
+This project officially supports the latest 3 stable version of TypeScript. As of writing this is 2.7 - 2.9. It *should* work with TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
 
-Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from this module.
+Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from any of the packages.
 
 ## Semantic Versioning (SemVer policy)
 
