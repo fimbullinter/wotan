@@ -83,7 +83,7 @@ export class Rule extends TypedRule {
     }
 
     private isIterableOfPromises(type: ts.Type, node: ts.Expression): boolean {
-        const symbol = type.getProperties().find((prop) => prop.name === '__@iterator');
+        const symbol = type.getProperties().find((prop) => prop.escapedName === '__@iterator');
         if (symbol === undefined)
             return false;
         const t = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(symbol, node));

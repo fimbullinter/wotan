@@ -1,5 +1,4 @@
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
-import * as ts from 'typescript';
 import { isElementAccessExpression, isTextualLiteral, isValidPropertyAccess } from 'tsutils';
 
 @excludeDeclarationFiles
