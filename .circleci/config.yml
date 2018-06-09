@@ -79,7 +79,7 @@ jobs:
     <<: *base
   test@2.8:
     docker:
-      - image: circleci/node:8@sha256:fdad4eb2cc225a5c1b56fc6ac1fe275f5f92434f135f63fbc95894274753adc3
+      - image: circleci/node:8@sha256:32c015ea2135d3ce9cebe56270239cbfc2285fc064005fed5f5446f90ff069dd
     environment:
       typescriptVersion: 2.8
     <<: *base
