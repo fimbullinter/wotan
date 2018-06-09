@@ -1,0 +1,2 @@
+, // should not be autofixed
+~                            [error local/delete: remove this character]
