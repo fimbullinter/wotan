@@ -30,7 +30,10 @@ export class Rule extends AbstractRule {
                     default:
                         // union of literal types, do not add these to `valuesSeen`, but display an error if all literals were already seen
                         if (literals.every((v) => valuesSeen.has(v)))
-                            this.addFailureAtNode(clause.expression, `Duplicate 'case ${literals.map(formatPrimitive).join(' | ')}'.`);
+                            this.addFailureAtNode(
+                                clause.expression,
+                                `Duplicate 'case ${literals.map(formatPrimitive).sort().join(' | ')}'.`,
+                            );
                 }
             }
         }
