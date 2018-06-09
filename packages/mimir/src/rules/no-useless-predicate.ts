@@ -218,7 +218,7 @@ export class Rule extends TypedRule {
     private executePredicate(type: ts.Type, predicate: (type: ts.Type) => boolean | undefined) {
         let result: boolean | undefined;
         for (let t of unionTypeParts(type)) {
-            if (t.flags & ts.TypeFlags.TypeVariable) {
+            if (t.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) {
                 const constraint = this.checker.getBaseConstraintOfType(t);
                 if (constraint === undefined)
                     return;
@@ -289,7 +289,7 @@ function isTypeofFunction(type: ts.Type) {
     if (type.getCallSignatures().length !== 0 || type.getConstructSignatures().length !== 0)
             return true;
     // check if this could be the global `Function` type
-    return type.symbol !== undefined && type.symbol.name === 'Function' &&
+    return type.symbol !== undefined && type.symbol.escapedName === 'Function' &&
         hasPropertyOfKind(type, 'apply', ts.SymbolFlags.Method) &&
         hasPropertyOfKind(type, 'arguments', ts.SymbolFlags.Property) &&
         hasPropertyOfKind(type, 'bind', ts.SymbolFlags.Method) &&

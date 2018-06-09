@@ -18,7 +18,7 @@ const emptyPropertyInfo: PropertyInfo = {
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public static supports(_sourceFile: ts.SourceFile, context: RuleSupportsContext) {
-        return !ts.version.startsWith('2.4.') && isStrictNullChecksEnabled(context.program!.getCompilerOptions());
+        return isStrictNullChecksEnabled(context.program!.getCompilerOptions());
     }
 
     public apply() {

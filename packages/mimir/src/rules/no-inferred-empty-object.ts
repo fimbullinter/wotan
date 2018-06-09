@@ -2,14 +2,11 @@ import { TypedRule, excludeDeclarationFiles, typescriptOnly } from '@fimbul/ymir
 import * as ts from 'typescript';
 import { isTypeLiteralNode } from 'tsutils';
 
-const typescriptPre270 = /^2\.[456]\./.test(ts.version);
-const typescriptPre290 = typescriptPre270 || /^2\.[78]\./.test(ts.version);
+const typescriptPre290 = /^2\.[78]\./.test(ts.version);
 
 @excludeDeclarationFiles
 @typescriptOnly // in .js files TypeParameters default to `any`
 export class Rule extends TypedRule {
-    private scanner: ts.Scanner | undefined = undefined;
-
     public apply() {
         for (const node of this.context.getFlatAst()) {
             if (node.kind === ts.SyntaxKind.CallExpression) {
@@ -74,10 +71,6 @@ export class Rule extends TypedRule {
         typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>,
         node: ts.Expression,
     ) {
-        // for compatibility with typescript@<2.7.0
-        if (typescriptPre270)
-            return this.scannerFallback(signature, typeParameters, node);
-
         const {typeArguments} = <ts.ExpressionWithTypeArguments><any>this.checker.signatureToSignatureDeclaration(
             signature,
             ts.SyntaxKind.CallExpression,
@@ -92,55 +85,6 @@ export class Rule extends TypedRule {
             const typeArgument = typeArguments[i];
             if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
                 this.handleEmptyTypeParameter(typeParameters[i], node);
-        }
-    }
-
-    private scannerFallback(signature: ts.Signature, typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>, node: ts.Expression) {
-        const scanner = this.scanner || (this.scanner = ts.createScanner(ts.ScriptTarget.ESNext, true));
-        scanner.setText(
-            this.checker.signatureToString(
-                signature,
-                undefined,
-                ts.TypeFormatFlags.WriteTypeArgumentsOfSignature | ts.TypeFormatFlags.NoTruncation,
-            ),
-            1, // start at 1 because we know 0 is '<'
-        );
-        let param = 0;
-        let token = scanner.scan();
-        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken) {
-            token = scanner.scan();
-            if (token === ts.SyntaxKind.CommaToken || token === ts.SyntaxKind.GreaterThanToken)
-                this.handleEmptyTypeParameter(typeParameters[0], node);
-        }
-        let level = 0;
-        /* Scan every token until we get to the closing '>'.
-           We need to keep track of nested type arguments, because we are only interested in the top level. */
-        while (true) {
-            switch (token) {
-                case ts.SyntaxKind.CommaToken:
-                    if (level === 0) {
-                        ++param;
-                        token = scanner.scan();
-                        if (token === ts.SyntaxKind.OpenBraceToken && scanner.scan() === ts.SyntaxKind.CloseBraceToken) {
-                            token = scanner.scan();
-                            if (token === ts.SyntaxKind.CommaToken || token === ts.SyntaxKind.GreaterThanToken)
-                                this.handleEmptyTypeParameter(typeParameters[param], node);
-                        }
-                        continue;
-                    }
-                    break;
-                case ts.SyntaxKind.GreaterThanToken:
-                    if (level === 0)
-                        return;
-                    --level;
-                    break;
-                case ts.SyntaxKind.LessThanToken:
-                    ++level;
-                    break;
-                case ts.SyntaxKind.EndOfFileToken:
-                    return;
-            }
-            token = scanner.scan();
         }
     }
 

@@ -65,12 +65,15 @@ function updateManifest(manifest: PackageData): boolean {
 for (const name of changedPackages)
     markForRelease(name);
 
+const supportedTypescriptVersions = rootManifest.peerDependencies.typescript;
 rootManifest.version = semver.inc(version, 'minor');
 writeManifest('package.json', rootManifest);
 
 for (const name of needsRelease) {
     const manifest = packages.get(name)!;
     manifest.version = releaseVersion;
+    if (manifest.peerDependencies && manifest.peerDependencies.typescript)
+        manifest.peerDependencies.typescript = supportedTypescriptVersions;
     writeManifest(`packages/${name}/package.json`, manifest);
 }
 

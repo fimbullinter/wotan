@@ -19,7 +19,6 @@ const log = debug('wotan:rule:no-useless-assertion');
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
-const typescriptPre270 = /^2\.[456]\./.test(ts.version);
 const typeFormat = ts.TypeFormatFlags.NoTruncation
     | ts.TypeFormatFlags.UseFullyQualifiedType
     | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
@@ -85,10 +84,7 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression)!;
-            const flags = getNullableFlags(
-                (!typescriptPre270 || originalType.flags & ts.TypeFlags.IndexedAccess) &&
-                    this.checker.getBaseConstraintOfType(originalType) || originalType,
-            );
+            const flags = getNullableFlags(this.checker.getBaseConstraintOfType(originalType) || originalType);
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
@@ -252,7 +248,7 @@ function couldBeTupleType(type: ts.ObjectType): boolean {
         return false;
     let i = 0;
     for (; i < properties.length; ++i) {
-        const name = properties[i].name;
+        const name = properties[i].escapedName;
         if (String(i) !== name) {
             if (i === 0)
                 // if there are no integer properties, this is not a tuple
@@ -261,7 +257,7 @@ function couldBeTupleType(type: ts.ObjectType): boolean {
         }
     }
     for (; i < properties.length; ++i)
-        if (String(+properties[i].name) === properties[i].name)
+        if (String(+properties[i].escapedName) === properties[i].escapedName)
             return false;
     return true;
 }
