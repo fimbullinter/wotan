@@ -1,4 +1,4 @@
-import { TypedRule, excludeDeclarationFiles, requiresStrictNullChecks } from '../../../ymir/src';
+import { TypedRule, excludeDeclarationFiles, requiresStrictNullChecks } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration } from 'tsutils';
 
