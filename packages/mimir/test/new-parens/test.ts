@@ -1,5 +1,4 @@
 new Array
-new Array<string>;
 
 new Array
     ();
