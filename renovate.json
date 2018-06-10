@@ -28,6 +28,6 @@
   },
   "docker": {
     "enabled": true,
-    "schedule": "before 6am every weekend"
+    "schedule": "before 8am on Sunday"
   }
 }
