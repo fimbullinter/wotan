@@ -61,6 +61,8 @@ export class Runner {
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
 
         for (const file of files) {
+            if (!hasSupportedExtension(file))
+                continue;
             if (options.config === undefined)
                 config = this.configManager.find(file);
             const mapped = processorHost.getProcessedFileInfo(file);
