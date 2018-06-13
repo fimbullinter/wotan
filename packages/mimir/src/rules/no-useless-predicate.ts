@@ -10,6 +10,7 @@ import {
     isTextualLiteral,
     isIdentifier,
     isEmptyObjectType,
+    isIntersectionType,
 } from 'tsutils';
 import { isStrictNullChecksEnabled } from '../utils';
 
@@ -226,7 +227,7 @@ export class Rule extends TypedRule {
             }
             if (t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never | ts.TypeFlags.Unknown))
                 return;
-            switch (predicate(t)) {
+            switch (isIntersectionType(t) ? this.matchIntersectionType(t, predicate) : predicate(t)) {
                 case true:
                     if (result === false)
                         return;
@@ -239,6 +240,24 @@ export class Rule extends TypedRule {
                     break;
                 default:
                     return;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * If one of the types in the intersection matches the precicate, this function returns true.
+     * Otherwise if any of the types results in undefined, this function returns undefined.
+     * If every type results in false, it returns false.
+     */
+    private matchIntersectionType(type: ts.IntersectionType, predicate: (type: ts.Type) => boolean | undefined) {
+        let result: boolean | undefined = false;
+        for (const t of type.types) {
+            switch (this.executePredicate(t, predicate)) {
+                case true:
+                    return true;
+                case undefined:
+                    result = undefined;
             }
         }
         return result;
