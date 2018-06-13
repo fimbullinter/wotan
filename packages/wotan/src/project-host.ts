@@ -10,6 +10,8 @@ import debug = require('debug');
 
 const log = debug('wotan:projectHost');
 
+const additionalExtensions = ['.json'];
+
 // @internal
 export interface ProcessedFileInfo {
     originalName: string;
@@ -68,7 +70,7 @@ export class ProjectHost implements ts.CompilerHost {
             const fileName = `${dir}/${entry}`;
             switch (this.fs.getKind(fileName)) {
                 case FileKind.File: {
-                    if (!hasSupportedExtension(fileName)) {
+                    if (!hasSupportedExtension(fileName, additionalExtensions)) {
                         const c = this.config || this.tryFindConfig(fileName);
                         const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
@@ -79,7 +81,7 @@ export class ProjectHost implements ts.CompilerHost {
                                     getSettings: () => this.configManager.getSettings(c!, fileName),
                                     readFile: () => this.fs.readFile(fileName),
                                 });
-                            if (hasSupportedExtension(newName)) {
+                            if (hasSupportedExtension(newName, additionalExtensions)) {
                                 files.push(newName);
                                 this.reverseMap.set(newName, fileName);
                                 break;
@@ -105,7 +107,7 @@ export class ProjectHost implements ts.CompilerHost {
             case FileKind.File:
                 return true;
             default:
-                return hasSupportedExtension(file) && this.getFileSystemFile(file) !== undefined;
+                return hasSupportedExtension(file, additionalExtensions) && this.getFileSystemFile(file) !== undefined;
         }
     }
 
