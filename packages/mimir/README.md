@@ -23,6 +23,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`await-async-result`](docs/await-async-result.md) | :mag: Warns about not using the result of a call to an async function inside async functions. | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 [`await-only-promise`](docs/await-only-promise.md) | :mag: :wrench: Finds uses of `await` on non-Promise values. Also checks `for await` loops. | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 [`ban-dom-globals`](docs/ban-dom-globals.md) | :mag: Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
+[`delete-only-optional-property`](docs/delete-only-optional-property.md) | :mag: Disallows `delete` of required properties. | There's no similar TSLint rule.
 [`generator-require-yield`](docs/generator-require-yield.md) | Requires at least one `yield` inside generator functions. | There's no similar TSLint rule.
 [`new-parens`](docs/new-parens.md) | :wrench: Requires parentheses when invoking constructors. | Performance!
 [`no-case-declaration`](docs/no-case-declaration.md) | Disallows `let`, `class` and `enum` in case blocks. | TSLint has no similar rule, ESLint has `no-case-declarations` which forbids function declarations as well.
