@@ -117,16 +117,16 @@ export function isTypescriptFile(sourceFile: ts.SourceFile) {
     return /\.tsx?$/.test(sourceFile.fileName);
 }
 
-export function typescriptOnly<T extends typeof AbstractRule>(target: T) {
+export function typescriptOnly(target: typeof AbstractRule) {
     target.supports = combinePredicates(target.supports, isTypescriptFile);
 }
 
-export function excludeDeclarationFiles<T extends typeof AbstractRule>(target: T) {
+export function excludeDeclarationFiles(target: typeof AbstractRule) {
     target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
 }
 
 export function requireLibraryFile(fileName: string) {
-    return <T extends typeof TypedRule>(target: T) => {
+    return (target: typeof TypedRule) => {
         target.supports = combinePredicates(target.supports, (_, context) => programContainsLibraryFile(context.program!, fileName));
     };
 }
@@ -134,6 +134,14 @@ export function requireLibraryFile(fileName: string) {
 function programContainsLibraryFile(program: ts.Program, fileName: string) {
     const libFileDir = path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()));
     return program.getSourceFile(path.join(libFileDir, fileName)) !== undefined;
+}
+
+export function requiresStrictNullChecks(target: typeof TypedRule) {
+    target.supports = combinePredicates(target.supports, (_, context) => isStrictNullChecksEnabled(context.program!.getCompilerOptions()));
+}
+
+function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
+    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
 }
 
 export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;

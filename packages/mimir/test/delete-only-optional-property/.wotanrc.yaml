@@ -1,0 +1,2 @@
+rules:
+  delete-only-optional-property: error
