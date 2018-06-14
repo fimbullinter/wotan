@@ -58,12 +58,8 @@ export class Rule extends TypedRule {
 
 function getLiterals(type: ts.Type) {
     const result = [];
-    for (const t of unionTypeParts(type)) {
-        if (t.flags & ts.TypeFlags.StringOrNumberLiteral) {
+    for (const t of unionTypeParts(type))
+        if (t.flags & ts.TypeFlags.StringOrNumberLiteral)
             result.push(`${(<ts.LiteralType>t).value}`);
-        } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
-            result.push((<{intrinsicName: string}><any>t).intrinsicName);
-        }
-    }
     return result;
 }
