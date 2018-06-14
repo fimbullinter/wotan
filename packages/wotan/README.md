@@ -19,7 +19,7 @@ Install Wotan as a local dependency:
 ```sh
 npm install --save-dev @fimbul/wotan
 # or
-yarn add -D @fimbult/wotan
+yarn add -D @fimbul/wotan
 ```
 
 Add a `.wotanrc.yaml` file to the root of your project with the following content:

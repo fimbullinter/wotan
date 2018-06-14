@@ -74,3 +74,10 @@ export class RealJsClass {
 
 /** @type {<T>(param?: T) => T} */
 export var functionTyped;
+
+/**
+ * @template T
+ * @callback Cb
+ * @param {T} [a]
+ */
+export function notGeneric(a) {}

@@ -29,7 +29,7 @@ yarn-error.log*
 !/packages/*/bin/main.js
 /packages/**/*.js.map
 /packages/**/*.d.ts
-!/packages/**/test/*/**
+!/packages/*/test/*/**
 /scripts/*.js
 /scripts/*.js.map
 /scripts/*.d.ts
