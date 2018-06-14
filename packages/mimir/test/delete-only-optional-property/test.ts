@@ -41,3 +41,9 @@ delete optional.d;
 
 delete [].length;
 delete [][Symbol.iterator];
+
+declare var myArrayLike: {
+    [index: number]: string;
+    [Symbol.iterator]?(): Iterator<number>;
+};
+delete myArrayLike[Symbol.iterator];
