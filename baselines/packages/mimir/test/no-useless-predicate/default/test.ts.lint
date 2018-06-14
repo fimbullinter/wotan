@@ -19,6 +19,18 @@ while (typeof get<{}>() == 'object') ;
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
 while (typeof get<{}>() == 'undefined') ;
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{a: number} & {b: string}>() === 'object') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<(() => void) & {prop: string}>() === 'function') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'string') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'number') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{length: number} & string>() === 'object') ; // TODO this should probably be considered always falsy
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                            [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'undefined') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
 while (typeof get<{toString(): string}>() == 'number') ; // TODO this is actually valid, but needs to check type assignability
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                          [error no-useless-predicate: Expression is always falsy.]
 while (typeof get<null>() == 'null');

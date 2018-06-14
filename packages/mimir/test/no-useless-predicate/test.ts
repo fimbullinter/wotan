@@ -14,6 +14,12 @@ while (typeof get<never>() === 'symbol') {}
 while (typeof get<{}>() === 'number') ;
 while (typeof get<{}>() == 'object') ;
 while (typeof get<{}>() == 'undefined') ;
+while (typeof get<{a: number} & {b: string}>() === 'object') ;
+while (typeof get<(() => void) & {prop: string}>() === 'function') ;
+while (typeof get<{length: number} & string>() === 'string') ;
+while (typeof get<{length: number} & string>() === 'number') ;
+while (typeof get<{length: number} & string>() === 'object') ; // TODO this should probably be considered always falsy
+while (typeof get<{length: number} & string>() === 'undefined') ;
 while (typeof get<{toString(): string}>() == 'number') ; // TODO this is actually valid, but needs to check type assignability
 while (typeof get<null>() == 'null');
 do {} while (typeof get<Function>() === 'object');
