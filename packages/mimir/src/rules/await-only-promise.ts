@@ -86,21 +86,21 @@ export class Rule extends TypedRule {
         const symbol = type.getProperties().find((prop) => prop.escapedName === '__@iterator');
         if (symbol === undefined)
             return false;
-        const t = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(symbol, node));
+        const t = this.checker.getTypeOfSymbolAtLocation(symbol, node);
         if (t.flags & ts.TypeFlags.Any)
             return true;
         for (const signature of t.getCallSignatures()) {
-            const returnType = this.checker.getApparentType(signature.getReturnType());
+            const returnType = signature.getReturnType();
             if (returnType.flags & ts.TypeFlags.Any)
                 return true;
             const next = returnType.getProperty('next');
             if (next === undefined)
                 continue;
-            const nextType = this.checker.getApparentType(this.checker.getTypeOfSymbolAtLocation(next, node));
+            const nextType = this.checker.getTypeOfSymbolAtLocation(next, node);
             if (nextType.flags & ts.TypeFlags.Any)
                 return true;
             for (const nextSignature of nextType.getCallSignatures()) {
-                const nextReturnType = this.checker.getApparentType(nextSignature.getReturnType());
+                const nextReturnType = nextSignature.getReturnType();
                 if (nextReturnType.flags & ts.TypeFlags.Any)
                     return true;
                 const value = nextReturnType.getProperty('value');
