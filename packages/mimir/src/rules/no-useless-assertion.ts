@@ -1,6 +1,11 @@
 import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isStrictNullChecksEnabled, isStrictPropertyInitializationEnabled, expressionNeedsParensWhenReplacingNode } from '../utils';
+import {
+    isStrictNullChecksEnabled,
+    isStrictPropertyInitializationEnabled,
+    expressionNeedsParensWhenReplacingNode,
+    typesAreEqual,
+} from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -18,11 +23,6 @@ const log = debug('wotan:rule:no-useless-assertion');
 
 const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type of the expression.";
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
-
-const typeFormat = ts.TypeFormatFlags.NoTruncation
-    | ts.TypeFormatFlags.UseFullyQualifiedType
-    | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
-    | ts.TypeFormatFlags.UseStructuralFallback;
 
 @excludeDeclarationFiles
 @typescriptOnly
@@ -163,10 +163,6 @@ export class Rule extends TypedRule {
         }
         return this.checker.getContextualType(node);
     }
-}
-
-function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
-    return a === b || checker.typeToString(a, undefined, typeFormat) === checker.typeToString(b, undefined, typeFormat);
 }
 
 function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {

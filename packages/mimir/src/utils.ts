@@ -144,3 +144,12 @@ function parentRequiresParensForNode(
 export function objectLiteralNeedsParens(replaced: ts.Expression): boolean {
     return parentRequiresParensForNode(ts.SyntaxKind.ObjectLiteralExpression, replaced);
 }
+
+const typeFormat = ts.TypeFormatFlags.NoTruncation
+    | ts.TypeFormatFlags.UseFullyQualifiedType
+    | ts.TypeFormatFlags.WriteClassExpressionAsTypeLiteral
+    | ts.TypeFormatFlags.UseStructuralFallback;
+
+export function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
+    return a === b || checker.typeToString(a, undefined, typeFormat) === checker.typeToString(b, undefined, typeFormat);
+}
