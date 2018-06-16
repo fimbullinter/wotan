@@ -146,17 +146,17 @@ for (let i = 0; i < iteratorWithNextParameter.length; ++i) {
     iteratorWithNextParameter[i]
 }
 
-declare let iteratorResultWithOptionalDone: ArrayLike & {[Symbol.iterator](): {next: {done?: boolean, value: number}}};
+declare let iteratorResultWithOptionalDone: ArrayLike & {[Symbol.iterator](): {next(): {done?: boolean, value: number}}};
 for (let i = 0; i < iteratorResultWithOptionalDone.length; ++i) {
     iteratorResultWithOptionalDone[i]
 }
 
-declare let iteratorResultWithMistypedDone: ArrayLike & {[Symbol.iterator](): {next: {done: string, value: number}}};
-for (let i = 0; i < iteratorResultWithOptionalDone.length; ++i) {
+declare let iteratorResultWithMistypedDone: ArrayLike & {[Symbol.iterator](): {next(): {done: string, value: number}}};
+for (let i = 0; i < iteratorResultWithMistypedDone.length; ++i) {
     iteratorResultWithMistypedDone[i]
 }
 
-declare let iteratorResultWithoutValue: ArrayLike & {[Symbol.iterator](): {next: {done: boolean}}};
+declare let iteratorResultWithoutValue: ArrayLike & {[Symbol.iterator](): {next(): {done: boolean}}};
 for (let i = 0; i < iteratorResultWithoutValue.length; ++i) {
     iteratorResultWithoutValue[i]
 }
@@ -175,4 +175,19 @@ class MyIterable {
 let myIterable = new MyIterable();
 for (let i = 0; i < myIterable.length; ++i) {
     myIterable[i]
+}
+
+declare let noIndexSignature: {length: number, [Symbol.iterator](): IterableIterator<number>};
+for (let i = 0; i < noIndexSignature.length; ++i) {
+     noIndexSignature[i]
+}
+
+declare let stringIndexSignature: {[key: string]: number, length: number, [Symbol.iterator](): IterableIterator<number>};
+for (let i = 0; i < stringIndexSignature.length; ++i) {
+     stringIndexSignature[i]
+}
+
+declare let iterableWithDifferentType: ArrayLike & Iterable<string>;
+for (let i = 0; i < iterableWithDifferentType.length; ++i) {
+    iterableWithDifferentType[i]
 }

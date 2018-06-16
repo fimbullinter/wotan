@@ -19,6 +19,7 @@ import {
     isSymbolFlagSet,
 } from 'tsutils';
 import * as path from 'path';
+import { typesAreEqual } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -90,6 +91,9 @@ export class Rule extends TypedRule {
     }
 
     private isIterable(type: ts.Type, node: ts.Expression): boolean {
+        const indexType = type.getNumberIndexType() || type.getStringIndexType();
+        if (indexType === undefined)
+            return false;
         const iteratorFn = type.getProperties().find((p) => p.escapedName === '__@iterator');
         if (!isPresentAndRequired(iteratorFn))
             return false;
@@ -98,10 +102,15 @@ export class Rule extends TypedRule {
             return isPresentAndRequired(next) &&
                 checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(next, node), (iteratorResult) => {
                     const done = iteratorResult.getProperty('done');
-                    return isPresentAndRequired(done) &&
-                        unionTypeParts(this.checker.getTypeOfSymbolAtLocation(done, node))
-                            .every((t) => isTypeFlagSet(t, ts.TypeFlags.BooleanLike)) &&
-                        isPresentAndRequired(iteratorResult.getProperty('value'));
+                    if (
+                        !isPresentAndRequired(done) ||
+                        !unionTypeParts(this.checker.getTypeOfSymbolAtLocation(done, node))
+                            .every((t) => isTypeFlagSet(t, ts.TypeFlags.BooleanLike))
+                    )
+                        return false;
+                    const value = iteratorResult.getProperty('value');
+                    return isPresentAndRequired(value) &&
+                        typesAreEqual(this.checker.getTypeOfSymbolAtLocation(value, node), indexType, this.checker);
                 });
 
         });
