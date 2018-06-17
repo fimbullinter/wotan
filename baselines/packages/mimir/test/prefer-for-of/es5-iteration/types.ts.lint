@@ -206,3 +206,14 @@ declare let iterableWithDifferentType: ArrayLike & Iterable<string>;
 for (let i = 0; i < iterableWithDifferentType.length; ++i) {
     iterableWithDifferentType[i]
 }
+
+import {jsIterable, jsNotIterable} from './jsdoc';
+
+for (let i = 0; i < jsIterable.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
+    jsIterable[i]
+}
+
+for (let i = 0; i < jsNotIterable.length; ++i) {
+    jsNotIterable[i]
+}
