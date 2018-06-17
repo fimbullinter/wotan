@@ -80,9 +80,7 @@ function getLiteralsByType(types: ReadonlyArray<ts.Type>) {
         } else if (type.flags & ts.TypeFlags.NumberLiteral) {
             result.number = append(result.number, (<ts.NumberLiteralType>type).value);
         } else if (type.flags & ts.TypeFlags.BooleanLiteral) {
-            const current = (<{intrinsicName: string}><{}>type).intrinsicName === 'true';
-            if (result.boolean !== current)
-                result.boolean = result.boolean === undefined ? current : undefined;
+            result.boolean = result.boolean === undefined ? (<{intrinsicName: string}><{}>type).intrinsicName === 'true' : undefined;
         }
     }
     return result;
