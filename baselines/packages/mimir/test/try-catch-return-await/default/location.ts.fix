@@ -93,6 +93,15 @@ async function test() {
             return x;
         }
     }
+    return {
+        get foo() {
+            try {
+                return x;
+            } catch {
+                return x;
+            }
+        }
+    }
 }
 
 try {
