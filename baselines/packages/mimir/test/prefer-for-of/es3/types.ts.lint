@@ -198,3 +198,13 @@ declare let iterableWithDifferentType: ArrayLike & Iterable<string>;
 for (let i = 0; i < iterableWithDifferentType.length; ++i) {
     iterableWithDifferentType[i]
 }
+
+import {jsIterable, jsNotIterable} from './jsdoc';
+
+for (let i = 0; i < jsIterable.length; ++i) {
+    jsIterable[i]
+}
+
+for (let i = 0; i < jsNotIterable.length; ++i) {
+    jsNotIterable[i]
+}

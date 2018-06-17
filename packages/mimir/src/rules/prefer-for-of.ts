@@ -136,8 +136,9 @@ function signatureHasArityZero(signature: ts.Signature): boolean {
 }
 
 function isOptionalParameter(node: ts.ParameterDeclaration): boolean {
-    // TODO does this need to handle JSDoc tags?
     if (node.questionToken !== undefined || node.dotDotDotToken !== undefined)
+        return true;
+    if (node.flags & ts.NodeFlags.JavaScriptFile && ts.getJSDocParameterTags(node).some((tag) => tag.isBracketed))
         return true;
     if (node.initializer === undefined)
         return false;

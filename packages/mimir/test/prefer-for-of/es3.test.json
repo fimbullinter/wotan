@@ -1,1 +1,3 @@
-{}
+{
+  "exclude": ["jsdoc.js"]
+}

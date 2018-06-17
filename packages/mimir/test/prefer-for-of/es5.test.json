@@ -1,3 +1,4 @@
 {
-  "project": "tsconfig-es5.json"
+  "project": "tsconfig-es5.json",
+  "exclude": ["jsdoc.js"]
 }
