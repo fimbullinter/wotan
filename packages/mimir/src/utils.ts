@@ -1,5 +1,16 @@
 import * as ts from 'typescript';
-import { hasModifier, WrappedAst, getWrappedNodeAtPosition, VariableUse, UsageDomain, isReassignmentTarget } from 'tsutils';
+import {
+    hasModifier,
+    WrappedAst,
+    getWrappedNodeAtPosition,
+    VariableUse,
+    UsageDomain,
+    isReassignmentTarget,
+    isPropertyAccessExpression,
+    isIdentifier,
+    unionTypeParts,
+    isLiteralType,
+} from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
 export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
@@ -152,4 +163,55 @@ const typeFormat = ts.TypeFormatFlags.NoTruncation
 
 export function typesAreEqual(a: ts.Type, b: ts.Type, checker: ts.TypeChecker) {
     return a === b || checker.typeToString(a, undefined, typeFormat) === checker.typeToString(b, undefined, typeFormat);
+}
+
+export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker: ts.TypeChecker) {
+    const {argumentExpression} = node;
+    if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
+        return;
+    yield* propertiesOfType(
+        checker.getApparentType(checker.getTypeAtLocation(node.expression)!),
+        lateBoundPropertyNames(argumentExpression, checker),
+    );
+}
+
+export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
+    for (const {symbolName, name} of names) {
+        const symbol = type.getProperties().find((s) => s.escapedName === symbolName);
+        if (symbol !== undefined)
+            yield {symbol, name};
+    }
+}
+
+export interface LateBoundPropertyName {
+    name: string;
+    symbolName: string;
+}
+
+export function *lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChecker) {
+    if (
+        isPropertyAccessExpression(node) &&
+        isIdentifier(node.expression) &&
+        node.expression.text === 'Symbol'
+    ) {
+        yield {
+            name: `Symbol.${node.name.text}`,
+            symbolName: `__@${node.name.text}`,
+        };
+    } else {
+        const type = checker.getTypeAtLocation(node)!;
+        for (const key of unionTypeParts(checker.getBaseConstraintOfType(type) || type)) {
+            if (isLiteralType(key)) {
+                const name = String(key.value);
+                yield {
+                    name,
+                    symbolName: escapeIdentifier(name),
+                };
+            }
+        }
+    }
+}
+
+function escapeIdentifier(name: string) {
+    return name.startsWith('__') ? '_' + name : name;
 }

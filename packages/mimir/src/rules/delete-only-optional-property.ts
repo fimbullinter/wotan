@@ -4,11 +4,9 @@ import {
     getWrappedNodeAtPosition,
     isDeleteExpression,
     isElementAccessExpression,
-    unionTypeParts,
-    isPropertyAccessExpression,
-    isIdentifier,
 } from 'tsutils';
 import * as ts from 'typescript';
+import { elementAccessSymbols } from '../utils';
 
 @excludeDeclarationFiles
 @requiresStrictNullChecks
@@ -22,27 +20,8 @@ export class Rule extends TypedRule {
                 continue;
             const {expression} = node;
             if (isElementAccessExpression(expression)) {
-                const {argumentExpression} = expression;
-                if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
-                    continue;
-                const expressionType = this.checker.getApparentType(this.checker.getTypeAtLocation(expression.expression)!);
-                if (
-                    isPropertyAccessExpression(argumentExpression) &&
-                    isIdentifier(argumentExpression.expression) &&
-                    argumentExpression.expression.text === 'Symbol'
-                ) {
-                    // handle well-known symbols
-                    const name = `__@${argumentExpression.name.text}`;
-                    this.checkSymbol(
-                        expressionType.getProperties().find((p) => p.escapedName === name),
-                        node,
-                        `Symbol.${argumentExpression.name.text}`,
-                    );
-                } else {
-                    const argumentType = this.checker.getTypeAtLocation(argumentExpression)!;
-                    for (const key of getLiterals(this.checker.getBaseConstraintOfType(argumentType) || argumentType))
-                        this.checkSymbol(expressionType.getProperty(key), node, key);
-                }
+                for (const {symbol, name} of elementAccessSymbols(expression, this.checker))
+                    this.checkSymbol(symbol, node, name);
             } else {
                 this.checkSymbol(this.checker.getSymbolAtLocation(expression), node);
             }
@@ -54,12 +33,4 @@ export class Rule extends TypedRule {
             return;
         this.addFailureAtNode(errorNode, `Only 'delete' optional properties. Property '${name || symbol.name}' is required.`);
     }
-}
-
-function getLiterals(type: ts.Type) {
-    const result = [];
-    for (const t of unionTypeParts(type))
-        if (t.flags & ts.TypeFlags.StringOrNumberLiteral)
-            result.push(`${(<ts.LiteralType>t).value}`);
-    return result;
 }
