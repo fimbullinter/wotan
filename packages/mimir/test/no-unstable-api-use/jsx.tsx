@@ -31,8 +31,14 @@ class BasComponent {
     }
 }
 
+declare var FizzComponent: {
+    /** @deprecated */
+    new(props: any): {render(): any};
+}
+
 let foo = <FooComponent foo="a"/>;
 let foo2 = <FooComponent bar="1"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
 let bas = <BasComponent bar=""></BasComponent>;
+let fizz = <FizzComponent></FizzComponent>;
