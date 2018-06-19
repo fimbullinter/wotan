@@ -22,7 +22,17 @@ class BarComponent {
 /** @deprecated */
 class BazComponent extends BarComponent {}
 
+class BasComponent {
+    /** @deprecated */
+    constructor(props?: any) {}
+
+    public render() {
+        return false;
+    }
+}
+
 let foo = <FooComponent foo="a"/>;
 let foo2 = <FooComponent bar="1"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
+let bas = <BasComponent bar=""></BasComponent>;

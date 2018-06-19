@@ -149,9 +149,14 @@ function describeSymbol(symbol: ts.Symbol): string {
     return '(unknown)';
 }
 
-function signatureToString(signature: ts.Signature, n: ts.CallLikeExpression, checker: ts.TypeChecker) {
-    const construct = n.kind === ts.SyntaxKind.NewExpression ||
-        n.kind === ts.SyntaxKind.CallExpression && n.expression.kind === ts.SyntaxKind.SuperKeyword;
+function signatureToString(signature: ts.Signature, _n: ts.CallLikeExpression, checker: ts.TypeChecker) {
+    let construct = false;
+    switch (signature.declaration && signature.declaration.kind) {
+        case ts.SyntaxKind.Constructor:
+        case ts.SyntaxKind.ConstructSignature:
+        case ts.SyntaxKind.ConstructorType:
+            construct = true;
+    }
     return `${construct ? 'Costruct' : 'Call'}Signature '${construct ? 'new ' : ''}${checker.signatureToString(signature)}'`;
 }
 
