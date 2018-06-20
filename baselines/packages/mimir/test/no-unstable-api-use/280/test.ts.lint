@@ -460,3 +460,37 @@ experimental;
 ~~~~~~~~~~~~  [error no-unstable-api-use: Variable 'experimental' is experimental.]
 experimentalReason;
 ~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Variable 'experimentalReason' is experimental: reason ]
+
+declare var myIterable: {
+    /** @deprecated use async iterator instead. */
+    [Symbol.iterator](): Iterator<number>;
+    '__@iterator'(): Iterator<number>;
+    [Symbol.asyncIterator](): AsyncIterableIterator<number>
+    /** @deprecated */
+    '__@asyncIterator'(): AsyncIterableIterator<number>;
+}
+
+myIterable[Symbol.iterator];
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Method 'Symbol.iterator' is deprecated: use async iterator instead. ]
+myIterable['__@iterator'];
+myIterable[Symbol.asyncIterator];
+myIterable['__@asyncIterator'];
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Method '__@asyncIterator' is deprecated.]
+
+const {[Symbol.iterator]: iteratorFn, [Symbol.asyncIterator]: asyncIteratorFn} = myIterable;
+       ~~~~~~~~~~~~~~~~~                                                                     [error no-unstable-api-use: Method 'Symbol.iterator' is deprecated: use async iterator instead. ]
+
+/** @deprecated var */
+declare var myDeprecatedCallable: {
+    (): void;
+    /** @deprecated signature */
+    (param: number): number;
+}
+
+myDeprecatedCallable;
+~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var ]
+myDeprecatedCallable();
+~~~~~~~~~~~~~~~~~~~~    [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var ]
+myDeprecatedCallable(1);
+~~~~~~~~~~~~~~~~~~~~     [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var ]
+~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(param: number): number' is deprecated: signature ]
