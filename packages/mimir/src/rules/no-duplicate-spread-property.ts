@@ -1,7 +1,6 @@
-import { TypedRule, excludeDeclarationFiles, RuleSupportsContext } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles, requiresStrictNullChecks } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration } from 'tsutils';
-import { isStrictNullChecksEnabled } from '../utils';
 
 interface PropertyInfo {
     known: boolean;
@@ -16,11 +15,8 @@ const emptyPropertyInfo: PropertyInfo = {
 };
 
 @excludeDeclarationFiles
+@requiresStrictNullChecks
 export class Rule extends TypedRule {
-    public static supports(_sourceFile: ts.SourceFile, context: RuleSupportsContext) {
-        return !ts.version.startsWith('2.4.') && isStrictNullChecksEnabled(context.program!.getCompilerOptions());
-    }
-
     public apply() {
         const checkedObjects = new Set<number>();
         for (const node of this.context.getFlatAst()) {

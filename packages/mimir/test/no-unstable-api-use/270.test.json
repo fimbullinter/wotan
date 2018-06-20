@@ -1,3 +1,4 @@
 {
-  "typescriptVersion": "~2.7.0"
+  "typescriptVersion": "~2.7.0",
+  "exclude": ["es6-module.ts", "export-assignment.ts"]
 }

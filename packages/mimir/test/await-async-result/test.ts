@@ -1,11 +1,12 @@
 // adapted from https://github.com/Microsoft/TypeScript/pull/15195
 
+async function isAsync(): Promise<any>;
 async function isAsync() {
     return 10;
 }
 
 async function async() {
-    async();
+    isAsync();
 }
 
 function notAsync() {
@@ -16,6 +17,7 @@ declare function returnsPromise(): Promise<number>;
 declare function returnsThenable(): {then(cb: (onfulfilled: (v: number) => void) => void): void};
 
 class Foo {
+    async isAsync(): Promise<any>;
     async isAsync() {
         return 10;
     }

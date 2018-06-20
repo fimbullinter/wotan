@@ -354,3 +354,30 @@ let experimentalReason = 1;
 
 experimental;
 experimentalReason;
+
+declare var myIterable: {
+    /** @deprecated use async iterator instead. */
+    [Symbol.iterator](): Iterator<number>;
+    '__@iterator'(): Iterator<number>;
+    [Symbol.asyncIterator](): AsyncIterableIterator<number>
+    /** @deprecated */
+    '__@asyncIterator'(): AsyncIterableIterator<number>;
+}
+
+myIterable[Symbol.iterator];
+myIterable['__@iterator'];
+myIterable[Symbol.asyncIterator];
+myIterable['__@asyncIterator'];
+
+const {[Symbol.iterator]: iteratorFn, [Symbol.asyncIterator]: asyncIteratorFn} = myIterable;
+
+/** @deprecated var */
+declare var myDeprecatedCallable: {
+    (): void;
+    /** @deprecated signature */
+    (param: number): number;
+}
+
+myDeprecatedCallable;
+myDeprecatedCallable();
+myDeprecatedCallable(1);

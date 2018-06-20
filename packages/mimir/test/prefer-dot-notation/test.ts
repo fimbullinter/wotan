@@ -13,7 +13,6 @@ obj[' '];
 obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
-obj[];
 
 for (const key of Object.keys(obj))
     obj[key];

@@ -61,7 +61,7 @@ declare const alsoNoTuple: AlsoNotATuple;
 
 <any>unknownName;
 
-function fn<T extends string | undefined>(param: T) {
+function fn<T extends string | undefined>(param: T): T {
     param as string;
     param as string | undefined;
     param as typeof param;
@@ -86,7 +86,40 @@ function fn<T extends string | undefined>(param: T) {
     takeStringUndefined(param as T);
     takeStringUndefined(param as string | undefined);
     takeStringUndefined(b as string);
+
+    return param;
 }
+
+function fn2<T>(param: T) {
+    fn(param as any);
+}
+
+function fn3<T>(param: T) {
+    fn2(param as any);
+}
+
+function fn4<T>(cb: (param: T) => void) {
+    return function <T>(v: T) {
+        cb(v as any);
+    }
+}
+
+function typeArg<T extends string | undefined>(a: T, b: (param: T) => void) {
+    b(a);
+}
+
+typeArg(a as string | undefined, (b) => b);
+
+`${a as string | undefined}`;
+
+declare function tag(strings: TemplateStringsArray, ...values: any[]): string;
+tag`${a as string | undefined}`;
+
+declare function genericTag<T>(strings: TemplateStringsArray, ...values: T[]): T;
+genericTag`${a as string | undefined}`;
+
+declare function genericTag2<T extends string | undefined>(strings: TemplateStringsArray, ...values: T[]): T;
+genericTag2`${a as string | undefined}`;
 
 namespace A {
     export class MyClass {

@@ -153,7 +153,7 @@ function getArrayPropertyName(_: ts.BindingElement, i: number) {
 }
 
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
-    if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.name) ? 0 : ts.SymbolFlags.Transient)))
+    if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.escapedName) ? 0 : ts.SymbolFlags.Transient)))
         return true;
     return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
         .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0);

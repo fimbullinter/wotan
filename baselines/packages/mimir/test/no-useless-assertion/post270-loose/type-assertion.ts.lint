@@ -81,7 +81,7 @@ declare const alsoNoTuple: AlsoNotATuple;
 <any>unknownName;
 ~~~~~             [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
-function fn<T extends string | undefined>(param: T) {
+function fn<T extends string | undefined>(param: T): T {
     param as string;
           ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     param as string | undefined;
@@ -117,7 +117,47 @@ function fn<T extends string | undefined>(param: T) {
                               ~~~~~~~~~~~~~~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     takeStringUndefined(b as string);
                           ~~~~~~~~~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+    return param;
 }
+
+function fn2<T>(param: T) {
+    fn(param as any);
+             ~~~~~~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts the original type of the expression.]
+}
+
+function fn3<T>(param: T) {
+    fn2(param as any);
+              ~~~~~~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts the original type of the expression.]
+}
+
+function fn4<T>(cb: (param: T) => void) {
+    return function <T>(v: T) {
+        cb(v as any);
+    }
+}
+
+function typeArg<T extends string | undefined>(a: T, b: (param: T) => void) {
+    b(a);
+}
+
+typeArg(a as string | undefined, (b) => b);
+          ~~~~~~~~~~~~~~~~~~~~~             [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+`${a as string | undefined}`;
+     ~~~~~~~~~~~~~~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare function tag(strings: TemplateStringsArray, ...values: any[]): string;
+tag`${a as string | undefined}`;
+        ~~~~~~~~~~~~~~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare function genericTag<T>(strings: TemplateStringsArray, ...values: T[]): T;
+genericTag`${a as string | undefined}`;
+               ~~~~~~~~~~~~~~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare function genericTag2<T extends string | undefined>(strings: TemplateStringsArray, ...values: T[]): T;
+genericTag2`${a as string | undefined}`;
+                ~~~~~~~~~~~~~~~~~~~~~    [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 
 namespace A {
     export class MyClass {

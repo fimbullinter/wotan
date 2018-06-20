@@ -10,6 +10,7 @@ import {
     isTextualLiteral,
     isIdentifier,
     isEmptyObjectType,
+    isIntersectionType,
 } from 'tsutils';
 import { isStrictNullChecksEnabled } from '../utils';
 
@@ -218,7 +219,7 @@ export class Rule extends TypedRule {
     private executePredicate(type: ts.Type, predicate: (type: ts.Type) => boolean | undefined) {
         let result: boolean | undefined;
         for (let t of unionTypeParts(type)) {
-            if (t.flags & ts.TypeFlags.TypeVariable) {
+            if (t.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) {
                 const constraint = this.checker.getBaseConstraintOfType(t);
                 if (constraint === undefined)
                     return;
@@ -226,7 +227,7 @@ export class Rule extends TypedRule {
             }
             if (t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never | ts.TypeFlags.Unknown))
                 return;
-            switch (predicate(t)) {
+            switch (isIntersectionType(t) ? this.matchIntersectionType(t, predicate) : predicate(t)) {
                 case true:
                     if (result === false)
                         return;
@@ -239,6 +240,24 @@ export class Rule extends TypedRule {
                     break;
                 default:
                     return;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * If one of the types in the intersection matches the precicate, this function returns true.
+     * Otherwise if any of the types results in undefined, this function returns undefined.
+     * If every type results in false, it returns false.
+     */
+    private matchIntersectionType(type: ts.IntersectionType, predicate: (type: ts.Type) => boolean | undefined) {
+        let result: boolean | undefined = false;
+        for (const t of type.types) {
+            switch (this.executePredicate(t, predicate)) {
+                case true:
+                    return true;
+                case undefined:
+                    result = undefined;
             }
         }
         return result;
@@ -289,7 +308,7 @@ function isTypeofFunction(type: ts.Type) {
     if (type.getCallSignatures().length !== 0 || type.getConstructSignatures().length !== 0)
             return true;
     // check if this could be the global `Function` type
-    return type.symbol !== undefined && type.symbol.name === 'Function' &&
+    return type.symbol !== undefined && type.symbol.escapedName === 'Function' &&
         hasPropertyOfKind(type, 'apply', ts.SymbolFlags.Method) &&
         hasPropertyOfKind(type, 'arguments', ts.SymbolFlags.Property) &&
         hasPropertyOfKind(type, 'bind', ts.SymbolFlags.Method) &&

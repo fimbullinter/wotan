@@ -38,7 +38,7 @@ function format(literals: LiteralInfo) {
     if (literals.number !== undefined)
         result.push(literals.number.join(' | '));
     if (literals.boolean !== undefined)
-        result.push(literals.boolean.join(' | '));
+        result.push(`${literals.boolean}`);
     return result.join(' | ');
 }
 
@@ -47,7 +47,7 @@ function match(a: LiteralInfo, b: LiteralInfo) {
         a.string = b.string = undefined;
     if (a.number === undefined || b.number === undefined || intersects(a.number, b.number))
         a.number = b.number = undefined;
-    if (a.boolean === undefined || b.boolean === undefined || intersects(a.boolean, b.boolean))
+    if (a.boolean === undefined || b.boolean === undefined || a.boolean === b.boolean)
         a.boolean = b.boolean = undefined;
 }
 
@@ -65,7 +65,7 @@ function isEmpty(literals: LiteralInfo) {
 interface LiteralInfo {
     string: string[] | undefined;
     number: number[] | undefined;
-    boolean: boolean[] | undefined;
+    boolean: boolean | undefined;
 }
 
 function getLiteralsByType(types: ReadonlyArray<ts.Type>) {
@@ -80,7 +80,7 @@ function getLiteralsByType(types: ReadonlyArray<ts.Type>) {
         } else if (type.flags & ts.TypeFlags.NumberLiteral) {
             result.number = append(result.number, (<ts.NumberLiteralType>type).value);
         } else if (type.flags & ts.TypeFlags.BooleanLiteral) {
-            result.boolean = append(result.boolean, (<{intrinsicName: string}><{}>type).intrinsicName === 'true');
+            result.boolean = result.boolean === undefined ? (<{intrinsicName: string}><{}>type).intrinsicName === 'true' : undefined;
         }
     }
     return result;

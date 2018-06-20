@@ -1,4 +1,4 @@
 {
-  "files": ["test.ts"],
+  "files": ["test.ts", "invalid.ts"],
   "fix": true
 }

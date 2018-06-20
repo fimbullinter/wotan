@@ -18,6 +18,9 @@ import { injectable } from 'inversify';
 import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
+import debug = require('debug');
+
+const log = debug('wotan:runner');
 
 export interface LintOptions {
     config: string | undefined;
@@ -58,6 +61,8 @@ export class Runner {
         let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
 
         for (const file of files) {
+            if (!hasSupportedExtension(file))
+                continue;
             if (options.config === undefined)
                 config = this.configManager.find(file);
             const mapped = processorHost.getProcessedFileInfo(file);
@@ -68,7 +73,8 @@ export class Runner {
             let sourceFile = program.getSourceFile(file)!;
             const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
             let summary: FileSummary;
-            if (options.fix) {
+            const fix = shouldFix(sourceFile, options, originalName);
+            if (fix) {
                 summary = this.linter.lintAndFix(
                     sourceFile,
                     originalContent,
@@ -77,7 +83,7 @@ export class Runner {
                         ({sourceFile, program} = processorHost.updateSourceFile(sourceFile, program, content, range));
                         return {program, file: sourceFile};
                     },
-                    options.fix === true ? undefined : options.fix,
+                    fix === true ? undefined : fix,
                     program,
                     mapped === undefined ? undefined : mapped.processor,
                 );
@@ -139,8 +145,9 @@ export class Runner {
             }
 
             let sourceFile = ts.createSourceFile(name, content, ts.ScriptTarget.ESNext, true);
+            const fix = shouldFix(sourceFile, options, file);
             let summary: FileSummary;
-            if (options.fix) {
+            if (fix) {
                 summary = this.linter.lintAndFix(
                     sourceFile,
                     originalContent,
@@ -149,7 +156,7 @@ export class Runner {
                         sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
                         return {file: sourceFile};
                     },
-                    options.fix === true ? undefined : options.fix,
+                    fix === true ? undefined : fix,
                     undefined,
                     processor,
                 );
@@ -295,17 +302,19 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
     return false;
 }
 
+function hasParseErrors(sourceFile: ts.SourceFile) {
+    return sourceFile.parseDiagnostics.length !== 0;
+}
+
+function shouldFix(sourceFile: ts.SourceFile, options: LintOptions, originalName: string) {
+    if (options.fix && hasParseErrors(sourceFile)) {
+        log("Not fixing '%s' because of parse errors.", originalName);
+        return false;
+    }
+    return options.fix;
+}
+
 declare module 'typescript' {
-    /** v2.4 */
-    export function matchFiles(
-        path: string,
-        extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string> | undefined,
-        includes: ReadonlyArray<string>,
-        useCaseSensitiveFileNames: boolean,
-        currentDirectory: string,
-        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
-    ): string[];
     export function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
@@ -321,14 +330,16 @@ declare module 'typescript' {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
     }
+
+    export interface SourceFile {
+        parseDiagnostics: ts.DiagnosticWithLocation[];
+    }
 }
 
 function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
     return {
         useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
         readDirectory(rootDir, extensions, excludes, includes, depth) {
-            if (/^2\.4\./.test(ts.version)) // workaround for missing parameter in typescript@2.4
-                return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, getEntries);
             return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, getEntries);
         },
         fileExists(f) {

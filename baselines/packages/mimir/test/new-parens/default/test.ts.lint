@@ -1,7 +1,5 @@
 new Array
          ~nil [error new-parens: Expected parentheses on constructor call.]
-new Array<string>;
-                 ~nil [error new-parens: Expected parentheses on constructor call.]
 
 new Array
     ();
