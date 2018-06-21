@@ -33,7 +33,7 @@ rules:
   prefer-dot-notation: error
   prefer-for-of: error
   prefer-namespace-keyword: error
-  prefer-number-isnan: error
+  prefer-number-methods: error
   prefer-object-spread: error
   return-never-call: error
   trailing-newline: error

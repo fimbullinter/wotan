@@ -1,0 +1,2 @@
+rules:
+  prefer-number-methods: error

@@ -1,5 +1,5 @@
 {
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
@@ -20,9 +20,9 @@
     "packages/*"
   ],
   "dependencies": {
-    "@fimbul/disir": "^0.10.0",
-    "@fimbul/valtyr": "^0.10.0",
-    "@fimbul/wotan": "^0.10.0",
+    "@fimbul/disir": "^0.11.0",
+    "@fimbul/valtyr": "^0.11.0",
+    "@fimbul/wotan": "^0.11.0",
     "@types/cross-spawn": "^6.0.0",
     "@types/glob": "^5.0.35",
     "@types/node": "^10.0.8",
@@ -39,7 +39,7 @@
     "tslint-consistent-codestyle": "^1.11.1"
   },
   "devDependencies": {
-    "typescript": "^3.0.0-dev.20180616"
+    "typescript": "^3.0.0-dev.20180621"
   },
   "peerDependencies": {
     "typescript": ">= 2.7.1 || >= 3.0.0-dev || >= 3.0.0-insiders || 3.0.0-rc || >= 3.1.0-dev"

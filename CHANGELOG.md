@@ -1,5 +1,30 @@
 # Change Log
 
+## v0.11.0
+
+:warning: **Breaking Changes:**
+
+* Dropped support for TypeScript@<2.7.0. The new backwards compatibility policy ensures support for the last 3 stable minor releases of TypeScript.
+* `prefer-number-isnan` -> `prefer-number-methods` which checks `isFinite` in addition
+
+**Features:**
+
+* new rule: `no-octal-escape`
+* new rule: `type-assertion`
+* new rule: `delete-only-optional-property`
+* Added support for `resolveJsonModule` compilerOption
+* handle `unknown` type introduced in TypeScript@3.0.0
+* `--fix` no longer autofixes files with syntax errors to prevent further destroying your code
+
+**Bugfixes:**
+
+* fixed crash in `no-inferred-empty-object` with TypeScript@3.0.0 and multiple JSDoc `@template` tags
+* `no-useless-assertion`: better handling of contextual types
+* `no-useless-predicate`: handle intersection types
+* `prefer-for-of`: ensure iterated object implements iteration protocol
+* `prefer-for-of`: ensure iterator yields the same type as index signature
+* `no-unstable-api-use`: check element access with well-known symbols
+
 ## v0.10.0
 
 This release fixes a few bugs related to the release process:
