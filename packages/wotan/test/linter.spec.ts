@@ -117,6 +117,7 @@ test('Linter', (t) => {
             severity: 'warning',
             start: {position: 0, line: 0, character: 0},
             end: {position: 0, line: 0, character: 0},
+            codeActions: undefined,
         }],
     );
     t.is(warnings.length, 2);
@@ -138,6 +139,7 @@ test('Linter', (t) => {
             severity: 'error',
             start: {position: 0, line: 0, character: 0},
             end: {position: 0, line: 0, character: 0},
+            codeActions: undefined,
         }],
     );
     t.is(warnings.length, 3);

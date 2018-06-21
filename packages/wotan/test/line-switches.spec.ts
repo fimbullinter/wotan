@@ -67,6 +67,7 @@ let foo /* wotan-disable-line */ = true;
                 ...ts.getLineAndCharacterOfPosition(sourceFile, end),
             },
             fix: undefined,
+            codeActions: undefined,
         };
     }
 });

@@ -3,7 +3,6 @@ import {
     Failure,
     EffectiveConfiguration,
     LintAndFixFileResult,
-    Replacement,
     RuleContext,
     Severity,
     RuleConstructor,
@@ -13,6 +12,7 @@ import {
     DeprecationTarget,
     FailureFilterFactory,
     FailureFilter,
+    ItemOrArray,
 } from '@fimbul/ymir';
 import { applyFixes } from './fix';
 import * as debug from 'debug';
@@ -139,40 +139,34 @@ export class Linter {
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
-            const failure: Failure = {
-                ruleName,
-                severity,
-                message,
-                start: {
-                    position: pos,
-                    ...ts.getLineAndCharacterOfPosition(sourceFile, pos),
-                },
-                end: {
-                    position: end,
-                    ...ts.getLineAndCharacterOfPosition(sourceFile, end),
-                },
-                fix: fix === undefined
-                    ? undefined
-                    : !Array.isArray(fix)
-                        ? {replacements: [fix]}
-                        : fix.length === 0
-                            ? undefined
-                            : {replacements: fix},
-            };
-            if (failureFilter === undefined)
-                failureFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
-            if (failureFilter.filter(failure))
-                result.push(failure);
-        };
-
         const context: RuleContext = {
-            addFailure,
             getFlatAst,
             getWrappedAst,
             program,
             sourceFile,
             settings,
+            addFailure: (pos, end, message, fix, codeActions) => {
+                fix = arrayify(fix);
+                const failure: Failure = {
+                    ruleName,
+                    severity,
+                    message,
+                    start: {
+                        position: pos,
+                        ...ts.getLineAndCharacterOfPosition(sourceFile, pos),
+                    },
+                    end: {
+                        position: end,
+                        ...ts.getLineAndCharacterOfPosition(sourceFile, end),
+                    },
+                    fix: fix && {replacements: fix},
+                    codeActions: arrayify(codeActions),
+                };
+                if (failureFilter === undefined)
+                    failureFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
+                if (failureFilter.filter(failure))
+                    result.push(failure);
+            },
             options: undefined,
         };
 
@@ -198,4 +192,14 @@ interface PreparedRule {
     options: any;
     ruleName: string;
     severity: Severity;
+}
+
+function arrayify<T>(maybeArr: ItemOrArray<T> | undefined): ReadonlyArray<T> | undefined {
+    return maybeArr === undefined
+        ? undefined
+        : !Array.isArray(maybeArr)
+            ? [maybeArr]
+            : maybeArr.length === 0
+                ? undefined
+                : maybeArr;
 }

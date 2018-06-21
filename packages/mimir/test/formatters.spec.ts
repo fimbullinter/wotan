@@ -26,6 +26,7 @@ function createFailure(name: string, severity: Severity, message: string, start:
             character: end,
         },
         fix: fix && { replacements: fix },
+        codeActions: undefined,
     };
 }
 
@@ -96,6 +97,7 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
                     character: 1,
                 },
                 fix: undefined,
+                codeActions: undefined,
             },
             {
                 severity: 'warning',
@@ -112,6 +114,7 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
                     character: 2,
                 },
                 fix: undefined,
+                codeActions: undefined,
             },
             {
                 severity: 'warning',
@@ -128,6 +131,7 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
                     character: 1,
                 },
                 fix: undefined,
+                codeActions: undefined,
             },
             {
                 severity: 'warning',
@@ -144,6 +148,7 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
                     character: 1,
                 },
                 fix: undefined,
+                codeActions: undefined,
             },
         ],
         fixes: 0,

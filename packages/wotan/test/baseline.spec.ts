@@ -47,6 +47,7 @@ let bar = foo;
             character: 0,
         },
         fix: undefined,
+        codeActions: undefined,
     }]);
     apply('zero length', [{
         ruleName: 'rule',
@@ -63,6 +64,7 @@ let bar = foo;
             character: 1,
         },
         fix: undefined,
+        codeActions: undefined,
     }]);
     const mixed: Failure[] = [
         {
@@ -80,6 +82,7 @@ let bar = foo;
                 character: 0,
             },
             fix: undefined,
+            codeActions: undefined,
         },
         {
             ruleName: 'rule',
@@ -96,6 +99,7 @@ let bar = foo;
                 character: 1,
             },
             fix: undefined,
+            codeActions: undefined,
         },
         {
             ruleName: 'rule',
@@ -112,6 +116,7 @@ let bar = foo;
                 character: 1,
             },
             fix: undefined,
+            codeActions: undefined,
         },
         {
             ruleName: 'other',
@@ -128,6 +133,7 @@ let bar = foo;
                 character: 4,
             },
             fix: undefined,
+            codeActions: undefined,
         },
         {
             ruleName: 'another',
@@ -144,6 +150,7 @@ let bar = foo;
                 character: 4,
             },
             fix: undefined,
+            codeActions: undefined,
         },
     ];
     apply('mixed', mixed);
@@ -165,6 +172,7 @@ let bar = foo;
                 character: 1,
             },
             fix: undefined,
+            codeActions: undefined,
         }],
         fixes: 0,
     });
@@ -186,6 +194,7 @@ let bar = foo;
                 character: 0,
             },
             fix: undefined,
+            codeActions: undefined,
         }],
         fixes: 0,
     });

@@ -13,6 +13,8 @@ export type LintResult = Iterable<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
 
+export type ItemOrArray<T> = T | ReadonlyArray<T>;
+
 export interface LintAndFixFileResult {
     content: string;
     failures: ReadonlyArray<Failure>;
@@ -41,6 +43,14 @@ export interface Fix {
     readonly replacements: ReadonlyArray<Replacement>;
 }
 
+export class CodeAction implements Fix {
+    public readonly replacements: ReadonlyArray<Replacement>;
+
+    constructor(public readonly description: string, replacements: ItemOrArray<Replacement>) {
+        this.replacements = Array.isArray(replacements) ? replacements : [replacements];
+    }
+}
+
 export interface Failure {
     readonly start: FailurePosition;
     readonly end: FailurePosition;
@@ -48,6 +58,7 @@ export interface Failure {
     readonly ruleName: string;
     readonly severity: Severity;
     readonly fix: Fix | undefined;
+    readonly codeActions: ReadonlyArray<CodeAction> | undefined;
 }
 
 export const Failure = {
@@ -94,7 +105,7 @@ export interface RuleContext {
     readonly sourceFile: ts.SourceFile;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
-    addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
+    addFailure(start: number, end: number, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -150,7 +161,7 @@ export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
     public static supports?: RuleSupportsPredicate = undefined;
-    public static validateConfig?(config: any): string[] | string | undefined;
+    public static validateConfig?(config: any): ItemOrArray<string> | undefined;
 
     public readonly sourceFile: ts.SourceFile;
     public readonly program: ts.Program | undefined;
@@ -162,12 +173,12 @@ export abstract class AbstractRule {
 
     public abstract apply(): void;
 
-    public addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
-        return this.context.addFailure(start, end, message, fix);
+    public addFailure(start: number, end: number, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>) {
+        return this.context.addFailure(start, end, message, fix, codeActions);
     }
 
-    public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
-        return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
+    public addFailureAtNode(node: ts.Node, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>) {
+        return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix, codeActions);
     }
 }
 
