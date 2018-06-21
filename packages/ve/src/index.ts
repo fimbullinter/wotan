@@ -1,6 +1,6 @@
 import { AbstractProcessor, ProcessorUpdateResult, Failure, Replacement, ProcessorSuffixContext, ProcessorContext } from '@fimbul/ymir';
 import * as path from 'path';
-import * as parse5 from 'parse5/lib';
+import * as SAXParser from 'parse5-sax-parser';
 import * as ts from 'typescript';
 import * as voidElements from 'void-elements';
 
@@ -9,14 +9,14 @@ export class Processor extends AbstractProcessor {
         if (path.extname(context.fileName) !== '.vue')
             return '';
         let suffix = '';
-        const parser = new parse5.SAXParser();
+        const parser = new SAXParser();
         let depth = 0;
-        parser.on('startTag', (tagName, attr, selfClosing) => {
-            if (selfClosing || voidElements[tagName])
+        parser.on('startTag', (startTag) => {
+            if (startTag.selfClosing || voidElements[startTag.tagName])
                 return;
             ++depth;
-            if (depth === 1 && tagName === 'script') {
-                const lang = attr.find(isLangAttr);
+            if (depth === 1 && startTag.tagName === 'script') {
+                const lang = startTag.attrs.find((attr) => attr.name === 'lang');
                 suffix = lang === undefined ? '.js' : `.${lang.value}`;
             }
         });
@@ -37,19 +37,19 @@ export class Processor extends AbstractProcessor {
     constructor(context: ProcessorContext) {
         super(context);
         if (path.extname(this.sourceFileName) === '.vue') {
-            const parser = new parse5.SAXParser({locationInfo: true});
+            const parser = new SAXParser({sourceCodeLocationInfo: true});
             let depth = 0;
-            parser.on('startTag', (tagName, _attr, selfClosing, location) => {
-                if (selfClosing || voidElements[tagName])
+            parser.on('startTag', (startTag) => {
+                if (startTag.selfClosing || voidElements[startTag.tagName])
                     return;
                 ++depth;
-                if (depth === 1 && tagName === 'script')
-                    this.range.start = location!.endOffset;
+                if (depth === 1 && startTag.tagName === 'script')
+                    this.range.start = startTag.sourceCodeLocation!.endOffset;
             });
-            parser.on('endTag', (tagName, location) => {
+            parser.on('endTag', (endTag) => {
                 --depth;
-                if (depth === 0 && tagName === 'script')
-                    this.range.end = location!.startOffset;
+                if (depth === 0 && endTag.tagName === 'script')
+                    this.range.end = endTag.sourceCodeLocation!.startOffset;
             });
             parser.write(this.source);
             parser.end();
@@ -111,8 +111,4 @@ export class Processor extends AbstractProcessor {
             text: r.text,
         };
     }
-}
-
-function isLangAttr(attr: parse5.AST.Default.Attribute) {
-    return attr.name === 'lang';
 }
