@@ -214,9 +214,9 @@
   version "9.6.22"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.22.tgz#05b55093faaadedea7a4b3f76e9a61346a6dd209"
 
-"@types/parse5-sax-parser@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@types/parse5-sax-parser/-/parse5-sax-parser-5.0.0.tgz#c02719c7c8dd148f9986a286ce52ea4cd6aeceef"
+"@types/parse5-sax-parser@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@types/parse5-sax-parser/-/parse5-sax-parser-5.0.1.tgz#f1e26e82bb09e48cb0c16ff6d1e88aea1e538fd5"
   dependencies:
     "@types/node" "*"
     "@types/parse5" "*"
