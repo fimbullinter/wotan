@@ -1,0 +1,2 @@
+export default function*foo() {}
+                       ~         [error generator-require-yield: Generator 'foo' contains no 'yield'.]

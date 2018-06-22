@@ -250,8 +250,8 @@ function prettyLine(line: string): string {
 
 function applyCodeActions(summary: FileSummary): string {
     return summary.failures[0].codeActions!
-        .map((action) => `/// @description: "${action.description}"\n${applyFixes(summary.content, [action])}`)
-        .join('\n\n\n');
+        .map((action) => `/// @description: "${action.description}"\n${applyFixes(summary.content, [action]).result}`)
+        .join('\n\n');
 }
 
 export const module = new ContainerModule((bind) => {
