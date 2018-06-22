@@ -33,6 +33,12 @@ foo as T && bar;
 foo & <T>bar;
 foo & bar as T;
 
+1 as number ** 2;
+(<number>1) ** 2;
+
+1 ** 2 + 1 as number;
+<number>(1 ** 2 + 1);
+
 foo & <T>bar | baz;
 foo & (bar as T) | baz;
 
