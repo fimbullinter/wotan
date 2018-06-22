@@ -10,9 +10,9 @@ import {
     isPropertyAssignment,
     isReassignmentTarget,
     isShorthandPropertyAssignment,
-    unionTypeParts,
 } from 'tsutils';
 import * as ts from 'typescript';
+import { elementAccessSymbols, propertiesOfType, lateBoundPropertyNames } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 
@@ -65,35 +65,26 @@ export class Rule extends TypedRule {
                 if (symbol !== undefined)
                     this.checkStability(symbol, element.name, name, describeWithName);
             } else {
-                const name = getPropertyName(element.propertyName);
-                if (name !== undefined) {
-                    const symbol = type.getProperty(name);
+                const propName = getPropertyName(element.propertyName);
+                if (propName !== undefined) {
+                    const symbol = type.getProperty(propName);
                     if (symbol !== undefined)
-                        this.checkStability(symbol, element.propertyName, name, describeWithName);
+                        this.checkStability(symbol, element.propertyName, propName, describeWithName);
                 } else {
-                    const propType = this.checker.getTypeAtLocation((<ts.ComputedPropertyName>element.propertyName).expression)!;
-                    this.checkDynamicPropertyAccess(type, propType, element.propertyName);
+                    for (const {symbol, name} of propertiesOfType(
+                            type,
+                            lateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker),
+                        )
+                    )
+                        this.checkStability(symbol, element.propertyName, name, describeWithName);
                 }
             }
         }
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        // compatibility with typescript@<2.9.0
-        if (node.argumentExpression === undefined) // wotan-disable-line no-useless-predicate
-            return;
-        const type = this.checker.getTypeAtLocation(node.expression)!;
-        const keyType = this.checker.getTypeAtLocation(node.argumentExpression)!;
-        this.checkDynamicPropertyAccess(type, keyType, node);
-    }
-
-    private checkDynamicPropertyAccess(type: ts.Type, keyType: ts.Type, node: ts.Node) {
-        for (const t of unionTypeParts(keyType)) {
-            if (t.flags & ts.TypeFlags.StringOrNumberLiteral) {
-                const name = String((<ts.StringLiteralType | ts.NumberLiteralType>t).value);
-                this.checkSymbol(type.getProperty(name), node, name);
-            }
-        }
+        for (const {symbol, name} of elementAccessSymbols(node, this.checker))
+            this.checkSymbol(symbol, node, name);
     }
 
     private checkSymbol(symbol: ts.Symbol | undefined, node: ts.Node, name: string) {
@@ -110,18 +101,18 @@ export class Rule extends TypedRule {
         s: T,
         node: U,
         hint: V,
-        descr: (s: T, node: U, checker: ts.TypeChecker, hint: V) => string,
+        descr: (s: T, checker: ts.TypeChecker, hint: V) => string,
     ) {
         for (const tag of s.getJsDocTags())
             if (tag.name === 'deprecated' || tag.name === 'experimental')
                 this.addFailureAtNode(
                     node,
-                    `${descr(s, node, this.checker, hint)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
+                    `${descr(s, this.checker, hint)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
                 );
     }
 }
 
-function describeWithName(symbol: ts.Symbol, _n: ts.Node, _c: ts.TypeChecker, name: string) {
+function describeWithName(symbol: ts.Symbol, _c: ts.TypeChecker, name: string) {
     return `${describeSymbol(symbol)} '${name}'`;
 }
 
@@ -149,9 +140,14 @@ function describeSymbol(symbol: ts.Symbol): string {
     return '(unknown)';
 }
 
-function signatureToString(signature: ts.Signature, n: ts.CallLikeExpression, checker: ts.TypeChecker) {
-    const construct = n.kind === ts.SyntaxKind.NewExpression ||
-        n.kind === ts.SyntaxKind.CallExpression && n.expression.kind === ts.SyntaxKind.SuperKeyword;
+function signatureToString(signature: ts.Signature, checker: ts.TypeChecker) {
+    let construct = false;
+    switch (signature.declaration && signature.declaration.kind) {
+        case ts.SyntaxKind.Constructor:
+        case ts.SyntaxKind.ConstructSignature:
+        case ts.SyntaxKind.ConstructorType:
+            construct = true;
+    }
     return `${construct ? 'Costruct' : 'Call'}Signature '${construct ? 'new ' : ''}${checker.signatureToString(signature)}'`;
 }
 

@@ -6,11 +6,11 @@ import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, u
 @requireLibraryFile('lib.es2015.core.d.ts')
 export class Rule extends TypedRule {
     public apply() {
-        const re = /\bisNaN\b/g;
+        const re = /\b(?:isNaN|isFinite)\s*[/(]/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
-            if (!isIdentifier(node) || node.end !== re.lastIndex || node.text !== 'isNaN')
+            if (!isIdentifier(node) || node.text !== 'isNaN' && node.text !== 'isFinite' || node.end - node.text.length !== match.index)
                 continue;
             const parent = node.parent!;
             if (isCallExpression(parent) && parent.expression === node && parent.arguments.length === 1 &&
@@ -18,7 +18,7 @@ export class Rule extends TypedRule {
                 this.addFailure(
                     match.index,
                     re.lastIndex,
-                    "Prefer 'Number.isNaN' over 'isNaN'.",
+                    `Prefer 'Number.${node.text}' over '${node.text}'.`,
                     Replacement.append(match.index, 'Number.'),
                 );
         }

@@ -22,9 +22,27 @@ class BarComponent {
 /** @deprecated */
 class BazComponent extends BarComponent {}
 
+class BasComponent {
+    /** @deprecated */
+    constructor(props?: any) {}
+
+    public render() {
+        return false;
+    }
+}
+
+declare var FizzComponent: {
+    /** @deprecated */
+    new(props: any): {render(): any};
+}
+
 let foo = <FooComponent foo="a"/>;
           ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(props: { foo: string; }): false' is deprecated.]
 let foo2 = <FooComponent bar="1"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
            ~~~~~~~~~~~~                  [error no-unstable-api-use: Class 'BazComponent' is deprecated.]
+let bas = <BasComponent bar=""></BasComponent>;
+          ~~~~~~~~~~~~~~~~~~~~~                 [error no-unstable-api-use: CostructSignature 'new (props?: any): BasComponent' is deprecated.]
+let fizz = <FizzComponent></FizzComponent>;
+           ~~~~~~~~~~~~~~~                  [error no-unstable-api-use: CostructSignature 'new (props: any): { render(): any; }' is deprecated.]
