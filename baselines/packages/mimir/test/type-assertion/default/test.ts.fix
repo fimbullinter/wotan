@@ -39,9 +39,6 @@ foo & bar as T;
 1 ** 2 + 1 as number;
 (1 ** 2 + 1) as number;
 
-1 & 2 as number;
-1 & 2 as number;
-
 foo & (bar as T) | baz;
 foo & (bar as T) | baz;
 
