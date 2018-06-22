@@ -1,0 +1,28 @@
+Math.pow(1, 2);
+~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+1 + Math.pow(1, 2);
+    ~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+
+Math.pow(1 + 1, 2 + 2);
+~~~~~~~~~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+Math.pow(<number>1, 2 as number);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+Math.pow(1, Boolean() ? 1 : 2);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+!Math.pow(1, 2);
+ ~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+Math.pow(1, 2).toString();
+~~~~~~~~~~~~~~             [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+<number>Math.pow(1, 2);
+        ~~~~~~~~~~~~~~  [error prefer-exponentiation-operator: Prefer the exponentiation operator '**' over 'Math.pow'.]
+
+declare var args: [number, number];
+Math.pow(...args);
+Math.pow(1);
+Math.pow(1, ...[2]);
+
+declare namespace foo {
+    function pow(a: number, b: number): number;
+}
+
+foo.pow(1, 2);

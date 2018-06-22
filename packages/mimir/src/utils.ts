@@ -110,6 +110,10 @@ function getLeadingExpressionWithPossibleParsingAmbiguity(expr: ts.Node): ts.Exp
     }
 }
 
+export function expressionNeedsParens(expr: ts.Expression): boolean {
+    return expressionNeedsParensWhenReplacingNode(expr, expr);
+}
+
 export function expressionNeedsParensWhenReplacingNode(expr: ts.Expression, replaced: ts.Expression): boolean {
     // this currently doesn't handle the following cases
     // (yield) as any
