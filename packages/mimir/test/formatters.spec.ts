@@ -1,5 +1,5 @@
 import test, { TestContext } from 'ava';
-import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '@fimbul/ymir';
+import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult, CodeAction } from '@fimbul/ymir';
 import { Formatter as JsonFormatter} from '../src/formatters/json';
 import { Formatter as StylishFormatter } from '../src/formatters/stylish';
 import chalk, { Level } from 'chalk';
@@ -10,10 +10,11 @@ test.before(() => {
     chalk.level = Level.Basic;
 });
 
-function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Failure {
+function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[], codeActions?: CodeAction[]): Failure {
     return {
         severity,
         message,
+        codeActions,
         ruleName: name,
         start: {
             position: start,
@@ -26,7 +27,6 @@ function createFailure(name: string, severity: Severity, message: string, start:
             character: end,
         },
         fix: fix && { replacements: fix },
-        codeActions: undefined,
     };
 }
 
@@ -41,7 +41,10 @@ summary.set('/some/other/directory/b.ts', {
     failures: [
         createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
         createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.replace(6, 9, 'baz')]),
-        createFailure('equals', 'error', 'no equals', 4, 5),
+        createFailure('equals', 'error', 'no equals', 4, 5, undefined, [
+            new CodeAction('Convert assignment to comparison', Replacement.append(5, '==')),
+            new CodeAction('Remove all the things', [Replacement.delete(1, 3), Replacement.delete(7, 9)]),
+        ]),
     ],
     fixes: 1,
 });
