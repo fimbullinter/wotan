@@ -10,7 +10,15 @@ test.before(() => {
     chalk.level = Level.Basic;
 });
 
-function createFailure(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[], codeActions?: CodeAction[]): Failure {
+function createFailure(
+    name: string,
+    severity: Severity,
+    message: string,
+    start: number,
+    end: number,
+    fix?: Replacement[],
+    codeActions?: CodeAction[],
+): Failure {
     return {
         severity,
         message,

@@ -58,7 +58,7 @@ export class Rule extends AbstractRule {
                     asteriskToken.end,
                     asteriskToken.pos < asteriskToken.end - 1 || name === undefined ? '' : ' ',
                 ),
-            )
+            ),
         );
     }
 }
