@@ -32,9 +32,15 @@ function enforceClassicTypeAssertion(context: RuleContext) {
         const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
         if (!isAsExpression(node) || node.type.pos !== re.lastIndex)
             continue;
+        const parent = node.parent!;
+        const expressionNeedsParens = node.expression.kind === ts.SyntaxKind.BinaryExpression;
+        const needsParens = isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AsteriskAsteriskToken;
         context.addFailure(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
-            Replacement.append(node.getStart(context.sourceFile), `<${node.type.getText(context.sourceFile)}>`),
-            Replacement.delete(node.expression.end, node.end),
+            Replacement.append(
+                node.getStart(context.sourceFile),
+                `${charIf(needsParens, '(')}<${node.type.getText(context.sourceFile)}>${charIf(expressionNeedsParens, '(')}`,
+            ),
+            Replacement.replace(node.expression.end, node.end, charIf(expressionNeedsParens, ')') + charIf(needsParens, ')')),
         ]);
     }
 }
