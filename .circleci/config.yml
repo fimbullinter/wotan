@@ -37,7 +37,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:10@sha256:077ee5098f0d713a25b8810164427aa4ec49fd617de73d61f58cec95bdfc05a5
+      - image: circleci/node:10@sha256:de36894a21213e95a15ae412981429bb94c2b94710ccc161f628a31e92bb44ca
     steps:
       - checkout
       - restore_cache:
@@ -69,7 +69,7 @@ jobs:
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:10@sha256:077ee5098f0d713a25b8810164427aa4ec49fd617de73d61f58cec95bdfc05a5
+      - image: circleci/node:10@sha256:de36894a21213e95a15ae412981429bb94c2b94710ccc161f628a31e92bb44ca
     <<: *base
   test@2.7:
     docker:
