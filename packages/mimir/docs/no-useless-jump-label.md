@@ -1,4 +1,4 @@
-# no-useless-initializer
+# no-useless-jump-label
 
 :wrench: fixable
 
