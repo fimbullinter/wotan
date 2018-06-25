@@ -33,6 +33,12 @@ foo as T && bar;
 foo & bar as T;
 foo & bar as T;
 
+1 as number ** 2;
+(1 as number) ** 2;
+
+1 ** 2 + 1 as number;
+(1 ** 2 + 1) as number;
+
 foo & (bar as T) | baz;
 foo & (bar as T) | baz;
 
