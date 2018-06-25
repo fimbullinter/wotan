@@ -52,6 +52,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `parameter-properties` | Enforces or disallows the use of parameter properties. This rule is **not** enabled in `wotan:recommended`. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 `prefer-const` | Prefer `const` for variables that are never reassigned. Use option `{destructuring: "any"}` if you want to see failures for each identifier of a destructuring, even if not all of them can be constants. The default is `{destructuring: "all"}`. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used in before being declared which results in a compiler error after fixing.
 `prefer-dot-notation` | Prefer `obj.foo` over `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
+`prefer-exponentiation-operator` | Prefer `a ** b` over `Math.pow(a, b)`. | No similar TSlint rule.
 `prefer-for-of` | Prefer `for-of` loops over regular `for` loops where possible. *requires type information* | Avoids the false positives of TSLint's `prefer-for-of` rule.
 `prefer-namespace-keyword` | Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
 `prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
