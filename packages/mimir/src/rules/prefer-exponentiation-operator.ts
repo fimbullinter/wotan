@@ -1,6 +1,6 @@
 import { excludeDeclarationFiles, AbstractRule, Replacement } from '@fimbul/ymir';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isPropertyAccessExpression, isCallExpression, isSpreadElement } from 'tsutils';
-import { expressionNeedsParensWhenReplacingNode, expressionNeedsParens } from '../utils';
+import { expressionNeedsParensWhenReplacingNode } from '../utils';
 import * as ts from 'typescript';
 
 @excludeDeclarationFiles
@@ -23,17 +23,26 @@ export class Rule extends AbstractRule {
                 grandparent.arguments.some(isSpreadElement)
             )
                 continue;
-            const fixed = ts.createBinary(
-                ts.getMutableClone(grandparent.arguments[0]),
-                ts.SyntaxKind.AsteriskAsteriskToken,
-                ts.getMutableClone(grandparent.arguments[1]),
-            );
             const fix = [Replacement.replace(grandparent.arguments[1].pos - 1, grandparent.arguments[1].pos, '**')];
-            fixed.left.parent = fixed.right.parent = fixed;
-            if (expressionNeedsParensWhenReplacingNode(
-                    fixed,
-                    grandparent,
-                )) {
+            const fixed = ts.createBinary(
+                grandparent.arguments[0],
+                ts.SyntaxKind.AsteriskAsteriskToken,
+                grandparent.arguments[1],
+            );
+            if (
+                expressionNeedsParensWhenReplacingNode(fixed, grandparent) ||
+                grandparent.parent!.kind === ts.SyntaxKind.PropertyAccessExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.ElementAccessExpression &&
+                    (<ts.ElementAccessExpression>grandparent.parent).expression === grandparent ||
+                grandparent.parent!.kind === ts.SyntaxKind.PrefixUnaryExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.AwaitExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.VoidExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.TypeOfExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.TypeAssertionExpression ||
+                grandparent.parent!.kind === ts.SyntaxKind.BinaryExpression &&
+                    (<ts.BinaryExpression>grandparent.parent).operatorToken.kind === ts.SyntaxKind.AsteriskAsteriskToken &&
+                    (<ts.BinaryExpression>grandparent.parent).left === grandparent
+            ) {
                 fix.push(Replacement.delete(grandparent.getStart(this.sourceFile), grandparent.arguments[0].pos - 1));
             } else {
                 fix.push(
@@ -41,12 +50,12 @@ export class Rule extends AbstractRule {
                     Replacement.delete(grandparent.end - 1, grandparent.end),
                 );
             }
-            if (expressionNeedsParens(fixed.left))
+            if (fixed.left !== grandparent.arguments[0])
                 fix.push(
                     Replacement.append(grandparent.arguments[0].getStart(this.sourceFile), '('),
                     Replacement.append(grandparent.arguments[0].end, ')'),
                 );
-            if (expressionNeedsParens(fixed.right))
+            if (fixed.right !== grandparent.arguments[1])
                 fix.push(
                     Replacement.append(grandparent.arguments[1].getStart(this.sourceFile), '('),
                     Replacement.append(grandparent.arguments[1].end, ')'),

@@ -1,17 +1,39 @@
 1** 2;
+(1)** (2);
 1 + 1** 2;
 
-1 + 1** 2 + 2;
-<number>1** 2 as number;
-1** Boolean() ? 1 : 2;
-!1** 2;
-1** 2.toString();
-<number>1** 2;
+2 ** 3** 2;
+(2** 3) ** 2;
+2** 3** 2; // TODO add parens
+
+({prop: 1}.prop** 2);
+
+(1 + 1)**(2 + 2);
+<number>(1** 2);
+1** 2 as number;
+(<number>1)** (2 as number);
+1** (Boolean() ? 1 : 2);
+!(1** 2);
+(1** 2).toString();
+<number>(1** 2);
+
+-((1 + 1)** (2 + 2));
+
+-1** 2; // TODO TS bug
 
 declare var args: [number, number];
 Math.pow(...args);
 Math.pow(1);
 Math.pow(1, ...[2]);
+
+async function* fn() {
+    await 1** await 2; // TODO TS bug
+    await (1** 2);
+    await (await 1** await 2); // TODO TS bug
+    (yield)** yield; // TODO TS bug
+    (yield 1)** yield 1; // TODO TS bug
+    yield 1** 2;
+}
 
 declare namespace foo {
     function pow(a: number, b: number): number;
