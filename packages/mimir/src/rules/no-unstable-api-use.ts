@@ -73,7 +73,7 @@ export class Rule extends TypedRule {
                 } else {
                     for (const {symbol, name} of propertiesOfType(
                             type,
-                            lateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker),
+                            lateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker).properties,
                         )
                     )
                         this.checkStability(symbol, element.propertyName, name, describeWithName);

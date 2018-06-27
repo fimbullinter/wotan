@@ -75,7 +75,13 @@ declare function get<T>(): T;
     let {any = 'any'} = get<{any: any}>();
     let {unknown = 'unknown'} = get<{unknown: unknown}>();
     let {'prop': renamed = 'renamed'} = obj;
-    let {[get<'prop'>()]: computed = 'computed'} = obj;
+    const propName = 'prop';
+    let {[propName]: computed = 'computed'} = obj;
+    const propName2: string | 1 | 2 = null as any;
+    let {[propName2]: computed2 = 'computed'} = get<{[key: string]: string, 1: string, 2: string}>();
+    const propName3 = 1;
+    let {[propName3]: computed3 = 'computed'} = get<{1: string, 2: string}>();
+    let {[Symbol.iterator]: iterator = () => get<IterableIterator<number>>()} = [1];
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
     let {toString = () => 'foo'} = 1;
 

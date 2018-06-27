@@ -12,7 +12,7 @@ import {
     isReassignmentTarget,
     isBinaryExpression,
 } from 'tsutils';
-import { isStrictNullChecksEnabled } from '../utils';
+import { isStrictNullChecksEnabled, lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName, escapeIdentifier } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -78,7 +78,7 @@ export class Rule extends AbstractRule {
         }
     }
 
-    private checkBindingPattern(node: ts.BindingPattern, getPropName: (element: ts.BindingElement, index: number) => string | undefined) {
+    private checkBindingPattern(node: ts.BindingPattern, propNames: typeof getObjectPropertyName) {
         if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
             return;
         const checker = this.program.getTypeChecker();
@@ -87,11 +87,8 @@ export class Rule extends AbstractRule {
             const element = node.elements[i];
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
                 continue;
-            const name = getPropName(element, i);
-            if (name === undefined)
-                continue;
-            const symbol = (type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!))).getProperty(name);
-            if (symbol === undefined || symbolMaybeUndefined(checker, symbol, node))
+            const lateBoundNames = propNames(element, i, checker);
+            if (!lateBoundNames.known || lateBoundNames.properties.some(maybeUndefined))
                 continue;
             const fix = checker.getTypeAtLocation(element.name)!.flags & (ts.TypeFlags.Union | ts.TypeFlags.Any | ts.TypeFlags.Unknown)
                 // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
@@ -101,6 +98,11 @@ export class Rule extends AbstractRule {
                 ? undefined
                 : Replacement.delete(getChildOfKind(element, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, element.end);
             this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.", fix);
+        }
+
+        function maybeUndefined({symbolName}: LateBoundPropertyName) {
+            const symbol = getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!)), symbolName);
+            return symbol === undefined || symbolMaybeUndefined(checker, symbol, node);
         }
     }
 
@@ -144,12 +146,17 @@ export class Rule extends AbstractRule {
     }
 }
 
-function getObjectPropertyName(property: ts.BindingElement) {
-    return getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
+function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker) {
+    const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
+    return staticName !== undefined
+        ? {known: true, properties: [{name: staticName, symbolName: escapeIdentifier(staticName)}]}
+        : lateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
+
 }
 
 function getArrayPropertyName(_: ts.BindingElement, i: number) {
-    return String(i);
+    const name = String(i);
+    return {known: true, properties: [{name, symbolName: <ts.__String>name}]};
 }
 
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
