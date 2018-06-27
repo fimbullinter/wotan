@@ -82,7 +82,7 @@ export class Rule extends AbstractRule {
         if (this.program === undefined || !isStrictNullChecksEnabled(this.program.getCompilerOptions()))
             return;
         const checker = this.program.getTypeChecker();
-        const type = checker.getApparentType(checker.getTypeAtLocation(node)!);
+        let type: ts.Type | undefined;
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
@@ -90,7 +90,7 @@ export class Rule extends AbstractRule {
             const name = getPropName(element, i);
             if (name === undefined)
                 continue;
-            const symbol = type.getProperty(name);
+            const symbol = (type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!))).getProperty(name);
             if (symbol === undefined || symbolMaybeUndefined(checker, symbol, node))
                 continue;
             const fix = checker.getTypeAtLocation(element.name)!.flags & (ts.TypeFlags.Union | ts.TypeFlags.Any | ts.TypeFlags.Unknown)
