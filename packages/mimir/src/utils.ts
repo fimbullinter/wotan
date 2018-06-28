@@ -171,47 +171,61 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
         return;
     yield* propertiesOfType(
         checker.getApparentType(checker.getTypeAtLocation(node.expression)!),
-        lateBoundPropertyNames(argumentExpression, checker),
+        lateBoundPropertyNames(argumentExpression, checker).properties,
     );
 }
 
 export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
     for (const {symbolName, name} of names) {
-        const symbol = type.getProperties().find((s) => s.escapedName === symbolName);
+        const symbol = getPropertyOfType(type, symbolName);
         if (symbol !== undefined)
             yield {symbol, name};
     }
 }
 
-export interface LateBoundPropertyName {
-    name: string;
-    symbolName: string;
+export function getPropertyOfType(type: ts.Type, name: ts.__String) {
+    return type.getProperties().find((s) => s.escapedName === name);
 }
 
-export function *lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChecker) {
+export interface LateBoundPropertyInfo {
+    known: boolean;
+    properties: LateBoundPropertyName[];
+}
+
+export interface LateBoundPropertyName {
+    name: string;
+    symbolName: ts.__String;
+}
+
+export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChecker): LateBoundPropertyInfo {
+    let known = true;
+    const properties = [];
     if (
         isPropertyAccessExpression(node) &&
         isIdentifier(node.expression) &&
         node.expression.text === 'Symbol'
     ) {
-        yield {
+        properties.push({
             name: `Symbol.${node.name.text}`,
-            symbolName: `__@${node.name.text}`,
-        };
+            symbolName: <ts.__String>`__@${node.name.text}`,
+        });
     } else {
         const type = checker.getTypeAtLocation(node)!;
         for (const key of unionTypeParts(checker.getBaseConstraintOfType(type) || type)) {
             if (isLiteralType(key)) {
                 const name = String(key.value);
-                yield {
+                properties.push({
                     name,
                     symbolName: escapeIdentifier(name),
-                };
+                });
+            } else {
+                known = false;
             }
         }
     }
+    return {known, properties};
 }
 
-function escapeIdentifier(name: string) {
-    return name.startsWith('__') ? '_' + name : name;
+export function escapeIdentifier(name: string): ts.__String {
+    return <ts.__String>(name.startsWith('__') ? '_' + name : name);
 }

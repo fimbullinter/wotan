@@ -81,7 +81,16 @@ declare function get<T>(): T;
     let {unknown = 'unknown'} = get<{unknown: unknown}>();
     let {'prop': renamed = 'renamed'} = obj;
                            ~~~~~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
-    let {[get<'prop'>()]: computed = 'computed'} = obj;
+    const propName = 'prop';
+    const {[propName]: computed = null} = obj;
+                                  ~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    const propName2: string = null as any;
+    let {[propName2]: computed2 = ''} = get<{[key: string]: string}>();
+    const propName3 = 1;
+    const {[propName3]: computed3 = null} = get<{1: string, 2: string}>();
+                                    ~~~~                                   [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
+    const {[Symbol.iterator]: iterator = () => get<IterableIterator<string>>()} = [1];
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~         [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
                                      ~~~~~~~~~~~~                                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
                                                      ~~~                                 [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
