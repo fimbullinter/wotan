@@ -105,6 +105,8 @@ function getLeadingExpressionWithPossibleParsingAmbiguity(expr: ts.Node): ts.Exp
             return (<ts.BinaryExpression>expr).left;
         case ts.SyntaxKind.ConditionalExpression:
             return (<ts.ConditionalExpression>expr).condition;
+        case ts.SyntaxKind.TaggedTemplateExpression:
+            return (<ts.TaggedTemplateExpression>expr).tag;
         default:
             return;
     }

@@ -93,6 +93,7 @@ try {
 
 async () => ({foo: 1});
 async () => ({foo: 1}['foo']);
+async () => ({fn(...args: any[]){}}.fn`str`);
 
 async function parensWhenNecessary() {
     if (Boolean())
