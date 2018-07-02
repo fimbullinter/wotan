@@ -31,6 +31,7 @@ rules:
   no-useless-spread: error
   prefer-const: error
   prefer-dot-notation: error
+  prefer-exponentiation-operator: error
   prefer-for-of: error
   prefer-namespace-keyword: error
   prefer-number-methods: error
