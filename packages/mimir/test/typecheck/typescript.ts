@@ -7,7 +7,7 @@ console.log(mdefault);
 let bar: Array<Map<number, [boolean, string]>>;
 let baz = foo;
 
-function fn(param?: Array<Map<number, [number, string]>>): boolean {
+function fn(param: Array<Map<number, [number, string]>>): boolean {
     return param[0];
     return true;
 }
