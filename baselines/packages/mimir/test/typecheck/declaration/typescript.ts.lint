@@ -10,7 +10,7 @@ console.log(mdefault);
 let bar: Array<Map<number, [boolean, string]>>;
 let baz = foo;
 
-function fn(param?: Array<Map<number, [number, string]>>): boolean {
+function fn(param: Array<Map<number, [number, string]>>): boolean {
     return param[0];
     ~~~~~~~~~~~~~~~~ [error typecheck: Type 'Map<number, [number, string]>' is not assignable to type 'boolean'.]
     return true;
