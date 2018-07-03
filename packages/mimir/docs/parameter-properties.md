@@ -31,7 +31,7 @@ rules:
       mode: never
 ```
 
-:thumbsdown: Examples of incorrect code with this option enabled
+:thumbsdown: Examples of incorrect code with this mode
 
 ```ts
 class C {
@@ -39,7 +39,7 @@ class C {
 }
 ```
 
-:thumbsup: Examples of correct code with this option enabled
+:thumbsup: Examples of correct code with this mode
 
 ```ts
 class C {
@@ -61,7 +61,7 @@ rules:
       mode: consistent
 ```
 
-:thumbsdown: Examples of incorrect code with this option enabled
+:thumbsdown: Examples of incorrect code with this mode
 
 ```ts
 class C {
@@ -76,7 +76,7 @@ class D {
 }
 ```
 
-:thumbsup: Examples of correct code with this option enabled
+:thumbsup: Examples of correct code with this mode
 
 ```ts
 class C {
@@ -109,7 +109,7 @@ rules:
       mode: when-possible
 ```
 
-:thumbsdown: Examples of incorrect code with this option enabled
+:thumbsdown: Examples of incorrect code with this mode
 
 ```ts
 class C {
@@ -120,7 +120,7 @@ class C {
 }
 ```
 
-:thumbsup: Examples of correct code with this option enabled
+:thumbsup: Examples of correct code with this mode
 
 ```ts
 class C {
@@ -161,6 +161,14 @@ class G {
 class H {
   public prop: string;
   constructor({prop}: {prop: string}) { // destructuring is not supported for parameter properties, yet
+    this.prop = prop;
+  }
+}
+
+class I {
+  public prop: string;
+  constructor(prop: string) {
+    prop = 'foo'; // parameter is modified before being assigned to property
     this.prop = prop;
   }
 }

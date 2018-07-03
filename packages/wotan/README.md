@@ -123,7 +123,7 @@ Just use `wotan show <filename>` to display the configuration file and the exact
 
 ## Enable or disable rules with comments
 
-Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`.
+Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`. Multiple rule names are separated by comma.
 
 * `// wotan-disable` disables all rules from the start of the comment until the end of the file (or until it is enabled again)
 * `// wotan-enable` enables all rules from the start of the comment until the end of the file. Enable comments have the same mechanics as disable comments.
