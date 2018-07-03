@@ -18,6 +18,12 @@ This library contains all core rules, formatters and configuration presets of th
 
 ## Rules
 
+:mag: requires type information
+:mag_right: works better with type information
+:wrench: fixable
+:nut_and_bolt: configurable
+:x: not enabled in `recommended` preset
+
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
 [`await-async-result`](docs/await-async-result.md) | :mag: Warns about not using the result of a call to an async function inside async functions. | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
@@ -49,7 +55,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-useless-jump-label`](docs/no-useless-jump-label.md) | :wrench: Disallows `continue label;` and `break label;` where the label is not necessary. | There's no similar TSLint rule.
 `no-useless-predicate` | Detects redundant conditions that are either always true or always false. *requires type information* | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
-`parameter-properties` | Enforces or disallows the use of parameter properties. This rule is **not** enabled in `wotan:recommended`. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
+[`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 `prefer-const` | Prefer `const` for variables that are never reassigned. Use option `{destructuring: "any"}` if you want to see failures for each identifier of a destructuring, even if not all of them can be constants. The default is `{destructuring: "all"}`. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used in before being declared which results in a compiler error after fixing.
 `prefer-dot-notation` | Prefer `obj.foo` over `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
 `prefer-for-of` | Prefer `for-of` loops over regular `for` loops where possible. *requires type information* | Avoids the false positives of TSLint's `prefer-for-of` rule.
