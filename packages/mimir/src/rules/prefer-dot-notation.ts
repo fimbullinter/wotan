@@ -1,21 +1,35 @@
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
-import { isElementAccessExpression, isTextualLiteral, isValidPropertyAccess } from 'tsutils';
+import { isTextualLiteral, isValidPropertyAccess } from 'tsutils';
+import * as ts from 'typescript';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
     public apply() {
-        for (const node of this.context.getFlatAst()) {
-            if (isElementAccessExpression(node) &&
-                // for compatiblity with typescript@<2.9.0
-                node.argumentExpression !== undefined && // wotan-disable-line no-useless-predicate
-                isTextualLiteral(node.argumentExpression) && isValidPropertyAccess(node.argumentExpression.text)) {
-                const property = node.argumentExpression.text;
-                this.addFailureAtNode(
-                    node.argumentExpression,
-                    `Prefer 'obj.${property}' over 'obj[${node.argumentExpression.getText(this.sourceFile)}]'.`,
-                    Replacement.replace(node.expression.end, node.end, '.' + property),
-                );
-            }
-        }
+        for (const node of this.context.getFlatAst())
+            if (node.kind === ts.SyntaxKind.ElementAccessExpression)
+                this.checkElementAccess(<ts.ElementAccessExpression>node);
+    }
+
+    private checkElementAccess(node: ts.ElementAccessExpression) {
+        if (
+            // for compatibility with typescript@<2.9
+            node.argumentExpression === undefined || // wotan-disable-line no-useless-predi
+            !isTextualLiteral(node.argumentExpression)
+        )
+            return;
+        const {text} = node.argumentExpression;
+        if (!isValidPropertyAccess(text))
+            return;
+
+        this.addFailureAtNode(
+            node.argumentExpression,
+            `Prefer 'obj.${text}' over 'obj[${node.argumentExpression.getText(this.sourceFile)}]'.`,
+            node.expression.kind === ts.SyntaxKind.NumericLiteral
+                ? [
+                    Replacement.append(node.expression.getStart(this.sourceFile), '('),
+                    Replacement.replace(node.expression.end, node.end, ').' + text),
+                ]
+                : Replacement.replace(node.expression.end, node.end, '.' + text),
+        );
     }
 }

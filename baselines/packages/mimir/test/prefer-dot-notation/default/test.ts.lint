@@ -18,6 +18,18 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+1['toString']();
+  ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.0['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1e1['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+.0['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1[''];
+
 for (const key of Object.keys(obj))
     obj[key];
 
