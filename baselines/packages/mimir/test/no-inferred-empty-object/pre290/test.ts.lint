@@ -81,6 +81,19 @@ fn({}, '2'); // there's not reliable way to tell if the empty object type is rea
 fn(1, {});
 ~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
+type LongLiteral = 'somereallyreallyreallyreallyreallyreallyreallyreallyreallylongliteraltypethathopefullycausestruncation';
+declare function get(): {
+    foo: LongLiteral;
+    bar?: LongLiteral;
+    baz: LongLiteral & {'prop': LongLiteral};
+    bas: Set<LongLiteral>;
+    foobar: Record<LongLiteral | 'foo', LongLiteral>;
+    someReallyReallyReallyReallyLongNameThatHelpsWithTruncation: LongLiteral;
+    yetAnotherReallyReallyReallyReallyLongNameThatHelpsWithTruncation: LongLiteral;
+};
+fn(get());
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+
 fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);

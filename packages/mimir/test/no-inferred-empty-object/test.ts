@@ -62,6 +62,18 @@ fn<number, string>(1, '2');
 fn({}, '2'); // there's not reliable way to tell if the empty object type is really intended like in this case
 fn(1, {});
 
+type LongLiteral = 'somereallyreallyreallyreallyreallyreallyreallyreallyreallylongliteraltypethathopefullycausestruncation';
+declare function get(): {
+    foo: LongLiteral;
+    bar?: LongLiteral;
+    baz: LongLiteral & {'prop': LongLiteral};
+    bas: Set<LongLiteral>;
+    foobar: Record<LongLiteral | 'foo', LongLiteral>;
+    someReallyReallyReallyReallyLongNameThatHelpsWithTruncation: LongLiteral;
+    yetAnotherReallyReallyReallyReallyLongNameThatHelpsWithTruncation: LongLiteral;
+};
+fn(get());
+
 fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
 fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
 
