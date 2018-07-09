@@ -213,7 +213,7 @@ function resolveAliases(
     receiver: WriteableAliasesMap | undefined,
     rulesDirectoryMap: Configuration['rulesDirectories'],
 ) {
-    const mapped: Map<string, RawConfiguration.Alias> = new Map();
+    const mapped = new Map<string, RawConfiguration.Alias>();
     for (const prefix of Object.keys(raw)) {
         const obj = raw[prefix];
         if (!obj)
