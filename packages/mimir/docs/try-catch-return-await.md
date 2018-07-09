@@ -1,6 +1,3 @@
-
-Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion.
-
 # try-catch-return-await
 
 :mag: requires type information
