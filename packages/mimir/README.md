@@ -63,7 +63,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
 `return-never-call` | Prefer `return neverReturns();` or `throw neverReturns();` over plain calls to `neverReturns();` to enable better control flow analysis and type inference. | TSLint has no similar rule.
-`syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
+[`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 `trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
 `try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. *requires type information* | TSLint has no similar rule.
 `type-assertion` | Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. This rule is **not** enabled in `wotan:recommended`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
