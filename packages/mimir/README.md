@@ -62,7 +62,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `prefer-namespace-keyword` | Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
 `prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
-`return-never-call` | Prefer `return neverReturns();` or `throw neverReturns();` over plain calls to `neverReturns();` to enable better control flow analysis and type inference. | TSLint has no similar rule.
+[`return-never-call`](docs/return-never-call.md) | :mag: Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`. | TSLint has no similar rule.
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 [`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
 [`try-catch-return-await`](docs/try-catch-return-await.md) | :mag: :wrench: Enforces the use of `return await foo;` inside `try-catch` in async functions where `foo` is a `Promise`-like value. | TSLint has no similar rule.
