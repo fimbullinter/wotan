@@ -1,5 +1,7 @@
 # no-return-await
 
+:wrench: fixable
+
 Disallows unnecesary `return await foo;` when you can simply `return foo;`.
 
 ## Rationale
