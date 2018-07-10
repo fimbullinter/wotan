@@ -14,6 +14,13 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+1['toString']();
+1.['toString']();
+1.0['toString']();
+1e1['toString']();
+.0['toString']();
+1[''];
+
 for (const key of Object.keys(obj))
     obj[key];
 
