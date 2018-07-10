@@ -42,7 +42,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-misused-generics`](docs/no-misused-generics.md) | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 [`no-nan-compare`](docs/no-nan-compare.md) | Disallows comparing with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 [`no-octal-escape`](docs/no-octal-escape.md) | :wrench: Disallows octal escape sequences in strings and template strings. | No such rule in TSLint.
-[`no-return-await`](docs/no-return-await.md) | Disallows unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
+[`no-return-await`](docs/no-return-await.md) | :wrench: Disallows unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 [`no-unassigned-variable`](docs/no-unassigned-variable.md) | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.
 [`no-unreachable-code`](docs/no-unreachable-code.md) | Disallows statements that will never be executed. | TSLint removed their `no-unreachable` rule in v4.0.0.
 [`no-unsafe-finally`](docs/no-unsafe-finally.md) | Disallows control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
@@ -62,12 +62,12 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 `prefer-namespace-keyword` | Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
 `prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
-`return-never-call` | Prefer `return neverReturns();` or `throw neverReturns();` over plain calls to `neverReturns();` to enable better control flow analysis and type inference. | TSLint has no similar rule.
-`syntaxcheck` | Reports syntax errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Used to be part of the deprecated `tslint --type-check`
-`trailing-newline` | Requires a line break at the end of each file. | Nothing fancy here :(
-`try-catch-return-await` | Companion of `no-return-await` because inside a try-catch block you should await returned promises to correctly enter the catch on rejection and/or the finally block after completion. *requires type information* | TSLint has no similar rule.
-`type-assertion` | Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. This rule is **not** enabled in `wotan:recommended`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
-`typecheck` | TypeScript's compiler errors as lint errors. This rule is **not** enabled in `wotan:recommended`. *requires type information* | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
+[`return-never-call`](docs/return-never-call.md) | :mag: Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`. | TSLint has no similar rule.
+[`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
+[`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
+[`try-catch-return-await`](docs/try-catch-return-await.md) | :mag: :wrench: Enforces the use of `return await foo;` inside `try-catch` in async functions where `foo` is a `Promise`-like value. | TSLint has no similar rule.
+]`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
+[`typecheck`](docs/typecheck.md) | :mag: :x: TypeScript's compile errors as lint errors. | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
 
 ## Formatters
 
