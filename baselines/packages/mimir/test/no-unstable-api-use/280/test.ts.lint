@@ -13,7 +13,7 @@ import MyDAlias = moduleNamespace.ns.D;
 namespaceImport;
 ~~~~~~~~~~~~~~~  [error no-unstable-api-use: Function 'namespaceImport' is deprecated.]
 namespaceImport();
-~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): void' is deprecated.]
+~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'namespaceImport(): void' is deprecated.]
 def;
 ~~~  [error no-unstable-api-use: Variable 'def' is deprecated.]
 v;
@@ -55,7 +55,7 @@ function baz(...args: string[]) {return args[0];}
 baz;
 ~~~  [error no-unstable-api-use: Function 'baz' is deprecated: Use the other overload instead. ]
 baz();
-~~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+~~~~~  [error no-unstable-api-use: CallSignature 'baz(): string' is deprecated: Use the other overload instead. ]
 baz('');
 (((baz)));
    ~~~     [error no-unstable-api-use: Function 'baz' is deprecated: Use the other overload instead. ]
@@ -71,7 +71,7 @@ declare const bas: {
 
 bas;
 bas();
-~~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+~~~~~  [error no-unstable-api-use: CallSignature 'bas(): string' is deprecated: Use the other overload instead. ]
 bas('');
 
 /** @deprecated Variable is deprecated. */
@@ -80,7 +80,7 @@ fn;
 ~~  [error no-unstable-api-use: Variable 'fn' is deprecated: Variable is deprecated. ]
 fn();
 ~~    [error no-unstable-api-use: Variable 'fn' is deprecated: Variable is deprecated. ]
-~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+~~~~  [error no-unstable-api-use: CallSignature 'fn(): string' is deprecated: Use the other overload instead. ]
 fn('');
 ~~      [error no-unstable-api-use: Variable 'fn' is deprecated: Variable is deprecated. ]
 
@@ -145,7 +145,7 @@ obj2[key];
 
 class HasDeprecatedConstructor {
     /** @deprecated */
-    constructor() {}
+    constructor(public prop?: any) {}
 }
 class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
     /** @deprecated */
@@ -153,14 +153,14 @@ class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
     constructor(p: number);
     constructor(p: string | number) {
         super();
-        ~~~~~~~  [error no-unstable-api-use: CostructSignature 'new (): HasDeprecatedConstructor' is deprecated.]
+        ~~~~~~~  [error no-unstable-api-use: CostructSignature 'super(public prop?: any): HasDeprecatedConstructor' is deprecated.]
     }
 }
 class Extending extends HasDeprecatedConstructorOverload {
     constructor(p?: string) {
         if (p !== undefined) {
             super(p);
-            ~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new (p: string): HasDeprecatedConstructorOverload' is deprecated.]
+            ~~~~~~~~  [error no-unstable-api-use: CostructSignature 'super(p: string): HasDeprecatedConstructorOverload' is deprecated.]
         } else {
             super(1);
         }
@@ -168,9 +168,9 @@ class Extending extends HasDeprecatedConstructorOverload {
 }
 
 new HasDeprecatedConstructor();
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new (): HasDeprecatedConstructor' is deprecated.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new HasDeprecatedConstructor(public prop?: any): HasDeprecatedConstructor' is deprecated.]
 new HasDeprecatedConstructorOverload('');
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new (p: string): HasDeprecatedConstructorOverload' is deprecated.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new HasDeprecatedConstructorOverload(p: string): HasDeprecatedConstructorOverload' is deprecated.]
 new HasDeprecatedConstructorOverload(1);
 new Extending('');
 new Extending();
@@ -202,28 +202,28 @@ class HasDeprecatedMethods {
     const v = new HasDeprecatedMethods();
     v.prop;
     v.prop();
-    ~~~~~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    ~~~~~~~~  [error no-unstable-api-use: CallSignature 'prop(): string' is deprecated: Use the other overload instead. ]
     v.prop('');
     v.method;
     ~~~~~~~~  [error no-unstable-api-use: Method 'method' is deprecated.]
     v.method();
-    ~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): void' is deprecated.]
+    ~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'method(): void' is deprecated.]
     v.method('');
     v.deprecatedProp;
     ~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'deprecatedProp' is deprecated.]
     v.deprecatedProp();
     ~~~~~~~~~~~~~~~~    [error no-unstable-api-use: Property 'deprecatedProp' is deprecated.]
-    ~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    ~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'deprecatedProp(): string' is deprecated: Use the other overload instead. ]
     v.deprecatedProp('');
     ~~~~~~~~~~~~~~~~      [error no-unstable-api-use: Property 'deprecatedProp' is deprecated.]
     v.deprecatedProp2;
     ~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'deprecatedProp2' is deprecated.]
     v.deprecatedProp2();
     ~~~~~~~~~~~~~~~~~    [error no-unstable-api-use: Property 'deprecatedProp2' is deprecated.]
-    ~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): void' is deprecated.]
+    ~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'deprecatedProp2(): void' is deprecated.]
     v.initialized;
     v.initialized();
-    ~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): string' is deprecated: Use the other overload instead. ]
+    ~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'initialized(): string' is deprecated: Use the other overload instead. ]
     v.initialized('');
 
     v['prop']();
@@ -262,7 +262,7 @@ tag`a`;
 tag`${''}`;
 tag`${1}`;
 tag`${''}${1}`;
-~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(parts: TemplateStringsArray, ...values: any[]): string' is deprecated.]
+~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'tag(parts: TemplateStringsArray, ...values: any[]): string' is deprecated.]
 
 declare function decorator<T extends Function>(clazz: T): T;
 /** @deprecated Options should be provided. */
@@ -271,7 +271,7 @@ declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
 
 @decorator
 @decorator()
- ~~~~~~~~~~~ [error no-unstable-api-use: CallSignature '(): ClassDecorator' is deprecated: Options should be provided. ]
+ ~~~~~~~~~~~ [error no-unstable-api-use: CallSignature 'decorator(): ClassDecorator' is deprecated: Options should be provided. ]
 @decorator({foo: '', bar: ''})
 class Decorated {}
 
@@ -446,7 +446,7 @@ namespace MyClass {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated.]
     myObj.fnA();
     ~~~~~~~~~    [error no-unstable-api-use: Property 'fnA' is deprecated.]
-    ~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(): void' is deprecated.]
+    ~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'fnA(): void' is deprecated.]
     myObj.fnB();
     ~~~~~~~~~    [error no-unstable-api-use: Property 'fnB' is deprecated.]
 }
@@ -493,4 +493,4 @@ myDeprecatedCallable();
 ~~~~~~~~~~~~~~~~~~~~    [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var ]
 myDeprecatedCallable(1);
 ~~~~~~~~~~~~~~~~~~~~     [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var ]
-~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(param: number): number' is deprecated: signature ]
+~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'myDeprecatedCallable(param: number): number' is deprecated: signature ]
