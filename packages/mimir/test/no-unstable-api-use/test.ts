@@ -103,7 +103,7 @@ obj2[key];
 
 class HasDeprecatedConstructor {
     /** @deprecated */
-    constructor() {}
+    constructor(public prop?: any) {}
 }
 class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
     /** @deprecated */

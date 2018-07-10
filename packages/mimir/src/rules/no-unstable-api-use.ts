@@ -15,6 +15,7 @@ import * as ts from 'typescript';
 import { elementAccessSymbols, propertiesOfType, lateBoundPropertyNames } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
+const signatureFormatFlags = ts.TypeFormatFlags.UseFullyQualifiedType | ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
 
 export class Rule extends TypedRule {
     public apply() {
@@ -101,13 +102,13 @@ export class Rule extends TypedRule {
         s: T,
         node: U,
         hint: V,
-        descr: (s: T, checker: ts.TypeChecker, hint: V) => string,
+        descr: (s: T, checker: ts.TypeChecker, hint: V, node: U) => string,
     ) {
         for (const tag of s.getJsDocTags())
             if (tag.name === 'deprecated' || tag.name === 'experimental')
                 this.addFailureAtNode(
                     node,
-                    `${descr(s, this.checker, hint)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
+                    `${descr(s, this.checker, hint, node)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
                 );
     }
 }
@@ -140,7 +141,7 @@ function describeSymbol(symbol: ts.Symbol): string {
     return '(unknown)';
 }
 
-function signatureToString(signature: ts.Signature, checker: ts.TypeChecker) {
+function signatureToString(signature: ts.Signature, checker: ts.TypeChecker, _: undefined, node: ts.CallLikeExpression) {
     let construct = false;
     switch (signature.declaration && signature.declaration.kind) {
         case ts.SyntaxKind.Constructor:
@@ -148,7 +149,32 @@ function signatureToString(signature: ts.Signature, checker: ts.TypeChecker) {
         case ts.SyntaxKind.ConstructorType:
             construct = true;
     }
-    return `${construct ? 'Costruct' : 'Call'}Signature '${construct ? 'new ' : ''}${checker.signatureToString(signature)}'`;
+    let name = '';
+    const expr = getExpressionOfCallLike(node);
+    if (isIdentifier(expr)) {
+        name = expr.text;
+    } else if (isPropertyAccessExpression(expr)) {
+        name = expr.name.text;
+    } else if (expr.kind === ts.SyntaxKind.SuperKeyword) {
+        name = 'super';
+    }
+    return `${construct ? 'Costruct' : 'Call'}Signature '${
+        construct && expr.kind !== ts.SyntaxKind.SuperKeyword ? 'new ' : ''
+    }${name}${checker.signatureToString(signature, undefined, signatureFormatFlags)}'`;
+}
+
+function getExpressionOfCallLike(node: ts.CallLikeExpression): ts.Expression {
+    switch (node.kind) {
+        case ts.SyntaxKind.CallExpression:
+        case ts.SyntaxKind.NewExpression:
+        case ts.SyntaxKind.Decorator:
+            return (<ts.CallExpression | ts.NewExpression | ts.Decorator>node).expression;
+        case ts.SyntaxKind.TaggedTemplateExpression:
+            return (<ts.TaggedTemplateExpression>node).tag;
+        case ts.SyntaxKind.JsxOpeningElement:
+        case ts.SyntaxKind.JsxSelfClosingElement:
+            return (<ts.JsxOpeningLikeElement>node).tagName;
+    }
 }
 
 function isPartOfCall(node: ts.Node) {
