@@ -51,4 +51,4 @@ optionalParam<{}>(v); // type argument need to be provided to satisfy the rule, 
 
 ## Related Rules
 
-* [no-misused-generics](no-misused-generics.md)
+* [`no-misused-generics`](no-misused-generics.md)

@@ -47,4 +47,4 @@ isNaN(v);
 
 ## Related Rules
 
-* [prefer-number-isnan](prefer-number-isnan.md)
+* [`prefer-number-methods`](prefer-number-methods.md)

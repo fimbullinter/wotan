@@ -45,4 +45,4 @@ declare class MyClass {
 
 ## Related Rules
 
-* [no-inferred-empty-object](no-inferred-empty-object.md)
+* [`no-inferred-empty-object`](no-inferred-empty-object.md)

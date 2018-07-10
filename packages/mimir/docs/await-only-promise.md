@@ -43,6 +43,6 @@ async function test(iterable: AsyncIterable<number>, promise?: Promise<number>) 
 
 ## Related Rules
 
-* [await-async-result](await-async-result.md)
-* [no-return-await](no-return-await.md)
-* [try-catch-return-await](try-catch-return-await.md)
+* [`await-async-result`](await-async-result.md)
+* [`no-return-await`](no-return-await.md)
+* [`try-catch-return-await`](try-catch-return-await.md)

@@ -82,6 +82,6 @@ async function foo(bar: Promise<any>) {
 
 ## Related Rules
 
-* [await-async-result](await-async-result.md)
-* [await-only-promise](await-only-promise.md)
-* [no-return-await](no-return-await.md)
+* [`await-async-result`](await-async-result.md)
+* [`await-only-promise`](await-only-promise.md)
+* [`no-return-await`](no-return-await.md)

@@ -93,5 +93,5 @@ rules:
 
 ## Related Rules
 
-* [no-invalid-assertion](no-invalid-assertion.md)
-* [no-useless-assertion](no-useless-assertion.md)
+* [`no-invalid-assertion`](no-invalid-assertion.md)
+* [`no-useless-assertion`](no-useless-assertion.md)

@@ -41,4 +41,6 @@ function test2() {
 
 ## Related Rules
 
+* [`await-only-promise`](await-only-promise.md)
+* [`no-return-await`](no-return-await.md)
 * [`try-catch-return-await`](try-catch-return-await.md)

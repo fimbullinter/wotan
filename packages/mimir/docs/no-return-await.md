@@ -75,5 +75,5 @@ async function foo(bar: Promise<any>) {
 
 ## Related Rules
 
-* [await-only-promise](await-only-promise.md)
-* [try-catch-return-await](try-catch-return-await.md)
+* [`await-only-promise`](await-only-promise.md)
+* [`try-catch-return-await`](try-catch-return-await.md)
