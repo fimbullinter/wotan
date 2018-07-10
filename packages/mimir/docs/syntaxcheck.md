@@ -13,3 +13,7 @@ There are several reasons this rule might be helpful for your setup:
 * single command to ensure your code has no syntax or lint errors
 
 If you are executing the TypeScript compiler anyway, this rule is not necessary for you. It just adds additional overhead in this case.
+
+## Related Rules
+
+* [`typecheck`](typecheck.md)

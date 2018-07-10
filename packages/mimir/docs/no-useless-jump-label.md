@@ -48,3 +48,7 @@ blockLabel: {
 
 * MDN: [Labeled Statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label)
 * MDN: [Destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+
+## Related Rules
+
+* [`no-unused-label`](no-unused-label.md)

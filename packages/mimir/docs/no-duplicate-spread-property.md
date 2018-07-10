@@ -51,3 +51,8 @@ obj = {
   baz: 1,
 }
 ```
+
+## Related Rules
+
+* [`prefer-object-spread`](prefer-object-spread.md)
+* [`no-useless-spread`](no-useless-spread.md)

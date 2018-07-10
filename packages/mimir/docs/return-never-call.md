@@ -38,3 +38,7 @@ throw neverReturns();
 ## Further Reading
 
 * TypeScript Deep Dive: [Never](https://basarat.gitbooks.io/typescript/content/docs/types/never.html)
+
+## Related Rules
+
+* [`no-unreachable-code`](no-unreachable-code.md)

@@ -90,3 +90,8 @@ rules:
 ## Further Reading
 
 * TypeScript Deep Dive: [Type Assertion](https://basarat.gitbooks.io/typescript/content/docs/types/type-assertion.html)
+
+## Related Rules
+
+* [no-invalid-assertion](no-invalid-assertion.md)
+* [no-useless-assertion](no-useless-assertion.md)

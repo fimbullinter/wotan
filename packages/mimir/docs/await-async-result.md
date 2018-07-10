@@ -38,3 +38,7 @@ function test2() {
   asyncFn(); // call is not inside an async function
 }
 ```
+
+## Related Rules
+
+* [`try-catch-return-await`](try-catch-return-await.md)

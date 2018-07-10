@@ -89,3 +89,8 @@ switch (v) {
     // there is no following clause so 'break;' is not necessary here
 }
 ```
+
+## Related Rules
+
+* [`no-case-declaration`](no-case-declaration.md)
+* [`no-duplicate-case`](no-duplicate-case.md)

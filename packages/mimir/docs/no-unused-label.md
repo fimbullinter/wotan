@@ -34,3 +34,7 @@ outer: while (true) {
   }
 }
 ```
+
+## Related Rules
+
+* [`no-useless-jump-label`](no-useless-jump-label.md)
