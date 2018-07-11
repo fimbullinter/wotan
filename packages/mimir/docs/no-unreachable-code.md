@@ -91,3 +91,7 @@ function foo() {
 
 * MDN: [Control flow](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling)
 * StackOverflow: [What are the rules for JavaScript's automatic semicolon insertion (ASI)?](https://stackoverflow.com/questions/2846283/what-are-the-rules-for-javascripts-automatic-semicolon-insertion-asi)
+
+## Related Rules
+
+* [`return-never-call`](return-never-call.md)

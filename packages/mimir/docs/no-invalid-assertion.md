@@ -49,3 +49,7 @@ false as boolean;
 1 as 'foo';
 <{foo: 'foo'}>{foo: 'bar'};
 ```
+
+## Related Rules
+
+* [`no-useless-assertion`](no-useless-assertion.md)

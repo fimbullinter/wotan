@@ -57,3 +57,8 @@ class C {
   prop!: number;
 }
 ```
+
+## Related Rules
+
+* [`no-invalid-assertion`](no-invalid-assertion.md)
+* [`type-assertion`](type-assertion.md)

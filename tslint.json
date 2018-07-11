@@ -171,7 +171,7 @@
       "allow-void-expression"
     ],
     "no-unnecessary-else": true,
-    "no-unnecessary-type-annotation": true,
+    "no-unnecessary-type-annotation": false,
     "no-var-before-return": true,
     "object-shorthand-properties-first": true,
     "parameter-properties": [

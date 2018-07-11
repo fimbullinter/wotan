@@ -117,3 +117,7 @@ const {a, b} = {a: 1, b: 2}; // 'a' and 'b' are never reassigned
 
 * MDN: [const](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)
 * Mozilla Hacks: [Destructuring](https://hacks.mozilla.org/2015/05/es6-in-depth-destructuring/)
+
+## Related Rules
+
+* [`no-unassigned-variable`](no-unassigned-variable.md)

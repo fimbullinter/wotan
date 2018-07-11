@@ -57,3 +57,8 @@ Math.max(1, ...arr, 2);
 ## Further Reading
 
 * MDN: [Spread Syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
+
+## Related Rules
+
+* [`no-duplicate-spread-property`](no-duplicate-spread-property.md)
+* [`prefer-object-spread`](prefer-object-spread.md)

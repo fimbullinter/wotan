@@ -44,3 +44,11 @@ restParam(1, 10); // arguments have compatible types, T is inferred as number
 declare let v: {};
 optionalParam<{}>(v); // type argument need to be provided to satisfy the rule, because T would be inferred as {}
 ```
+
+## Further Reading
+
+* TypeScript Handbook: [Generics](https://www.typescriptlang.org/docs/handbook/generics.html)
+
+## Related Rules
+
+* [`no-misused-generics`](no-misused-generics.md)

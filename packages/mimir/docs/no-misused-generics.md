@@ -42,3 +42,7 @@ declare class MyClass {
 
 * TypeScript Handbook: [Generics](https://www.typescriptlang.org/docs/handbook/generics.html)
 * [Union type inference](https://github.com/Microsoft/TypeScript/issues/23312#issuecomment-380218861)
+
+## Related Rules
+
+* [`no-inferred-empty-object`](no-inferred-empty-object.md)

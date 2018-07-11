@@ -43,3 +43,8 @@ switch (v) {
   case someOtherVariable:
 }
 ```
+
+## Related Rules
+
+* [`no-case-declaration`](no-case-declaration.md)
+* [`no-fallthrough`](no-fallthrough.md)

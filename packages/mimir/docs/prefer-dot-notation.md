@@ -17,6 +17,8 @@ declare let obj: Record<string, string>;
 
 obj['prop'];
 obj['foo_bar'];
+
+1['toString']();
 ```
 
 :thumbsup: Examples of correct code
@@ -26,6 +28,10 @@ declare let obj: Record<string, string>;
 
 obj.prop;
 obj.foo_bar;
+
+(1).toString();
+1..toString(); // double dot is intentional to avoid parsing ambiguity
+1.0.toString();
 
 // dynamic element access
 obj['prop' + Math.random()];
