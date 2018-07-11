@@ -32,7 +32,7 @@ export class Rule extends TypedRule {
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
-            if (typeParameters.length !== 0)
+            if (typeParameters!== undefined && typeParameters.length !== 0) // wotan-disable-line no-useless-predicate
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
     }
@@ -43,7 +43,8 @@ export class Rule extends TypedRule {
         if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
-            if (typeParameters.length !== 0) // only check the signature if it declares type parameters
+            // wotan-disable-next-line no-useless-predicate
+            if (typeParameters !== undefined && typeParameters.length !== 0) // only check the signature if it declares type parameters
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
 
@@ -55,6 +56,8 @@ export class Rule extends TypedRule {
         const typeParameterResult = [];
         for (const declaration of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(declaration);
+            if (typeParameters === undefined) // wotan-disable-line no-useless-predicate
+                continue; // compatibility with typescript@<2.9.0
             for (let i = 0; i < typeParameters.length; ++i)
                 // wotan-disable-next-line no-useless-predicate
                 if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
