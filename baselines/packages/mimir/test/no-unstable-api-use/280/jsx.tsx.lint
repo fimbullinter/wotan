@@ -37,7 +37,7 @@ declare var FizzComponent: {
 }
 
 let foo = <FooComponent foo="a"/>;
-          ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature '(props: { foo: string; }): false' is deprecated.]
+          ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'FooComponent(props: { foo: string; }): false' is deprecated.]
 let foo2 = <FooComponent bar="1"></FooComponent>;
 let bar = <BarComponent></BarComponent>;
 let baz = <BazComponent></BazComponent>;
