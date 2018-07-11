@@ -32,7 +32,7 @@ export class Rule extends TypedRule {
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
-            if (typeParameters!== undefined && typeParameters.length !== 0) // wotan-disable-line no-useless-predicate
+            if (typeParameters !== undefined && typeParameters.length !== 0) // wotan-disable-line no-useless-predicate
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
     }
