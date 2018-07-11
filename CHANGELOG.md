@@ -1,5 +1,19 @@
 # Change Log
 
+## v0.12.0
+
+**Features:**
+
+* `no-inferred-empty-object`: handle multiple JSDoc `@template` tags starting from TypeScript@3.0.0
+* `no-unstable-api-use`: better error message for signatures
+* `no-useless-initializer`: check computed names in destructuring
+
+**Bugfixes:**
+
+* `no-return-await`, `await-only-promise`, `no-useless-assertion`: fixer looks into tagged templates when parenthesizing
+* `prefer-dot-notation`: fixer adds parens around numeric literals
+* `type-assertion`: no longer emit invalid code when fixing to classic style
+
 ## v0.11.0
 
 :warning: **Breaking Changes:**
