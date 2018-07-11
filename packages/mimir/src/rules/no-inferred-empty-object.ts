@@ -31,8 +31,8 @@ export class Rule extends TypedRule {
         const signature = this.checker.getResolvedSignature(node)!;
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
-            const typeParameters = getTypeParameters(signature.declaration);
-            if (typeParameters !== undefined)
+            const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
+            if (typeParameters !== undefined && typeParameters.length !== 0) // wotan-disable-line no-useless-predicate
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
     }
@@ -42,8 +42,9 @@ export class Rule extends TypedRule {
         // wotan-disable-next-line no-useless-predicate
         if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
-            const typeParameters = getTypeParameters(signature.declaration);
-            if (typeParameters !== undefined) // only check the signature if it declares type parameters
+            const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
+            // wotan-disable-next-line no-useless-predicate
+            if (typeParameters !== undefined && typeParameters.length !== 0) // only check the signature if it declares type parameters
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
 
@@ -54,9 +55,9 @@ export class Rule extends TypedRule {
         // collect all TypeParameters and their defaults from all merged declarations
         const typeParameterResult = [];
         for (const declaration of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
-            const typeParameters = getTypeParameters(declaration);
-            if (typeParameters === undefined)
-                continue;
+            const typeParameters = ts.getEffectiveTypeParameterDeclarations(declaration);
+            if (typeParameters === undefined) // wotan-disable-line no-useless-predicate
+                continue; // compatibility with typescript@<2.9.0
             for (let i = 0; i < typeParameters.length; ++i)
                 // wotan-disable-next-line no-useless-predicate
                 if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
@@ -81,7 +82,7 @@ export class Rule extends TypedRule {
         if (typeArguments === undefined)
             return;
 
-        for (let i = 0, len = Math.min(typeParameters.length, typeArguments.length); i < len; ++i) {
+        for (let i = 0; i < typeParameters.length; ++i) {
             const typeArgument = typeArguments[i];
             if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
                 this.handleEmptyTypeParameter(typeParameters[i], node);
@@ -95,15 +96,4 @@ export class Rule extends TypedRule {
                 `TypeParameter '${typeParameter.name.text}' is inferred as '{}'. Consider adding type arguments to the call.`,
             );
     }
-}
-
-function getTypeParameters(node: ts.DeclarationWithTypeParameters): ReadonlyArray<ts.TypeParameterDeclaration> | undefined {
-    // TODO remove assertion when https://github.com/Microsoft/TypeScript/issues/24248 is resolved
-    if ((<any>node).typeParameters !== undefined)
-        return (<any>node).typeParameters;
-    if (node.flags & ts.NodeFlags.JavaScriptFile) {
-        const tag = ts.getJSDocTemplateTag(node);
-        return tag && tag.typeParameters;
-    }
-    return;
 }
