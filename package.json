@@ -16,6 +16,10 @@
     "test-coverage": "nyc --reporter=html --reporter=text-summary yarn test",
     "verify": "npm-run-all -s clean compile -p check-dependencies lint -s test-coverage"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fimbullinter/wotan.git"
+  },
   "workspaces": [
     "packages/*"
   ],
@@ -39,6 +43,8 @@
     "tslint-consistent-codestyle": "^1.11.1"
   },
   "devDependencies": {
+    "@octokit/rest": "^15.9.4",
+    "github-url-to-object": "^4.0.4",
     "typescript": "3.0.0-dev.20180707"
   },
   "peerDependencies": {
