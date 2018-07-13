@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fimbul/ymir": "^0.11.0",
-    "get-caller-file": "^1.0.2",
+    "get-caller-file": "^2.0.0",
     "tslib": "^1.8.1",
     "tsutils": "^2.24.0"
   },
