@@ -231,3 +231,26 @@ export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChec
 export function escapeIdentifier(name: string): ts.__String {
     return <ts.__String>(name.startsWith('__') ? '_' + name : name);
 }
+
+export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
+    switch (node.kind) {
+        case ts.SyntaxKind.SourceFile:
+        case ts.SyntaxKind.ModuleBlock:
+            return true;
+        case ts.SyntaxKind.Block:
+            switch (node.parent!.kind) {
+                case ts.SyntaxKind.ArrowFunction:
+                case ts.SyntaxKind.FunctionExpression:
+                case ts.SyntaxKind.FunctionDeclaration:
+                case ts.SyntaxKind.MethodDeclaration:
+                case ts.SyntaxKind.Constructor:
+                case ts.SyntaxKind.GetAccessor:
+                case ts.SyntaxKind.SetAccessor:
+                    return true;
+                default:
+                    return false;
+            }
+        default:
+            return false;
+    }
+}
