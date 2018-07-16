@@ -82,7 +82,7 @@ export class Rule extends AbstractRule {
     private hasUseStrictDirective(node: ts.BlockLike) {
         for (const statement of node.statements) {
             if (!isExpressionStatement(statement) || !isStringLiteral(statement.expression))
-                return false;
+                break;
             if (statement.expression.getText(this.sourceFile).slice(1, -1) === 'use strict')
                 return true;
         }
