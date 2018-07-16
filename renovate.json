@@ -18,6 +18,9 @@
     "after 10pm",
     "before 5am"
   ],
+  "peerDependencies": {
+    "enabled": false
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
