@@ -1,0 +1,25 @@
+'use strict';
+namespace foo {
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': a parent node is already in strict mode.]
+    "use strict";
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
+    foo;
+    'use strict';
+}
+
+var C = class {
+    get prop() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+        return 1;
+    }
+};
+
+const obj = {
+    get prop() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': a parent node is already in strict mode.]
+        return 1;
+    },
+};

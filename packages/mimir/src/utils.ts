@@ -13,14 +13,13 @@ import {
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
-export function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
-}
+// TODO move to tsutils
+export type StrictOption =
+    'noImplicitAny' | 'noImplicitThis' | 'strictNullChecks' | 'strictFunctionTypes' | 'strictPropertyInitialization' | 'alwaysStrict';
 
-export function isStrictPropertyInitializationEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict
-        ? options.strictPropertyInitialization !== false && options.strictNullChecks !== false
-        : options.strictPropertyInitialization === true && options.strictNullChecks === true;
+export function isStrictFlagEnabled(options: ts.CompilerOptions, option: StrictOption): boolean {
+    return (options.strict ? options[option] !== false : options[option] === true) &&
+        (option !== 'strictPropertyInitialization' || isStrictFlagEnabled(options, 'strictNullChecks'));
 }
 
 export function* switchStatements(context: RuleContext) {
