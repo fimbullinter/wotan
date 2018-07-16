@@ -1,7 +1,7 @@
 namespace foo {
-    'use strict';
     'use\u0020strict';
     '\'use strict';
+    'use strict';
     foo;
     'use strict';
 
@@ -47,7 +47,25 @@ var C = class {
 
 const obj = {
     get prop() {
+        obj;
         'use strict';
-        return 1;
+        return () => {
+            'use strict';
+            return () => {
+            }
+        };
     },
+
+    m() {
+        return () => {
+            'use strict';
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+            'use strict';
+        }
+    }
 };

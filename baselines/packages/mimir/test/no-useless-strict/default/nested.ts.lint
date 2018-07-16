@@ -1,7 +1,7 @@
 namespace foo {
-    'use strict';
     'use\u0020strict';
     '\'use strict';
+    'use strict';
     'use strict';
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
     "use strict";
@@ -63,7 +63,27 @@ var C = class {
 
 const obj = {
     get prop() {
+        obj;
         'use strict';
-        return 1;
+        return () => {
+            'use strict';
+            return () => {
+                "use strict";
+                ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': a parent node is already in strict mode.]
+            }
+        };
     },
+
+    m() {
+        return () => {
+            'use strict';
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+            'use strict';
+        }
+    }
 };

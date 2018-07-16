@@ -46,6 +46,22 @@ var C = class {
 
 const obj = {
     get prop() {
-        return 1;
+        obj;
+        'use strict';
+        return () => {
+            return () => {
+            }
+        };
     },
+
+    m() {
+        return () => {
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+        }
+    }
 };
