@@ -12,7 +12,7 @@ import {
     isEmptyObjectType,
     isIntersectionType,
 } from 'tsutils';
-import { isStrictFlagEnabled } from '@fimbul/mimir/src/utils';
+import { isStrictFlagEnabled } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
