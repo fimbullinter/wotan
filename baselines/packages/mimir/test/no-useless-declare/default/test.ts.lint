@@ -7,6 +7,8 @@ export declare interface I {}
        ~~~~~~~                [error no-useless-declare: Using the 'declare' keyword here is redundant as the statement has no runtime value.]
 declare class C {}
 
+export declare class C3 {}
+
 enum E2 {}
 const enum CE2 {}
 type T2 = any;
