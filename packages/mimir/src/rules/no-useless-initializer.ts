@@ -11,8 +11,9 @@ import {
     unionTypeParts,
     isReassignmentTarget,
     isBinaryExpression,
+    isStrictCompilerOptionEnabled,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName, escapeIdentifier, isStrictFlagEnabled } from '../utils';
+import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName, escapeIdentifier } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -46,7 +47,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkObjectDestructuring(node: ts.ObjectLiteralExpression) {
-        if (this.program === undefined || !isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
+        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
             return;
         const checker = this.program.getTypeChecker();
         for (const property of node.properties) {
@@ -79,7 +80,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkBindingPattern(node: ts.BindingPattern, propNames: typeof getObjectPropertyName) {
-        if (this.program === undefined || !isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
+        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
             return;
         const checker = this.program.getTypeChecker();
         let type: ts.Type | undefined;
