@@ -35,6 +35,5 @@ yarn-error.log*
 /scripts/*.d.ts
 # these are written as js file
 !/scripts/last-travis-nightly.js
-!/scripts/github-release.js
 
 !/baselines/**

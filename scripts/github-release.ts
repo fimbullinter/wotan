@@ -1,17 +1,20 @@
-// @ts-check
-"use strict";
-const fs = require("fs");
-const parseGithubUrl = require("github-url-to-object");
-const Github = require('@octokit/rest');
+import * as fs from 'fs';
+import * as parseGithubUrl from 'github-url-to-object';
+import * as Github  from '@octokit/rest';
+
+if (!process.env.GITHUB_TOKEN) {
+    console.error('Missing environment variable GITHUB_TOKEN');
+    throw process.exit(1);
+}
 
 const content = fs.readFileSync('./CHANGELOG.md', 'utf8');
 const re = /^## (v\d+\.\d+\.\d+)$/mg;
-const startMatch = re.exec(content);
+const startMatch = re.exec(content)!;
 const start = startMatch.index + startMatch[0].length;
-const end = re.exec(content).index;
+const end = re.exec(content)!.index;
 const body = content.substring(start, end).trim();
 const tag = startMatch[1];
-const { user, repo } = parseGithubUrl(require(process.cwd() + '/package.json').repository);
+const { user, repo } = parseGithubUrl(require(process.cwd() + '/package.json').repository)!;
 
 const ghClient = new Github();
 ghClient.authenticate({
@@ -32,4 +35,4 @@ ghClient.authenticate({
 })().catch((err) => {
     console.error(err);
     process.exitCode = 1;
-});;
+});
