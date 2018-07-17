@@ -55,6 +55,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-useless-jump-label`](docs/no-useless-jump-label.md) | :wrench: Disallows `continue label;` and `break label;` where the label is not necessary. | There's no similar TSLint rule.
 `no-useless-predicate` | Detects redundant conditions that are either always true or always false. *requires type information* | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
+[`no-useless-strict`](docs/no-useless-strict.md) | :mag_right: :wrench: Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
 [`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 [`prefer-const`](docs/prefer-const.md) | :wrench: :nut_and_bolt: Enforces the use of `const` for variables that are never reassigned. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used before being declared which results in a compiler or runtime error after fixing.
 [`prefer-dot-notation`](docs/prefer-dot-notation.md) | :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
