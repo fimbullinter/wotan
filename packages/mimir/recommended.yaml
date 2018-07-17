@@ -28,6 +28,7 @@ rules:
   no-useless-initializer: error
   no-useless-jump-label: error
   no-useless-predicate: error
+  no-useless-strict: error
   no-useless-spread: error
   prefer-const: error
   prefer-dot-notation: error

@@ -1,11 +1,6 @@
 import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import {
-    isStrictNullChecksEnabled,
-    isStrictPropertyInitializationEnabled,
-    expressionNeedsParensWhenReplacingNode,
-    typesAreEqual,
-} from '../utils';
+import { expressionNeedsParensWhenReplacingNode, typesAreEqual, isStrictFlagEnabled } from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -27,7 +22,7 @@ const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no eff
 @excludeDeclarationFiles
 @typescriptOnly
 export class Rule extends TypedRule {
-    private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
+    private strictNullChecks = isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictNullChecks');
 
     public apply(): void {
         for (const node of this.context.getFlatAst()) {
@@ -52,7 +47,7 @@ export class Rule extends TypedRule {
         // compiler already emits an error for definite assignment assertions on ambient or initialized variables
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined && (
-                !isStrictNullChecksEnabled(this.program.getCompilerOptions()) || // strictNullChecks need to be enabled
+                !isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictNullChecks') || // strictNullChecks need to be enabled
                 getNullableFlags(this.checker.getTypeAtLocation(node.name)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFailure(
@@ -69,7 +64,7 @@ export class Rule extends TypedRule {
             node.initializer === undefined &&
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
-                !isStrictPropertyInitializationEnabled(this.program.getCompilerOptions()) || // strictPropertyInitialization must be enabled
+                !isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictPropertyInitialization') ||
                 getNullableFlags(this.checker.getTypeAtLocation(node)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFailure(

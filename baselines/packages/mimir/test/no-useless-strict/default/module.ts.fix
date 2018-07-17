@@ -1,0 +1,17 @@
+export {};
+namespace foo {
+    foo;
+    'use strict';
+}
+
+var C = class {
+    get prop() {
+        return 1;
+    }
+};
+
+const obj = {
+    get prop() {
+        return 1;
+    },
+};

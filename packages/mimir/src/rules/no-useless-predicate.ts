@@ -12,7 +12,7 @@ import {
     isEmptyObjectType,
     isIntersectionType,
 } from 'tsutils';
-import { isStrictNullChecksEnabled } from '../utils';
+import { isStrictFlagEnabled } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -70,7 +70,7 @@ const predicates: Record<string, TypePredicate> = {
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
-    private strictNullChecks = isStrictNullChecksEnabled(this.program.getCompilerOptions());
+    private strictNullChecks = isStrictFlagEnabled(this.program.getCompilerOptions(), 'strictNullChecks');
 
     public apply() {
         for (const node of this.context.getFlatAst()) {

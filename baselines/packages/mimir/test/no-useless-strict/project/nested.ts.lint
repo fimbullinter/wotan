@@ -1,0 +1,89 @@
+namespace foo {
+    'use\u0020strict';
+    '\'use strict';
+    'use strict';
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
+    "use strict";
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
+    foo;
+    'use strict';
+
+    function fn() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': a parent node is already in strict mode.]
+    }
+    function fn2() {
+        fn();
+        'use strict';
+    }
+    class Foo {
+        constructor() {
+            "use strict";
+            ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+        }
+        method() {
+            if (Boolean())
+                'use strict';
+            else {
+                "use strict";
+            }
+            return {
+                m() {
+                    'use strict';
+                    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+                },
+            };
+        }
+    }
+}
+
+class Foo {
+    constructor() {
+        "use strict";
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+    }
+    method() {
+        return {
+            m() {
+                'use strict';
+                ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+            },
+        };
+    }
+}
+
+var C = class {
+    get prop() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
+        return 1;
+    }
+};
+
+const obj = {
+    get prop() {
+        obj;
+        'use strict';
+        return () => {
+            'use strict';
+            return () => {
+                "use strict";
+                ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': a parent node is already in strict mode.]
+            }
+        };
+    },
+
+    m() {
+        return () => {
+            'use strict';
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+            'use strict';
+        }
+    }
+};
