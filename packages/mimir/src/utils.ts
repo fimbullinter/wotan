@@ -13,15 +13,6 @@ import {
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
-// TODO move to tsutils
-export type StrictOption =
-    'noImplicitAny' | 'noImplicitThis' | 'strictNullChecks' | 'strictFunctionTypes' | 'strictPropertyInitialization' | 'alwaysStrict';
-
-export function isStrictFlagEnabled(options: ts.CompilerOptions, option: StrictOption): boolean {
-    return (options.strict ? options[option] !== false : options[option] === true) &&
-        (option !== 'strictPropertyInitialization' || isStrictFlagEnabled(options, 'strictNullChecks'));
-}
-
 export function* switchStatements(context: RuleContext) {
     const {text} = context.sourceFile;
     const re = /\bswitch\s*[(/]/g;

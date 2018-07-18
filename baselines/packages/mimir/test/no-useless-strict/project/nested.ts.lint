@@ -1,11 +1,14 @@
 namespace foo {
     'use\u0020strict';
     '\'use strict';
+    '"use strict"';
+    // 'use strict'
     'use strict';
     'use strict';
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
     "use strict";
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': there is already a 'use strict' directive in this prologue.]
+    `use strict`;
     foo;
     'use strict';
 
@@ -23,6 +26,7 @@ namespace foo {
             ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': classes are always in strict mode.]
         }
         method() {
+            console.log('use strict');
             if (Boolean())
                 'use strict';
             else {

@@ -1,9 +1,12 @@
 namespace foo {
     'use\u0020strict';
     '\'use strict';
+    '"use strict"';
+    // 'use strict'
     'use strict';
     'use strict';
     "use strict";
+    `use strict`;
     foo;
     'use strict';
 
@@ -19,6 +22,7 @@ namespace foo {
             "use strict";
         }
         method() {
+            console.log('use strict');
             if (Boolean())
                 'use strict';
             else {

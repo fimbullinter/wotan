@@ -13,8 +13,8 @@ let baz = foo;
 function fn(param: Array<Map<number, [number, string]>>): boolean {
     return param[0];
     ~~~~~~~~~~~~~~~~ [error typecheck: Type 'Map<number, [number, string]>' is not assignable to type 'boolean'.]
-    return true;
-    ~~~~~~       [error typecheck: Unreachable code detected.]
+    fn
+    ~~ [error typecheck: Unreachable code detected.]
 }
 
 function fn2(param1: string, param2): string {

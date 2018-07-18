@@ -1,5 +1,5 @@
 {
   "project": "tsconfig.json",
   "files": ["global.ts", "non-null.ts", "type-assertion.ts"],
-  "typescriptVersion": ">= 2.8.0"
+  "typescriptVersion": "^2.8.0"
 }

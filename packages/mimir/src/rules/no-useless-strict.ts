@@ -1,7 +1,7 @@
 import { excludeDeclarationFiles, AbstractRule, Replacement } from '@fimbul/ymir';
-import { WrappedAst, getWrappedNodeAtPosition, isExpressionStatement, isStringLiteral } from 'tsutils';
+import { WrappedAst, getWrappedNodeAtPosition, isExpressionStatement, isStringLiteral, isStrictCompilerOptionEnabled } from 'tsutils';
 import * as ts from 'typescript';
-import { hasDirectivePrologue, isStrictFlagEnabled } from '../utils';
+import { hasDirectivePrologue } from '../utils';
 
 const enum Reason {
     Antedecent = "there is already a 'use strict' directive in this prologue",
@@ -13,7 +13,7 @@ const enum Reason {
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    private strictFile = this.program !== undefined && isStrictFlagEnabled(this.program.getCompilerOptions(), 'alwaysStrict')
+    private strictFile = this.program !== undefined && isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'alwaysStrict')
         ? Reason.Option
         : ts.isExternalModule(this.sourceFile)
             ? Reason.Module

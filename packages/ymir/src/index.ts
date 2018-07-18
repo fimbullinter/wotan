@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as ts from 'typescript';
-import { WrappedAst } from 'tsutils';
+import { WrappedAst, isStrictCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
 
 export class ConfigurationError extends Error {}
@@ -137,11 +137,10 @@ function programContainsLibraryFile(program: ts.Program, fileName: string) {
 }
 
 export function requiresStrictNullChecks(target: typeof TypedRule) {
-    target.supports = combinePredicates(target.supports, (_, context) => isStrictNullChecksEnabled(context.program!.getCompilerOptions()));
-}
-
-function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
+    target.supports = combinePredicates(
+        target.supports,
+        (_, context) => isStrictCompilerOptionEnabled(context.program!.getCompilerOptions(), 'strictNullChecks'),
+    );
 }
 
 export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
