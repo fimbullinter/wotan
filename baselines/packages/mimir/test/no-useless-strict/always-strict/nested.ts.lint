@@ -1,12 +1,15 @@
 namespace foo {
     'use\u0020strict';
     '\'use strict';
+    '"use strict"';
+    // 'use strict'
     'use strict';
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
     'use strict';
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
     "use strict";
     ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    `use strict`;
     foo;
     'use strict';
 
@@ -24,6 +27,7 @@ namespace foo {
             ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
         }
         method() {
+            console.log('use strict');
             if (Boolean())
                 'use strict';
             else {
