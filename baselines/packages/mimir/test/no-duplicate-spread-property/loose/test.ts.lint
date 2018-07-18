@@ -106,3 +106,6 @@ const foo = 'foo';
     prop2: 2,
     ...get<any>(),
 });
+
+var v: any;
+({v, ...{v}} = get<Record<string, any>>());
