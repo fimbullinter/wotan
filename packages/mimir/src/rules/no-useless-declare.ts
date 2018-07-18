@@ -44,7 +44,7 @@ export class Rule extends AbstractRule {
                 // allow 'declare const enum' in declaration files, because it's required in declaration files
                 return !this.sourceFile.isDeclarationFile && hasModifier(node.modifiers, ts.SyntaxKind.ConstKeyword);
             default:
-                return false;
+                return this.sourceFile.isDeclarationFile && hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword);
         }
     }
 }

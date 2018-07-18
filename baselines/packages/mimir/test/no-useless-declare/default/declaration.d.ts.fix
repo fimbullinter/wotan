@@ -1,11 +1,19 @@
 declare enum E {}
 export declare const enum CE {}
 type T = any;
-export interface I {}
+interface I {}
+export interface I2 {}
 declare class C {}
+export class C2 {}
 
 type T2 = any;
-interface I2 {}
+interface I3 {}
+
+declare var v: any;
+export var v2: any;
+export var v3: any;
+
+export namespace namespace {}
 
 declare namespace ns.sub {
     declare enum E {}

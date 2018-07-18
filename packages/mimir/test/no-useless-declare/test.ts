@@ -4,6 +4,8 @@ declare type T = any;
 export declare interface I {}
 declare class C {}
 
+export declare class C3 {}
+
 enum E2 {}
 const enum CE2 {}
 type T2 = any;
