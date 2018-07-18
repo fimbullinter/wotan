@@ -9,7 +9,7 @@ let baz = foo;
 
 function fn(param: Array<Map<number, [number, string]>>): boolean {
     return param[0];
-    return true;
+    fn
 }
 
 function fn2(param1: string, param2): string {
