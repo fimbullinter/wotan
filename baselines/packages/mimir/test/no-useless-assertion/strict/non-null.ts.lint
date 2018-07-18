@@ -1,0 +1,249 @@
+export {};
+
+1!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+(1 + 2)!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+null!;
+undefined!;
+NaN!;
+   ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+Infinity!;
+        ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+something!;
+         ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+const a = 1;
+a!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let b: string | undefined;
+b = "b";
+b!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+b = undefined;
+b!;
+
+const c = !b ? "foo" : undefined;
+c!;
+
+const obj = {
+    prop: c,
+};
+obj!.prop!;
+   ~        [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let d: string;
+d!;
+d = "foo";
+d!;
+
+let e: string | number;
+e!;
+e = 1;
+e!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+const f = c ? c : null;
+f!;
+f!!;
+  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let g: string;
+g!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let {h} = {h: ''};
+h!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let i: string;
+i!;
+{
+    i!;
+}
+function foo(j: string) {
+    j!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    i!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+let k = b || c!; // this line should not be an error in strict mode
+k!; // but this line should
+ ~                          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let l: string | null;
+
+let m: any;
+m!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+let n: string | void = null as any;
+n!;
+ ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+foobar!;
+      ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+declare let possiblyNull: string | null;
+declare let possiblyUndefined: string | undefined;
+declare let possiblyBoth: string | null | undefined;
+
+function take<T extends string | null | undefined>(arg: T, cb: (p: T) => void) {}
+function takeAny(arg: any) {}
+function takeNull(arg: string | null) {}
+function takeUndefined(arg: string | undefined) {}
+function takeBoth(arg: string | null | undefined) {}
+function takeStringNumberUndefined(arg: string | number | undefined) {}
+function takeUnknown(arg: unknown) {}
+
+take<string | null>(possiblyNull!, (p) => p);
+                                ~             [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+take(possiblyNull!, (p: string) => p);
+take(possiblyNull!, (p) => p.length);
+
+takeAny(possiblyNull!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeAny(possiblyUndefined!);
+                         ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeAny(possiblyBoth!);
+                    ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+takeAny(l!);
+
+takeUnknown(possiblyNull!);
+                        ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeUnknown(possiblyUndefined!);
+                             ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeUnknown(possiblyBoth!);
+                        ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+takeUnknown(l!);
+
+takeNull(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeNull(possiblyUndefined!);
+takeNull(possiblyBoth!);
+takeNull(l!);
+
+takeUndefined(possiblyNull!);
+takeUndefined(possiblyUndefined!);
+                               ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeUndefined(possiblyBoth!);
+
+takeBoth(possiblyNull!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' values.]
+takeBoth(possiblyUndefined!);
+                          ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeBoth(possiblyBoth!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'null' and 'undefined' values.]
+
+takeStringNumberUndefined(possiblyNull!);
+takeStringNumberUndefined(possiblyUndefined!);
+                                           ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+takeStringNumberUndefined(possiblyBoth!);
+
+declare let functionOrAny: (() => void) | undefined;
+functionOrAny!();
+
+function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
+    one!;
+    two!;
+       ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    fn(one!, two!);
+          ~         [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(one!);
+    fn(two!, one!);
+          ~         [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    foo(three!);
+             ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(one!);
+                     ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+    let initialized: T = one;
+    initialized!;
+    let uninitialized: T;
+    uninitialized!;
+    let uninitialized2: U;
+    uninitialized2!;
+    let uninitialized3: V;
+    uninitialized3!;
+    let uninitialized4: T | undefined;
+    uninitialized4!;
+    let uninitialized5: U | undefined;
+    uninitialized5!;
+    foo(initialized!);
+    takeUndefined(initialized!);
+                             ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+    foo(uninitialized!);
+    takeUndefined(uninitialized!);
+    foo(uninitialized2!);
+    takeUndefined(uninitialized2!);
+    foo(uninitialized5!);
+    takeUndefined(uninitialized5!);
+                                ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+}
+
+interface I {
+    foo?: string;
+    bar?: string;
+}
+
+function fn1<T extends I>(o: T, k: keyof I) {
+    foo(o[k]!);
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+}
+
+function fn2<T extends I, K extends keyof T>(o: T, k: K) {
+    foo(o[k]!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}
+
+function fn3<K extends keyof I>(o: I, k: K) {
+    foo(o[k]!);
+    takeUndefined(o[k]!);
+                      ~   [error no-useless-assertion: This assertion is unnecessary as the receiver accepts 'undefined' values.]
+}
+
+function fn4<T extends {} | undefined, U extends {}>(param1: T, param2: U) {
+    const v = Boolean() ? param1 : param2;
+    takeObject(v!);
+    function takeObject(o: {}) {}
+}
+
+let outer: number;
+(function useBeforeDeclare() {
+    outer!;
+    let inner: number;
+    inner!;
+    (() => outer! + inner! + function() {
+        return outer! + inner!;
+    }())();
+    (async function() {
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    })();
+    (function*(param) {
+        yield;
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    })(() => outer!);
+                  ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    function nested() {
+        outer!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        inner!;
+             ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        (() => outer! + inner!)();
+                    ~              [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+                             ~     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    }
+    (() => inner!);
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+})();

@@ -15,7 +15,7 @@ let baz = foo;
  */
 function fn(param) {
     return param[0];
-    return true;
+    fn
 }
 
 /**
