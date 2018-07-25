@@ -1,4 +1,4 @@
-import { excludeDeclarationFiles, TypedRule, requiresStrictNullChecks } from '@fimbul/ymir';
+import { excludeDeclarationFiles, TypedRule, requiresCompilerOption } from '@fimbul/ymir';
 import {
     WrappedAst,
     getWrappedNodeAtPosition,
@@ -9,7 +9,7 @@ import * as ts from 'typescript';
 import { elementAccessSymbols } from '../utils';
 
 @excludeDeclarationFiles
-@requiresStrictNullChecks
+@requiresCompilerOption('strictNullChecks')
 export class Rule extends TypedRule {
     public apply() {
         const re = /\bdelete\b/g;

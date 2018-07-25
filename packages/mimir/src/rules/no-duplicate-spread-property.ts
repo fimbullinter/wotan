@@ -1,4 +1,4 @@
-import { TypedRule, excludeDeclarationFiles, requiresStrictNullChecks } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration } from 'tsutils';
 
@@ -15,7 +15,7 @@ const emptyPropertyInfo: PropertyInfo = {
 };
 
 @excludeDeclarationFiles
-@requiresStrictNullChecks
+@requiresCompilerOption('strictNullChecks')
 export class Rule extends TypedRule {
     public apply() {
         const checkedObjects = new Set<number>();

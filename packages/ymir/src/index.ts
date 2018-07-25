@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as ts from 'typescript';
-import { WrappedAst, isStrictCompilerOptionEnabled } from 'tsutils';
+import { WrappedAst, isStrictCompilerOptionEnabled, BooleanCompilerOptions, isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
 
 export class ConfigurationError extends Error {}
@@ -136,6 +136,16 @@ function programContainsLibraryFile(program: ts.Program, fileName: string) {
     return program.getSourceFile(path.join(libFileDir, fileName)) !== undefined;
 }
 
+export function requiresCompilerOption(option: BooleanCompilerOptions) {
+    return (target: typeof TypedRule) => {
+        target.supports = combinePredicates(
+            target.supports,
+            (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option),
+        );
+    };
+}
+
+/** @deprecated Use `requiresCompilerOption` instead. */
 export function requiresStrictNullChecks(target: typeof TypedRule) {
     target.supports = combinePredicates(
         target.supports,
