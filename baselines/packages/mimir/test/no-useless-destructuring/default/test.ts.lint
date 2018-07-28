@@ -1,0 +1,50 @@
+declare var v: any;
+declare function get<T>(): T;
+
+let {} = {};
+    ~~       [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
+({} = {});
+ ~~        [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
+({prop: {}} = {prop: {}});
+  ~~~~~~~~                 [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+({...{}} = {});
+  ~~~~~         [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+
+let [] = [];
+    ~~       [error no-useless-destructuring: Array destructuring is not necessary as it contains no elements.]
+[] = [];
+~~       [error no-useless-destructuring: Array destructuring is not necessary as it contains no elements.]
+[{}, [, {nested: {}}], (v)] = [{}, [{nested: {}}, {nested: {}}], 1];
+         ~~~~~~~~~~                                                  [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+[, , , ...[, [], ...[]]] = new Array(10);
+       ~~~~~~~~~~~~~~~~                   [error no-useless-destructuring: Array destructuring within array rest is redundant.]
+                 ~~~~~                    [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
+[v, , , [], {}, ] = new Array(10);
+            ~~                     [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
+
+function obj({}: Record<string, string>){}
+             ~~                            [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
+function arr([, , , ]: any[]){}
+                 ~nil           [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
+
+({...{v}} = get<Record<string, any>>());
+  ~~~~~~                                 [error no-useless-destructuring: Destructuring object rest is not allowed.]
+
+({v, prop: [],} = get<any>());
+     ~~~~~~~~                  [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+({v, prop: []} = get<any>());
+     ~~~~~~~~                 [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+({prop: [], v} = get<any>());
+  ~~~~~~~~                    [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+
+({v, ...{v}} = get<Record<string, any>>());
+     ~~~~~~                                 [error no-useless-destructuring: Destructuring object rest is not allowed.]
+
+[...[v]] = [1];
+ ~~~~~~         [error no-useless-destructuring: Array destructuring within array rest is redundant.]
+[v, ...[, [], ]] = [1, [], []];
+    ~~~~~~~~~~~                 [error no-useless-destructuring: Array destructuring within array rest is redundant.]
+          ~~                    [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
+
+function foo(...[...[a]]: any[]) {}
+                 ~~~~~~             [error no-useless-destructuring: Array destructuring within array rest is redundant.]
