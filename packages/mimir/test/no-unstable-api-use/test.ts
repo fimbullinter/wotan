@@ -227,7 +227,7 @@ namespace MyClass {
     let d: string;
     ({a, c: b, d, ...c} = {a: 'a', b: 'b', c: 'c'});
     let myObj = {a, c: b, ...c};
-    ({d = a} = {d: 'd'}); // TODO show error on `a`: https://github.com/Microsoft/TypeScript/issues/21046
+    ({d = a} = {d: 'd'});
 }
 
 {

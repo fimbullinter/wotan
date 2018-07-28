@@ -153,7 +153,7 @@ class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
     constructor(p: number);
     constructor(p: string | number) {
         super();
-        ~~~~~~~  [error no-unstable-api-use: CostructSignature 'super(public prop?: any): HasDeprecatedConstructor' is deprecated.]
+        ~~~~~~~  [error no-unstable-api-use: CostructSignature 'super(prop?: any): HasDeprecatedConstructor' is deprecated.]
     }
 }
 class Extending extends HasDeprecatedConstructorOverload {
@@ -168,7 +168,7 @@ class Extending extends HasDeprecatedConstructorOverload {
 }
 
 new HasDeprecatedConstructor();
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new HasDeprecatedConstructor(public prop?: any): HasDeprecatedConstructor' is deprecated.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new HasDeprecatedConstructor(prop?: any): HasDeprecatedConstructor' is deprecated.]
 new HasDeprecatedConstructorOverload('');
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CostructSignature 'new HasDeprecatedConstructorOverload(p: string): HasDeprecatedConstructorOverload' is deprecated.]
 new HasDeprecatedConstructorOverload(1);

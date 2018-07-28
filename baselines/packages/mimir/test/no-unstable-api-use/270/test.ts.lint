@@ -301,7 +301,7 @@ namespace MyClass {
                  ~               [error no-unstable-api-use: Variable 'a' is deprecated.]
                        ~         [error no-unstable-api-use: Variable 'b' is deprecated.]
                              ~   [error no-unstable-api-use: Variable 'c' is deprecated.]
-    ({d = a} = {d: 'd'}); // TODO show error on `a`: https://github.com/Microsoft/TypeScript/issues/21046
+    ({d = a} = {d: 'd'});
 }
 
 {
