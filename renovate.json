@@ -31,7 +31,7 @@
   },
   "docker": {
     "enabled": true,
-    "schedule": "before 8am on Sunday",
+    "schedule": "before 2am on Sunday",
     "packageRules": [
       {
         "groupName": "Node Docker digests",
