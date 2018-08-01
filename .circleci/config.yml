@@ -6,9 +6,6 @@ workflows:
       - test:
           requires:
             - build
-      - test@2.7:
-          requires:
-            - build
       - test@2.8:
           requires:
             - build
@@ -73,12 +70,6 @@ jobs:
   test:
     docker:
       - image: circleci/node:10@sha256:1c44768a9047ecb0b35029802c7d100dcdd64d71b7683eb071f9e521c54d1049
-    <<: *base
-  test@2.7:
-    docker:
-      - image: circleci/node:6@sha256:3be05e1441f172d7f4c368f0ead9ebe51d0f0c5a67a34e7f3e473028fbe8a046
-    environment:
-      typescriptVersion: 2.7
     <<: *base
   test@2.8:
     docker:

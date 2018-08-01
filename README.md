@@ -129,7 +129,7 @@ This one tries to avoid design decisions of other linters that turned out to be 
 
 This project runs on all actively supported versions of Node.js.
 
-This project officially supports the latest 3 stable version of TypeScript. As of writing this is 2.7 - 2.9. It *should* work with TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
+This project officially supports the latest 3 stable version of TypeScript. As of writing this is 2.8 - 3.0. It *should* work with TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
 
 Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from any of the packages.
 
