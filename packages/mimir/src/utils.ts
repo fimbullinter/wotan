@@ -208,7 +208,7 @@ export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChec
                 const name = String(key.value);
                 properties.push({
                     name,
-                    symbolName: escapeIdentifier(name),
+                    symbolName: ts.escapeLeadingUnderscores(name),
                 });
             } else {
                 known = false;
@@ -216,10 +216,6 @@ export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChec
         }
     }
     return {known, properties};
-}
-
-export function escapeIdentifier(name: string): ts.__String {
-    return <ts.__String>(name.startsWith('__') ? '_' + name : name);
 }
 
 export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {

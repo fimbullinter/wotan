@@ -13,7 +13,7 @@ import {
     isBinaryExpression,
     isStrictCompilerOptionEnabled,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName, escapeIdentifier } from '../utils';
+import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -150,7 +150,7 @@ export class Rule extends AbstractRule {
 function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker) {
     const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
     return staticName !== undefined
-        ? {known: true, properties: [{name: staticName, symbolName: escapeIdentifier(staticName)}]}
+        ? {known: true, properties: [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
         : lateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
 
 }
