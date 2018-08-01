@@ -109,3 +109,18 @@ const foo = 'foo';
 
 var v: any;
 ({v, ...{v}} = get<Record<string, any>>());
+
+({
+    ['foo'+Math.random()]: 1,
+    ['foo'+Math.random()]: 1,
+    ['bar'+Math.random()]: 1,
+    ['bar'+Math.random()]: 1,
+    ...{
+        ['foo'+Math.random()]: 2,
+        ['bar'+Math.random()]: 2,
+        bar: 2,
+    },
+    bar: 3,
+    ['foo'+Math.random()]: 3,
+    ['bar'+Math.random()]: 3,
+});

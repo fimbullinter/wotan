@@ -127,3 +127,23 @@ const foo = 'foo';
 
 var v: any;
 ({v, ...{v}} = get<Record<string, any>>());
+
+({
+    ['foo'+Math.random()]: 1,
+    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
+    ['foo'+Math.random()]: 1,
+    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
+    ['bar'+Math.random()]: 1,
+    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['bar'+Math.random()]' is overridden later.]
+    ['bar'+Math.random()]: 1,
+    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['bar'+Math.random()]' is overridden later.]
+    ...{
+        ['foo'+Math.random()]: 2,
+        ['bar'+Math.random()]: 2,
+        bar: 2,
+    },
+    bar: 3,
+    ['foo'+Math.random()]: 3,
+    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
+    ['bar'+Math.random()]: 3,
+});

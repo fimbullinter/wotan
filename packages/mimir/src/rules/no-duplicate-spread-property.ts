@@ -59,9 +59,7 @@ export class Rule extends TypedRule {
                     assignedNames: [property.name.escapedText],
                 };
             default: {
-                const symbol = this.checker.getSymbolAtLocation(property.name);
-                if (symbol === undefined)
-                    return emptyPropertyInfo;
+                const symbol = this.checker.getSymbolAtLocation(property.name)!;
                 return {
                     known: true,
                     names: [symbol.escapedName],
@@ -75,8 +73,8 @@ export class Rule extends TypedRule {
         const type = this.checker.getTypeAtLocation(node)!;
         return unionTypeParts(type).map(getPropertyInfoFromType).reduce(combinePropertyInfo);
     }
-
 }
+
 function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
     if (!isObjectType(type))
         return emptyPropertyInfo;
