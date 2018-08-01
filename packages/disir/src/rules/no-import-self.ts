@@ -8,7 +8,7 @@ export class Rule extends AbstractRule {
         const dirname = path.dirname(this.sourceFile.fileName);
         const currentPackage = `@fimbul/${getPackageName(dirname)}`;
         for (const name of findImports(this.sourceFile, ImportKind.AllStaticImports | ImportKind.ExportFrom))
-            if (name.text === currentPackage)
+            if (name.text === currentPackage || name.text.startsWith(currentPackage + '/'))
                 this.addFailureAtNode(
                     name,
                     `Import directly from the module containing the declaration instead of '${currentPackage}'.`,
