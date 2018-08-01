@@ -120,7 +120,36 @@ var v: any;
         ['bar'+Math.random()]: 2,
         bar: 2,
     },
+    ...{
+        ['foo'+Math.random()]: 2.5,
+        ['bar'+Math.random()]: 2.5,
+    },
     bar: 3,
     ['foo'+Math.random()]: 3,
     ['bar'+Math.random()]: 3,
+});
+
+({
+    [get<'foo' | 'bar'>()]: 1,
+    ...{
+        foo: 2,
+    },
+    [get<'foo' | 'bar'>()]: 1,
+});
+
+({
+    [get<'foo' | 'bar'>()]: 1,
+    ...{
+        foo: 2,
+        bar: 2,
+    },
+    [get<'foo' | 'bar'>()]: 1,
+});
+
+({
+    [get<'foo' | 'bar' | number>()]: 1,
+    ...{
+        foo: 2,
+        bar: 2,
+    },
 });
