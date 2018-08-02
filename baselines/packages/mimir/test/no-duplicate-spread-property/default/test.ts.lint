@@ -45,6 +45,7 @@ const foo = 'foo';
 
 ({
     [get<'foo'>()]: 1,
+    ~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '[get<'foo'>()]' is overridden later.]
     ...{[get<'foo'>()]: 2},
     ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
     ...{[foo]: 3},
@@ -130,20 +131,66 @@ var v: any;
 
 ({
     ['foo'+Math.random()]: 1,
-    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
     ['foo'+Math.random()]: 1,
-    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
     ['bar'+Math.random()]: 1,
-    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['bar'+Math.random()]' is overridden later.]
     ['bar'+Math.random()]: 1,
-    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['bar'+Math.random()]' is overridden later.]
     ...{
         ['foo'+Math.random()]: 2,
         ['bar'+Math.random()]: 2,
         bar: 2,
     },
+    ...{
+        ['foo'+Math.random()]: 2.5,
+        ['bar'+Math.random()]: 2.5,
+    },
     bar: 3,
     ['foo'+Math.random()]: 3,
-    ~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '['foo'+Math.random()]' is overridden later.]
     ['bar'+Math.random()]: 3,
+});
+
+({
+    [get<'foo' | 'bar'>()]: 1,
+    ...{
+        foo: 2,
+    },
+});
+
+({
+    ...{
+        foo: 2,
+        bar: 2,
+    },
+    [get<'foo' | 'bar'>()]: 1,
+});
+
+({
+    ...{
+        foo: 2,
+    },
+    [get<'foo' | 'bar'>()]: 1,
+});
+
+({
+    [get<'foo' | 'bar'>()]: 1,
+    ...{
+        foo: 2,
+    },
+    [get<'foo' | 'bar'>()]: 3,
+});
+
+({
+    [get<'foo' | 'bar'>()]: 1,
+    ~~~~~~~~~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '[get<'foo' | 'bar'>()]' is overridden later.]
+    ...{
+        foo: 2,
+        bar: 2,
+    },
+});
+
+({
+    [get<'foo' | 'bar' | number>()]: 1,
+    ...{
+        foo: 2,
+        bar: 2,
+    },
 });
