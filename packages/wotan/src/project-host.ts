@@ -15,7 +15,7 @@ const additionalExtensions = ['.json'];
 // @internal
 export interface ProcessedFileInfo {
     originalName: string;
-    originalContent: string;
+    originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
@@ -202,5 +202,12 @@ export class ProjectHost implements ts.CompilerHost {
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
         program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
         return {sourceFile, program};
+    }
+
+    public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
+        // this is only called for paths that are no longer referenced
+        // it's safe to remove the cache entry completely because it won't be called with updated SourceFiles
+        this.sourceFileCache.delete(sourceFile.fileName);
+        this.processedFiles.delete(sourceFile.fileName);
     }
 }

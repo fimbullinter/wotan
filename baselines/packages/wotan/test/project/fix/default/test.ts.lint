@@ -3,3 +3,5 @@ import {foo as fn} from './other';
 foo: bar: <string>fn();
 ~~~                     [error no-unused-label: Unused label 'foo'.]
      ~~~                [error no-unused-label: Unused label 'bar'.]
+import {v} from './zzz';
+~~~~~~~~~~~~~~~~~~~~~~~~ [error local/foo: import is unused]
