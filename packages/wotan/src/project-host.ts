@@ -195,9 +195,10 @@ export class ProjectHost implements ts.CompilerHost {
         sourceFile: ts.SourceFile,
         program: ts.Program,
         newContent: string,
-        changeRange: ts.TextChangeRange,
+        _changeRange: ts.TextChangeRange,
     ): {sourceFile: ts.SourceFile, program: ts.Program} {
-        sourceFile = ts.updateSourceFile(sourceFile, newContent, changeRange);
+        // TODO use updateSourceFile once https://github.com/Microsoft/TypeScript/issues/26166 is resolved
+        sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
         program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
         return {sourceFile, program};
