@@ -199,6 +199,7 @@ var v: any;
     foo: 1,
     ...new class {
         get foo() { return 1; }
+        set foo(v) {}
         bar = 1;
     },
 });
@@ -224,6 +225,7 @@ var v: any;
 
 ({
     foo: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
     ...{
         set foo(v: number) {},
         bar: 2,

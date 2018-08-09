@@ -107,13 +107,10 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
     return result;
 }
 function isSpreadableProperty(prop: ts.Symbol): boolean | undefined {
-    if (prop.flags & (ts.SymbolFlags.Method | ts.SymbolFlags.GetAccessor)) {
+    if (prop.flags & (ts.SymbolFlags.Method | ts.SymbolFlags.Accessor))
         for (const declaration of prop.declarations!)
             if (isClassLikeDeclaration(declaration.parent!))
-                return false; // class Methods and GetAccessors are not spreadable
-    } else if (prop.flags & ts.SymbolFlags.SetAccessor) {
-        return false; // SetAccessor-only properties are never spreadable
-    }
+                return false;
     return true;
 }
 

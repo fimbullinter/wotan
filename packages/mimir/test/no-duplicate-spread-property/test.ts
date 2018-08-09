@@ -179,6 +179,7 @@ var v: any;
     foo: 1,
     ...new class {
         get foo() { return 1; }
+        set foo(v) {}
         bar = 1;
     },
 });
