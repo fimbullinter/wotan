@@ -174,3 +174,36 @@ var v: any;
         bar: 2,
     },
 });
+
+({
+    foo: 1,
+    ...new class {
+        get foo() { return 1; }
+        bar = 1;
+    },
+});
+
+({
+    foo: 1,
+    ...{
+        get foo() { return 1; },
+        bar: 2,
+    },
+});
+
+({
+    foo: 1,
+    ...{
+        get foo() { return 1; },
+        set foo(v: number) {},
+        bar: 2,
+    },
+});
+
+({
+    foo: 1,
+    ...{
+        set foo(v: number) {},
+        bar: 2,
+    },
+});
