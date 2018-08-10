@@ -208,3 +208,27 @@ var v: any;
         bar: 2,
     },
 });
+
+({
+    get foo() { return 1; },
+    set foo(v: number) {},
+    ...{
+        bar: 1,
+    },
+});
+
+({
+    get foo() { return 1; },
+    set foo(v: number) {},
+    ...{
+        foo: 2,
+    },
+});
+
+({
+    ...{
+        get foo() { return 1 },
+    },
+    get foo() { return 2; },
+    set foo(v: number) {},
+});

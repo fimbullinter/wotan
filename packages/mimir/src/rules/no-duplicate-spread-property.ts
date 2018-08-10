@@ -33,19 +33,23 @@ export class Rule extends TypedRule {
     }
 
     private checkObject({properties}: ts.ObjectLiteralExpression) {
-        const propertiesSeen = new Set<ts.__String>();
+        /** key: propertyName, value: isAccessor */
+        const propertiesSeen = new Map<ts.__String, boolean>();
         for (let i = properties.length - 1; i >= 0; --i) {
             const property = properties[i];
             const info = this.getPropertyInfo(property);
-            if (info.known && info.names.every((name) => propertiesSeen.has(name))) {
+            const isAccessor = property.kind === ts.SyntaxKind.GetAccessor || property.kind === ts.SyntaxKind.SetAccessor;
+            if (info.known && info.names.every((name) => isAccessor ? propertiesSeen.get(name) === false : propertiesSeen.has(name))) {
                 if (property.kind === ts.SyntaxKind.SpreadAssignment) {
                     this.addFailureAtNode(property, 'All properties of this object are overridden later.');
                 } else {
                     this.addFailureAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
+                    if (isAccessor)
+                        continue; // avoid overriding the isAccessor state
                 }
             }
             for (const name of info.assignedNames)
-                propertiesSeen.add(name);
+                propertiesSeen.set(name, isAccessor);
         }
     }
 
