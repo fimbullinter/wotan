@@ -98,7 +98,7 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
         assignedNames: [],
     };
     for (const prop of type.getProperties()) {
-        if (isClassMethod(prop))
+        if (!isSpreadableProperty(prop))
             continue;
         if ((prop.flags & ts.SymbolFlags.Optional) === 0)
             result.assignedNames.push(prop.escapedName);
@@ -106,12 +106,12 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
     }
     return result;
 }
-function isClassMethod(prop: ts.Symbol): boolean | undefined {
-    if (prop.flags & ts.SymbolFlags.Method && prop.declarations !== undefined)
-        for (const declaration of prop.declarations)
+function isSpreadableProperty(prop: ts.Symbol): boolean | undefined {
+    if (prop.flags & (ts.SymbolFlags.Method | ts.SymbolFlags.Accessor))
+        for (const declaration of prop.declarations!)
             if (isClassLikeDeclaration(declaration.parent!))
-                return true;
-    return false;
+                return false;
+    return true;
 }
 
 function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
