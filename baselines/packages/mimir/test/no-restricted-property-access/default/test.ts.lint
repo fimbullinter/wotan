@@ -1,0 +1,75 @@
+class Private {
+    private prop = 1;
+    other = this['prop'];
+
+    method() {
+        this['prop'];
+    }
+
+    static fn(a: Private) {
+        a['prop'];
+    }
+}
+function testPrivate(this: Private) {
+    new Private()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+}
+class DerivedPrivate extends Private {
+    p2 = this['prop'];
+         ~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+}
+
+new Private()['prop'];
+~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+
+class Protected {
+    protected prop = 1;
+    other = this['prop'];
+
+    method() {
+        this['prop'];
+    }
+
+    static fn(a: Private) {
+        a['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+    }
+}
+function testProtected(this: Protected) {
+    new Protected()['prop'];
+    enum E {
+        bar = new Protected()['prop'],
+              ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+    }
+    @decorator(new Protected()['prop'])
+    class Inner {
+        bar = new Protected()['prop'];
+              ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+    }
+
+}
+new Protected()['prop'];
+~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+
+class DerivedProtected extends Protected {
+    p2 = this['prop'];
+}
+function testDerivedProtected(this: DerivedProtected) {
+    new DerivedProtected()['prop'];
+    new Protected()['prop'];
+}
+
+class Unrelated {}
+function testUnrelated(this: Unrelated) {
+    new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+}
+
+new class {
+~~~~~~~~~~~
+    private foo = 1;
+~~~~~~~~~~~~~~~~~~~~
+}()['foo'];
+~~~~~~~~~~  [error no-restricted-property-access: Property 'foo' is private and only accessible within class '(Anonymous class)'.]
+
+declare function decorator(...args: any[]): any;
