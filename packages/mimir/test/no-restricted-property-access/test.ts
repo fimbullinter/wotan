@@ -89,21 +89,36 @@ abstract class Abstract {
 }
 class DerivedAbstract extends Abstract {
     prop = 1;
-    other = this['prop'] + this['getProp']();
+    other = this['prop'] + this['getProp']() + super['getProp']() + super['prop'];
     constructor(other: Abstract) {
         super(other);
         other['prop'];
         this['prop'];
         this['getProp']();
+        super['getProp']();
+        super['prop'];
     }
 
     getProp() {
         return this['prop'];
     }
+    m() {
+        return new class extends DerivedAbstract {
+            other = super['getProp']() + super['prop'];
+        }(this);
+    }
 }
 
 abstract class DerivedAbstractAbstract extends Abstract {
-    other = this['prop'];
+    other = this['prop'] + this['getProp']() + super['getProp']();
+
+    constructor(other: Abstract) {
+        super(other);
+    }
+}
+
+abstract class EvenMoreDerivedAbstract extends DerivedAbstractAbstract {
+    other = super['getProp']();
 }
 
 declare function decorator(...args: any[]): any;

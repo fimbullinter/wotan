@@ -35,14 +35,26 @@ export class Rule extends TypedRule {
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
             if (enclosingClass !== undefined)
-                for (const {parent} of getMatchingDeclarations(symbol, ts.ModifierFlags.Abstract))
-                    if (parent === enclosingClass)
-                        return this.addFailureAtNode(
-                            errorNode,
-                            `Abstract property '${name}' in class '${
-                                this.printClass(parent)
-                            }' cannot be accessed during class initialization.`,
-                        );
+                return this.addFailureAtNode(
+                    errorNode,
+                    `Abstract property '${name}' in class '${
+                        this.printClass(enclosingClass)
+                    }' cannot be accessed during class initialization.`,
+                );
+        }
+        if (expression !== undefined && expression.kind === ts.SyntaxKind.SuperKeyword) {
+            if ((symbol.flags & ts.SymbolFlags.Method) === 0)
+                return this.addFailureAtNode(
+                    errorNode,
+                    "Only public and protected methods of the base class are accessible via the 'super' keyword.",
+                );
+            if (flags & ts.ModifierFlags.Abstract) {
+                const [{parent: declaringClass}] = getMatchingDeclarations(symbol, ts.ModifierFlags.Abstract);
+                return this.addFailureAtNode(
+                    errorNode,
+                    `Abstract method '${name}' in class '${this.printClass(declaringClass)}' cannot be accessed via the 'super' keyword.`,
+                );
+            }
         }
 
         if ((flags & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
@@ -122,9 +134,9 @@ function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
             switch (node.kind) {
                 case ts.SyntaxKind.ClassDeclaration:
                 case ts.SyntaxKind.ClassExpression:
-                    return node;
+                    return <ts.ClassLikeDeclaration>node;
                 case ts.SyntaxKind.Constructor:
-                    return node.parent!;
+                    return <ts.ClassLikeDeclaration>node.parent;
                 default:
                     return;
             }
