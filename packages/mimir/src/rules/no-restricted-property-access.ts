@@ -1,7 +1,7 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { elementAccessSymbols } from '../utils';
-import { isThisParameter, isTypeParameter, isTypeReference, isIntersectionType } from 'tsutils';
+import { isThisParameter, isTypeParameter, isTypeReference, isIntersectionType, isFunctionScopeBoundary } from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -19,38 +19,51 @@ export class Rule extends TypedRule {
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
         for (const {symbol, name} of elementAccessSymbols(node, this.checker))
-            this.checkSymbol(symbol, name, node);
+            this.checkSymbol(symbol, name, node, node.expression);
     }
 
     private checkComputedProperty(_node: ts.ComputedPropertyName) {
 
     }
 
-    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node) {
+    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, expression: ts.Expression | undefined) {
         const flags = getModifierFlagsOfSymbol(symbol);
-        // TODO check all other stuff here
+
+        if (
+            expression !== undefined && expression.kind === ts.SyntaxKind.ThisKeyword &&
+            flags & ts.ModifierFlags.Abstract && symbol.flags & ts.SymbolFlags.Property
+        ) {
+            const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
+            if (enclosingClass !== undefined)
+                for (const {parent} of getMatchingDeclarations(symbol, ts.ModifierFlags.Abstract))
+                    if (parent === enclosingClass)
+                        return this.addFailureAtNode(
+                            errorNode,
+                            `Abstract property '${name}' in class '${
+                                this.printClass(parent)
+                            }' cannot be accessed during class initialization.`,
+                        );
+        }
 
         if ((flags & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
             return;
         if (flags & ts.ModifierFlags.Private) {
-            const declaration = getMatchingDeclaration(symbol, ts.ModifierFlags.Private);
-            const declaringClass = declaration.parent!;
+            const [{parent: declaringClass}] = getMatchingDeclarations(symbol, ts.ModifierFlags.Private);
             if (errorNode.pos < declaringClass.pos || errorNode.end > declaringClass.end)
                 this.failVisibility(errorNode, name, declaringClass, true);
         } else {
-            const declaration = getMatchingDeclaration(symbol, ts.ModifierFlags.Protected);
-            const declaringClass = declaration.parent!;
-            let enclosingClass = this.findEnclosingClass(errorNode.parent!.parent!, declaringClass);
+            const declaringClasses = Array.from(getMatchingDeclarations(symbol, ts.ModifierFlags.Protected), (d) => d.parent);
+            let enclosingClass = this.findEnclosingClass(errorNode.parent!.parent!, declaringClasses);
             if (enclosingClass === undefined) {
                 if ((flags & ts.ModifierFlags.Static) === 0)
-                    enclosingClass = this.getEnclosingClassFromThisParameter(errorNode.parent!.parent!, declaringClass);
+                    enclosingClass = this.getEnclosingClassFromThisParameter(errorNode.parent!.parent!, declaringClasses);
                 if (enclosingClass === undefined)
-                    return this.failVisibility(errorNode, name, declaringClass, false);
+                    return this.failVisibility(errorNode, name, declaringClasses[0], false);
             }
         }
     }
 
-    private getEnclosingClassFromThisParameter(node: ts.Node, baseClass: ts.ClassLikeDeclaration) {
+    private getEnclosingClassFromThisParameter(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[]) {
         const thisParameter = getThisParameterFromContext(node);
         if (thisParameter === undefined || thisParameter.type === undefined)
             return;
@@ -61,7 +74,7 @@ export class Rule extends TypedRule {
                 return;
             thisType = constraint;
         }
-        return hasBaseType(thisType, baseClass) ? thisType : undefined;
+        return baseClasses.every((baseClass) => hasBaseType(thisType, baseClass)) ? thisType : undefined;
     }
 
     private failVisibility(node: ts.Node, property: string, clazz: ts.ClassLikeDeclaration, isPrivate: boolean) {
@@ -73,13 +86,13 @@ export class Rule extends TypedRule {
         );
     }
 
-    private findEnclosingClass(node: ts.Node, baseClass: ts.ClassLikeDeclaration) {
+    private findEnclosingClass(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[]) {
         while (true) {
             switch (node.kind) {
                 case ts.SyntaxKind.ClassDeclaration:
                 case ts.SyntaxKind.ClassExpression: {
                     const declaredType = this.getDeclaredType(<ts.ClassLikeDeclaration>node);
-                    if (hasBaseType(declaredType, baseClass))
+                    if (baseClasses.every((baseClass) => hasBaseType(declaredType, baseClass)))
                         return declaredType;
                     break;
                 }
@@ -95,18 +108,35 @@ export class Rule extends TypedRule {
     }
 
     private getDeclaredType(declaration: ts.ClassLikeDeclaration) {
-        return this.checker.getDeclaredTypeOfSymbol(this.getSymbolOfClassLikeDeclaration(declaration));
-    }
-
-    private getSymbolOfClassLikeDeclaration(declaration: ts.ClassLikeDeclaration) {
-        if (declaration.name !== undefined)
-            return this.checker.getSymbolAtLocation(declaration.name)!;
-        return this.checker.getTypeAtLocation(declaration).symbol!;
+        return this.checker.getDeclaredTypeOfSymbol(
+            declaration.name !== undefined
+                ? this.checker.getSymbolAtLocation(declaration.name)!
+                : this.checker.getTypeAtLocation(declaration).symbol!,
+        );
     }
 }
 
-function getMatchingDeclaration(symbol: ts.Symbol, flags: ts.ModifierFlags) {
-    return symbol.declarations!.find((d): d is ts.PropertyDeclaration => (ts.getCombinedModifierFlags(d) & flags) !== 0)!;
+function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
+    while (true) {
+        if (isFunctionScopeBoundary(node)) {
+            switch (node.kind) {
+                case ts.SyntaxKind.ClassDeclaration:
+                case ts.SyntaxKind.ClassExpression:
+                    return node;
+                case ts.SyntaxKind.Constructor:
+                    return node.parent!;
+                default:
+                    return;
+            }
+        }
+        node = node.parent!;
+    }
+}
+
+function* getMatchingDeclarations(symbol: ts.Symbol, flags: ts.ModifierFlags) {
+    for (const declaration of symbol.declarations!)
+        if (ts.getCombinedModifierFlags(declaration) & flags)
+            yield <(ts.PropertyDeclaration | ts.MethodDeclaration | ts.AccessorDeclaration) & {parent: ts.ClassLikeDeclaration}>declaration;
 }
 
 function hasBaseType(type: ts.Type, declaration: ts.Declaration) {

@@ -26,8 +26,10 @@ class Protected {
     protected prop = 1;
     other = this['prop'];
 
-    method() {
+    method(other: OtherProtected) {
         this['prop'];
+        other['prop'];
+        ~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'OtherProtected' and its subclasses.]
     }
 
     static fn(a: Private) {
@@ -71,5 +73,53 @@ new class {
 ~~~~~~~~~~~~~~~~~~~~
 }()['foo'];
 ~~~~~~~~~~  [error no-restricted-property-access: Property 'foo' is private and only accessible within class '(Anonymous class)'.]
+
+const Foo = class {
+    private foo = 1;
+}
+new Foo()['foo'];
+~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'foo' is private and only accessible within class 'Foo'.]
+
+class OtherProtected extends Protected {
+    protected prop = 1;
+}
+
+abstract class Abstract {
+    abstract prop: number;
+    abstract getProp(): number;
+    other = this['prop'] + this['getProp']();
+            ~~~~~~~~~~~~                      [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
+    yetAnother = decorator(this['prop']);
+                           ~~~~~~~~~~~~   [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
+    constructor(other: Abstract) {
+        this['prop'];
+        ~~~~~~~~~~~~  [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
+        this['getProp']();
+        other['prop'];
+        () => this['prop'];
+    }
+    method() {
+        this['prop'];
+    }
+    fn = () => this['prop'];
+}
+class DerivedAbstract extends Abstract {
+    prop = 1;
+    other = this['prop'] + this['getProp']();
+    constructor(other: Abstract) {
+        super(other);
+        other['prop'];
+        this['prop'];
+        this['getProp']();
+    }
+
+    getProp() {
+        return this['prop'];
+    }
+}
+
+abstract class DerivedAbstractAbstract extends Abstract {
+    other = this['prop'];
+}
 
 declare function decorator(...args: any[]): any;

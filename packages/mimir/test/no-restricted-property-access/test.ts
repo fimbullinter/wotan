@@ -23,8 +23,9 @@ class Protected {
     protected prop = 1;
     other = this['prop'];
 
-    method() {
+    method(other: OtherProtected) {
         this['prop'];
+        other['prop'];
     }
 
     static fn(a: Private) {
@@ -60,5 +61,49 @@ function testUnrelated(this: Unrelated) {
 new class {
     private foo = 1;
 }()['foo'];
+
+const Foo = class {
+    private foo = 1;
+}
+new Foo()['foo'];
+
+class OtherProtected extends Protected {
+    protected prop = 1;
+}
+
+abstract class Abstract {
+    abstract prop: number;
+    abstract getProp(): number;
+    other = this['prop'] + this['getProp']();
+    yetAnother = decorator(this['prop']);
+    constructor(other: Abstract) {
+        this['prop'];
+        this['getProp']();
+        other['prop'];
+        () => this['prop'];
+    }
+    method() {
+        this['prop'];
+    }
+    fn = () => this['prop'];
+}
+class DerivedAbstract extends Abstract {
+    prop = 1;
+    other = this['prop'] + this['getProp']();
+    constructor(other: Abstract) {
+        super(other);
+        other['prop'];
+        this['prop'];
+        this['getProp']();
+    }
+
+    getProp() {
+        return this['prop'];
+    }
+}
+
+abstract class DerivedAbstractAbstract extends Abstract {
+    other = this['prop'];
+}
 
 declare function decorator(...args: any[]): any;
