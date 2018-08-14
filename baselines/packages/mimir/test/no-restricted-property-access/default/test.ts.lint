@@ -59,6 +59,7 @@ class DerivedProtected extends Protected {
 function testDerivedProtected(this: DerivedProtected) {
     new DerivedProtected()['prop'];
     new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'DerivedProtected'.]
 }
 
 class Unrelated {}
@@ -158,3 +159,50 @@ publicPrivate['prop'];
 ~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Private'.]
 
 declare function decorator(...args: any[]): any;
+
+abstract class A {
+    protected prop = 1;
+
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        b['prop'];
+        c['prop'];
+    }
+}
+
+abstract class B extends A {
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'B'.]
+        b['prop'];
+        c['prop'];
+    }
+}
+
+abstract class C extends B {
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'C'.]
+        b['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'C'.]
+        c['prop'];
+    }
+}
+
+function fnA(this: A, a: A, b: B, c: C) {
+    a['prop'];
+    b['prop'];
+    c['prop'];
+}
+function fnB(this: B, a: A, b: B, c: C) {
+    a['prop'];
+    ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'B'.]
+    b['prop'];
+    c['prop'];
+}
+function fnC(this: B, a: A, b: B, c: C) {
+    a['prop'];
+    ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'B'.]
+    b['prop'];
+    c['prop'];
+}

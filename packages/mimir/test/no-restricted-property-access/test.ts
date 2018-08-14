@@ -132,3 +132,45 @@ declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
 
 declare function decorator(...args: any[]): any;
+
+abstract class A {
+    protected prop = 1;
+
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        b['prop'];
+        c['prop'];
+    }
+}
+
+abstract class B extends A {
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        b['prop'];
+        c['prop'];
+    }
+}
+
+abstract class C extends B {
+    method(a: A, b: B, c: C) {
+        a['prop'];
+        b['prop'];
+        c['prop'];
+    }
+}
+
+function fnA(this: A, a: A, b: B, c: C) {
+    a['prop'];
+    b['prop'];
+    c['prop'];
+}
+function fnB(this: B, a: A, b: B, c: C) {
+    a['prop'];
+    b['prop'];
+    c['prop'];
+}
+function fnC(this: B, a: A, b: B, c: C) {
+    a['prop'];
+    b['prop'];
+    c['prop'];
+}

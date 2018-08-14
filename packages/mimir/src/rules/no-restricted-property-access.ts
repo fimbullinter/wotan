@@ -29,6 +29,9 @@ export class Rule extends TypedRule {
     private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression | undefined, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
+        if (isTypeParameter(lhsType))
+            lhsType = lhsType.getConstraint() || lhsType;
+
         if (hasConflictingAccessModifiers(flags))
             return this.addFailureAtNode(
                 errorNode,
@@ -78,6 +81,13 @@ export class Rule extends TypedRule {
                 if (enclosingClass === undefined)
                     return this.failVisibility(errorNode, name, declaringClasses[0], false);
             }
+            if (!hasBase(lhsType, enclosingClass, isIdentical))
+                return this.addFailureAtNode(
+                    errorNode,
+                    `Property '${name}' is protected and only accessible through an instance of class '${
+                        this.checker.typeToString(enclosingClass)
+                    }'.`,
+                );
         }
     }
 
@@ -92,7 +102,7 @@ export class Rule extends TypedRule {
                 return;
             thisType = constraint;
         }
-        return baseClasses.every((baseClass) => hasBaseType(thisType, baseClass)) ? thisType : undefined;
+        return baseClasses.every((baseClass) => hasBase(thisType, baseClass, typeContainsDeclaration)) ? thisType : undefined;
     }
 
     private failVisibility(node: ts.Node, property: string, clazz: ts.ClassLikeDeclaration, isPrivate: boolean) {
@@ -110,7 +120,7 @@ export class Rule extends TypedRule {
                 case ts.SyntaxKind.ClassDeclaration:
                 case ts.SyntaxKind.ClassExpression: {
                     const declaredType = this.getDeclaredType(<ts.ClassLikeDeclaration>node);
-                    if (baseClasses.every((baseClass) => hasBaseType(declaredType, baseClass)))
+                    if (baseClasses.every((baseClass) => hasBase(declaredType, baseClass, typeContainsDeclaration)))
                         return declaredType;
                     break;
                 }
@@ -168,18 +178,26 @@ function* getMatchingDeclarations(symbol: ts.Symbol, flags: ts.ModifierFlags) {
             yield <(ts.PropertyDeclaration | ts.MethodDeclaration | ts.AccessorDeclaration) & {parent: ts.ClassLikeDeclaration}>declaration;
 }
 
-function hasBaseType(type: ts.Type, declaration: ts.Declaration) {
-    return (function check(t): boolean {
+function hasBase<T>(type: ts.Type, needle: T, check: (type: ts.Type, needle: T) => boolean) {
+    return (function recur(t): boolean {
         if (isTypeReference(t)) {
             t = t.target;
-            if (t.symbol !== undefined && t.symbol.declarations !== undefined && t.symbol.declarations.includes(declaration))
+            if (check(t, needle))
                 return true;
         }
         const baseTypes = t.getBaseTypes();
-        if (baseTypes !== undefined && baseTypes.some(check))
+        if (baseTypes !== undefined && baseTypes.some(recur))
             return true;
-        return isIntersectionType(t) && t.types.some(check);
+        return isIntersectionType(t) && t.types.some(recur);
     })(type);
+}
+
+function isIdentical<T>(a: T, b: T) {
+    return a === b;
+}
+
+function typeContainsDeclaration(type: ts.Type, declaration: ts.Declaration) {
+    return type.symbol !== undefined && type.symbol.declarations !== undefined && type.symbol.declarations.includes(declaration);
 }
 
 function getThisParameterFromContext(node: ts.Node) {
