@@ -19,18 +19,24 @@ export class Rule extends TypedRule {
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
         for (const {symbol, name} of elementAccessSymbols(node, this.checker))
-            this.checkSymbol(symbol, name, node, node.expression);
+            this.checkSymbol(symbol, name, node, node.expression, this.checker.getTypeAtLocation(node.expression));
     }
 
     private checkComputedProperty(_node: ts.ComputedPropertyName) {
 
     }
 
-    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, expression: ts.Expression | undefined) {
+    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression | undefined, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
+        if (hasConflictingAccessModifiers(flags))
+            return this.addFailureAtNode(
+                errorNode,
+                `Property '${name}' has conflicting declarations and is inaccessible in type '${this.checker.typeToString(lhsType)}'.`,
+            );
+
         if (
-            expression !== undefined && expression.kind === ts.SyntaxKind.ThisKeyword &&
+            lhs !== undefined && lhs.kind === ts.SyntaxKind.ThisKeyword &&
             flags & ts.ModifierFlags.Abstract && symbol.flags & ts.SymbolFlags.Property
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
@@ -42,7 +48,7 @@ export class Rule extends TypedRule {
                     }' cannot be accessed during class initialization.`,
                 );
         }
-        if (expression !== undefined && expression.kind === ts.SyntaxKind.SuperKeyword) {
+        if (lhs !== undefined && lhs.kind === ts.SyntaxKind.SuperKeyword) {
             if ((symbol.flags & ts.SymbolFlags.Method) === 0)
                 return this.addFailureAtNode(
                     errorNode,
@@ -145,6 +151,17 @@ function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
     }
 }
 
+function hasConflictingAccessModifiers(flags: ts.ModifierFlags) {
+    let result = 0;
+    if (flags & ts.ModifierFlags.Public)
+        ++result;
+    if (flags & ts.ModifierFlags.Protected)
+        ++result;
+    if (flags & ts.ModifierFlags.Private)
+        ++result;
+    return result > 1;
+}
+
 function* getMatchingDeclarations(symbol: ts.Symbol, flags: ts.ModifierFlags) {
     for (const declaration of symbol.declarations!)
         if (ts.getCombinedModifierFlags(declaration) & flags)
@@ -193,8 +210,13 @@ function getThisParameterFromContext(node: ts.Node) {
 
 function getModifierFlagsOfSymbol(symbol: ts.Symbol): ts.ModifierFlags {
     let flags = ts.ModifierFlags.None;
-    if (symbol.declarations !== undefined)
-        for (const declaration of symbol.declarations)
-            flags |= ts.getCombinedModifierFlags(declaration);
+    if (symbol.declarations !== undefined) {
+        for (const declaration of symbol.declarations) {
+            const current = ts.getCombinedModifierFlags(declaration);
+            flags |= current;
+            if ((current & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
+                flags |= ts.ModifierFlags.Public; // add public modifier if property is implicitly public
+        }
+    }
     return flags;
 }
