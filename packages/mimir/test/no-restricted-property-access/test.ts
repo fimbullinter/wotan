@@ -133,7 +133,7 @@ publicPrivate['prop'];
 
 declare function decorator(...args: any[]): any;
 
-abstract class A {
+class A {
     protected prop = 1;
 
     method(a: A, b: B, c: C) {
@@ -143,7 +143,7 @@ abstract class A {
     }
 }
 
-abstract class B extends A {
+class B extends A {
     method(a: A, b: B, c: C) {
         a['prop'];
         b['prop'];
@@ -151,7 +151,7 @@ abstract class B extends A {
     }
 }
 
-abstract class C extends B {
+class C extends B {
     method(a: A, b: B, c: C) {
         a['prop'];
         b['prop'];

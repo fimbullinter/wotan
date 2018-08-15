@@ -160,7 +160,7 @@ publicPrivate['prop'];
 
 declare function decorator(...args: any[]): any;
 
-abstract class A {
+class A {
     protected prop = 1;
 
     method(a: A, b: B, c: C) {
@@ -170,7 +170,7 @@ abstract class A {
     }
 }
 
-abstract class B extends A {
+class B extends A {
     method(a: A, b: B, c: C) {
         a['prop'];
         ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'B'.]
@@ -179,7 +179,7 @@ abstract class B extends A {
     }
 }
 
-abstract class C extends B {
+class C extends B {
     method(a: A, b: B, c: C) {
         a['prop'];
         ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'C'.]

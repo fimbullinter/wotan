@@ -1,7 +1,14 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { elementAccessSymbols } from '../utils';
-import { isThisParameter, isTypeParameter, isTypeReference, isIntersectionType, isFunctionScopeBoundary } from 'tsutils';
+import { lateBoundPropertyNames, propertiesOfType } from '../utils';
+import {
+    isThisParameter,
+    isTypeParameter,
+    isTypeReference,
+    isIntersectionType,
+    isFunctionScopeBoundary,
+    isReassignmentTarget,
+ } from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -12,25 +19,40 @@ export class Rule extends TypedRule {
                     this.checkElementAccess(<ts.ElementAccessExpression>node);
                     break;
                 case ts.SyntaxKind.ComputedPropertyName:
-                    this.checkComputedProperty(<ts.ComputedPropertyName>node);
+                    switch (node.parent!.kind) {
+                        case ts.SyntaxKind.PropertyAssignment:
+                            if (!isReassignmentTarget(<ts.ObjectLiteralExpression>node.parent!.parent))
+                                break;
+                            // falls through
+                        case ts.SyntaxKind.BindingElement:
+                            this.checkComputedProperty(<ts.ComputedPropertyName>node);
+                    }
             }
         }
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        for (const {symbol, name} of elementAccessSymbols(node, this.checker))
-            this.checkSymbol(symbol, name, node, node.expression, this.checker.getTypeAtLocation(node.expression));
+        // for compatibility with typescript@<2.9.0
+        if (node.argumentExpression === undefined || node.argumentExpression.pos === node.argumentExpression.end)
+            return;
+        this.checkPropertiesOfNode(node.expression, node.argumentExpression, node, node.expression);
     }
 
-    private checkComputedProperty(_node: ts.ComputedPropertyName) {
+    private checkComputedProperty(node: ts.ComputedPropertyName) {
+        this.checkPropertiesOfNode(node.parent!.parent!, node.expression, node, undefined);
+    }
 
+    private checkPropertiesOfNode(parent: ts.Node, propertyName: ts.Expression, errorNode: ts.Node, lhs: ts.Expression | undefined) {
+        const {properties} = lateBoundPropertyNames(propertyName, this.checker);
+        if (properties.length === 0)
+            return;
+        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(parent));
+        for (const {symbol, name} of propertiesOfType(type, properties))
+            this.checkSymbol(symbol, name, errorNode, lhs, type);
     }
 
     private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression | undefined, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
-
-        if (isTypeParameter(lhsType))
-            lhsType = lhsType.getConstraint() || lhsType;
 
         if (hasConflictingAccessModifiers(flags))
             return this.addFailureAtNode(
