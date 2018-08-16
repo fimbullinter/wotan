@@ -1,6 +1,7 @@
 class Private {
     private prop = 1;
     other = this['prop'];
+    private ['private'] = 2;
 
     method() {
         this['prop'];
@@ -12,6 +13,9 @@ class Private {
 }
 function testPrivate(this: Private) {
     new Private()['prop'];
+    const privateKey = 'private';
+    let {['prop']: prop, [privateKey]: priv} = new Private();
+    ({['prop']: prop, [privateKey]: priv} = new Private());
 }
 class DerivedPrivate extends Private {
     p2 = this['prop'];
