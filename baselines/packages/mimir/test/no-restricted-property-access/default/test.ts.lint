@@ -19,6 +19,9 @@ function testPrivate(this: Private) {
          ~~~~~~~~                                             [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
                          ~~~~~~~~~~~~                         [error no-restricted-property-access: Property 'private' is private and only accessible within class 'Private'.]
     ({['prop']: prop, [privateKey]: priv} = new Private());
+    const key = Boolean() ? 'prop' : 'other';
+    const {[key]: value} = new Private();
+           ~~~~~                          [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
 }
 class DerivedPrivate extends Private {
     p2 = this['prop'];

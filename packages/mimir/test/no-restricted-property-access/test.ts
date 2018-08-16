@@ -16,6 +16,8 @@ function testPrivate(this: Private) {
     const privateKey = 'private';
     let {['prop']: prop, [privateKey]: priv} = new Private();
     ({['prop']: prop, [privateKey]: priv} = new Private());
+    const key = Boolean() ? 'prop' : 'other';
+    const {[key]: value} = new Private();
 }
 class DerivedPrivate extends Private {
     p2 = this['prop'];
