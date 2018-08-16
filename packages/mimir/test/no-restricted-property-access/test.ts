@@ -83,6 +83,7 @@ abstract class Abstract {
         other['prop'];
         this['getter'];
         () => this['prop'];
+        const {['prop']: prop, ['getter']: getter} = this; // TODO this could be an error
     }
     method() {
         this['prop'];

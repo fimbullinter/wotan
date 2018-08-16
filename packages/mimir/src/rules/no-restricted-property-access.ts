@@ -39,6 +39,7 @@ export class Rule extends TypedRule {
     }
 
     private checkComputedProperty(node: ts.ComputedPropertyName) {
+        // TODO could use some magic to find the initializer of the destructuring
         this.checkPropertiesOfNode(node.parent!.parent!, node.expression, node, undefined);
     }
 

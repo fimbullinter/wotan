@@ -102,6 +102,7 @@ abstract class Abstract {
         this['getter'];
         ~~~~~~~~~~~~~~  [error no-restricted-property-access: Abstract property 'getter' in class 'Abstract' cannot be accessed during class initialization.]
         () => this['prop'];
+        const {['prop']: prop, ['getter']: getter} = this; // TODO this could be an error
     }
     method() {
         this['prop'];
