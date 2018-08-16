@@ -86,10 +86,12 @@ class OtherProtected extends Protected {
 }
 
 abstract class Abstract {
+    abstract get getter(): number;
     abstract prop: number;
     abstract getProp(): number;
-    other = this['prop'] + this['getProp']();
-            ~~~~~~~~~~~~                      [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
+    other = this['prop'] + this['getProp']() + this['getter'];
+            ~~~~~~~~~~~~                                       [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
+                                               ~~~~~~~~~~~~~~  [error no-restricted-property-access: Abstract property 'getter' in class 'Abstract' cannot be accessed during class initialization.]
     yetAnother = decorator(this['prop']);
                            ~~~~~~~~~~~~   [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
     constructor(other: Abstract) {
@@ -97,6 +99,8 @@ abstract class Abstract {
         ~~~~~~~~~~~~  [error no-restricted-property-access: Abstract property 'prop' in class 'Abstract' cannot be accessed during class initialization.]
         this['getProp']();
         other['prop'];
+        this['getter'];
+        ~~~~~~~~~~~~~~  [error no-restricted-property-access: Abstract property 'getter' in class 'Abstract' cannot be accessed during class initialization.]
         () => this['prop'];
     }
     method() {
@@ -106,9 +110,11 @@ abstract class Abstract {
 }
 class DerivedAbstract extends Abstract {
     prop = 1;
-    other = this['prop'] + this['getProp']() + super['getProp']() + super['prop'];
-                                               ~~~~~~~~~~~~~~~~                    [error no-restricted-property-access: Abstract method 'getProp' in class 'Abstract' cannot be accessed via the 'super' keyword.]
-                                                                    ~~~~~~~~~~~~~  [error no-restricted-property-access: Only public and protected methods of the base class are accessible via the 'super' keyword.]
+    getter = 2;
+    other = this['prop'] + this['getProp']() + super['getProp']() + super['prop'] + super['getter'] + this['getter'];
+                                               ~~~~~~~~~~~~~~~~                                                       [error no-restricted-property-access: Abstract method 'getProp' in class 'Abstract' cannot be accessed via the 'super' keyword.]
+                                                                    ~~~~~~~~~~~~~                                     [error no-restricted-property-access: Only public and protected methods of the base class are accessible via the 'super' keyword.]
+                                                                                    ~~~~~~~~~~~~~~~                   [error no-restricted-property-access: Only public and protected methods of the base class are accessible via the 'super' keyword.]
     constructor(other: Abstract) {
         super(other);
         other['prop'];
@@ -132,9 +138,11 @@ class DerivedAbstract extends Abstract {
 }
 
 abstract class DerivedAbstractAbstract extends Abstract {
-    other = this['prop'] + this['getProp']() + super['getProp']();
-            ~~~~~~~~~~~~                                           [error no-restricted-property-access: Abstract property 'prop' in class 'DerivedAbstractAbstract' cannot be accessed during class initialization.]
-                                               ~~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'getProp' in class 'Abstract' cannot be accessed via the 'super' keyword.]
+    other = this['prop'] + this['getProp']() + super['getProp']() + this['getter'] + super['getter'];
+            ~~~~~~~~~~~~                                                                              [error no-restricted-property-access: Abstract property 'prop' in class 'DerivedAbstractAbstract' cannot be accessed during class initialization.]
+                                               ~~~~~~~~~~~~~~~~                                       [error no-restricted-property-access: Abstract method 'getProp' in class 'Abstract' cannot be accessed via the 'super' keyword.]
+                                                                    ~~~~~~~~~~~~~~                    [error no-restricted-property-access: Abstract property 'getter' in class 'DerivedAbstractAbstract' cannot be accessed during class initialization.]
+                                                                                     ~~~~~~~~~~~~~~~  [error no-restricted-property-access: Only public and protected methods of the base class are accessible via the 'super' keyword.]
 
     constructor(other: Abstract) {
         super(other);

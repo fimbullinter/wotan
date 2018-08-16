@@ -62,7 +62,7 @@ export class Rule extends TypedRule {
 
         if (
             lhs !== undefined && lhs.kind === ts.SyntaxKind.ThisKeyword &&
-            flags & ts.ModifierFlags.Abstract && symbol.flags & ts.SymbolFlags.Property
+            flags & ts.ModifierFlags.Abstract && symbol.flags & ts.SymbolFlags.PropertyOrAccessor
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
             if (enclosingClass !== undefined)
@@ -74,7 +74,7 @@ export class Rule extends TypedRule {
                 );
         }
         if (lhs !== undefined && lhs.kind === ts.SyntaxKind.SuperKeyword) {
-            if ((symbol.flags & ts.SymbolFlags.Method) === 0)
+            if (symbol.flags & ts.SymbolFlags.PropertyOrAccessor)
                 return this.addFailureAtNode(
                     errorNode,
                     "Only public and protected methods of the base class are accessible via the 'super' keyword.",

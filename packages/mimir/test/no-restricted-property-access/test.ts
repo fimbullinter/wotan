@@ -72,14 +72,16 @@ class OtherProtected extends Protected {
 }
 
 abstract class Abstract {
+    abstract get getter(): number;
     abstract prop: number;
     abstract getProp(): number;
-    other = this['prop'] + this['getProp']();
+    other = this['prop'] + this['getProp']() + this['getter'];
     yetAnother = decorator(this['prop']);
     constructor(other: Abstract) {
         this['prop'];
         this['getProp']();
         other['prop'];
+        this['getter'];
         () => this['prop'];
     }
     method() {
@@ -89,7 +91,8 @@ abstract class Abstract {
 }
 class DerivedAbstract extends Abstract {
     prop = 1;
-    other = this['prop'] + this['getProp']() + super['getProp']() + super['prop'];
+    getter = 2;
+    other = this['prop'] + this['getProp']() + super['getProp']() + super['prop'] + super['getter'] + this['getter'];
     constructor(other: Abstract) {
         super(other);
         other['prop'];
@@ -110,7 +113,7 @@ class DerivedAbstract extends Abstract {
 }
 
 abstract class DerivedAbstractAbstract extends Abstract {
-    other = this['prop'] + this['getProp']() + super['getProp']();
+    other = this['prop'] + this['getProp']() + super['getProp']() + this['getter'] + super['getter'];
 
     constructor(other: Abstract) {
         super(other);
