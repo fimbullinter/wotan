@@ -23,7 +23,7 @@ export class Rule extends TypedRule {
                         case ts.SyntaxKind.PropertyAssignment:
                             if (!isReassignmentTarget(<ts.ObjectLiteralExpression>node.parent!.parent))
                                 break;
-                            // falls through
+                            break; // TODO https://github.com/Microsoft/TypeScript/issues/26509
                         case ts.SyntaxKind.BindingElement:
                             this.checkComputedProperty(<ts.ComputedPropertyName>node);
                     }

@@ -21,6 +21,11 @@ function testPrivate(this: Private) {
 }
 class DerivedPrivate extends Private {
     p2 = this['prop'];
+    constructor() {
+        super();
+        const {['prop']: prop} = this;
+        const {a: {['prop']: {}}} = {a: this};
+    }
 }
 
 new Private()['prop'];
