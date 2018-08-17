@@ -201,3 +201,15 @@ for (let i = 0; i < jsIterable.length; ++i) {
 for (let i = 0; i < jsNotIterable.length; ++i) {
     jsNotIterable[i]
 }
+
+declare class PrivateIterable {
+    [key: number]: number;
+    length: number;
+    private [Symbol.iterator](): Iterator<number>;
+}
+
+declare let privateIterable: PrivateIterable;
+
+for (let i = 0; i < privateIterable.length; ++i) {
+    privateIterable[i]
+}
