@@ -34,7 +34,7 @@
     "@types/glob": "^5.0.33",
     "@types/is-negated-glob": "^1.0.0",
     "@types/js-yaml": "^3.10.1",
-    "@types/json5": "0.0.29",
+    "@types/json5": "0.0.30",
     "@types/minimatch": "^3.0.1",
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^9.3.0",
