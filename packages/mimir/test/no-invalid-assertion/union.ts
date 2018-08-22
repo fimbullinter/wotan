@@ -31,3 +31,16 @@ get<'foo' | 'bar' | 1 | 2 | true>() as 'boo';
 get<'foo' | 'bar' | 1 | 2 | true>() as 'boo' | 3 | false;
 
 get<'foo' | 'bar' | 1 | 2 | true | object>() as 'boo' | object;
+
+get<'foo'>() as 'baz' | (string & {length: number}) | 'bar';
+get<'foo'>() as ('bar' & {length: number}) | string;
+get<'foo'>() as string | ('bar' & {length: number});
+get<'foo'>() as 'bar' | ('bar' & {length: number});
+get<'foo'>() as ('baz' & {length: number}) | 'bar';
+get<'foo'>() as ('baz' & {length: number}) | 'foo';
+false as (true & {toString(): string}) | true;
+false as true | (true & {toString(): string});
+false as boolean | (true & {toString(): string});
+1 as 0 | (number & {toString(base: number): string}) | 2 | 3;
+1 as 1 & '';
+1 as 0 & '';
