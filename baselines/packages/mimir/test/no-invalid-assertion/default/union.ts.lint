@@ -43,3 +43,21 @@ get<'foo' | 'bar' | 1 | 2 | true>() as 'boo' | 3 | false;
 
 get<'foo' | 'bar' | 1 | 2 | true | object>() as 'boo' | object;
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo" | "bar"' cannot be converted to type '"boo"'.]
+
+get<'foo'>() as 'baz' | (string & {length: number}) | 'bar';
+get<'foo'>() as ('bar' & {length: number}) | string;
+get<'foo'>() as string | ('bar' & {length: number});
+get<'foo'>() as 'bar' | ('bar' & {length: number});
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"bar"'.]
+get<'foo'>() as ('baz' & {length: number}) | 'bar';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '"foo"' cannot be converted to type '"bar" | "baz"'.]
+get<'foo'>() as ('baz' & {length: number}) | 'foo';
+false as (true & {toString(): string}) | true;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type 'false' cannot be converted to type 'true'.]
+false as true | (true & {toString(): string});
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type 'false' cannot be converted to type 'true'.]
+false as boolean | (true & {toString(): string});
+1 as 0 | (number & {toString(base: number): string}) | 2 | 3;
+1 as 1 & '';
+1 as 0 & '';
+~~~~~~~~~~~  [error no-invalid-assertion: Type '1' cannot be converted to type '0'.]
