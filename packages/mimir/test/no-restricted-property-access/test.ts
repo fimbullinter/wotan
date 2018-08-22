@@ -231,3 +231,6 @@ class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
         return super['method']();
     }
 }
+
+declare var tuple: [string, string];
+tuple['length']; // don't crash

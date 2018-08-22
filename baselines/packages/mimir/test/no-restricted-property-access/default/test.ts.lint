@@ -280,3 +280,6 @@ class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
                ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'C' cannot be accessed via the 'super' keyword.]
     }
 }
+
+declare var tuple: [string, string];
+tuple['length']; // don't crash
