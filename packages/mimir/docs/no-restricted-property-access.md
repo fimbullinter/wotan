@@ -27,11 +27,65 @@ All of these checks are related to classes, so you won't need this rule if you d
 :thumbsdown: Examples of incorrect code
 
 ```ts
+abstract class A {
+  abstract prop: string;
+  other = this['prop']; // accessing abstract property during initialization of the class
+  abstract method(): void;
+}
+abstract class B extends A {
+  other = this['prop']; // accessing abstract property during initialization of a subclass if there is no implementation for that property
+  method() {
+    super['method'](); // accessing abstract method of superclass
+    super['prop']; // accessing non-method properties via 'super'
+  }
+}
+
+class C {
+  private priv = 1;
+  protected prot = 1;
+}
+new C()['priv']; // accessing private member outside of class body
+new C()['prot']; // accessing protected member outside of class body
+
+class D extends C {
+  doStuff(other: C) {
+    this['priv']; // accessing private member outside of the declaring class' body
+    other['prot']; // accessing a protected member declared in a base class on an instance that is not instanceof the containing class
+  }
+}
+
+class Public {
+  public prop = 1;
+}
+class Private {
+  private prop = 1;
+}
+function doStuff(instance: Public & Private) {
+  instance['prop']; // property has conflicting visibility modifiers
+  const {['prop']: prop} = instance; // all of the above checks also apply to destructuring
+}
 ```
 
 :thumbsup: Examples of correct code
 
 ```ts
+abstract class A {
+  abstract prop: string;
+  other = () => this['prop']; // property is not accessed immediately
+}
+class B extends A {
+  prop = '';
+  other = this['prop']; // class contains an implementation for 'prop'
+}
+
+class C {
+  protected prop = 1;
+}
+class D extends C {}
+function explicitThis(this: C) {
+  new C()['prop']; // functions with explicit 'this' are treated as they were in the class body when checking protected member access
+  new D()['prop']; // accessing protected member on an object that is instanceof the containing class
+}
 ```
 
 ## Further Reading
