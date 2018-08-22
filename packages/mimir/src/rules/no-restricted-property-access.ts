@@ -7,7 +7,6 @@ import {
     isTypeReference,
     isIntersectionType,
     isFunctionScopeBoundary,
-    isReassignmentTarget,
  } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -21,8 +20,6 @@ export class Rule extends TypedRule {
                 case ts.SyntaxKind.ComputedPropertyName:
                     switch (node.parent!.kind) {
                         case ts.SyntaxKind.PropertyAssignment:
-                            if (!isReassignmentTarget(<ts.ObjectLiteralExpression>node.parent!.parent))
-                                break;
                             break; // TODO https://github.com/Microsoft/TypeScript/issues/26509
                         case ts.SyntaxKind.BindingElement:
                             this.checkComputedProperty(<ts.ComputedPropertyName>node);
@@ -104,7 +101,7 @@ export class Rule extends TypedRule {
                 if (enclosingClass === undefined)
                     return this.failVisibility(errorNode, name, declaringClasses[0], false);
             }
-            if (!hasBase(lhsType, enclosingClass, isIdentical))
+            if ((flags & ts.ModifierFlags.Static) === 0 && !hasBase(lhsType, enclosingClass, isIdentical))
                 return this.addFailureAtNode(
                     errorNode,
                     `Property '${name}' is protected and only accessible through an instance of class '${
@@ -125,6 +122,8 @@ export class Rule extends TypedRule {
                 return;
             thisType = constraint;
         }
+        if (isTypeReference(thisType))
+            thisType = thisType.target;
         return baseClasses.every((baseClass) => hasBase(thisType, baseClass, typeContainsDeclaration)) ? thisType : undefined;
     }
 

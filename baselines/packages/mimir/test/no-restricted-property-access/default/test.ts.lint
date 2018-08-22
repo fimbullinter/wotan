@@ -37,6 +37,8 @@ class DerivedPrivate extends Private {
 
 new Private()['prop'];
 ~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+new Private()[];
+new Private()['pr' + 'op'];
 
 class Protected {
     protected prop = 1;
@@ -46,14 +48,18 @@ class Protected {
         this['prop'];
         other['prop'];
         ~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'OtherProtected' and its subclasses.]
+        Protected['fn'](null!);
+        DerivedProtected['fn'](null!);
     }
 
-    static fn(a: Private) {
-        a['prop'];
-        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+    protected static fn(a: Private) {
+        return a['prop'];
+               ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
     }
 }
 function testProtected(this: Protected) {
+    Protected['fn'](null!);
+    ~~~~~~~~~~~~~~~         [error no-restricted-property-access: Property 'fn' is protected and only accessible within class 'Protected' and its subclasses.]
     new Protected()['prop'];
     enum E {
         bar = new Protected()['prop'],
@@ -64,13 +70,32 @@ function testProtected(this: Protected) {
         bar = new Protected()['prop'];
               ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
     }
-
 }
 new Protected()['prop'];
 ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
 
+function testGeneric<T>(this: T) {
+    new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+}
+function testConstrainedGeneric<T extends Protected>(this: T) {
+    new Protected()['prop'];
+}
+function testIntersection(this: Protected & {something: any}) {
+    new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible through an instance of class 'Protected & { something: any; }'.]
+}
+function testFunction() {
+    new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+}
+function testUntypedThis(this) {
+    new Protected()['prop'];
+    ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+}
+
 class DerivedProtected extends Protected {
-    p2 = this['prop'];
+    p2 = this['prop'] + Protected['fn'](null!);
 }
 function testDerivedProtected(this: DerivedProtected) {
     new DerivedProtected()['prop'];

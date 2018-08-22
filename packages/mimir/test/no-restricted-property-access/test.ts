@@ -29,6 +29,8 @@ class DerivedPrivate extends Private {
 }
 
 new Private()['prop'];
+new Private()[];
+new Private()['pr' + 'op'];
 
 class Protected {
     protected prop = 1;
@@ -37,13 +39,16 @@ class Protected {
     method(other: OtherProtected) {
         this['prop'];
         other['prop'];
+        Protected['fn'](null!);
+        DerivedProtected['fn'](null!);
     }
 
-    static fn(a: Private) {
-        a['prop'];
+    protected static fn(a: Private) {
+        return a['prop'];
     }
 }
 function testProtected(this: Protected) {
+    Protected['fn'](null!);
     new Protected()['prop'];
     enum E {
         bar = new Protected()['prop'],
@@ -52,12 +57,27 @@ function testProtected(this: Protected) {
     class Inner {
         bar = new Protected()['prop'];
     }
-
 }
 new Protected()['prop'];
 
+function testGeneric<T>(this: T) {
+    new Protected()['prop'];
+}
+function testConstrainedGeneric<T extends Protected>(this: T) {
+    new Protected()['prop'];
+}
+function testIntersection(this: Protected & {something: any}) {
+    new Protected()['prop'];
+}
+function testFunction() {
+    new Protected()['prop'];
+}
+function testUntypedThis(this) {
+    new Protected()['prop'];
+}
+
 class DerivedProtected extends Protected {
-    p2 = this['prop'];
+    p2 = this['prop'] + Protected['fn'](null!);
 }
 function testDerivedProtected(this: DerivedProtected) {
     new DerivedProtected()['prop'];
