@@ -200,9 +200,9 @@
   version "3.11.2"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.11.2.tgz#699ad86054cc20043c30d66a6fcde30bbf5d3d5e"
 
-"@types/json5@0.0.29":
-  version "0.0.29"
-  resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
+"@types/json5@0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.30.tgz#44cb52f32a809734ca562e685c6473b5754a7818"
 
 "@types/minimatch@*", "@types/minimatch@^3.0.1":
   version "3.0.3"
@@ -2548,9 +2548,9 @@ json5@^0.5.0, json5@^0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/json5/-/json5-0.5.1.tgz#1eade7acc012034ad84e2396767ead9fa5495821"
 
-json5@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/json5/-/json5-1.0.1.tgz#779fb0018604fa854eacbf6252180d83543e3dbe"
+json5@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/json5/-/json5-2.0.1.tgz#3d6d0d1066039eb50984e66a7840e4f4b7a2c660"
   dependencies:
     minimist "^1.2.0"
 
@@ -4229,9 +4229,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-typescript@3.1.0-dev.20180818:
-  version "3.1.0-dev.20180818"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.1.0-dev.20180818.tgz#9bcc3e3fcc7d96ffbf4b3099d00b5c8a69da2e61"
+typescript@3.1.0-dev.20180821:
+  version "3.1.0-dev.20180821"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.1.0-dev.20180821.tgz#56d44d584900d663a076f16059d56f4e6d7618c3"
 
 uglify-js@^2.6:
   version "2.8.29"

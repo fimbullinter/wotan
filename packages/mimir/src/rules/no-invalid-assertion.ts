@@ -1,5 +1,5 @@
 import { excludeDeclarationFiles, typescriptOnly, TypedRule } from '@fimbul/ymir';
-import { unionTypeParts } from 'tsutils';
+import { unionTypeParts, isIntersectionType } from 'tsutils';
 import * as ts from 'typescript';
 
 @excludeDeclarationFiles
@@ -18,11 +18,11 @@ export class Rule extends TypedRule {
     private checkAssertion(node: ts.AssertionExpression) {
         let assertedType = this.checker.getTypeFromTypeNode(node.type);
         assertedType = this.checker.getBaseConstraintOfType(assertedType) || assertedType;
-        const assertedLiterals = getLiteralsByType(unionTypeParts(assertedType));
+        const assertedLiterals = getLiteralsByType(assertedType);
         if (isEmpty(assertedLiterals))
             return;
         // if expression is a type variable, the type checker already handles everything as expected
-        const originalTypeParts = getLiteralsByType(unionTypeParts(this.checker.getTypeAtLocation(node.expression)!));
+        const originalTypeParts = getLiteralsByType(this.checker.getTypeAtLocation(node.expression));
         if (isEmpty(originalTypeParts))
             return;
         match(originalTypeParts, assertedLiterals);
@@ -34,9 +34,9 @@ export class Rule extends TypedRule {
 function format(literals: LiteralInfo) {
     const result = [];
     if (literals.string !== undefined)
-        result.push(`"${literals.string.join('" | "')}"`);
+        result.push(`"${Array.from(literals.string).join('" | "')}"`);
     if (literals.number !== undefined)
-        result.push(literals.number.join(' | '));
+        result.push(Array.from(literals.number).join(' | '));
     if (literals.boolean !== undefined)
         result.push(`${literals.boolean}`);
     return result.join(' | ');
@@ -51,9 +51,9 @@ function match(a: LiteralInfo, b: LiteralInfo) {
         a.boolean = b.boolean = undefined;
 }
 
-function intersects<T>(arr: T[], other: T[]): boolean {
+function intersects<T>(arr: Iterable<T>, other: Set<T>): boolean {
     for (const element of arr)
-        if (other.includes(element))
+        if (other.has(element))
             return true;
     return false;
 }
@@ -63,32 +63,65 @@ function isEmpty(literals: LiteralInfo) {
 }
 
 interface LiteralInfo {
-    string: string[] | undefined;
-    number: number[] | undefined;
+    string: Set<string> | undefined;
+    number: Set<number> | undefined;
     boolean: boolean | undefined;
 }
 
-function getLiteralsByType(types: ReadonlyArray<ts.Type>) {
+function getLiteralsByType(type: ts.Type) {
     const result: LiteralInfo = {
         string: undefined,
         number: undefined,
         boolean: undefined,
     };
-    for (const type of types) {
-        if (type.flags & ts.TypeFlags.StringLiteral) {
-            result.string = append(result.string, (<ts.StringLiteralType>type).value);
-        } else if (type.flags & ts.TypeFlags.NumberLiteral) {
-            result.number = append(result.number, (<ts.NumberLiteralType>type).value);
-        } else if (type.flags & ts.TypeFlags.BooleanLiteral) {
-            result.boolean = result.boolean === undefined ? (<{intrinsicName: string}><{}>type).intrinsicName === 'true' : undefined;
+    // typically literal types are swallowed by their corresponding widened type if they occur in the same union
+    // this is not the case with intersections: `(string & {foo: string}) | ('bar' & {bar: string})`
+    // therefore we need to reset all previously seen literal types if we see the widened type
+    // we also need to remember not to store any new literal types of that kind
+    let seenString = false;
+    let seenNumber = false;
+    let seenBoolean = false;
+    for (const t of typeParts(type)) {
+        if (t.flags & ts.TypeFlags.StringLiteral) {
+            if (!seenString)
+                result.string = append(result.string, (<ts.StringLiteralType>t).value);
+        } else if (t.flags & ts.TypeFlags.NumberLiteral) {
+            if (!seenNumber)
+                result.number = append(result.number, (<ts.NumberLiteralType>t).value);
+        } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
+            if (!seenBoolean) {
+                const current = (<{intrinsicName: string}><{}>t).intrinsicName === 'true';
+                if (result.boolean === undefined) {
+                    result.boolean = current;
+                } else if (result.boolean !== current) {
+                    result.boolean = undefined;
+                    seenBoolean = true;
+                }
+            }
+        } else if (t.flags & ts.TypeFlags.String) {
+            result.string = undefined;
+            seenString = true;
+        } else if (t.flags & ts.TypeFlags.Number) {
+            result.number = undefined;
+            seenNumber = true;
         }
     }
     return result;
 }
 
-function append<T>(arr: T[] | undefined, v: T) {
-    if (arr === undefined)
-        return [v];
-    arr.push(v);
-    return arr;
+function* typeParts(type: ts.Type) {
+    for (const t of unionTypeParts(type)) {
+        if (isIntersectionType(t)) {
+            yield* t.types;
+        } else {
+            yield t;
+        }
+    }
+}
+
+function append<T>(set: Set<T> | undefined, v: T) {
+    if (set === undefined)
+        return new Set([v]);
+    set.add(v);
+    return set;
 }

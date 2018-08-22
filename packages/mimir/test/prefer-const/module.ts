@@ -86,3 +86,11 @@ declare namespace ambientNamespace {
         var2,
     };
 }
+
+for (var element of new Array(element)) {
+    element;
+}
+
+for (var element2 of []) {
+    element2;
+}
