@@ -7,6 +7,7 @@ import {
     isTypeReference,
     isIntersectionType,
     isFunctionScopeBoundary,
+    isMethodDeclaration,
  } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -60,7 +61,7 @@ export class Rule extends TypedRule {
 
         if (
             lhs !== undefined && lhs.kind === ts.SyntaxKind.ThisKeyword &&
-            flags & ts.ModifierFlags.Abstract && symbol.flags & ts.SymbolFlags.PropertyOrAccessor
+            flags & ts.ModifierFlags.Abstract && hasNonMethodDeclaration(symbol)
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
             if (enclosingClass !== undefined)
@@ -72,7 +73,7 @@ export class Rule extends TypedRule {
                 );
         }
         if (lhs !== undefined && lhs.kind === ts.SyntaxKind.SuperKeyword) {
-            if (symbol.flags & ts.SymbolFlags.PropertyOrAccessor)
+            if (hasNonMethodDeclaration(symbol))
                 return this.addFailureAtNode(
                     errorNode,
                     "Only public and protected methods of the base class are accessible via the 'super' keyword.",
@@ -164,6 +165,10 @@ export class Rule extends TypedRule {
                 : this.checker.getTypeAtLocation(declaration).symbol!,
         );
     }
+}
+
+function hasNonMethodDeclaration(symbol: ts.Symbol) {
+    return !symbol.declarations!.every(isMethodDeclaration);
 }
 
 function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {

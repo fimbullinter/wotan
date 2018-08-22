@@ -256,3 +256,27 @@ function fnC(this: B, a: A, b: B, c: C) {
     b['prop'];
     c['prop'];
 }
+
+type Constructor<T = {}> = new (...args: any[]) => T;
+
+function Mixin<TBase extends Constructor>(Base: TBase) {
+    abstract class C extends Base {
+        abstract method(): number;
+    }
+    return C;
+}
+
+class MixinSubclass extends Mixin(class {a() {return 1;}}) {
+    method() {
+        return super['method']();
+               ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'C' cannot be accessed via the 'super' keyword.]
+    }
+}
+
+class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
+    prop = this['method']();
+    other() {
+        return super['method']();
+               ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'C' cannot be accessed via the 'super' keyword.]
+    }
+}
