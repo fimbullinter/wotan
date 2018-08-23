@@ -100,6 +100,17 @@ new Foo()['foo'];
 
 class OtherProtected extends Protected {
     protected prop = 1;
+    doStuff(instance: Protected & OtherProtected) {
+        instance['prop'];
+    }
+}
+
+class YetAnotherProtected {
+    protected prop = 1;
+    doStuff(a: Protected & YetAnotherProtected, b: YetAnotherProtected & Protected) {
+        a['prop'];
+        b['prop'];
+    }
 }
 
 abstract class Abstract {
@@ -165,6 +176,13 @@ class Public {
 
 declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
+
+class PrivateTwo {
+    private prop = 2;
+}
+
+declare let privatePrivate: Private & PrivateTwo;
+privatePrivate['prop'];
 
 declare function decorator(...args: any[]): any;
 

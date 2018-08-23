@@ -59,7 +59,7 @@ class Protected {
 }
 function testProtected(this: Protected) {
     Protected['fn'](null!);
-    ~~~~~~~~~~~~~~~         [error no-restricted-property-access: Property 'fn' is protected and only accessible within class 'Protected' and its subclasses.]
+    ~~~~~~~~~~~~~~~         [error no-restricted-property-access: Property 'fn' is protected and only accessible within class 'typeof Protected' and its subclasses.]
     new Protected()['prop'];
     enum E {
         bar = new Protected()['prop'],
@@ -124,6 +124,19 @@ new Foo()['foo'];
 
 class OtherProtected extends Protected {
     protected prop = 1;
+    doStuff(instance: Protected & OtherProtected) {
+        instance['prop'];
+    }
+}
+
+class YetAnotherProtected {
+    protected prop = 1;
+    doStuff(a: Protected & YetAnotherProtected, b: YetAnotherProtected & Protected) {
+        a['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected & YetAnotherProtected' and its subclasses.]
+        b['prop'];
+        ~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'YetAnotherProtected & Protected' and its subclasses.]
+    }
 }
 
 abstract class Abstract {
@@ -208,6 +221,14 @@ declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
 ~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Private'.]
 
+class PrivateTwo {
+    private prop = 2;
+}
+
+declare let privatePrivate: Private & PrivateTwo;
+privatePrivate['prop'];
+~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Private & PrivateTwo'.]
+
 declare function decorator(...args: any[]): any;
 
 class A {
@@ -277,7 +298,6 @@ class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
     prop = this['method']();
     other() {
         return super['method']();
-               ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'C' cannot be accessed via the 'super' keyword.]
     }
 }
 
@@ -294,6 +314,5 @@ declare const Base: new() => WithMethod & WithAbstractMethod;
 class IntersectionSubclass extends Base {
     doStuff() {
         return super['method']();
-               ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'WithAbstractMethod' cannot be accessed via the 'super' keyword.]
     }
 }

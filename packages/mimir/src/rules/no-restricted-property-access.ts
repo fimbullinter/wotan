@@ -8,6 +8,7 @@ import {
     isIntersectionType,
     isFunctionScopeBoundary,
     isMethodDeclaration,
+    hasModifier,
  } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -53,7 +54,7 @@ export class Rule extends TypedRule {
     private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression | undefined, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
-        if (hasConflictingAccessModifiers(flags))
+        if (hasConflictingAccessModifiers(flags, symbol))
             return this.addFailureAtNode(
                 errorNode,
                 `Property '${name}' has conflicting declarations and is inaccessible in type '${this.checker.typeToString(lhsType)}'.`,
@@ -78,29 +79,32 @@ export class Rule extends TypedRule {
                     errorNode,
                     "Only public and protected methods of the base class are accessible via the 'super' keyword.",
                 );
-            if (flags & ts.ModifierFlags.Abstract) {
-                const [{parent: declaringClass}] = getMatchingDeclarations(symbol, ts.ModifierFlags.Abstract);
+            if (
+                flags & ts.ModifierFlags.Abstract &&
+                symbol.declarations!.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.AbstractKeyword))
+            )
                 return this.addFailureAtNode(
                     errorNode,
-                    `Abstract method '${name}' in class '${this.printClass(declaringClass)}' cannot be accessed via the 'super' keyword.`,
+                    `Abstract method '${name}' in class '${
+                        this.printClass(<ts.ClassLikeDeclaration>symbol.declarations![0].parent)
+                    }' cannot be accessed via the 'super' keyword.`,
                 );
-            }
         }
 
         if ((flags & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
             return;
         if (flags & ts.ModifierFlags.Private) {
-            const [{parent: declaringClass}] = getMatchingDeclarations(symbol, ts.ModifierFlags.Private);
+            const declaringClass = <ts.ClassLikeDeclaration>symbol.declarations![0].parent;
             if (errorNode.pos < declaringClass.pos || errorNode.end > declaringClass.end)
-                this.failVisibility(errorNode, name, declaringClass, true);
+                this.failVisibility(errorNode, name, this.printClass(declaringClass), true);
         } else {
-            const declaringClasses = Array.from(getMatchingDeclarations(symbol, ts.ModifierFlags.Protected), (d) => d.parent);
+            const declaringClasses = symbol.declarations!.map((d) => <ts.ClassLikeDeclaration>d.parent);
             let enclosingClass = this.findEnclosingClass(errorNode.parent!.parent!, declaringClasses);
             if (enclosingClass === undefined) {
                 if ((flags & ts.ModifierFlags.Static) === 0)
                     enclosingClass = this.getEnclosingClassFromThisParameter(errorNode.parent!.parent!, declaringClasses);
                 if (enclosingClass === undefined)
-                    return this.failVisibility(errorNode, name, declaringClasses[0], false);
+                    return this.failVisibility(errorNode, name, this.checker.typeToString(lhsType), false);
             }
             if ((flags & ts.ModifierFlags.Static) === 0 && !hasBase(lhsType, enclosingClass, isIdentical))
                 return this.addFailureAtNode(
@@ -128,10 +132,10 @@ export class Rule extends TypedRule {
         return baseClasses.every((baseClass) => hasBase(thisType, baseClass, typeContainsDeclaration)) ? thisType : undefined;
     }
 
-    private failVisibility(node: ts.Node, property: string, clazz: ts.ClassLikeDeclaration, isPrivate: boolean) {
+    private failVisibility(node: ts.Node, property: string, typeString: string, isPrivate: boolean) {
         this.addFailureAtNode(
             node,
-            `Property '${property}' is ${isPrivate ? 'private' : 'protected'} and only accessible within class '${this.printClass(clazz)}'${
+            `Property '${property}' is ${isPrivate ? 'private' : 'protected'} and only accessible within class '${typeString}'${
                 isPrivate ? '' : ' and its subclasses'
             }.`,
         );
@@ -188,21 +192,12 @@ function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
     }
 }
 
-function hasConflictingAccessModifiers(flags: ts.ModifierFlags) {
-    let result = 0;
-    if (flags & ts.ModifierFlags.Public)
-        ++result;
-    if (flags & ts.ModifierFlags.Protected)
-        ++result;
-    if (flags & ts.ModifierFlags.Private)
-        ++result;
-    return result > 1;
-}
-
-function* getMatchingDeclarations(symbol: ts.Symbol, flags: ts.ModifierFlags) {
-    for (const declaration of symbol.declarations!)
-        if (ts.getCombinedModifierFlags(declaration) & flags)
-            yield <(ts.PropertyDeclaration | ts.MethodDeclaration | ts.AccessorDeclaration) & {parent: ts.ClassLikeDeclaration}>declaration;
+function hasConflictingAccessModifiers(flags: ts.ModifierFlags, symbol: ts.Symbol) {
+    return flags & ts.ModifierFlags.Private
+        ? symbol.declarations!.length !== 1
+        : (flags & ts.ModifierFlags.Protected) !== 0 &&
+            symbol.declarations!.length !== 1 &&
+            !symbol.declarations.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.ProtectedKeyword));
 }
 
 function hasBase<T>(type: ts.Type, needle: T, check: (type: ts.Type, needle: T) => boolean) {
@@ -254,14 +249,8 @@ function getThisParameterFromContext(node: ts.Node) {
 }
 
 function getModifierFlagsOfSymbol(symbol: ts.Symbol): ts.ModifierFlags {
-    let flags = ts.ModifierFlags.None;
-    if (symbol.declarations !== undefined) {
-        for (const declaration of symbol.declarations) {
-            const current = ts.getCombinedModifierFlags(declaration);
-            flags |= current;
-            if ((current & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
-                flags |= ts.ModifierFlags.Public; // add public modifier if property is implicitly public
-        }
-    }
-    return flags;
+    return symbol.declarations === undefined
+        ? ts.ModifierFlags.None
+        : symbol.declarations.reduce((flags, decl) => flags | ts.getCombinedModifierFlags(decl), ts.ModifierFlags.None);
+
 }
