@@ -283,3 +283,17 @@ class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
 
 declare var tuple: [string, string];
 tuple['length']; // don't crash
+
+class WithMethod {
+    method() { return 1; }
+}
+abstract class WithAbstractMethod {
+    abstract method(): number;
+}
+declare const Base: new() => WithMethod & WithAbstractMethod;
+class IntersectionSubclass extends Base {
+    doStuff() {
+        return super['method']();
+               ~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'method' in class 'WithAbstractMethod' cannot be accessed via the 'super' keyword.]
+    }
+}

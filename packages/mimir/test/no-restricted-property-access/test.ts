@@ -234,3 +234,16 @@ class MixinSubclass2 extends Mixin(class {method() {return 1;}}) {
 
 declare var tuple: [string, string];
 tuple['length']; // don't crash
+
+class WithMethod {
+    method() { return 1; }
+}
+abstract class WithAbstractMethod {
+    abstract method(): number;
+}
+declare const Base: new() => WithMethod & WithAbstractMethod;
+class IntersectionSubclass extends Base {
+    doStuff() {
+        return super['method']();
+    }
+}
