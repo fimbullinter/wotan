@@ -7,6 +7,7 @@ import { Runner } from '../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
+import { unixifyPath } from '../src/utils';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
@@ -30,7 +31,7 @@ test('throws error on non-existing file', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `'${path.resolve('packages/wotan/non-existent.ts')}' does not exist.`,
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.`,
     );
 });
 
@@ -52,7 +53,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `'${path.resolve('packages/wotan/non-existent.ts')}' is not included in the project.`,
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
     );
 });
 
