@@ -7,7 +7,7 @@ const log = debug('wotan:cli');
 
 // @internal
 export async function run(argv: string[]) {
-    if (argv.length === 1 && /^(')?(?:-v|version)\1$/.test(argv[0]))
+    if (argv.length === 1 && /^(')?-(?:v|-version)\1$/.test(argv[0]))
         return console.log(require('../package.json').version);
     try {
         const config = await loadConfig('.');
