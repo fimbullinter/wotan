@@ -42,5 +42,6 @@ false as (true & {toString(): string}) | true;
 false as true | (true & {toString(): string});
 false as boolean | (true & {toString(): string});
 1 as 0 | (number & {toString(base: number): string}) | 2 | 3;
+1 as number | (0 & {toString(base: number): string});
 1 as 1 & '';
 1 as 0 & '';
