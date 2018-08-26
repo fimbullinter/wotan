@@ -227,6 +227,6 @@ test('works with absolute and relative paths', (t) => {
             extensions: undefined,
         }));
         t.is(result.length, 1);
-        t.is(result[0][0], path.resolve('packages/wotan/test/fixtures/paths/a.ts'));
+        t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
     }
 });
