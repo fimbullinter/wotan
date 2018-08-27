@@ -31,7 +31,7 @@ test('throws error on non-existing file', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        "'non-existent.ts' does not exist.",
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.`,
     );
 });
 
@@ -53,7 +53,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        "'non-existent.ts' is not included in the project.",
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
     );
 });
 
@@ -315,3 +315,34 @@ test.skip('excludes symlinked typeRoots', (t) => {
 function isLibraryFile(name: string) {
     return /[\\/]typescript[\\/]lib[\\/]lib(\.es\d+(\.\w+)*)?\.d\.ts$/.test(name);
 }
+
+test('works with absolute and relative paths', (t) => {
+    const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+    testRunner(true);
+    testRunner(false);
+
+    function testRunner(project: boolean) {
+        const result = Array.from(runner.lintCollection({
+            config: undefined,
+            files: [
+                path.resolve('packages/wotan/test/fixtures/paths/a.ts'),
+                path.resolve('packages/wotan/test/fixtures/paths/b.ts'),
+                'test/fixtures/paths/c.ts',
+                './test/fixtures/paths/d.ts',
+            ],
+            exclude: [
+                './test/fixtures/paths/b.ts',
+                path.resolve('packages/wotan/test/fixtures/paths/c.ts'),
+                'test/fixtures/paths/d.ts',
+            ],
+            project: project ? 'test/fixtures/paths/tsconfig.json' : undefined,
+            fix: false,
+            extensions: undefined,
+        }));
+        t.is(result.length, 1);
+        t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
+    }
+});

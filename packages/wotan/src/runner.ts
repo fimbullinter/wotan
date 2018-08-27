@@ -19,6 +19,7 @@ import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
+import resolveGlob = require('to-absolute-glob');
 
 const log = debug('wotan:runner');
 
@@ -44,10 +45,17 @@ export class Runner {
 
     public lintCollection(options: LintOptions): LintResult {
         const config = options.config !== undefined ? this.configManager.loadLocalOrResolved(options.config) : undefined;
+        const resolveOptions = {cwd: this.directories.getCurrentDirectory()};
+        const files = options.files.map(resolve);
+        const exclude = options.exclude.map(resolve);
         if (options.project === undefined && options.files.length !== 0)
-            return this.lintFiles(options, config);
+            return this.lintFiles({...options, files, exclude}, config);
 
-        return this.lintProject(options, config);
+        return this.lintProject({...options, files, exclude}, config);
+
+        function resolve(pattern: string) {
+            return resolveGlob(pattern, resolveOptions);
+        }
     }
 
     private *lintProject(options: LintOptions, config: Configuration | undefined): LintResult {
@@ -208,7 +216,7 @@ export class Runner {
                 !typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep))
             )
                 continue;
-            const originalName = path.relative(cwd, host.getFileSystemFile(fileName)!);
+            const originalName = host.getFileSystemFile(fileName)!;
             if (include.length !== 0 && !include.some((e) => e.match(originalName)) || ex.some((e) => e.match(originalName)))
                 continue;
             files.push(fileName);
