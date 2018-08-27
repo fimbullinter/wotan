@@ -276,15 +276,17 @@ test.skip('excludes symlinked typeRoots', (t) => {
         }
 
         private resolvePath(p: string) {
-            const parts = path.relative(this.normalizePath(this.dirs.getCurrentDirectory()), p).split(/\//g);
+            const parts = path.relative(this.normalizePath(this.dirs.getCurrentDirectory()), this.normalizePath(p)).split(/\//g);
             let current: FileMeta | undefined = files;
             let part = parts.shift();
             let realPath = [];
-            while (current !== undefined && part !== undefined) {
+            while (part !== undefined) {
                 if (part) {
                     realPath.push(part);
                     current = current.entries && current.entries[part];
-                    if (current !== undefined && current.symlink !== undefined) {
+                    if (current === undefined)
+                        return;
+                    if (current.symlink !== undefined) {
                         parts.unshift(...current.symlink.split(/\//g));
                         realPath = [];
                         current = files;
@@ -292,7 +294,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
                 }
                 part = parts.shift();
             }
-            return current && {resolved: current, realpath: realPath.join('/')};
+            return {resolved: current, realpath: realPath.join('/')};
         }
     }
     container.bind(FileSystem).to(MockFileSystem);
