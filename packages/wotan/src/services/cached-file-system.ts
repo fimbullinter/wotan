@@ -51,7 +51,7 @@ export class CachedFileSystem {
     }
 
     public realpath = this.fs.realpath === undefined ? undefined : (file: string) => {
-        return resolveCachedResult(this.realpathCache, this.fs.normalizePath(file), () => this.fs.realpath!(file));
+        return resolveCachedResult(this.realpathCache, this.fs.normalizePath(file), (f) => this.fs.realpath!(f));
     };
 
     public writeFile(file: string, content: string) {
