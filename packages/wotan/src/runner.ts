@@ -66,48 +66,48 @@ export class Runner {
             this.configManager,
             this.processorLoader,
         );
-        let {files, program} = this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost);
-
-        for (const file of files) {
-            if (!hasSupportedExtension(file))
-                continue;
-            if (options.config === undefined)
-                config = this.configManager.find(file);
-            const mapped = processorHost.getProcessedFileInfo(file);
-            const originalName = mapped === undefined ? file : mapped.originalName;
-            const effectiveConfig = config && this.configManager.reduce(config, originalName);
-            if (effectiveConfig === undefined)
-                continue;
-            let sourceFile = program.getSourceFile(file)!;
-            const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
-            let summary: FileSummary;
-            const fix = shouldFix(sourceFile, options, originalName);
-            if (fix) {
-                summary = this.linter.lintAndFix(
-                    sourceFile,
-                    originalContent,
-                    effectiveConfig,
-                    (content, range) => {
-                        ({sourceFile, program} = processorHost.updateSourceFile(sourceFile, program, content, range));
-                        return {program, file: sourceFile};
-                    },
-                    fix === true ? undefined : fix,
-                    program,
-                    mapped === undefined ? undefined : mapped.processor,
-                );
-            } else {
-                summary = {
-                    failures: this.linter.getFailures(
+        for (let {files, program} of this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost)) {
+            for (const file of files) {
+                if (!hasSupportedExtension(file))
+                    continue;
+                if (options.config === undefined)
+                    config = this.configManager.find(file);
+                const mapped = processorHost.getProcessedFileInfo(file);
+                const originalName = mapped === undefined ? file : mapped.originalName;
+                const effectiveConfig = config && this.configManager.reduce(config, originalName);
+                if (effectiveConfig === undefined)
+                    continue;
+                let sourceFile = program.getSourceFile(file)!;
+                const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
+                let summary: FileSummary;
+                const fix = shouldFix(sourceFile, options, originalName);
+                if (fix) {
+                    summary = this.linter.lintAndFix(
                         sourceFile,
+                        originalContent,
                         effectiveConfig,
+                        (content, range) => {
+                            ({sourceFile, program} = processorHost.updateSourceFile(sourceFile, program, content, range));
+                            return {program, file: sourceFile};
+                        },
+                        fix === true ? undefined : fix,
                         program,
                         mapped === undefined ? undefined : mapped.processor,
-                    ),
-                    fixes: 0,
-                    content: originalContent,
-                };
+                    );
+                } else {
+                    summary = {
+                        failures: this.linter.getFailures(
+                            sourceFile,
+                            effectiveConfig,
+                            program,
+                            mapped === undefined ? undefined : mapped.processor,
+                        ),
+                        fixes: 0,
+                        content: originalContent,
+                    };
+                }
+                yield [originalName, summary];
             }
-            yield [originalName, summary];
         }
     }
 
@@ -184,46 +184,44 @@ export class Runner {
         }
     }
 
-    private getFilesAndProgram(
+    private* getFilesAndProgram(
         project: string | undefined,
         patterns: string[],
         exclude: string[],
         host: ProjectHost,
-    ): {files: Iterable<string>, program: ts.Program} {
-        const cwd = this.directories.getCurrentDirectory();
-        if (project !== undefined) {
-            project = this.checkConfigDirectory(path.resolve(cwd, project));
-        } else {
-            project = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
-            if (project === undefined)
-                throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
-        }
-        const program = this.createProgram(project, host);
-        const files: string[] = [];
+    ): Iterable<{files: Iterable<string>, program: ts.Program}> {
         const originalNames: string [] = [];
-        const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
-        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host) || [];
+        // TODO maybe use a different host for each Program or purge all non-declaration files?
+        for (const program of this.createPrograms(project, host, new Set(), isFileIncluded)) {
+            const files: string[] = [];
+            const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
+            const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host) || [];
 
-        for (const sourceFile of program.getSourceFiles()) {
-            const {fileName} = sourceFile;
-            if (
-                fileName.startsWith(libDirectory) || // lib.xxx.d.ts
-                // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
-                fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
-                program.isSourceFileFromExternalLibrary(sourceFile) ||
-                !typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep))
-            )
-                continue;
-            const originalName = host.getFileSystemFile(fileName)!;
-            if (include.length !== 0 && !include.some((e) => e.match(originalName)) || ex.some((e) => e.match(originalName)))
-                continue;
-            files.push(fileName);
-            originalNames.push(originalName);
+            for (const sourceFile of program.getSourceFiles()) {
+                const {fileName} = sourceFile;
+                if (
+                    fileName.startsWith(libDirectory) || // lib.xxx.d.ts
+                    // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
+                    fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
+                    program.isSourceFileFromExternalLibrary(sourceFile) ||
+                    !typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep))
+                )
+                    continue;
+                const originalName = host.getFileSystemFile(fileName)!;
+                if (!isFileIncluded(originalName))
+                    continue;
+                files.push(fileName);
+                originalNames.push(originalName);
+            }
+            yield {files, program};
         }
         ensurePatternsMatch(include, ex, originalNames);
-        return {files, program};
+
+        function isFileIncluded(fileName: string) {
+            return (include.length === 0 || include.some((p) => p.match(fileName))) && !ex.some((p) => p.match(fileName));
+        }
     }
 
     private checkConfigDirectory(fileOrDirName: string): string {
@@ -241,7 +239,20 @@ export class Runner {
         }
     }
 
-    private createProgram(configFile: string, host: ProjectHost): ts.Program {
+    private* createPrograms(
+        configFile: string | undefined,
+        host: ProjectHost,
+        seen: Set<string>,
+        isFileIncluded: (fileName: string) => boolean,
+    ): Iterable<ts.Program> {
+        const cwd = this.directories.getCurrentDirectory();
+        if (configFile !== undefined) {
+            configFile = this.checkConfigDirectory(path.resolve(cwd, configFile));
+        } else {
+            configFile = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
+            if (configFile === undefined)
+                throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
+        }
         const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
         if (config.error !== undefined) {
             this.logger.warn(ts.formatDiagnostics([config.error], host));
@@ -254,9 +265,29 @@ export class Runner {
             {noEmit: true},
             configFile,
         );
-        if (parsed.errors.length !== 0)
-            this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
-        return ts.createProgram(parsed.fileNames, parsed.options, host);
+        if (parsed.errors.length !== 0) {
+            let {errors} = parsed;
+            if (parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
+                errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
+            if (errors.length !== 0)
+                this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
+        }
+        if (parsed.fileNames.length !== 0) {
+            if (parsed.options.composite && !parsed.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
+                log("Project '%s' contains no file to lint", configFile);
+            } else {
+                log("Using project '%s'", configFile);
+                yield ts.createProgram(parsed.fileNames, parsed.options, host);
+            }
+        }
+        if (parsed.projectReferences !== undefined) {
+            for (const reference of parsed.projectReferences) {
+                if (seen.has(reference.path))
+                    continue;
+                seen.add(reference.path);
+                yield* this.createPrograms(reference.path, host, seen, isFileIncluded);
+            }
+        }
     }
 }
 
