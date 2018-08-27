@@ -196,24 +196,18 @@ export class Runner {
         const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
-        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
-        outer: for (const sourceFile of program.getSourceFiles()) {
+        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host) || [];
+
+        for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
-            if (fileName.startsWith(libDirectory) || // lib.xxx.d.ts
-                // tslib implicitly gets added while linting a project where a dependecy in node_modules contains typescript files
-                // for some reason they are not correctly marked as external library
-                // therefore we always ignore it
-                fileName.endsWith('/node_modules/tslib/tslib.d.ts'))
+            if (
+                fileName.startsWith(libDirectory) || // lib.xxx.d.ts
+                // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
+                fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
+                program.isSourceFileFromExternalLibrary(sourceFile) ||
+                !typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep))
+            )
                 continue;
-            if (program.isSourceFileFromExternalLibrary(sourceFile))
-                continue;
-            if (typeRoots !== undefined) {
-                for (const typeRoot of typeRoots) {
-                    const relative = path.relative(typeRoot, fileName);
-                    if (!relative.startsWith('..' + path.sep))
-                        continue outer;
-                }
-            }
             const originalName = path.relative(cwd, host.getFileSystemFile(fileName)!);
             if (include.length !== 0 && !include.some((e) => e.match(originalName)) || ex.some((e) => e.match(originalName)))
                 continue;
