@@ -16,12 +16,9 @@ function testPrivate(this: Private) {
     ~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
     const privateKey = 'private';
     let {['prop']: prop, [privateKey]: priv} = new Private();
-         ~~~~~~~~                                             [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
-                         ~~~~~~~~~~~~                         [error no-restricted-property-access: Property 'private' is private and only accessible within class 'Private'.]
     ({['prop']: prop, [privateKey]: priv} = new Private());
     const key = Boolean() ? 'prop' : 'other';
     const {[key]: value} = new Private();
-           ~~~~~                          [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
 }
 class DerivedPrivate extends Private {
     p2 = this['prop'];
@@ -29,9 +26,7 @@ class DerivedPrivate extends Private {
     constructor() {
         super();
         const {['prop']: prop} = this;
-               ~~~~~~~~                [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
         const {a: {['prop']: {}}} = {a: this};
-                   ~~~~~~~~                    [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
     }
 }
 
@@ -92,6 +87,12 @@ function testFunction() {
 function testUntypedThis(this) {
     new Protected()['prop'];
     ~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is protected and only accessible within class 'Protected' and its subclasses.]
+}
+
+function testGenericAccess<T extends 'prop' | 'private'>(key: T) {
+    new Private()[key];
+    ~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'private' is private and only accessible within class 'Private'.]
+    ~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
 }
 
 class DerivedProtected extends Protected {

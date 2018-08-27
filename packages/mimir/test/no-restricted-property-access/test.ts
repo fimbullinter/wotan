@@ -76,6 +76,10 @@ function testUntypedThis(this) {
     new Protected()['prop'];
 }
 
+function testGenericAccess<T extends 'prop' | 'private'>(key: T) {
+    new Private()[key];
+}
+
 class DerivedProtected extends Protected {
     p2 = this['prop'] + Protected['fn'](null!);
 }

@@ -62,7 +62,6 @@ class Private {
 }
 function doStuff(instance: Public & Private) {
   instance['prop']; // property has conflicting visibility modifiers
-  const {['prop']: prop} = instance; // all of the above checks also apply to destructuring
 }
 ```
 

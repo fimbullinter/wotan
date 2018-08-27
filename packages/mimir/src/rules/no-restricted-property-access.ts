@@ -14,44 +14,24 @@ import {
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        for (const node of this.context.getFlatAst()) {
-            switch (node.kind) {
-                case ts.SyntaxKind.ElementAccessExpression:
-                    this.checkElementAccess(<ts.ElementAccessExpression>node);
-                    break;
-                case ts.SyntaxKind.ComputedPropertyName:
-                    switch (node.parent!.kind) {
-                        case ts.SyntaxKind.PropertyAssignment:
-                            break; // TODO https://github.com/Microsoft/TypeScript/issues/26509
-                        case ts.SyntaxKind.BindingElement:
-                            this.checkComputedProperty(<ts.ComputedPropertyName>node);
-                    }
-            }
-        }
+        for (const node of this.context.getFlatAst())
+            if (node.kind === ts.SyntaxKind.ElementAccessExpression)
+                this.checkElementAccess(<ts.ElementAccessExpression>node);
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
         // for compatibility with typescript@<2.9.0
         if (node.argumentExpression === undefined || node.argumentExpression.pos === node.argumentExpression.end)
             return;
-        this.checkPropertiesOfNode(node.expression, node.argumentExpression, node, node.expression);
-    }
-
-    private checkComputedProperty(node: ts.ComputedPropertyName) {
-        // TODO could use some magic to find the initializer of the destructuring
-        this.checkPropertiesOfNode(node.parent!.parent!, node.expression, node, undefined);
-    }
-
-    private checkPropertiesOfNode(parent: ts.Node, propertyName: ts.Expression, errorNode: ts.Node, lhs: ts.Expression | undefined) {
-        const {properties} = lateBoundPropertyNames(propertyName, this.checker);
+        const {properties} = lateBoundPropertyNames(node.argumentExpression, this.checker);
         if (properties.length === 0)
             return;
-        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(parent));
+        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
         for (const {symbol, name} of propertiesOfType(type, properties))
-            this.checkSymbol(symbol, name, errorNode, lhs, type);
+            this.checkSymbol(symbol, name, node, node.expression, type);
     }
 
-    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression | undefined, lhsType: ts.Type) {
+    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
         if (hasConflictingAccessModifiers(flags, symbol))
