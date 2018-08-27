@@ -13,6 +13,7 @@ rules:
   no-fallthrough: error
   no-inferred-empty-object: error
   no-invalid-assertion: error
+  no-restricted-property-access: error
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error

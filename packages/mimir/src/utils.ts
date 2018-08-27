@@ -161,10 +161,10 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {argumentExpression} = node;
     if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
         return;
-    yield* propertiesOfType(
-        checker.getApparentType(checker.getTypeAtLocation(node.expression)!),
-        lateBoundPropertyNames(argumentExpression, checker).properties,
-    );
+    const {properties} = lateBoundPropertyNames(argumentExpression, checker);
+    if (properties.length === 0)
+        return;
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), properties);
 }
 
 export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
