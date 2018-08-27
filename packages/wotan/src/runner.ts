@@ -46,8 +46,8 @@ export class Runner {
     public lintCollection(options: LintOptions): LintResult {
         const config = options.config !== undefined ? this.configManager.loadLocalOrResolved(options.config) : undefined;
         const resolveOptions = {cwd: this.directories.getCurrentDirectory()};
-        const files = options.files && options.files.map(resolve);
-        const exclude = options.exclude && options.exclude.map(resolve);
+        const files = options.files.map(resolve);
+        const exclude = options.exclude.map(resolve);
         if (options.project === undefined && options.files.length !== 0)
             return this.lintFiles({...options, files, exclude}, config);
 
@@ -204,28 +204,20 @@ export class Runner {
         const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
-        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host);
-        outer: for (const sourceFile of program.getSourceFiles()) {
+        const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host) || [];
+
+        for (const sourceFile of program.getSourceFiles()) {
             const {fileName} = sourceFile;
-            if (fileName.startsWith(libDirectory) || // lib.xxx.d.ts
-                // tslib implicitly gets added while linting a project where a dependecy in node_modules contains typescript files
-                // for some reason they are not correctly marked as external library
-                // therefore we always ignore it
-                fileName.endsWith('/node_modules/tslib/tslib.d.ts'))
+            if (
+                fileName.startsWith(libDirectory) || // lib.xxx.d.ts
+                // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
+                fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
+                program.isSourceFileFromExternalLibrary(sourceFile) ||
+                !typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep))
+            )
                 continue;
-            if (program.isSourceFileFromExternalLibrary(sourceFile))
-                continue;
-            if (typeRoots !== undefined) {
-                for (const typeRoot of typeRoots) {
-                    const relative = path.relative(typeRoot, fileName);
-                    if (!relative.startsWith('..' + path.sep))
-                        continue outer;
-                }
-            }
             const originalName = host.getFileSystemFile(fileName)!;
-            if (include.length !== 0 && !include.some((e) => e.match(originalName)))
-                continue;
-            if (ex.some((e) => e.match(originalName)))
+            if (include.length !== 0 && !include.some((e) => e.match(originalName)) || ex.some((e) => e.match(originalName)))
                 continue;
             files.push(fileName);
             originalNames.push(originalName);
@@ -323,7 +315,7 @@ function shouldFix(sourceFile: ts.SourceFile, options: LintOptions, originalName
 }
 
 declare module 'typescript' {
-    export function matchFiles(
+    function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
         excludes: ReadonlyArray<string> | undefined,
@@ -334,12 +326,12 @@ declare module 'typescript' {
         getFileSystemEntries: (path: string) => ts.FileSystemEntries,
     ): string[];
 
-    export interface FileSystemEntries {
+    interface FileSystemEntries {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
     }
 
-    export interface SourceFile {
+    interface SourceFile {
         parseDiagnostics: ts.DiagnosticWithLocation[];
     }
 }
