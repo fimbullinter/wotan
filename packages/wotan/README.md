@@ -142,6 +142,8 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information.
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
+Note that all file paths are relative to the current working directory. Therefore `**/*.ts` doesn't match `../foo.ts`.
+
 ### Examples
 
 The following examples are intended to be used as npm scripts. If you want to execute it directly on the command line, you need to use `./node_modules/.bin/wotan` instead of just `wotan`.

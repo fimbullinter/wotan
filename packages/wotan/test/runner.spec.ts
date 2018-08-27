@@ -7,6 +7,7 @@ import { Runner } from '../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
+import { unixifyPath } from '../src/utils';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
@@ -30,7 +31,7 @@ test('throws error on non-existing file', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        "'non-existent.ts' does not exist.",
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.`,
     );
 });
 
@@ -52,7 +53,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        "'non-existent.ts' is not included in the project.",
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
     );
 });
 
@@ -202,4 +203,35 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         extensions: undefined,
     }));
     t.regex(warning, /^error TS18003:/);
+});
+
+test('works with absolute and relative paths', (t) => {
+    const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+    testRunner(true);
+    testRunner(false);
+
+    function testRunner(project: boolean) {
+        const result = Array.from(runner.lintCollection({
+            config: undefined,
+            files: [
+                path.resolve('packages/wotan/test/fixtures/paths/a.ts'),
+                path.resolve('packages/wotan/test/fixtures/paths/b.ts'),
+                'test/fixtures/paths/c.ts',
+                './test/fixtures/paths/d.ts',
+            ],
+            exclude: [
+                './test/fixtures/paths/b.ts',
+                path.resolve('packages/wotan/test/fixtures/paths/c.ts'),
+                'test/fixtures/paths/d.ts',
+            ],
+            project: project ? 'test/fixtures/paths/tsconfig.json' : undefined,
+            fix: false,
+            extensions: undefined,
+        }));
+        t.is(result.length, 1);
+        t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
+    }
 });
