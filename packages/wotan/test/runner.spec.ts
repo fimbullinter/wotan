@@ -202,7 +202,8 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     t.regex(warning, /^error TS18003:/);
 });
 
-test('excludes symlinked typeRoots', (t) => {
+// TODO https://github.com/fimbullinter/wotan/issues/387 https://github.com/Microsoft/TypeScript/issues/26684
+test.skip('excludes symlinked typeRoots', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
     interface FileMeta {
