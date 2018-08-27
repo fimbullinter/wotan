@@ -1,6 +1,6 @@
 # no-restricted-property-access
 
-:mag: requires type information :wrench: fixable
+:mag: requires type information
 
 Disallows accessing properties via computed name that would not be accessible using a static name.
 
