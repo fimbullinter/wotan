@@ -215,9 +215,7 @@ export class Runner {
                 }
             }
             const originalName = path.relative(cwd, host.getFileSystemFile(fileName)!);
-            if (include.length !== 0 && !include.some((e) => e.match(originalName)))
-                continue;
-            if (ex.some((e) => e.match(originalName)))
+            if (include.length !== 0 && !include.some((e) => e.match(originalName)) || ex.some((e) => e.match(originalName)))
                 continue;
             files.push(fileName);
             originalNames.push(originalName);
@@ -315,7 +313,7 @@ function shouldFix(sourceFile: ts.SourceFile, options: LintOptions, originalName
 }
 
 declare module 'typescript' {
-    export function matchFiles(
+    function matchFiles(
         path: string,
         extensions: ReadonlyArray<string>,
         excludes: ReadonlyArray<string> | undefined,
@@ -326,12 +324,12 @@ declare module 'typescript' {
         getFileSystemEntries: (path: string) => ts.FileSystemEntries,
     ): string[];
 
-    export interface FileSystemEntries {
+    interface FileSystemEntries {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
     }
 
-    export interface SourceFile {
+    interface SourceFile {
         parseDiagnostics: ts.DiagnosticWithLocation[];
     }
 }
