@@ -1,5 +1,29 @@
 # Change Log
 
+## v0.13.0
+
+:warning: **Breaking Changes:**
+
+* Node.js v9 is no longer officially supported
+* TypeScript v2.7 is no longer officially supported
+
+**Features:**
+
+* new rule: `no-restricted-property-access`
+* new rule: `no-useless-strict`
+* `no-useless-declare`: `declare` keyword is useless on `export`ed declarations in declaration files
+
+**Bugfixes:**
+
+* `no-duplicate-spread-property`: correctly handles computed names
+* `no-duplicate-spread-property`: exclude class getters and setters like it's already done for class methods
+* `no-duplicate-spread-property`: no error on getter and setter pair
+* `no-invalid-assertion`: handle intersection types
+* `prefer-for-of`: don't suggest `for-of` if implementation of iteration protocol contains `private` or `protected` members
+* CLI: fixed handling of `--version`
+* CLI: correctly handle absolute paths
+* fixed corrupted internal state during autofixing with `--project` without typed rules
+
 ## v0.12.0
 
 **Features:**
