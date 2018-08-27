@@ -34,7 +34,7 @@ Now you can run the linter with one of the following commands depending on your 
 
 ```sh
 wotan -p <path/to/tsconfig.json> # lint the whole project
-wotan "src/**/*.ts" -e "**/*.d.ts" # lint all typescript files excluding declaration files
+wotan 'src/**/*.ts' -e '**/*.d.ts' # lint all typescript files excluding declaration files
 wotan --fix # lint the whole project and fix all fixable errors
 ```
 
