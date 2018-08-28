@@ -195,13 +195,16 @@ export class Runner {
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         // TODO maybe use a different host for each Program or purge all non-declaration files?
         for (const program of this.createPrograms(project, host, new Set(), isFileIncluded)) {
+            const options = program.getCompilerOptions();
             const files: string[] = [];
-            const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(program.getCompilerOptions()))) + '/';
-            const typeRoots = ts.getEffectiveTypeRoots(program.getCompilerOptions(), host) || [];
+            const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
+            const typeRoots = ts.getEffectiveTypeRoots(options, host) || [];
+            const rootFileNames = program.getRootFileNames();
 
             for (const sourceFile of program.getSourceFiles()) {
                 const {fileName} = sourceFile;
                 if (
+                    options.composite && !rootFileNames.includes(fileName) || // composite projects need to specify all files as rootFiles
                     fileName.startsWith(libDirectory) || // lib.xxx.d.ts
                     // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
                     fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
