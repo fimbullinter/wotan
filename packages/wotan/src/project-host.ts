@@ -191,6 +191,23 @@ export class ProjectHost implements ts.CompilerHost {
         );
     }
 
+    public createProgram(
+        rootNames: ReadonlyArray<string>,
+        options: ts.CompilerOptions,
+        oldProgram: ts.Program | undefined,
+        projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
+    ) {
+        return projectReferences === undefined
+            ? ts.createProgram(rootNames, options, this, oldProgram) // for compatibility with TypeScript@<3.0.0
+            : ts.createProgram({
+                rootNames,
+                options,
+                oldProgram,
+                projectReferences,
+                host: this,
+            });
+    }
+
     public updateSourceFile(
         sourceFile: ts.SourceFile,
         program: ts.Program,
@@ -200,7 +217,17 @@ export class ProjectHost implements ts.CompilerHost {
         // TODO use updateSourceFile once https://github.com/Microsoft/TypeScript/issues/26166 is resolved
         sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
-        program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
+        const references = program.getProjectReferences && // for compatibility with TypeScript@<3.0.0
+            program.getProjectReferences();
+
+        program = this.createProgram(
+            program.getRootFileNames(),
+            program.getCompilerOptions(),
+            program,
+            references && references
+                .filter(<T>(ref: T | undefined): ref is T => ref !== undefined)
+                .map((ref) => ({path: ref.sourceFile.fileName})),
+        );
         return {sourceFile, program};
     }
 

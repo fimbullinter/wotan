@@ -277,7 +277,7 @@ export class Runner {
                 log("Project '%s' contains no file to lint", configFile);
             } else {
                 log("Using project '%s'", configFile);
-                yield ts.createProgram(parsed.fileNames, parsed.options, host);
+                yield host.createProgram(parsed.fileNames, parsed.options, undefined, parsed.projectReferences);
             }
         }
         if (parsed.projectReferences !== undefined) {
