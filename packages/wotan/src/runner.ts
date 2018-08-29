@@ -20,6 +20,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import resolveGlob = require('to-absolute-glob');
+import { isCompilerOptionEnabled } from 'tsutils';
 
 const log = debug('wotan:runner');
 
@@ -200,11 +201,13 @@ export class Runner {
             const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
             const typeRoots = ts.getEffectiveTypeRoots(options, host) || [];
             const rootFileNames = program.getRootFileNames();
+            const outputsOfReferencedProjects = getOutputsOfProjectReferences(program);
 
             for (const sourceFile of program.getSourceFiles()) {
                 const {fileName} = sourceFile;
                 if (
                     options.composite && !rootFileNames.includes(fileName) || // composite projects need to specify all files as rootFiles
+                    outputsOfReferencedProjects.includes(fileName) || // exclude outputs of referenced projects
                     fileName.startsWith(libDirectory) || // lib.xxx.d.ts
                     // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
                     fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
@@ -292,6 +295,68 @@ export class Runner {
             }
         }
     }
+}
+
+function getOutputsOfProjectReferences(program: ts.Program) {
+    const references = program.getProjectReferences && program.getProjectReferences();
+    if (references === undefined)
+        return [];
+    return flatMap(references, (ref) => ref === undefined ? [] : getOutputFileNamesOfProjectReference(ref));
+}
+
+function getOutputFileNamesOfProjectReference(reference: ts.ResolvedProjectReference) {
+    const options = reference.commandLine.options;
+    if (options.outFile)
+        return getOutFileNames(options.outFile, options);
+    const projectDirectory = path.dirname(reference.sourceFile.fileName);
+    // TODO fileNames does not contain the rootFiles if "include" is used
+    return flatMap(reference.commandLine.fileNames, (fileName) => getOutputFileNames(fileName, options, projectDirectory));
+}
+
+function flatMap<T, U>(source: Iterable<T>, cb: (e: T) => U[]): U[] {
+    const result = [];
+    for (const item of source)
+        result.push(...cb(item));
+    return result;
+}
+
+function getOutputExtension(fileName: string, options: ts.CompilerOptions) {
+    switch (path.extname(fileName)) {
+        case '.ts':
+            if (path.extname(fileName.slice(0, -3)) === '.d')
+                return; // .d.ts files produce no output
+            break;
+        case '.json':
+            return '.json';
+        case '.jsx':
+        case '.tsx':
+            if (options.jsx === ts.JsxEmit.Preserve)
+                return '.jsx';
+    }
+    return '.js';
+}
+
+function getOutputFileNames(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
+    const extension = getOutputExtension(fileName, options);
+    if (extension === undefined)
+        return [];
+    fileName = fileName.slice(0, -extension.length);
+    fileName = path.resolve(options.outDir || projectDirectory, path.relative(options.rootDir || projectDirectory, fileName));
+    const result = [fileName + extension];
+    // TODO isn't "declaration" always enabled in referenced projects?
+    // TODO are JS files allowed and do they produce declaration files?
+    // TODO declartionDir? tsc doesn't treat this special
+    if (extension !== '.json' && isCompilerOptionEnabled(options, 'declaration'))
+        result.push(fileName + '.d.ts');
+    return result;
+}
+
+function getOutFileNames(outFile: string, options: ts.CompilerOptions) {
+    const result = [outFile];
+    // TODO declarationDir?
+    if (isCompilerOptionEnabled(options, 'declaration'))
+        result.push(outFile.slice(0, -path.extname(outFile).length) + '.d.ts');
+    return result;
 }
 
 function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<string> {
