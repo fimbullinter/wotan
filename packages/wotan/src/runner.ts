@@ -29,6 +29,7 @@ export interface LintOptions {
     files: string[];
     exclude: string[];
     project: string | undefined;
+    references: boolean;
     fix: boolean | number;
     extensions: string[] | undefined;
 }

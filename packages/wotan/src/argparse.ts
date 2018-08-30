@@ -50,6 +50,7 @@ export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGl
             files: [],
             exclude: [],
             project: undefined,
+            references: false,
             formatter: undefined,
             fix: false,
             extensions: undefined,
@@ -60,6 +61,7 @@ export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGl
         files: expectStringOrStringArray(options, 'files') || [],
         exclude: expectStringOrStringArray(options, 'exclude') || [],
         project: expectStringOption(options, 'project'),
+        references: expectBooleanOption(options, 'references'),
         formatter: expectStringOption(options, 'formatter'),
         fix: expectBooleanOrNumberOption(options, 'fix'),
         extensions: (expectStringOrStringArray(options, 'extensions') || []).map(sanitizeExtensionArgument),
@@ -83,6 +85,14 @@ function expectStringOption(options: GlobalOptions, option: string): string | un
     if (value !== undefined)
         log("Expected a value of type 'string' for option '%s'.", option);
     return;
+}
+function expectBooleanOption(options: GlobalOptions, option: string): boolean {
+    const value = options[option];
+    if (typeof value === 'boolean')
+        return value;
+    if (value !== undefined)
+        log("Expected a value of type 'boolean' for option '%s'.", option);
+    return false;
 }
 function expectBooleanOrNumberOption(options: GlobalOptions, option: string): boolean | number {
     const value = options[option];
@@ -116,6 +126,10 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
             case '-p':
             case '--project':
                 result.project = expectStringArgument(args, ++i, arg) || undefined;
+                break;
+            case '-r':
+            case '--references':
+                ({index: i, argument: result.references} = parseOptionalBoolean(args, i));
                 break;
             case '-e':
             case '--exclude':
