@@ -39,8 +39,23 @@ export class ProjectHost implements ts.CompilerHost {
     public getProcessedFileInfo(fileName: string) {
         return this.processedFiles.get(fileName);
     }
-    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
-        return resolveCachedResult(this.directoryEntries, dir, this.processDirectory);
+    public readDirectory(
+        rootDir: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        depth?: number,
+    ) {
+        return ts.matchFiles(
+            rootDir,
+            extensions,
+            excludes,
+            includes,
+            this.useCaseSensitiveFileNames(),
+            this.cwd,
+            depth,
+            (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+        );
     }
     /**
      * Try to find and load the configuration for a file.

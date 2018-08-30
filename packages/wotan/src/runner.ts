@@ -309,7 +309,6 @@ function getOutputFileNamesOfProjectReference(reference: ts.ResolvedProjectRefer
     if (options.outFile)
         return getOutFileNames(options.outFile, options);
     const projectDirectory = path.dirname(reference.sourceFile.fileName);
-    // TODO fileNames does not contain the rootFiles if "include" is used
     return flatMap(reference.commandLine.fileNames, (fileName) => getOutputFileNames(fileName, options, projectDirectory));
 }
 
@@ -437,9 +436,9 @@ declare module 'typescript' {
 
 function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
     return {
-        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
         readDirectory(rootDir, extensions, excludes, includes, depth) {
-            return ts.matchFiles(rootDir, extensions, excludes, includes, ts.sys.useCaseSensitiveFileNames, host.cwd, depth, getEntries);
+            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
         },
         fileExists(f) {
             return host.fileExists(f);
@@ -448,8 +447,4 @@ function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
             return host.readFile(f);
         },
     };
-
-    function getEntries(dir: string) {
-        return host.getDirectoryEntries(dir);
-    }
 }
