@@ -68,7 +68,9 @@ export class Runner {
             this.configManager,
             this.processorLoader,
         );
-        for (let {files, program} of this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost)) {
+        for (let {files, program} of
+            this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
+        ) {
             for (const file of files) {
                 if (!hasSupportedExtension(file))
                     continue;
@@ -191,12 +193,13 @@ export class Runner {
         patterns: string[],
         exclude: string[],
         host: ProjectHost,
+        references: boolean,
     ): Iterable<{files: Iterable<string>, program: ts.Program}> {
         const originalNames: string [] = [];
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         // TODO maybe use a different host for each Program or purge all non-declaration files?
-        for (const program of this.createPrograms(project, host, new Set(), isFileIncluded)) {
+        for (const program of this.createPrograms(project, host, new Set(), references, isFileIncluded)) {
             const options = program.getCompilerOptions();
             const files: string[] = [];
             const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
@@ -208,7 +211,7 @@ export class Runner {
                 const {fileName} = sourceFile;
                 if (
                     options.composite && !rootFileNames.includes(fileName) || // composite projects need to specify all files as rootFiles
-                    outputsOfReferencedProjects.includes(fileName) || // exclude outputs of referenced projects
+                    fileName.endsWith('.d.ts') && outputsOfReferencedProjects.includes(fileName) ||
                     fileName.startsWith(libDirectory) || // lib.xxx.d.ts
                     // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
                     fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
@@ -250,16 +253,23 @@ export class Runner {
         configFile: string | undefined,
         host: ProjectHost,
         seen: Set<string>,
+        references: boolean,
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
         const cwd = this.directories.getCurrentDirectory();
         if (configFile !== undefined) {
             configFile = this.checkConfigDirectory(path.resolve(cwd, configFile));
+        } else if (references) {
+            configFile = this.checkConfigDirectory(cwd);
         } else {
             configFile = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
             if (configFile === undefined)
                 throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
         }
+        if (seen.has(configFile))
+            return;
+        seen.add(configFile);
+
         const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
         if (config.error !== undefined) {
             this.logger.warn(ts.formatDiagnostics([config.error], host));
@@ -274,7 +284,7 @@ export class Runner {
         );
         if (parsed.errors.length !== 0) {
             let {errors} = parsed;
-            if (parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
+            if (references && parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
                 errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
             if (errors.length !== 0)
                 this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
@@ -284,17 +294,12 @@ export class Runner {
                 log("Project '%s' contains no file to lint", configFile);
             } else {
                 log("Using project '%s'", configFile);
-                yield host.createProgram(parsed.fileNames, parsed.options, undefined, parsed.projectReferences);
+                yield host.createProgram(parsed.fileNames, parsed.options, undefined, references ? parsed.projectReferences : undefined);
             }
         }
-        if (parsed.projectReferences !== undefined) {
-            for (const reference of parsed.projectReferences) {
-                if (seen.has(reference.path))
-                    continue;
-                seen.add(reference.path);
-                yield* this.createPrograms(reference.path, host, seen, isFileIncluded);
-            }
-        }
+        if (references && parsed.projectReferences !== undefined)
+            for (const reference of parsed.projectReferences)
+                yield* this.createPrograms(reference.path, host, seen, true, isFileIncluded);
     }
 }
 
@@ -308,9 +313,19 @@ function getOutputsOfProjectReferences(program: ts.Program) {
 function getOutputFileNamesOfProjectReference(reference: ts.ResolvedProjectReference) {
     const options = reference.commandLine.options;
     if (options.outFile)
-        return getOutFileNames(options.outFile, options);
+        return [getOutFileDeclarationName(options.outFile)];
     const projectDirectory = path.dirname(reference.sourceFile.fileName);
-    return flatMap(reference.commandLine.fileNames, (fileName) => getOutputFileNames(fileName, options, projectDirectory));
+    return mapDefined(reference.commandLine.fileNames, (fileName) => getDeclarationOutputName(fileName, options, projectDirectory));
+}
+
+function mapDefined<T, U>(source: Iterable<T>, cb: (e: T) => U | undefined): U[] {
+    const result = [];
+    for (const item of source) {
+        const current = cb(item);
+        if (current !== undefined)
+            result.push(current);
+    }
+    return result;
 }
 
 function flatMap<T, U>(source: Iterable<T>, cb: (e: T) => U[]): U[] {
@@ -320,43 +335,28 @@ function flatMap<T, U>(source: Iterable<T>, cb: (e: T) => U[]): U[] {
     return result;
 }
 
-function getOutputExtension(fileName: string, options: ts.CompilerOptions) {
-    switch (path.extname(fileName)) {
+function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
+    const extension = path.extname(fileName);
+    switch (extension) {
+        case '.tsx':
+            break;
         case '.ts':
-            if (path.extname(fileName.slice(0, -3)) === '.d')
+            if (path.extname(fileName.slice(0, -extension.length)) === '.d')
                 return; // .d.ts files produce no output
             break;
-        case '.json':
-            return '.json';
-        case '.jsx':
-        case '.tsx':
-            if (options.jsx === ts.JsxEmit.Preserve)
-                return '.jsx';
+        default:
+            return;
     }
-    return '.js';
+    fileName = fileName.slice(0, -extension.length) + '.d.ts';
+    return path.resolve(
+        options.declarationDir || options.outDir || projectDirectory,
+        path.relative(options.rootDir || projectDirectory, fileName),
+    );
 }
 
-function getOutputFileNames(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
-    const extension = getOutputExtension(fileName, options);
-    if (extension === undefined)
-        return [];
-    fileName = fileName.slice(0, -extension.length);
-    fileName = path.resolve(options.outDir || projectDirectory, path.relative(options.rootDir || projectDirectory, fileName));
-    const result = [fileName + extension];
-    // TODO isn't "declaration" always enabled in referenced projects?
-    // TODO are JS files allowed and do they produce declaration files?
-    // TODO declartionDir? tsc doesn't treat this special
-    if (extension !== '.json' && isCompilerOptionEnabled(options, 'declaration'))
-        result.push(fileName + '.d.ts');
-    return result;
-}
-
-function getOutFileNames(outFile: string, options: ts.CompilerOptions) {
-    const result = [outFile];
-    // TODO declarationDir?
-    if (isCompilerOptionEnabled(options, 'declaration'))
-        result.push(outFile.slice(0, -path.extname(outFile).length) + '.d.ts');
-    return result;
+function getOutFileDeclarationName(outFile: string) {
+    // outFile ignores declarationDir?
+    return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
 }
 
 function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<string> {
