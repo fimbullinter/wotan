@@ -9,6 +9,8 @@ declare function nonGeneric(): void;
 nonGeneric();
 nonGeneric('foo');
 fn(1, 2, 3);
+~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
 import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass, RealJsClass, functionTyped, notGeneric} from './js';
 
@@ -277,6 +279,7 @@ myTagFn``;
 myTagFn`${''}`;
 myTagFn`${1}`;
 myTagFn`${1}${''}`;
+~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myTagFn<string | number>`${1}${''}`;
 
 myOtherTag``;

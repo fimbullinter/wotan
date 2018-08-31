@@ -117,7 +117,7 @@ functionOrAny!();
 function fn<T extends string | undefined, U extends string, V>(one: T, two: U, three: V) {
     one!;
     two;
-    fn(one, two);
+    fn(one!, two);
     foo(one!);
     fn(two, one!);
     foo(three);
