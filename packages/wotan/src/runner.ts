@@ -20,7 +20,6 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import resolveGlob = require('to-absolute-glob');
-import { isCompilerOptionEnabled } from 'tsutils';
 
 const log = debug('wotan:runner');
 

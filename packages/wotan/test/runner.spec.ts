@@ -28,6 +28,7 @@ test('throws error on non-existing file', (t) => {
             ],
             exclude: ['*.js'],
             project: undefined,
+            references: false,
             fix: false,
             extensions: undefined,
         })),
@@ -50,6 +51,7 @@ test('throws error on file not included in project', (t) => {
             ],
             exclude: ['*.js'],
             project: 'test/project/setup',
+            references: false,
             fix: false,
             extensions: undefined,
         })),
@@ -82,6 +84,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             files: [],
             exclude: [],
             project: root,
+            references: false,
             fix: false,
             extensions: undefined,
         })),
@@ -95,6 +98,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             files: [],
             exclude: [],
             project: dir,
+            references: false,
             fix: false,
             extensions: undefined,
         })),
@@ -107,6 +111,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             files: [],
             exclude: [],
             project: undefined,
+            references: false,
             fix: false,
             extensions: undefined,
         })),
@@ -163,6 +168,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         files: [],
         exclude: [],
         project: 'invalid-config.json',
+        references: false,
         fix: false,
         extensions: undefined,
     }));
@@ -174,6 +180,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         files: [],
         exclude: [],
         project: 'invalid-base.json',
+        references: false,
         fix: false,
         extensions: undefined,
     }));
@@ -185,6 +192,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         files: [],
         exclude: [],
         project: 'invalid-files.json',
+        references: false,
         fix: false,
         extensions: undefined,
     }));
@@ -196,6 +204,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         files: [],
         exclude: [],
         project: 'no-match.json',
+        references: false,
         fix: false,
         extensions: undefined,
     }));
@@ -305,6 +314,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
         files: [],
         exclude: [],
         project: 'tsconfig.json',
+        references: false,
         fix: false,
         extensions: undefined,
     }));
@@ -339,6 +349,7 @@ test('works with absolute and relative paths', (t) => {
                 'test/fixtures/paths/d.ts',
             ],
             project: project ? 'test/fixtures/paths/tsconfig.json' : undefined,
+            references: false,
             fix: false,
             extensions: undefined,
         }));

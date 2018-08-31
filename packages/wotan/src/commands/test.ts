@@ -153,6 +153,7 @@ class TestCommandRunner extends AbstractCommandRunner {
             exclude: [],
             files: [],
             project: undefined,
+            references: false,
             extensions: undefined,
             ...config,
             fix: false,

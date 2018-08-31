@@ -156,6 +156,7 @@ test('SaveCommand', async (t) => {
         await verify({
             command: CommandName.Save,
             project: undefined,
+            references: false,
             config: undefined,
             fix: false,
             exclude: [],
@@ -175,6 +176,7 @@ test('SaveCommand', async (t) => {
             {
                 command: CommandName.Save,
                 project: undefined,
+                references: false,
                 config: undefined,
                 fix: 0,
                 exclude: [],
@@ -199,6 +201,7 @@ test('SaveCommand', async (t) => {
             {
                 command: CommandName.Save,
                 project: undefined,
+                references: false,
                 config: '.wotanrc.yaml',
                 fix: true,
                 exclude: [],
@@ -209,6 +212,7 @@ test('SaveCommand', async (t) => {
             },
             {
                 project: 'foo.json',
+                references: true,
                 modules: ['foo', 'bar'],
             },
         ),
@@ -223,6 +227,7 @@ test('SaveCommand', async (t) => {
             {
                 command: CommandName.Save,
                 project: undefined,
+                references: false,
                 config: undefined,
                 fix: 0,
                 exclude: [],
@@ -328,6 +333,7 @@ test('LintCommand', async (t) => {
                 exclude: [],
                 config: '.wotanrc.yaml',
                 project: undefined,
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
@@ -348,6 +354,7 @@ test('LintCommand', async (t) => {
                 exclude: [],
                 config: '.wotanrc.fail.yaml',
                 project: undefined,
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
@@ -378,6 +385,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
                 project: undefined,
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
@@ -402,6 +410,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
                 project: undefined,
+                references: false,
                 formatter: undefined,
                 fix: false,
                 extensions: undefined,
