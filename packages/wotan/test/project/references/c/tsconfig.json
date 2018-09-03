@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "outDir": "../outdir/c",
+    "composite": true
+  },
+  "references": [
+    {"path": "../b"},
+    {"path": "../a"}
+  ]
+}
