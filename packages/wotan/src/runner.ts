@@ -251,7 +251,7 @@ export class Runner {
             case FileKind.NonExistent:
                 throw new ConfigurationError(`The specified path does not exist: '${fileOrDirName}'`);
             case FileKind.Directory: {
-                const file = path.join(fileOrDirName, 'tsconfig.json');
+                const file = unixifyPath(path.join(fileOrDirName, 'tsconfig.json'));
                 if (!this.fs.isFile(file))
                     throw new ConfigurationError(`Cannot find a tsconfig.json file at the specified directory: '${fileOrDirName}'`);
                 return file;
@@ -378,9 +378,11 @@ function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions,
             return;
     }
     fileName = fileName.slice(0, -extension.length) + '.d.ts';
-    return path.resolve(
-        options.declarationDir || options.outDir || projectDirectory,
-        path.relative(options.rootDir || projectDirectory, fileName),
+    return unixifyPath(
+        path.resolve(
+            options.declarationDir || options.outDir || projectDirectory,
+            path.relative(options.rootDir || projectDirectory, fileName),
+        ),
     );
 }
 
