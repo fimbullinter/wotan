@@ -1,4 +1,5 @@
 {
   "project": "e",
-  "references": false
+  "references": false,
+  "typescriptVersion": ">= 3.0.0"
 }

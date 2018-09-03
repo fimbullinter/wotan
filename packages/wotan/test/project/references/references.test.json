@@ -1,3 +1,4 @@
 {
-  "references": true
+  "references": true,
+  "typescriptVersion": ">= 3.0.0"
 }
