@@ -1,0 +1,36 @@
+import mdefault, {m} from 'non-existent-module';
+                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+let foo: string;
+foo = 1;
+~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
+console.clog(foo);
+        ~~~~       [error typecheck: Property 'clog' does not exist on type 'Console'. Did you mean 'log'?]
+console.log(mdefault);
+
+let bar: Array<Map<number, [boolean, string]>>;
+let baz = foo;
+
+function fn(param: Array<Map<number, [number, string]>>): boolean {
+    return param[0];
+    ~~~~~~~~~~~~~~~~ [error typecheck: Type 'Map<number, [number, string]>' is not assignable to type 'boolean'.]
+    fn
+    ~~ [error typecheck: Unreachable code detected.]
+}
+
+function fn2(param1: string, param2): string {
+                                      ~~~~~~   [error typecheck: A function whose declared type is neither 'void' nor 'any' must return a value.]
+    fn(bar);
+       ~~~   [error typecheck: Argument of type 'Map<number, [boolean, string]>[]' is not assignable to parameter of type 'Map<number, [number, string]>[]'.\
+  Type 'Map<number, [boolean, string]>' is not assignable to type 'Map<number, [number, string]>'.\
+    Type '[boolean, string]' is not assignable to type '[number, string]'.\
+      Type 'boolean' is not assignable to type 'number'.]
+}
+
+fn2();
+~~~~~  [error typecheck: Expected 2 arguments, but got 0.]
+
+export function usesPrivateName() {
+                ~~~~~~~~~~~~~~~     [error typecheck: Return type of exported function has or is using private name 'Foo'.]
+    class Foo {}
+    return new Foo();
+}

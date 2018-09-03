@@ -1,10 +1,11 @@
 import { TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
+import { isCompilerOptionEnabled } from 'tsutils';
 
 export class Rule extends TypedRule {
     public apply() {
         this.program.getSemanticDiagnostics(this.sourceFile).forEach(this.addDiagnostic, this);
-        if (this.program.getCompilerOptions().declaration)
+        if (isCompilerOptionEnabled(this.program.getCompilerOptions(), 'declaration'))
             this.program.getDeclarationDiagnostics(this.sourceFile).forEach(this.addDiagnostic, this);
     }
 
