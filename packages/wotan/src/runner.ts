@@ -194,6 +194,17 @@ export class Runner {
         host: ProjectHost,
         references: boolean,
     ): Iterable<{files: Iterable<string>, program: ts.Program}> {
+        const cwd = this.directories.getCurrentDirectory();
+        if (project !== undefined) {
+            project = this.checkConfigDirectory(path.resolve(cwd, project));
+        } else if (references) {
+            project = this.checkConfigDirectory(cwd);
+        } else {
+            project = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
+            if (project === undefined)
+                throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
+        }
+
         const originalNames: string [] = [];
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
@@ -249,22 +260,12 @@ export class Runner {
     }
 
     private* createPrograms(
-        configFile: string | undefined,
+        configFile: string,
         host: ProjectHost,
         seen: Set<string>,
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
-        const cwd = this.directories.getCurrentDirectory();
-        if (configFile !== undefined) {
-            configFile = this.checkConfigDirectory(path.resolve(cwd, configFile));
-        } else if (references) {
-            configFile = this.checkConfigDirectory(cwd);
-        } else {
-            configFile = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
-            if (configFile === undefined)
-                throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
-        }
         if (seen.has(configFile))
             return;
         seen.add(configFile);
@@ -298,7 +299,7 @@ export class Runner {
         }
         if (references && parsed.projectReferences !== undefined)
             for (const reference of parsed.projectReferences)
-                yield* this.createPrograms(reference.path, host, seen, true, isFileIncluded);
+                yield* this.createPrograms(this.checkConfigDirectory(reference.path), host, seen, true, isFileIncluded);
     }
 }
 
