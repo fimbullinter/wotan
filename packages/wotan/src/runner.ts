@@ -11,7 +11,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, mapDefined } from './utils';
+import { unixifyPath, hasSupportedExtension, mapDefined, addUnique } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -208,7 +208,7 @@ export class Runner {
         const originalNames: string [] = [];
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
-        const projectsSeen = new Set<string>();
+        const projectsSeen: string[] = [];
         // TODO maybe use a different host for each Program or purge all non-declaration files?
         for (const program of this.createPrograms(project, host, projectsSeen, references, isFileIncluded)) {
             const options = program.getCompilerOptions();
@@ -265,13 +265,12 @@ export class Runner {
     private* createPrograms(
         configFile: string,
         host: ProjectHost,
-        seen: Set<string>,
+        seen: string[],
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
-        if (seen.has(configFile))
+        if (!addUnique(seen, configFile))
             return;
-        seen.add(configFile);
 
         const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
         if (config.error !== undefined) {
@@ -310,13 +309,12 @@ function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
     const references = program.getProjectReferences && program.getProjectReferences();
     if (references === undefined)
         return [];
-    const seen = new Set<string>();
+    const seen: string[] = [];
     const result = [];
     const moreReferences = [];
     for (const ref of references) {
-        if (ref === undefined || seen.has(ref.sourceFile.fileName))
+        if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
             continue;
-        seen.add(ref.sourceFile.fileName);
         result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
         if (ref.commandLine.projectReferences !== undefined)
             moreReferences.push(...ref.commandLine.projectReferences);
@@ -327,9 +325,9 @@ function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
 }
 
 /** recurse into every transitive project reference to exclude all of their outputs from linting */
-function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: Set<string>, host: ProjectHost) {
+function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: string[], host: ProjectHost) {
     const referencePath = ts.resolveProjectReferencePath(host, reference);
-    if (seen.has(referencePath))
+    if (!addUnique(seen, referencePath))
         return [];
     const sourceFile = host.getSourceFile(referencePath, ts.ScriptTarget.JSON);
     if (sourceFile === undefined)
@@ -407,13 +405,13 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<
     return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
-function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[], projects: Set<string>) {
+function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[], projects: ReadonlyArray<string>) {
     for (const pattern of include) {
         if (!glob.hasMagic(pattern.pattern)) {
             const normalized = pattern.set[0].join('/');
             if (!files.includes(normalized) && !isExcluded(normalized, exclude))
                 throw new ConfigurationError(
-                    `'${normalized}' is not included in any of the projects: '${Array.from(projects).join("', '")}'.`,
+                    `'${normalized}' is not included in any of the projects: '${projects.join("', '")}'.`,
                 );
         }
     }

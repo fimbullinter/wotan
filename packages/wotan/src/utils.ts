@@ -124,3 +124,14 @@ export function mapDefined<T, U>(input: Iterable<T>, cb: (item: T) => U | undefi
     }
     return result;
 }
+
+/**
+ * Adds an item to an array if it's not already included.
+ * @returns true if the item was not present in the array
+ * */
+export function addUnique<T>(arr: T[], item: T & {[K in keyof T]: T[K]}) {
+    if (arr.includes(item))
+        return false;
+    arr.push(item);
+    return true;
+}

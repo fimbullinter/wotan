@@ -22,7 +22,7 @@ export interface ProcessedFileInfo {
 // @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
-    private files = new Set<string>();
+    private files: string[] = [];
     private directoryEntries = new Map<string, ts.FileSystemEntries>();
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
@@ -104,7 +104,7 @@ export class ProjectHost implements ts.CompilerHost {
                         }
                     }
                     files.push(fileName);
-                    this.files.add(fileName);
+                    this.files.push(fileName);
                     break;
                 }
                 case FileKind.Directory:
@@ -131,7 +131,7 @@ export class ProjectHost implements ts.CompilerHost {
     }
 
     public getFileSystemFile(file: string): string | undefined {
-        if (this.files.has(file))
+        if (this.files.includes(file))
             return file;
         const reverse = this.reverseMap.get(file);
         if (reverse !== undefined)
