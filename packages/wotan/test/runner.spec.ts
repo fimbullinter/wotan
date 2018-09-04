@@ -55,7 +55,7 @@ test('throws error on file not included in project', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in the project.`,
+        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in any of the projects.`,
     );
 });
 

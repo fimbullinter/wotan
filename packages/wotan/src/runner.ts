@@ -421,7 +421,7 @@ function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files
         if (!glob.hasMagic(pattern.pattern)) {
             const normalized = pattern.set[0].join('/');
             if (!files.includes(normalized) && !isExcluded(normalized, exclude))
-                throw new ConfigurationError(`'${normalized}' is not included in the project.`);
+                throw new ConfigurationError(`'${normalized}' is not included in any of the projects.`);
         }
     }
 }
