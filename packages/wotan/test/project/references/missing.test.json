@@ -1,3 +1,4 @@
 {
-  "project": "missing/tsconfig.y.json"
+  "project": "missing/tsconfig.y.json",
+  "typescriptVersion": ">= 3.0.0"
 }
