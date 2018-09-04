@@ -66,7 +66,7 @@ test('parseGlobalOptions', (t) => {
     );
 
     t.deepEqual(
-        parseGlobalOptions({fix: 'foo', project: false, references: undefined, modules: [1]}),
+        parseGlobalOptions({fix: 'foo', project: false, references: 'false', modules: [1]}),
         {
             modules: [],
             config: undefined,
