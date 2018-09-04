@@ -208,8 +208,9 @@ export class Runner {
         const originalNames: string [] = [];
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
+        const projectsSeen = new Set<string>();
         // TODO maybe use a different host for each Program or purge all non-declaration files?
-        for (const program of this.createPrograms(project, host, new Set(), references, isFileIncluded)) {
+        for (const program of this.createPrograms(project, host, projectsSeen, references, isFileIncluded)) {
             const options = program.getCompilerOptions();
             const files: string[] = [];
             const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
@@ -239,7 +240,7 @@ export class Runner {
             }
             yield {files, program};
         }
-        ensurePatternsMatch(include, ex, originalNames);
+        ensurePatternsMatch(include, ex, originalNames, projectsSeen);
 
         function isFileIncluded(fileName: string) {
             return (include.length === 0 || include.some((p) => p.match(fileName))) && !ex.some((p) => p.match(fileName));
@@ -406,12 +407,14 @@ function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<
     return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
-function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[]) {
+function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[], projects: Set<string>) {
     for (const pattern of include) {
         if (!glob.hasMagic(pattern.pattern)) {
             const normalized = pattern.set[0].join('/');
             if (!files.includes(normalized) && !isExcluded(normalized, exclude))
-                throw new ConfigurationError(`'${normalized}' is not included in any of the projects.`);
+                throw new ConfigurationError(
+                    `'${normalized}' is not included in any of the projects: '${Array.from(projects).join("', '")}'.`,
+                );
         }
     }
 }
