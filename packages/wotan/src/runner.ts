@@ -11,7 +11,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension } from './utils';
+import { unixifyPath, hasSupportedExtension, mapDefined } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -353,16 +353,6 @@ function getOutputFileNamesOfProjectReference(projectDirectory: string, commandL
     if (options.outFile)
         return [getOutFileDeclarationName(options.outFile)];
     return mapDefined(commandLine.fileNames, (fileName) => getDeclarationOutputName(fileName, options, projectDirectory));
-}
-
-function mapDefined<T, U>(source: Iterable<T>, cb: (e: T) => U | undefined): U[] {
-    const result = [];
-    for (const item of source) {
-        const current = cb(item);
-        if (current !== undefined)
-            result.push(current);
-    }
-    return result;
 }
 
 function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {

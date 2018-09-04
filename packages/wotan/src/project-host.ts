@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -239,9 +239,7 @@ export class ProjectHost implements ts.CompilerHost {
             program.getRootFileNames(),
             program.getCompilerOptions(),
             program,
-            references && references
-                .filter(<T>(ref: T | undefined): ref is T => ref !== undefined)
-                .map((ref) => ({path: ref.sourceFile.fileName})),
+            references && mapDefined(references, (ref) => ref && {path: ref.sourceFile.fileName}),
         );
         return {sourceFile, program};
     }

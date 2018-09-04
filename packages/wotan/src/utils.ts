@@ -64,12 +64,7 @@ function convertToPrintable(value: any): any {
         value = obj;
     }
     if (Array.isArray(value)) {
-        const result = [];
-        for (const element of value) {
-            const converted = convertToPrintable(element);
-            if (converted !== undefined)
-                result.push(converted);
-        }
+        const result = mapDefined(value, convertToPrintable);
         return result.length === 0 ? undefined : result;
     }
     const keys = Object.keys(value);
@@ -118,4 +113,14 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
 export function hasSupportedExtension(fileName: string, extensions?: ReadonlyArray<string>) {
     const ext = path.extname(fileName);
     return /^\.[jt]sx?$/.test(ext) || extensions !== undefined && extensions.includes(ext);
+}
+
+export function mapDefined<T, U>(input: Iterable<T>, cb: (item: T) => U | undefined) {
+    const result = [];
+    for (const item of input) {
+        const current = cb(item);
+        if (current !== undefined)
+            result.push(current);
+    }
+    return result;
 }
