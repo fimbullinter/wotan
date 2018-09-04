@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "composite": true,
+  },
+  "files": [
+    "x.ts"
+  ],
+  "references": [
+    {"path": "tsconfig.missing.json"}
+  ]
+}

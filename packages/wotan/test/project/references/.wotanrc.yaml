@@ -1,0 +1,5 @@
+rulesDirectories:
+  local: '.'
+rules:
+  local/quotemark: error
+  no-debugger: error

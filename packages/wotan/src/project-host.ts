@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -39,8 +39,23 @@ export class ProjectHost implements ts.CompilerHost {
     public getProcessedFileInfo(fileName: string) {
         return this.processedFiles.get(fileName);
     }
-    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
-        return resolveCachedResult(this.directoryEntries, dir, this.processDirectory);
+    public readDirectory(
+        rootDir: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        depth?: number,
+    ) {
+        return ts.matchFiles(
+            rootDir,
+            extensions,
+            excludes,
+            includes,
+            this.useCaseSensitiveFileNames(),
+            this.cwd,
+            depth,
+            (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+        );
     }
     /**
      * Try to find and load the configuration for a file.
@@ -191,6 +206,23 @@ export class ProjectHost implements ts.CompilerHost {
         );
     }
 
+    public createProgram(
+        rootNames: ReadonlyArray<string>,
+        options: ts.CompilerOptions,
+        oldProgram: ts.Program | undefined,
+        projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
+    ) {
+        return projectReferences === undefined
+            ? ts.createProgram(rootNames, options, this, oldProgram) // for compatibility with TypeScript@<3.0.0
+            : ts.createProgram({
+                rootNames,
+                options,
+                oldProgram,
+                projectReferences,
+                host: this,
+            });
+    }
+
     public updateSourceFile(
         sourceFile: ts.SourceFile,
         program: ts.Program,
@@ -200,7 +232,15 @@ export class ProjectHost implements ts.CompilerHost {
         // TODO use updateSourceFile once https://github.com/Microsoft/TypeScript/issues/26166 is resolved
         sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
-        program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
+        const references = program.getProjectReferences && // for compatibility with TypeScript@<3.0.0
+            program.getProjectReferences();
+
+        program = this.createProgram(
+            program.getRootFileNames(),
+            program.getCompilerOptions(),
+            program,
+            references && mapDefined(references, (ref) => ref && {path: ref.sourceFile.fileName}),
+        );
         return {sourceFile, program};
     }
 

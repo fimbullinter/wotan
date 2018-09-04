@@ -36,6 +36,7 @@ Now you can run the linter with one of the following commands depending on your 
 wotan -p <path/to/tsconfig.json> # lint the whole project
 wotan 'src/**/*.ts' -e '**/*.d.ts' # lint all typescript files excluding declaration files
 wotan --fix # lint the whole project and fix all fixable errors
+wotan -p tsconfig.json -r # lint the specified project and all projects in its 'references'
 ```
 
 ## Available Rules
@@ -134,12 +135,13 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 
 ## CLI Options
 
-* `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
 * `-c --config <name>` specifies the configuration to use for all files instead of looking for configuration files in parent directories. This can either be a file name, the name of a node module containing a shareable config, or the name of a builtin config like `wotan:recommended`
 * `-e --exclude <glob>` excludes all files that match the given glob pattern from linting. This option can be used multiple times to specify multiple patterns. For example `-e '**/*.js' -e '**/*.d.ts'`. It is recommended to wrap the glob patterns in single quotes to prevent the shell from expanding them.
+* `--fix [true|false|number]` automatically fixes all fixable failures in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Given a number it will at most use the specified number of iterations for fixing before returning the result.
 * `-f --formatter <name>` the name or path of a formatter. This can either be a file name, the name of a node module contianing a formatter, or the name of a builtin formatter. Currently available builtin formatters are `json` and `stylish` (default).
-* `--fix [true|false]` automatically fixes all fixable failures in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature.
+* `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information.
+* `-r --references [true|false]` enables project references. Starting from the project specified with `-p --project` or the `tsconfig.json` in the current directory it will recursively follow all `"references"` and lint those projects.
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
 Note that all file paths are relative to the current working directory. Therefore `**/*.ts` doesn't match `../foo.ts`.

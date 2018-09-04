@@ -1,0 +1,9 @@
+{
+  "files": [
+    "y.ts"
+  ],
+  "references": [
+    {"path": "tsconfig.x.json"},
+    {"path": "tsconfig.missing.json"}
+  ]
+}

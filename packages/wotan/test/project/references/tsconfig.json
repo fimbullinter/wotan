@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    {"path": "a"},
+    {"path": "b"},
+    {"path": "c"},
+    {"path": "d"},
+    {"path": "e"},
+    {"path": "a/tsconfig.json"},
+    {"path": "outfile/tsconfig.b.json"}
+  ]
+}

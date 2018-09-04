@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outFile": "./out-a.js",
+    "composite": true
+  },
+  "files": [
+    "a.ts"
+  ]
+}

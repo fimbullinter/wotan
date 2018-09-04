@@ -1,0 +1,7 @@
+{
+  "project": ".",
+  "references": true,
+  "exclude": ["{a,b,d}/index.ts?(x)", "outfile/**"],
+  "fix": false,
+  "typescriptVersion": ">= 3.0.0"
+}

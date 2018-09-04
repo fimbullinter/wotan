@@ -1,0 +1,7 @@
+import { X } from "./x";
+                  ~~~~~  [error local/quotemark: Prefer single quotes]
+
+// this needs two fixer runs and ensures it still resolves to 'x.d.ts' instead of 'x.ts'
+<string><string>new X().prop;
+~~~~~~~~                      [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+        ~~~~~~~~              [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
