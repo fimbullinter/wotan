@@ -376,7 +376,7 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
             fix: true,
             extensions: undefined,
         }),
-        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]]
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]],
     );
     t.snapshot(result, {id: 'multi-project'});
 });

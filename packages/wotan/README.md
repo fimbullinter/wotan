@@ -140,7 +140,7 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 * `--fix [true|false|number]` automatically fixes all fixable failures in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Given a number it will at most use the specified number of iterations for fixing before returning the result.
 * `-f --formatter <name>` the name or path of a formatter. This can either be a file name, the name of a node module contianing a formatter, or the name of a builtin formatter. Currently available builtin formatters are `json` and `stylish` (default).
 * `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
-* `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information.
+* `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information. This option can be used multiple times to specify multiple projects to lint.
 * `-r --references [true|false]` enables project references. Starting from the project specified with `-p --project` or the `tsconfig.json` in the current directory it will recursively follow all `"references"` and lint those projects.
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
@@ -157,6 +157,8 @@ wotan -c wotan:recommended --fix # same as above with automatic fixing
 wotan '**/*.ts' -e '**/*.d.ts' -e 'node_modules/**' # lint all typescript files excluding declaration files, also excludes node_modules just to be sure
 wotan -p . # lint the whole project configured by ./tsconfig.json, with type information, excludes node_modules by default
 wotan -p . 'src/**' # lint all files in src directory that are included in the project with type information
+wotan -p src -p test # lint all files in project 'src' and all files in project 'test'
+wotan -p . -r # lint the whole project configured by ./tsconfig.json all all of its project references
 wotan -m @fimbul/heimdall # enables TSLint rules and formatters to be used. for more information, see @fimbul/heimdall
 ```
 
