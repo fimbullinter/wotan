@@ -247,7 +247,11 @@ export class ProjectHost implements ts.CompilerHost {
     public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
         // this is only called for paths that are no longer referenced
         // it's safe to remove the cache entry completely because it won't be called with updated SourceFiles
-        this.sourceFileCache.delete(sourceFile.fileName);
-        this.processedFiles.delete(sourceFile.fileName);
+        this.uncacheFile(sourceFile.fileName);
+    }
+
+    public uncacheFile(fileName: string) {
+        this.sourceFileCache.delete(fileName);
+        this.processedFiles.delete(fileName);
     }
 }
