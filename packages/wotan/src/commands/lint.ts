@@ -2,7 +2,7 @@ import { AbstractCommandRunner, LintCommand } from './base';
 import { injectable, ContainerModule } from 'inversify';
 import { Runner } from '../runner';
 import { FormatterLoader } from '../services/formatter-loader';
-import { MessageHandler, Failure } from '@fimbul/ymir';
+import { MessageHandler } from '@fimbul/ymir';
 import { CachedFileSystem } from '../services/cached-file-system';
 
 @injectable()
@@ -22,7 +22,7 @@ class LintCommandRunner extends AbstractCommandRunner {
         if (formatter.prefix !== undefined)
             this.logger.log(formatter.prefix);
         for (const [file, summary] of result) {
-            if (summary.failures.some(isError))
+            if (summary.failures.some((f) => f.severity === 'error'))
                 success = false;
             const formatted = formatter.format(file, summary);
             if (formatted !== undefined)
@@ -37,10 +37,6 @@ class LintCommandRunner extends AbstractCommandRunner {
         }
         return success;
     }
-}
-
-function isError(failure: Failure) {
-    return failure.severity === 'error';
 }
 
 export const module = new ContainerModule((bind) => {
