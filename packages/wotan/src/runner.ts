@@ -194,7 +194,7 @@ export class Runner {
         host: ProjectHost,
         references: boolean,
     ): Iterable<{files: Iterable<string>, program: ts.Program}> {
-        const cwd = this.directories.getCurrentDirectory();
+        const cwd = unixifyPath(this.directories.getCurrentDirectory());
         if (projects.length !== 0) {
             projects = projects.map((configFile) => this.checkConfigDirectory(unixifyPath(path.resolve(cwd, configFile))));
         } else if (references) {

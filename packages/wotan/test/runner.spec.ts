@@ -90,7 +90,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `Cannot find a tsconfig.json file at the specified directory: '${root}'`,
+        `Cannot find a tsconfig.json file at the specified directory: '${unixifyPath(root)}'`,
     );
 
     const dir = path.join(__dirname, 'non-existent');
@@ -104,7 +104,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `The specified path does not exist: '${dir}'`,
+        `The specified path does not exist: '${unixifyPath(dir)}'`,
     );
 
     t.throws(
@@ -117,7 +117,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             fix: false,
             extensions: undefined,
         })),
-        `Cannot find tsconfig.json for directory '${process.cwd()}'.`,
+        `Cannot find tsconfig.json for directory '${unixifyPath(process.cwd())}'.`,
     );
 });
 
@@ -198,7 +198,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         fix: false,
         extensions: undefined,
     }));
-    t.is(warning, `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`);
+    t.is(warning, `error TS18002: The 'files' list in config file '${unixifyPath(path.resolve('invalid-files.json'))}' is empty.\n`);
     warning = '';
 
     Array.from(runner.lintCollection({
