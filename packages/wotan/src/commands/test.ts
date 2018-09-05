@@ -11,6 +11,7 @@ import { satisfies, SemVer } from 'semver';
 import { LintOptions, Runner } from '../runner';
 import * as ts from 'typescript';
 import * as diff from 'diff';
+import { parseGlobalOptions } from '../argparse';
 
 const enum BaselineKind {
     Lint = 'lint',
@@ -148,16 +149,8 @@ class TestCommandRunner extends AbstractCommandRunner {
     }
 
     private test(config: Partial<LintOptions>, host: RuleTestHost): boolean {
-        const lintOptions: LintOptions = {
-            config: undefined,
-            exclude: [],
-            files: [],
-            project: undefined,
-            references: false,
-            extensions: undefined,
-            ...config,
-            fix: false,
-        };
+        const lintOptions = parseGlobalOptions(config);
+        lintOptions.fix = false;
         const lintResult = Array.from(this.runner.lintCollection(lintOptions));
         let containsFixes = false;
         for (const [fileName, summary] of lintResult) {
