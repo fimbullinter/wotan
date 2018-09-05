@@ -6,7 +6,7 @@ import { createDefaultModule } from '../src/di/default.module';
 import { Runner } from '../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
-import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
+import { FileSystem, MessageHandler, DirectoryService, FileSummary } from '@fimbul/ymir';
 import { unixifyPath } from '../src/utils';
 
 const directories: DirectoryService = {
@@ -358,4 +358,25 @@ test('works with absolute and relative paths', (t) => {
         t.is(result.length, 1);
         t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
     }
+});
+
+test('supports linting multiple (overlapping) projects in one run', (t) => {
+    const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/multi-project/src', 'test/fixtures/multi-project/test'],
+            references: false,
+            fix: true,
+            extensions: undefined,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]]
+    );
+    t.snapshot(result, {id: 'multi-project'});
 });
