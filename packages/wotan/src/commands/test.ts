@@ -120,7 +120,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                         fix: OptionParser.Parser.parsePrimitive('boolean', 'number'), // no default
                         typescriptVersion: OptionParser.Parser.parsePrimitive('string'),
                     },
-                    {validate: true, context: testcase},
+                    {validate: true, context: testcase, exhaustive: true},
                 );
                 if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {
                     this.logger.log(

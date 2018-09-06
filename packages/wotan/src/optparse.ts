@@ -14,6 +14,7 @@ export namespace OptionParser {
     export interface ParseConfig {
         validate?: boolean;
         context?: string;
+        exhaustive?: boolean;
     }
 
     export function parse<T extends Record<string, ParseFunction<any>>>(
@@ -25,10 +26,19 @@ export namespace OptionParser {
         let name: string;
         for (name of Object.keys(specs))
             result[name] = specs[name](options && options[name], reportMismatch);
+        if (config.exhaustive && options)
+            for (const key of Object.keys(options))
+                if (specs[key] === undefined)
+                    report(`Unexpected option '${key}'.`);
         return <ParsedOptions<T>>result;
 
         function reportMismatch(type: string) {
-            const message = `${config.context ? config.context + ': ' : ''}Expected a value of type '${type}' for option '${name}'.`;
+            report(`Expected a value of type '${type}' for option '${name}'.`);
+        }
+
+        function report(message: string) {
+            if (config.context)
+                message = config.context + ': ' + message;
             if (config.validate)
                 throw new ConfigurationError(message);
             log(message);
