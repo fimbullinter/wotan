@@ -49,7 +49,7 @@ export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGl
             config: undefined,
             files: [],
             exclude: [],
-            project: undefined,
+            project: [],
             references: false,
             formatter: undefined,
             fix: false,
@@ -60,7 +60,7 @@ export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGl
         config: expectStringOption(options, 'config'),
         files: expectStringOrStringArray(options, 'files') || [],
         exclude: expectStringOrStringArray(options, 'exclude') || [],
-        project: expectStringOption(options, 'project'),
+        project: expectStringOrStringArray(options, 'project') || [],
         references: expectBooleanOption(options, 'references'),
         formatter: expectStringOption(options, 'formatter'),
         fix: expectBooleanOrNumberOption(options, 'fix'),
@@ -119,13 +119,17 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
     const extensions: string[] = [];
     const modules: string[] = [];
     const files: string[] = [];
+    const projects: string[] = [];
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
         switch (arg) {
             case '-p':
             case '--project':
-                result.project = expectStringArgument(args, ++i, arg) || undefined;
+                result.project = projects;
+                const project = expectStringArgument(args, ++i, arg);
+                if (project !== '')
+                    projects.push(project);
                 break;
             case '-r':
             case '--references':
@@ -174,7 +178,7 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
     if (result.extensions !== undefined) {
         if (result.extensions.length === 0) {
             result.extensions = undefined;
-        } else if (result.project !== undefined || result.files.length === 0) {
+        } else if (result.project.length !== 0 || result.files.length === 0) {
             throw new ConfigurationError("Options '--ext' and '--project' cannot be used together.");
         }
     }

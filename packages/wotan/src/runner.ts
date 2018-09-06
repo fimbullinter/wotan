@@ -25,12 +25,12 @@ const log = debug('wotan:runner');
 
 export interface LintOptions {
     config: string | undefined;
-    files: string[];
-    exclude: string[];
-    project: string | undefined;
+    files: ReadonlyArray<string>;
+    exclude: ReadonlyArray<string>;
+    project: ReadonlyArray<string>;
     references: boolean;
     fix: boolean | number;
-    extensions: string[] | undefined;
+    extensions: ReadonlyArray<string> | undefined;
 }
 
 @injectable()
@@ -49,7 +49,7 @@ export class Runner {
         const resolveOptions = {cwd: this.directories.getCurrentDirectory()};
         const files = options.files.map(resolve);
         const exclude = options.exclude.map(resolve);
-        if (options.project === undefined && options.files.length !== 0)
+        if (options.project.length === 0 && options.files.length !== 0)
             return this.lintFiles({...options, files, exclude}, config);
 
         return this.lintProject({...options, files, exclude}, config);
@@ -188,21 +188,22 @@ export class Runner {
     }
 
     private* getFilesAndProgram(
-        project: string | undefined,
-        patterns: string[],
-        exclude: string[],
+        projects: ReadonlyArray<string>,
+        patterns: ReadonlyArray<string>,
+        exclude: ReadonlyArray<string>,
         host: ProjectHost,
         references: boolean,
     ): Iterable<{files: Iterable<string>, program: ts.Program}> {
-        const cwd = this.directories.getCurrentDirectory();
-        if (project !== undefined) {
-            project = this.checkConfigDirectory(path.resolve(cwd, project));
+        const cwd = unixifyPath(this.directories.getCurrentDirectory());
+        if (projects.length !== 0) {
+            projects = projects.map((configFile) => this.checkConfigDirectory(unixifyPath(path.resolve(cwd, configFile))));
         } else if (references) {
-            project = this.checkConfigDirectory(cwd);
+            projects = [this.checkConfigDirectory(cwd)];
         } else {
-            project = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
+            const project = ts.findConfigFile(cwd, (f) => this.fs.isFile(f));
             if (project === undefined)
                 throw new ConfigurationError(`Cannot find tsconfig.json for directory '${cwd}'.`);
+            projects = [project];
         }
 
         const originalNames: string [] = [];
@@ -210,7 +211,7 @@ export class Runner {
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
         // TODO maybe use a different host for each Program or purge all non-declaration files?
-        for (const program of this.createPrograms(project, host, projectsSeen, references, isFileIncluded)) {
+        for (const program of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
             const options = program.getCompilerOptions();
             const files: string[] = [];
             const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
@@ -263,45 +264,52 @@ export class Runner {
     }
 
     private* createPrograms(
-        configFile: string,
+        projects: ReadonlyArray<string>,
         host: ProjectHost,
         seen: string[],
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
-        if (!addUnique(seen, configFile))
-            return;
+        for (const configFile of projects) {
+            if (!addUnique(seen, configFile))
+                continue;
 
-        const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
-        if (config.error !== undefined) {
-            this.logger.warn(ts.formatDiagnostics([config.error], host));
-            config.config = {};
-        }
-        const parsed = ts.parseJsonConfigFileContent(
-            config.config,
-            createParseConfigHost(host),
-            path.dirname(configFile),
-            {noEmit: true},
-            configFile,
-        );
-        if (parsed.errors.length !== 0) {
-            let {errors} = parsed;
-            if (references && parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
-                errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
-            if (errors.length !== 0)
-                this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
-        }
-        if (parsed.fileNames.length !== 0) {
-            if (parsed.options.composite && !parsed.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
-                log("Project '%s' contains no file to lint", configFile);
-            } else {
-                log("Using project '%s'", configFile);
-                yield host.createProgram(parsed.fileNames, parsed.options, undefined, parsed.projectReferences);
+            const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
+            if (config.error !== undefined) {
+                this.logger.warn(ts.formatDiagnostics([config.error], host));
+                config.config = {};
             }
+            const parsed = ts.parseJsonConfigFileContent(
+                config.config,
+                createParseConfigHost(host),
+                path.dirname(configFile),
+                {noEmit: true},
+                configFile,
+            );
+            if (parsed.errors.length !== 0) {
+                let {errors} = parsed;
+                if (references && parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
+                    errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
+                if (errors.length !== 0)
+                    this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
+            }
+            if (parsed.fileNames.length !== 0) {
+                if (parsed.options.composite && !parsed.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
+                    log("Project '%s' contains no file to lint", configFile);
+                } else {
+                    log("Using project '%s'", configFile);
+                    yield host.createProgram(parsed.fileNames, parsed.options, undefined, parsed.projectReferences);
+                }
+            }
+            if (references && parsed.projectReferences !== undefined)
+                yield* this.createPrograms(
+                    parsed.projectReferences.map((ref) => this.checkConfigDirectory(ref.path)),
+                    host,
+                    seen,
+                    true,
+                    isFileIncluded,
+                );
         }
-        if (references && parsed.projectReferences !== undefined)
-            for (const reference of parsed.projectReferences)
-                yield* this.createPrograms(this.checkConfigDirectory(reference.path), host, seen, true, isFileIncluded);
     }
 }
 
@@ -380,7 +388,7 @@ function getOutFileDeclarationName(outFile: string) {
     return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
 }
 
-function getFiles(patterns: string[], exclude: string[], cwd: string): Iterable<string> {
+function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
     const result: string[] = [];
     const globOptions = {
         cwd,
