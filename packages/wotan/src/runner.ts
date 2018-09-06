@@ -206,7 +206,7 @@ export class Runner {
             projects = [project];
         }
 
-        const originalNames: string [] = [];
+        const allMatchedFiles: string [] = [];
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
@@ -239,7 +239,7 @@ export class Runner {
                 if (!isFileIncluded(originalName))
                     continue;
                 files.push(fileName);
-                originalNames.push(originalName);
+                allMatchedFiles.push(originalName);
             }
             // uncache all files of the previous project if they are no longer needed
             if (filesOfPreviousProject !== undefined)
@@ -248,9 +248,10 @@ export class Runner {
                         host.uncacheFile(oldFile);
             filesOfPreviousProject = ownFiles;
 
-            yield {files, program};
+            if (files.length !== 0)
+                yield {files, program};
         }
-        ensurePatternsMatch(include, ex, originalNames, projectsSeen);
+        ensurePatternsMatch(include, ex, allMatchedFiles, projectsSeen);
 
         function isFileIncluded(fileName: string) {
             return (include.length === 0 || include.some((p) => p.match(fileName))) && !ex.some((p) => p.match(fileName));
