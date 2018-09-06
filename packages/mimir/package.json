@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/mimir",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Core rules of the Fimbullinter project",
   "main": "recommended.yaml",
   "publishConfig": {

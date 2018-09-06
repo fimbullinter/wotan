@@ -1,5 +1,20 @@
 # Change Log
 
+## v0.14.0
+
+**Features:**
+
+* Added support for [Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) added in TypeScript 3.0.0
+  * Correctly process `tsconfig.json` containing `references`
+  * Log no warning on empty `files` array if there are `references`
+  * Added `-r` or `--references` CLI option to recursively lint all `references`. This works similar to `tsc --build` but doesn't build a dependency graph. Instead it processes the projects depth-first in their specified order.
+* Allow linting multiple projects in one run by specifiying `-p` or `--project` multiple times
+* If a file was not found, report the projects it was searched in
+
+**Bugfixes:**
+
+* `typecheck`: correctly report declaration errors with `"composite": true`
+
 ## v0.13.0
 
 :warning: **Breaking Changes:**
