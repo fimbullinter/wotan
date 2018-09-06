@@ -372,6 +372,7 @@ function getOutputFileNamesOfProjectReference(projectDirectory: string, commandL
     return mapDefined(commandLine.fileNames, (fileName) => getDeclarationOutputName(fileName, options, projectDirectory));
 }
 
+// TODO remove once https://github.com/Microsoft/TypeScript/issues/26410 is resolved
 function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
     const extension = path.extname(fileName);
     switch (extension) {

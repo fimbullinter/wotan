@@ -229,7 +229,7 @@ export class ProjectHost implements ts.CompilerHost {
         newContent: string,
         _changeRange: ts.TextChangeRange,
     ): {sourceFile: ts.SourceFile, program: ts.Program} {
-        // TODO use updateSourceFile once https://github.com/Microsoft/TypeScript/issues/26166 is resolved
+        // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
         sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
         const references = program.getProjectReferences && // for compatibility with TypeScript@<3.0.0
