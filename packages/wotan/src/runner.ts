@@ -210,8 +210,9 @@ export class Runner {
         const include = patterns.map((p) => new Minimatch(p));
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
-        // TODO maybe use a different host for each Program or purge all non-declaration files?
+        let filesOfPreviousProject: string[] | undefined;
         for (const program of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
+            const ownFiles = [];
             const options = program.getCompilerOptions();
             const files: string[] = [];
             const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
@@ -233,12 +234,20 @@ export class Runner {
                     )
                 )
                     continue;
+                ownFiles.push(fileName);
                 const originalName = host.getFileSystemFile(fileName)!;
                 if (!isFileIncluded(originalName))
                     continue;
                 files.push(fileName);
                 originalNames.push(originalName);
             }
+            // uncache all files of the previous project if they are no longer needed
+            if (filesOfPreviousProject !== undefined)
+                for (const oldFile of filesOfPreviousProject)
+                    if (!ownFiles.includes(oldFile))
+                        host.uncacheFile(oldFile);
+            filesOfPreviousProject = ownFiles;
+
             yield {files, program};
         }
         ensurePatternsMatch(include, ex, originalNames, projectsSeen);
