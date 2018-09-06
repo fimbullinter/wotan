@@ -30,7 +30,7 @@ test('parseGlobalOptions', (t) => {
             references: false,
             formatter: undefined,
             fix: false,
-            extensions: [],
+            extensions: undefined,
         },
         'ignores excess options',
     );
@@ -61,7 +61,7 @@ test('parseGlobalOptions', (t) => {
             references: true,
             formatter: undefined,
             fix: true,
-            extensions: [],
+            extensions: undefined,
         },
     );
 
@@ -76,7 +76,7 @@ test('parseGlobalOptions', (t) => {
             references: false,
             formatter: undefined,
             fix: false,
-            extensions: [],
+            extensions: undefined,
         },
         'invalid values are ignored',
     );

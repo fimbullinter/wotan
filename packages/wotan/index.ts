@@ -20,4 +20,4 @@ export * from './src/linter';
 export * from './src/runner';
 export * from './src/baseline';
 export * from './src/fix';
-export { parseGlobalOptions, ParsedGlobalOptions } from './src/argparse';
+export { parseGlobalOptions, ParsedGlobalOptions, GLOBAL_OPTIONS_SPEC } from './src/argparse';
