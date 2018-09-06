@@ -155,7 +155,7 @@ test('SaveCommand', async (t) => {
     t.deepEqual(
         await verify({
             command: CommandName.Save,
-            project: undefined,
+            project: [],
             references: false,
             config: undefined,
             fix: false,
@@ -175,7 +175,7 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
                 references: false,
                 config: undefined,
                 fix: 0,
@@ -200,7 +200,7 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
                 references: false,
                 config: '.wotanrc.yaml',
                 fix: true,
@@ -226,7 +226,7 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
                 references: false,
                 config: undefined,
                 fix: 0,
@@ -332,7 +332,7 @@ test('LintCommand', async (t) => {
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.yaml',
-                project: undefined,
+                project: [],
                 references: false,
                 formatter: undefined,
                 fix: true,
@@ -353,7 +353,7 @@ test('LintCommand', async (t) => {
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.fail.yaml',
-                project: undefined,
+                project: [],
                 references: false,
                 formatter: undefined,
                 fix: true,
@@ -384,7 +384,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
-                project: undefined,
+                project: [],
                 references: false,
                 formatter: undefined,
                 fix: true,
@@ -409,7 +409,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
-                project: undefined,
+                project: [],
                 references: false,
                 formatter: undefined,
                 fix: false,

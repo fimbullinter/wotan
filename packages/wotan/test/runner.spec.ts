@@ -6,7 +6,7 @@ import { createDefaultModule } from '../src/di/default.module';
 import { Runner } from '../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
-import { FileSystem, MessageHandler, DirectoryService } from '@fimbul/ymir';
+import { FileSystem, MessageHandler, DirectoryService, FileSummary } from '@fimbul/ymir';
 import { unixifyPath } from '../src/utils';
 
 const directories: DirectoryService = {
@@ -27,7 +27,7 @@ test('throws error on non-existing file', (t) => {
                 'non-existent.ts', // does not exist
             ],
             exclude: ['*.js'],
-            project: undefined,
+            project: [],
             references: false,
             fix: false,
             extensions: undefined,
@@ -50,7 +50,7 @@ test('throws error on file not included in project', (t) => {
                 'non-existent.ts', // does not exist
             ],
             exclude: ['*.js'],
-            project: 'test/project/setup',
+            project: ['test/project/setup'],
             references: false,
             fix: false,
             extensions: undefined,
@@ -85,12 +85,12 @@ test('throws if no tsconfig.json can be found', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            project: root,
+            project: [root],
             references: false,
             fix: false,
             extensions: undefined,
         })),
-        `Cannot find a tsconfig.json file at the specified directory: '${root}'`,
+        `Cannot find a tsconfig.json file at the specified directory: '${unixifyPath(root)}'`,
     );
 
     const dir = path.join(__dirname, 'non-existent');
@@ -99,12 +99,12 @@ test('throws if no tsconfig.json can be found', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            project: dir,
+            project: [dir],
             references: false,
             fix: false,
             extensions: undefined,
         })),
-        `The specified path does not exist: '${dir}'`,
+        `The specified path does not exist: '${unixifyPath(dir)}'`,
     );
 
     t.throws(
@@ -112,12 +112,12 @@ test('throws if no tsconfig.json can be found', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            project: undefined,
+            project: [],
             references: false,
             fix: false,
             extensions: undefined,
         })),
-        `Cannot find tsconfig.json for directory '${process.cwd()}'.`,
+        `Cannot find tsconfig.json for directory '${unixifyPath(process.cwd())}'.`,
     );
 });
 
@@ -169,7 +169,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         config: undefined,
         files: [],
         exclude: [],
-        project: 'invalid-config.json',
+        project: ['invalid-config.json'],
         references: false,
         fix: false,
         extensions: undefined,
@@ -181,7 +181,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         config: undefined,
         files: [],
         exclude: [],
-        project: 'invalid-base.json',
+        project: ['invalid-base.json'],
         references: false,
         fix: false,
         extensions: undefined,
@@ -193,19 +193,19 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         config: undefined,
         files: [],
         exclude: [],
-        project: 'invalid-files.json',
+        project: ['invalid-files.json'],
         references: false,
         fix: false,
         extensions: undefined,
     }));
-    t.is(warning, `error TS18002: The 'files' list in config file '${path.resolve('invalid-files.json')}' is empty.\n`);
+    t.is(warning, `error TS18002: The 'files' list in config file '${unixifyPath(path.resolve('invalid-files.json'))}' is empty.\n`);
     warning = '';
 
     Array.from(runner.lintCollection({
         config: undefined,
         files: [],
         exclude: [],
-        project: 'no-match.json',
+        project: ['no-match.json'],
         references: false,
         fix: false,
         extensions: undefined,
@@ -315,7 +315,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
         config: undefined,
         files: [],
         exclude: [],
-        project: 'tsconfig.json',
+        project: ['tsconfig.json'],
         references: false,
         fix: false,
         extensions: undefined,
@@ -350,7 +350,7 @@ test('works with absolute and relative paths', (t) => {
                 path.resolve('packages/wotan/test/fixtures/paths/c.ts'),
                 'test/fixtures/paths/d.ts',
             ],
-            project: project ? 'test/fixtures/paths/tsconfig.json' : undefined,
+            project: project ? ['test/fixtures/paths/tsconfig.json'] : [],
             references: false,
             fix: false,
             extensions: undefined,
@@ -358,4 +358,25 @@ test('works with absolute and relative paths', (t) => {
         t.is(result.length, 1);
         t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
     }
+});
+
+test('supports linting multiple (overlapping) projects in one run', (t) => {
+    const container = new Container();
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/multi-project/src', 'test/fixtures/multi-project/test'],
+            references: false,
+            fix: true,
+            extensions: undefined,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]],
+    );
+    t.snapshot(result, {id: 'multi-project'});
 });
