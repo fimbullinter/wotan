@@ -144,7 +144,7 @@ test('ShowCommand', async (t) => {
     }
     function normalizePaths(str: string): string {
         // replace `cwd` with / and all backslashes with forward slash
-        const re = new RegExp(`(- )?(['"]?)${escapeRegex(cwd)}(.*?)\\2(,?)$`, 'gm');
+        const re = new RegExp(`(- )?(['"]?)${escapeRegex(cwd)}(.*?)\\2(,?)$`, 'gmi');
         return str.replace(/\\\\/g, '\\').replace(re, (_, dash, quote, p, comma) => dash && !comma
             ? dash + unixifyPath(p)
             : quote + unixifyPath(p) + quote + comma);
@@ -319,7 +319,7 @@ test('LintCommand', async (t) => {
         error() { throw new Error(); },
     });
 
-    const cwd = path.join(__dirname, 'fixtures/test').toLowerCase();
+    const cwd = path.join(__dirname, 'fixtures/test');
     container.bind(DirectoryService).toConstantValue({
         getCurrentDirectory() { return cwd; },
     });
@@ -395,7 +395,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
         true,
     );
     t.deepEqual(filesWritten, {
-        [unixifyPath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
+        [NodeFileSystem.normalizePath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
     });
     t.is(output.join('\n'), 'Automatically fixed 1 failure.');
 
@@ -431,7 +431,7 @@ ERROR 2:1  no-unused-label  Unused label 'label'.
 });
 
 test('TestCommand', async (t) => {
-    let cwd = path.join(__dirname, 'fixtures').toLowerCase();
+    let cwd = path.join(__dirname, 'fixtures');
     const directories: DirectoryService = {
         getCurrentDirectory() { return cwd; },
     };
@@ -654,15 +654,15 @@ ${path.normalize('test/.fail-fix.test.json')}
             },
         );
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.fix')),
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.fix')),
         ]);
         t.deepEqual(written, {
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n',
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n',
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
                 `"bar";\nlabel: 'baz';\n~~~~~         [error no-unused-label: Unused label 'label'.]\n`,
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.fix'))]: `"bar";\n'baz';\n`,
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.fix'))]: `"bar";\n'baz';\n`,
         });
     }
 
@@ -718,14 +718,14 @@ ${path.normalize('test/.success.test.json')}
         );
 
         t.deepEqual(written, {
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/1.ts.lint'))]: 'export {};\n',
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/2.ts.lint'))]: "export {};\n'foo';\n",
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/3.ts.lint'))]: `"bar";\nlabel: 'baz';\n`,
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/1.ts.lint'))]: 'export {};\n',
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/2.ts.lint'))]: "export {};\n'foo';\n",
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/3.ts.lint'))]: `"bar";\nlabel: 'baz';\n`,
         });
         t.deepEqual(directoriesCreated, [
-            unixifyPath(path.join(cwd, 'baselines/.success')),
-            unixifyPath(path.join(cwd, 'baselines')),
-            unixifyPath(path.join(cwd, 'baselines/.success')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines/.success')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines/.success')),
         ]);
     }
 
@@ -820,8 +820,8 @@ ${path.normalize('.fail-fix.test.json')}
         );
 
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.fix')),
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
         ]);
     }
 
