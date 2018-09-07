@@ -17,6 +17,7 @@ workflows:
             - build
 
 base: &base
+  working_directory: '~/Project' # to really test case sensitivity
   steps:
     - checkout
     - attach_workspace:
@@ -36,6 +37,7 @@ base: &base
 version: 2
 jobs:
   build:
+    working_directory: '~/Project'
     docker:
       - image: circleci/node:10@sha256:37a9958a87a806664578bca2cc721ab1886aee95efc3771ddb9051bdd33960f3
     steps:
