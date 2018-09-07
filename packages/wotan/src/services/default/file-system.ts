@@ -6,10 +6,13 @@ import * as ts from 'typescript';
 
 @injectable()
 export class NodeFileSystem implements FileSystem {
+    public static normalizePath(path: string) {
+        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+    }
     constructor(private logger: MessageHandler) {}
 
     public normalizePath(path: string) {
-        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+        return NodeFileSystem.normalizePath(path);
     }
     public readFile(file: string) {
         const buf = fs.readFileSync(file);

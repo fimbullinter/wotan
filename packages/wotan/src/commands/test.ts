@@ -19,6 +19,12 @@ const enum BaselineKind {
     Fix = 'fix',
 }
 
+const TEST_OPTION_SPEC = {
+    ...GLOBAL_OPTIONS_SPEC,
+    fix: OptionParser.Transform.noDefault(GLOBAL_OPTIONS_SPEC.fix),
+    typescriptVersion: OptionParser.Factory.parsePrimitive('string'),
+};
+
 interface RuleTestHost {
     checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
 }
@@ -115,11 +121,7 @@ class TestCommandRunner extends AbstractCommandRunner {
             for (const testcase of glob.sync(pattern, globOptions)) {
                 const {typescriptVersion, ...testConfig} = OptionParser.parse(
                     require(testcase),
-                    {
-                        ...GLOBAL_OPTIONS_SPEC,
-                        fix: OptionParser.Parser.parsePrimitive('boolean', 'number'), // no default
-                        typescriptVersion: OptionParser.Parser.parsePrimitive('string'),
-                    },
+                    TEST_OPTION_SPEC,
                     {validate: true, context: testcase, exhaustive: true},
                 );
                 if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {

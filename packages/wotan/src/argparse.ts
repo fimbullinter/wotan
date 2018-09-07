@@ -44,15 +44,15 @@ export interface ParsedGlobalOptions extends LintOptions {
 }
 
 export const GLOBAL_OPTIONS_SPEC = {
-    modules: OptionParser.withDefault(OptionParser.Parser.parsePrimitiveOrArray('string'), []),
-    config: OptionParser.Parser.parsePrimitive('string'),
-    files: OptionParser.withDefault(OptionParser.Parser.parsePrimitiveOrArray('string'), []),
-    exclude: OptionParser.withDefault(OptionParser.Parser.parsePrimitiveOrArray('string'), []),
-    project: OptionParser.withDefault(OptionParser.Parser.parsePrimitiveOrArray('string'), []),
-    references: OptionParser.withDefault(OptionParser.Parser.parsePrimitive('boolean'), false),
-    formatter: OptionParser.Parser.parsePrimitive('string'),
-    fix: OptionParser.withDefault(OptionParser.Parser.parsePrimitive('boolean', 'number'), false),
-    extensions: OptionParser.map(OptionParser.Parser.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
+    modules: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    config: OptionParser.Factory.parsePrimitive('string'),
+    files: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
+    formatter: OptionParser.Factory.parsePrimitive('string'),
+    fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
+    extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
 };
 
 export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {

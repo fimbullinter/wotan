@@ -13,7 +13,7 @@ export namespace OptionParser {
 
     export interface ParseConfig {
         validate?: boolean;
-        context?: string;
+        context: string;
         exhaustive?: boolean;
     }
 
@@ -37,32 +37,39 @@ export namespace OptionParser {
         }
 
         function report(message: string) {
-            if (config.context)
-                message = config.context + ': ' + message;
+            message = config.context + ': ' + message;
             if (config.validate)
                 throw new ConfigurationError(message);
             log(message);
         }
     }
 
-    export function withDefault<T>(parseFn: ParseFunction<T | undefined>, defaultValue: T): ParseFunction<T> {
-        return (value, report) => {
-            const result = parseFn(value, report);
-            return result === undefined ? defaultValue : result;
-        };
+    export namespace Transform {
+        export function withDefault<T>(parseFn: ParseFunction<T | undefined>, defaultValue: T): ParseFunction<T> {
+            return (value, report) => {
+                const result = parseFn(value, report);
+                return result === undefined ? defaultValue : result;
+            };
+        }
+
+        export function noDefault<T>(parseFn: ParseFunction<T>): ParseFunction<T | undefined> {
+            return (value, report) => {
+                return value === undefined ? undefined : parseFn(value, report);
+            };
+        }
+
+        export function map<T extends U[] | undefined, U, V>(
+            parseFn: ParseFunction<T>,
+            cb: (item: U) => V,
+        ): ParseFunction<{[K in keyof T]: V}> {
+            return (value, report) => {
+                const result = parseFn(value, report);
+                return <any>(result === undefined ? undefined : result.map(cb));
+            };
+        }
     }
 
-    export function map<T extends U[] | undefined, U, V>(
-        parseFn: ParseFunction<T>,
-        cb: (item: U) => V,
-    ): ParseFunction<{[K in keyof T]: V}> {
-        return (value, report) => {
-            const result = parseFn(value, report);
-            return <any>(result === undefined ? undefined : result.map(cb));
-        };
-    }
-
-    export namespace Parser {
+    export namespace Factory {
         type PrimitiveName = 'string' | 'number' | 'boolean';
         type PrimitiveMap<T extends PrimitiveName> =
             T extends 'string'
