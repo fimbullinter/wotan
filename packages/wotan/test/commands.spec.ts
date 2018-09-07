@@ -319,7 +319,7 @@ test('LintCommand', async (t) => {
         error() { throw new Error(); },
     });
 
-    const cwd = path.join(__dirname, 'fixtures/test').toLowerCase();
+    const cwd = path.join(__dirname, 'fixtures/test');
     container.bind(DirectoryService).toConstantValue({
         getCurrentDirectory() { return cwd; },
     });
