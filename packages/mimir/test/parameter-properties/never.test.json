@@ -1,4 +1,4 @@
 {
-  "files": ["*.ts"],
+  "files": "*.ts",
   "config": ".wotanrc-never.yaml"
 }

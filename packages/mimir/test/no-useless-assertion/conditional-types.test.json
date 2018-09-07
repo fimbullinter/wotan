@@ -1,5 +1,5 @@
 {
   "project": "tsconfig.json",
-  "files": ["conditional-types.ts"],
+  "files": "conditional-types.ts",
   "typescriptVersion": ">= 2.8.0"
 }
