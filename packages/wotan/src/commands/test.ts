@@ -11,12 +11,19 @@ import { satisfies, SemVer } from 'semver';
 import { LintOptions, Runner } from '../runner';
 import * as ts from 'typescript';
 import * as diff from 'diff';
-import { parseGlobalOptions } from '../argparse';
+import { GLOBAL_OPTIONS_SPEC } from '../argparse';
+import { OptionParser } from '../optparse';
 
 const enum BaselineKind {
     Lint = 'lint',
     Fix = 'fix',
 }
+
+const TEST_OPTION_SPEC = {
+    ...GLOBAL_OPTIONS_SPEC,
+    fix: OptionParser.Transform.noDefault(GLOBAL_OPTIONS_SPEC.fix),
+    typescriptVersion: OptionParser.Factory.parsePrimitive('string'),
+};
 
 interface RuleTestHost {
     checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
@@ -112,10 +119,11 @@ class TestCommandRunner extends AbstractCommandRunner {
         };
         for (const pattern of options.files) {
             for (const testcase of glob.sync(pattern, globOptions)) {
-                interface TestOptions extends Partial<LintOptions> {
-                    typescriptVersion?: string;
-                }
-                const {typescriptVersion, ...testConfig} = <TestOptions>require(testcase);
+                const {typescriptVersion, ...testConfig} = OptionParser.parse(
+                    require(testcase),
+                    TEST_OPTION_SPEC,
+                    {validate: true, context: testcase, exhaustive: true},
+                );
                 if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {
                     this.logger.log(
                         `${path.relative(basedir, testcase)} ${chalk.yellow(`SKIPPED, requires TypeScript ${typescriptVersion}`)}`,
@@ -148,9 +156,8 @@ class TestCommandRunner extends AbstractCommandRunner {
         return success;
     }
 
-    private test(config: Partial<LintOptions>, host: RuleTestHost): boolean {
-        const lintOptions = parseGlobalOptions(config);
-        lintOptions.fix = false;
+    private test(config: {[K in keyof LintOptions]: LintOptions[K] | (K extends 'fix' ? undefined : never)}, host: RuleTestHost): boolean {
+        const lintOptions: LintOptions = {...config, fix: false};
         const lintResult = Array.from(this.runner.lintCollection(lintOptions));
         let containsFixes = false;
         for (const [fileName, summary] of lintResult) {
@@ -159,7 +166,7 @@ class TestCommandRunner extends AbstractCommandRunner {
             containsFixes = containsFixes || summary.failures.some(isFixable);
         }
 
-        if (!('fix' in config) || config.fix) {
+        if (config.fix || config.fix === undefined) {
             lintOptions.fix = config.fix || true; // fix defaults to true if not specified
             const fixResult = containsFixes ? this.runner.lintCollection(lintOptions) : lintResult;
             for (const [fileName, summary] of fixResult)

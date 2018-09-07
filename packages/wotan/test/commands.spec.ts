@@ -441,11 +441,37 @@ test('TestCommand', async (t) => {
             command: CommandName.Test,
             bail: false,
             exact: false,
-            files: ['test/subdir/.*.test.json'],
+            files: ['test/subdir/.outside.test.json'],
             updateBaselines: false,
             modules: [],
         }),
         `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/subdir/.invalid-option-value.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        `${
+            unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-value.test.json'))
+        }: Expected a value of type 'string | string[]' for option 'project'.`,
+    );
+
+    void t.throws(
+        verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/subdir/.invalid-option-name.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        `${unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-name.test.json'))}: Unexpected option 'prjoect'.`,
     );
 
     t.deepEqual(

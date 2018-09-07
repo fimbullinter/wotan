@@ -2,6 +2,7 @@ import { Command, CommandName, TestCommand, ShowCommand, ValidateCommand, BaseLi
 import { ConfigurationError, Format, GlobalOptions } from '@fimbul/ymir';
 import { LintOptions } from './runner';
 import debug = require('debug');
+import { OptionParser } from './optparse';
 
 const log = debug('wotan:argparse');
 
@@ -42,65 +43,20 @@ export interface ParsedGlobalOptions extends LintOptions {
     formatter: string | undefined;
 }
 
-export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
-    if (options === undefined)
-        return {
-            modules: [],
-            config: undefined,
-            files: [],
-            exclude: [],
-            project: [],
-            references: false,
-            formatter: undefined,
-            fix: false,
-            extensions: undefined,
-        };
-    return {
-        modules: expectStringOrStringArray(options, 'modules') || [],
-        config: expectStringOption(options, 'config'),
-        files: expectStringOrStringArray(options, 'files') || [],
-        exclude: expectStringOrStringArray(options, 'exclude') || [],
-        project: expectStringOrStringArray(options, 'project') || [],
-        references: expectBooleanOption(options, 'references'),
-        formatter: expectStringOption(options, 'formatter'),
-        fix: expectBooleanOrNumberOption(options, 'fix'),
-        extensions: (expectStringOrStringArray(options, 'extensions') || []).map(sanitizeExtensionArgument),
-    };
-}
+export const GLOBAL_OPTIONS_SPEC = {
+    modules: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    config: OptionParser.Factory.parsePrimitive('string'),
+    files: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
+    formatter: OptionParser.Factory.parsePrimitive('string'),
+    fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
+    extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
+};
 
-function expectStringOrStringArray(options: GlobalOptions, option: string): string[] | undefined {
-    const value = options[option];
-    if (Array.isArray(value) && value.every((v) => typeof v === 'string'))
-        return value;
-    if (typeof value === 'string')
-        return [value];
-    if (value !== undefined)
-        log("Expected a value of type 'string | string[]' for option '%s'.", option);
-    return;
-}
-function expectStringOption(options: GlobalOptions, option: string): string | undefined {
-    const value = options[option];
-    if (typeof value === 'string')
-        return value;
-    if (value !== undefined)
-        log("Expected a value of type 'string' for option '%s'.", option);
-    return;
-}
-function expectBooleanOption(options: GlobalOptions, option: string): boolean {
-    const value = options[option];
-    if (typeof value === 'boolean')
-        return value;
-    if (value !== undefined)
-        log("Expected a value of type 'boolean' for option '%s'.", option);
-    return false;
-}
-function expectBooleanOrNumberOption(options: GlobalOptions, option: string): boolean | number {
-    const value = options[option];
-    if (typeof value === 'boolean' || typeof value === 'number')
-        return value;
-    if (value !== undefined)
-        log("Expected a value of type 'boolean | number' for option '%s'.", option);
-    return false;
+export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
+    return OptionParser.parse(options, GLOBAL_OPTIONS_SPEC, {context: 'global options'});
 }
 
 type AssertNever<T extends never> = T;
