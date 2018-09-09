@@ -36,7 +36,7 @@ export class NodeFileSystem implements FileSystem {
         return buf.toString('utf8'); // default to UTF8 without BOM
     }
     public readDirectory(dir: string) {
-        return fs.readdirSync(dir);
+        return fs.readdirSync(dir, <any>{withFileTypes: true});
     }
     public stat(path: string): Stats {
         return fs.statSync(path);
