@@ -15,9 +15,11 @@ export const enum FileKind {
 export class CachedFileSystem {
     private fileKindCache: Cache<string, FileKind>;
     private realpathCache: Cache<string, string>;
+    private direntCache: Cache<string, string[]>;
     constructor(private fs: FileSystem, cache: CacheFactory) {
         this.fileKindCache = cache.create();
         this.realpathCache = cache.create();
+        this.direntCache = cache.create();
     }
 
     public isFile(file: string): boolean {
@@ -43,7 +45,12 @@ export class CachedFileSystem {
     }
 
     public readDirectory(dir: string): string[] {
-        return this.fs.readDirectory(this.fs.normalizePath(dir));
+        return resolveCachedResult(this.direntCache, this.fs.normalizePath(dir), this.doReadDirectory);
+    }
+
+    @bind
+    private doReadDirectory(dir: string): string[] {
+        return this.fs.readDirectory(dir);
     }
 
     public readFile(file: string): string {
@@ -57,13 +64,13 @@ export class CachedFileSystem {
     public writeFile(file: string, content: string) {
         file = this.fs.normalizePath(file);
         this.fs.writeFile(file, content);
-        this.fileKindCache.set(file, FileKind.File);
+        this.updateCache(file, FileKind.File);
     }
 
     public remove(file: string) {
         file = this.fs.normalizePath(file);
         this.fs.deleteFile(file);
-        this.fileKindCache.set(file, FileKind.NonExistent);
+        this.updateCache(file, FileKind.NonExistent);
     }
 
     public createDirectory(dir: string) {
@@ -89,6 +96,17 @@ export class CachedFileSystem {
                 this.fs.createDirectory(dir);
             }
         }
-        this.fileKindCache.set(dir, FileKind.Directory);
+        this.updateCache(dir, FileKind.Directory);
+    }
+
+    private updateCache(file: string, kind: FileKind) {
+        // this currently doesn't handle directory removal as there is no API for that
+        if (this.fileKindCache.get(file) !== kind)
+            return; // this is not entirely correct as there might be no cached kind, but file is already in direntCache
+        this.fileKindCache.set(file, kind);
+        if (kind === FileKind.NonExistent)
+            this.realpathCache.delete(file); // only invalidate realpath cache on file removal
+        // invalidate direntCache unconditionally as the new file's name might differ in case from the one we have here
+        this.direntCache.delete(this.fs.normalizePath(path.dirname(file)));
     }
 }
