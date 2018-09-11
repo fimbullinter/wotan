@@ -57,6 +57,11 @@ test('readDirectory', (t) => {
                             'a',
                             makeDirent('b', 'FILE'),
                         ];
+                    case '/':
+                        return [
+                            'a',
+                            makeDirent('b', 'SYMLINK'),
+                        ];
                     default:
                         throw new Error('ENOENT');
                 }
@@ -73,6 +78,10 @@ test('readDirectory', (t) => {
                         return makeStat('FILE');
                     case '/mixed/a':
                         return makeStat('OTHER');
+                    case '/a':
+                        return makeStat('FILE');
+                    case '/b':
+                        return makeStat('DIR');
                     default:
                         throw new Error('not expected');
                 }
@@ -99,6 +108,12 @@ test('readDirectory', (t) => {
         'handles mixed string and Dirent array',
     );
 
+    t.deepEqual(
+        fs.readDirectory('/'),
+        [{name: 'a', kind: FileKind.File}, {name: 'b', kind: FileKind.Directory}],
+        'correctly handles root directory',
+    );
+
     t.throws(() => fs.readDirectory('/non-existent'), 'ENOENT');
 
     // ensure values are cached
@@ -115,4 +130,5 @@ test('readDirectory', (t) => {
     t.true(fs.isFile('/dirent/file'));
     t.false(fs.isDirectory('/mixed/a'));
     t.false(fs.isDirectory('/mixed/a'));
+    t.true(fs.isDirectory('/b'));
 });
