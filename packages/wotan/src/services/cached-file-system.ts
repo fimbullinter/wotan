@@ -126,8 +126,8 @@ export class CachedFileSystem {
 
     private updateCache(file: string, kind: FileKind) {
         // this currently doesn't handle directory removal as there is no API for that
-        if (this.fileKindCache.get(file) !== kind)
-            return; // this is not entirely correct as there might be no cached kind, but file is already in direntCache
+        if (this.fileKindCache.get(file) === kind)
+            return;
         this.fileKindCache.set(file, kind);
         if (kind === FileKind.NonExistent)
             this.realpathCache.delete(file); // only invalidate realpath cache on file removal
