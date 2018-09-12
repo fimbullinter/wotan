@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FileSystem, CacheFactory, Cache } from '@fimbul/ymir';
+import { FileSystem, CacheFactory, Cache, Stats } from '@fimbul/ymir';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
 import * as path from 'path';
@@ -9,6 +9,11 @@ export const enum FileKind {
     File,
     Directory,
     Other,
+}
+
+export interface DirectoryEntryWithKind {
+    name: string;
+    kind: FileKind;
 }
 
 @injectable()
@@ -35,15 +40,30 @@ export class CachedFileSystem {
     @bind
     private doGetKind(file: string): FileKind {
         try {
-            const stat = this.fs.stat(file);
-            return stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Other;
+            return statsToKind(this.fs.stat(file));
         } catch {
             return FileKind.NonExistent;
         }
     }
 
-    public readDirectory(dir: string): string[] {
-        return this.fs.readDirectory(this.fs.normalizePath(dir));
+    public readDirectory(dir: string) {
+        const result: DirectoryEntryWithKind[] = [];
+        for (const entry of this.fs.readDirectory(this.fs.normalizePath(dir))) {
+            if (typeof entry === 'string') {
+                result.push({kind: this.getKind(path.join(dir, entry)), name: entry});
+            } else {
+                const filePath = path.join(dir, entry.name);
+                let kind: FileKind;
+                if (entry.isSymbolicLink()) {
+                    kind = this.getKind(filePath);
+                } else {
+                    kind = statsToKind(entry);
+                    this.fileKindCache.set(this.fs.normalizePath(filePath), kind);
+                }
+                result.push({kind, name: entry.name});
+            }
+        }
+        return result;
     }
 
     public readFile(file: string): string {
@@ -91,4 +111,8 @@ export class CachedFileSystem {
         }
         this.fileKindCache.set(dir, FileKind.Directory);
     }
+}
+
+function statsToKind(stats: Stats) {
+    return stats.isFile() ? FileKind.File : stats.isDirectory() ? FileKind.Directory : FileKind.Other;
 }
