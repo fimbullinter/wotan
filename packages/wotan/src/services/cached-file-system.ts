@@ -21,10 +21,12 @@ export class CachedFileSystem {
     private fileKindCache: Cache<string, FileKind>;
     private realpathCache: Cache<string, string>;
     private direntCache: Cache<string, string[]>;
+    private symlinkCache: Cache<string, boolean>;
     constructor(private fs: FileSystem, cache: CacheFactory) {
         this.fileKindCache = cache.create();
         this.realpathCache = cache.create();
         this.direntCache = cache.create();
+        this.symlinkCache = cache.create();
     }
 
     public isFile(file: string): boolean {
@@ -48,6 +50,27 @@ export class CachedFileSystem {
         }
     }
 
+    public isSymbolicLink(file: string): boolean {
+        file = this.fs.normalizePath(file);
+        let cached = this.symlinkCache.get(file);
+        if (cached !== undefined)
+            return cached;
+        try {
+            const stats = this.fs.lstat(file);
+            if (stats.isSymbolicLink()) {
+                cached = true;
+            } else {
+                cached = false;
+                this.fileKindCache.set(file, statsToKind(stats));
+            }
+        } catch {
+            cached = false;
+            this.fileKindCache.set(file, FileKind.NonExistent);
+        }
+        this.symlinkCache.set(file, cached);
+        return cached;
+    }
+
     public readDirectory(dir: string) {
         dir = this.fs.normalizePath(dir);
         let cachedResult = this.direntCache.get(dir);
@@ -63,13 +86,15 @@ export class CachedFileSystem {
                 result.push({kind: this.getKind(path.join(dir, entry)), name: entry});
             } else {
                 cachedResult.push(entry.name);
-                const filePath = path.join(dir, entry.name);
+                const filePath = this.fs.normalizePath(path.join(dir, entry.name));
                 let kind: FileKind;
                 if (entry.isSymbolicLink()) {
                     kind = this.getKind(filePath);
+                    this.symlinkCache.set(filePath, true);
                 } else {
+                    this.symlinkCache.set(filePath, false);
                     kind = statsToKind(entry);
-                    this.fileKindCache.set(this.fs.normalizePath(filePath), kind);
+                    this.fileKindCache.set(filePath, kind);
                 }
                 result.push({kind, name: entry.name});
             }
@@ -126,8 +151,11 @@ export class CachedFileSystem {
 
     private updateCache(file: string, kind: FileKind) {
         // this currently doesn't handle directory removal as there is no API for that
-        if (this.fileKindCache.get(file) === kind)
+        const previous = this.fileKindCache.get(file);
+        if (previous === kind)
             return;
+        if (previous === FileKind.NonExistent || kind === FileKind.NonExistent)
+            this.symlinkCache.set(file, false);
         this.fileKindCache.set(file, kind);
         if (kind === FileKind.NonExistent)
             this.realpathCache.delete(file); // only invalidate realpath cache on file removal

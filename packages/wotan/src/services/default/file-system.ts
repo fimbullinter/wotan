@@ -1,4 +1,4 @@
-import { FileSystem, Stats, MessageHandler, Dirent } from '@fimbul/ymir';
+import { FileSystem, Stats, MessageHandler, Dirent, LStats } from '@fimbul/ymir';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 import { unixifyPath } from '../../utils';
@@ -40,6 +40,9 @@ export class NodeFileSystem implements FileSystem {
     }
     public stat(path: string): Stats {
         return fs.statSync(path);
+    }
+    public lstat(path: string): LStats {
+        return fs.lstatSync(path);
     }
     public realpath(path: string) {
         return fs.realpathSync(path);

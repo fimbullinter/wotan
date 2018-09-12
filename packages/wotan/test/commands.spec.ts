@@ -256,6 +256,7 @@ test('SaveCommand', async (t) => {
             readFile() { throw new Error(); },
             readDirectory() { throw new Error(); },
             stat() { throw new Error(); },
+            lstat() { throw new Error(); },
             createDirectory() { throw new Error(); },
             writeFile(f, c) {
                 t.is(f, path.resolve('.fimbullinter.yaml'));
