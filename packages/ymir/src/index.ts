@@ -380,8 +380,8 @@ export interface FileSystem {
     normalizePath(path: string): string;
     /** Reads the given file. Tries to infer and convert encoding. */
     readFile(file: string): string;
-    /** Reads directory entries. Returns only the basenames. */
-    readDirectory(dir: string): string[];
+    /** Reads directory entries. Returns only the basenames optionally with file type information. */
+    readDirectory(dir: string): Array<string | Dirent>;
     /** Gets the status of a file or directory. */
     stat(path: string): Stats;
     /** Gets the realpath of a given file or directory. */
@@ -398,6 +398,11 @@ export abstract class FileSystem {}
 export interface Stats {
     isDirectory(): boolean;
     isFile(): boolean;
+}
+
+export interface Dirent extends Stats {
+    name: string;
+    isSymbolicLink(): boolean;
 }
 
 export interface RuleLoaderHost {

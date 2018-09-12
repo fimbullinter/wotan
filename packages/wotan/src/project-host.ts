@@ -75,15 +75,15 @@ export class ProjectHost implements ts.CompilerHost {
         const files: string[] = [];
         const directories: string[] = [];
         const result: ts.FileSystemEntries = {files, directories};
-        let entries: string[];
+        let entries;
         try {
             entries = this.fs.readDirectory(dir);
         } catch {
             return result;
         }
         for (const entry of entries) {
-            const fileName = `${dir}/${entry}`;
-            switch (this.fs.getKind(fileName)) {
+            const fileName = `${dir}/${entry.name}`;
+            switch (entry.kind) {
                 case FileKind.File: {
                     if (!hasSupportedExtension(fileName, additionalExtensions)) {
                         const c = this.config || this.tryFindConfig(fileName);
@@ -193,7 +193,10 @@ export class ProjectHost implements ts.CompilerHost {
         const cached = this.directoryEntries.get(dir);
         if (cached !== undefined)
             return cached.directories.map((d) => path.posix.basename(d));
-        return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
+        return mapDefined(
+            this.fs.readDirectory(dir),
+            (entry) => entry.kind === FileKind.Directory ? path.join(dir, entry.name) : undefined,
+        );
     }
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(

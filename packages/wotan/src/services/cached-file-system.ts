@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { FileSystem, CacheFactory, Cache } from '@fimbul/ymir';
+import { FileSystem, CacheFactory, Cache, Stats } from '@fimbul/ymir';
 import bind from 'bind-decorator';
 import { resolveCachedResult } from '../utils';
 import * as path from 'path';
@@ -9,6 +9,11 @@ export const enum FileKind {
     File,
     Directory,
     Other,
+}
+
+export interface DirectoryEntryWithKind {
+    name: string;
+    kind: FileKind;
 }
 
 @injectable()
@@ -37,20 +42,40 @@ export class CachedFileSystem {
     @bind
     private doGetKind(file: string): FileKind {
         try {
-            const stat = this.fs.stat(file);
-            return stat.isFile() ? FileKind.File : stat.isDirectory() ? FileKind.Directory : FileKind.Other;
+            return statsToKind(this.fs.stat(file));
         } catch {
             return FileKind.NonExistent;
         }
     }
 
-    public readDirectory(dir: string): string[] {
-        return resolveCachedResult(this.direntCache, this.fs.normalizePath(dir), this.doReadDirectory);
-    }
-
-    @bind
-    private doReadDirectory(dir: string): string[] {
-        return this.fs.readDirectory(dir);
+    public readDirectory(dir: string) {
+        dir = this.fs.normalizePath(dir);
+        let cachedResult = this.direntCache.get(dir);
+        if (cachedResult !== undefined)
+            return cachedResult.map(
+                (entry) => ({kind: this.fileKindCache.get(this.fs.normalizePath(path.join(dir, entry)))!, name: entry}),
+            );
+        cachedResult = [];
+        const result: DirectoryEntryWithKind[] = [];
+        for (const entry of this.fs.readDirectory(dir)) {
+            if (typeof entry === 'string') {
+                cachedResult.push(entry);
+                result.push({kind: this.getKind(path.join(dir, entry)), name: entry});
+            } else {
+                cachedResult.push(entry.name);
+                const filePath = path.join(dir, entry.name);
+                let kind: FileKind;
+                if (entry.isSymbolicLink()) {
+                    kind = this.getKind(filePath);
+                } else {
+                    kind = statsToKind(entry);
+                    this.fileKindCache.set(this.fs.normalizePath(filePath), kind);
+                }
+                result.push({kind, name: entry.name});
+            }
+        }
+        this.direntCache.set(dir, cachedResult);
+        return result;
     }
 
     public readFile(file: string): string {
@@ -109,4 +134,8 @@ export class CachedFileSystem {
         // invalidate direntCache unconditionally as the new file's name might differ in case from the one we have here
         this.direntCache.delete(this.fs.normalizePath(path.dirname(file)));
     }
+}
+
+function statsToKind(stats: Stats) {
+    return stats.isFile() ? FileKind.File : stats.isDirectory() ? FileKind.Directory : FileKind.Other;
 }
