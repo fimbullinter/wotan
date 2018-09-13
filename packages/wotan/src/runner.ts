@@ -405,7 +405,6 @@ function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string
     const result: string[] = [];
     const globOptions = {
         cwd,
-        absolute: true,
         ignore: exclude,
         nodir: true,
         ...createGlobProxy(createGlobFileSystem(fs)),

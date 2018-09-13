@@ -1,45 +1,43 @@
 import { CachedFileSystem, FileKind } from './services/cached-file-system';
 
+/** A minimal abstraction of FileSystem operations needed to provide a cache proxy for 'glob'. None of the methods are expected to throw. */
 export interface GlobFileSystem {
-    realpathSync(path: string): string;
-    statSync(path: string): { isDirectory(): boolean; };
-    lstatSync(path: string): { isSymbolicLink(): boolean; };
-    readdirSync(dir: string): string[];
+    /** Returns `true` if the specified `path` is a directory, `undefined` if it doesn't exist and `false` otherwise. */
+    isDirectory(path: string): boolean | undefined;
+    /** Returns `true` if the specified `path` is a symlink, `false` in all other cases. */
+    isSymbolicLink(path: string): boolean;
+    /** Get the entries of a directory as string array. */
+    readDirectory(dir: string): string[];
+    /** Get the realpath of a given `path` by resolving all symlinks in the path. */
+    realpath(path: string): string;
 }
 
-const symlinkStats = {
-    isDirectory() { return false; },
-    isSymbolicLink() { return true; },
-};
 const directoryStats = {
     isDirectory() { return true; },
-    isSymbolicLink() { return false; },
 };
 const otherStats = {
     isDirectory() { return false; },
-    isSymbolicLink() { return false; },
 };
 
 export function createGlobFileSystem(fs: CachedFileSystem): GlobFileSystem {
     return {
-        realpathSync(path) {
+        realpath(path) {
             return fs.realpath === undefined ? path : fs.realpath(path);
         },
-        statSync(path) {
-            const kind = fs.getKind(path);
-            switch (kind) {
+        isDirectory(path) {
+            switch (fs.getKind(path)) {
                 case FileKind.Directory:
-                    return directoryStats;
+                    return true;
                 case FileKind.NonExistent:
-                    throw new Error('ENOENT');
+                    return;
                 default:
-                    return otherStats;
+                    return false;
             }
         },
-        lstatSync(path) {
-            return fs.isSymbolicLink(path) ? symlinkStats : otherStats;
+        isSymbolicLink(path) {
+            return fs.isSymbolicLink(path);
         },
-        readdirSync(dir: string) {
+        readDirectory(dir: string) {
             return fs.readDirectory(dir).map((entry) => entry.name);
         },
     };
@@ -53,16 +51,13 @@ export function createGlobProxy(fs: GlobFileSystem) {
             return propertyDescriptor;
         },
         get(_, path: string) {
-            try {
-                if (!fs.statSync(path).isDirectory())
+            switch (fs.isDirectory(path)) {
+                case true:
+                    return fs.readDirectory(path);
+                case false:
                     return 'FILE';
-            } catch {
-                return false;
-            }
-            try {
-                return fs.readdirSync(path);
-            } catch {
-                return [];
+                default:
+                    return false;
             }
         },
         set() {
@@ -72,11 +67,8 @@ export function createGlobProxy(fs: GlobFileSystem) {
     });
     const statCache = new Proxy<Record<string, any>>({}, {
         get(_, path: string) {
-            try {
-                return fs.statSync(path).isDirectory() ? directoryStats : otherStats;
-            } catch {
-                return false;
-            }
+            return fs.isDirectory(path) ? directoryStats : otherStats;
+
         },
         set() {
             // ignore cache write
@@ -88,11 +80,7 @@ export function createGlobProxy(fs: GlobFileSystem) {
             return propertyDescriptor;
         },
         get(_, path: string) {
-            try {
-                return fs.realpathSync(path);
-            } catch {
-                return path;
-            }
+            return fs.realpath(path);
         },
     });
     const symlinks = new Proxy<Record<string, boolean>>({}, {
@@ -100,11 +88,7 @@ export function createGlobProxy(fs: GlobFileSystem) {
             return propertyDescriptor;
         },
         get(_, path: string) {
-            try {
-                return fs.lstatSync(path).isSymbolicLink();
-            } catch {
-                return false;
-            }
+            return fs.isSymbolicLink(path);
         },
     });
     return {
