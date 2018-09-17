@@ -20,7 +20,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import resolveGlob = require('to-absolute-glob');
-import { createGlobProxy, createGlobFileSystem } from './glob-proxy';
+import { createGlobProxy } from './glob-proxy';
 
 const log = debug('wotan:runner');
 
@@ -407,7 +407,7 @@ function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string
         cwd,
         ignore: exclude,
         nodir: true,
-        ...createGlobProxy(createGlobFileSystem(fs)),
+        ...createGlobProxy(fs),
     };
     for (const pattern of patterns) {
         const match = glob.sync(pattern, globOptions);

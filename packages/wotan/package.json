@@ -53,6 +53,7 @@
     "debug": "^4.0.0",
     "diff": "^3.4.0",
     "glob": "^7.1.2",
+    "glob-interceptor": "^0.0.1",
     "import-local": "^2.0.0",
     "inversify": "^4.10.0",
     "is-negated-glob": "^1.0.0",

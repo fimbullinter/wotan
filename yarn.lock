@@ -1706,6 +1706,10 @@ fast-diff@^1.1.1:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/fast-diff/-/fast-diff-1.1.2.tgz#4b62c42b8e03de3f848460b639079920695d0154"
 
+fast-extend@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/fast-extend/-/fast-extend-0.0.2.tgz#f5ec42cf40b9460f521a6387dfb52deeed671dbd"
+
 fast-json-stable-stringify@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/fast-json-stable-stringify/-/fast-json-stable-stringify-2.0.0.tgz#d5142c0caee6b1189f87d3a76111064f86c8bbf2"
@@ -1827,6 +1831,10 @@ fs-minipass@^1.2.5:
   dependencies:
     minipass "^2.2.1"
 
+fs-monkey@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/fs-monkey/-/fs-monkey-0.3.3.tgz#7960bb2b1fa2653731b9d0e2e84812a7e8b3664a"
+
 fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
@@ -1905,6 +1913,12 @@ glob-base@^0.3.0:
   dependencies:
     glob-parent "^2.0.0"
     is-glob "^2.0.0"
+
+glob-interceptor@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/glob-interceptor/-/glob-interceptor-0.0.1.tgz#5d5ab4f2c8761db432b106dfdf62d3aa4c802283"
+  dependencies:
+    memfs "^2.10.0"
 
 glob-parent@^2.0.0:
   version "2.0.0"
@@ -2810,6 +2824,13 @@ mem@^1.1.0:
   resolved "https://registry.yarnpkg.com/mem/-/mem-1.1.0.tgz#5edd52b485ca1d900fe64895505399a0dfa45f76"
   dependencies:
     mimic-fn "^1.0.0"
+
+memfs@^2.10.0:
+  version "2.10.0"
+  resolved "https://registry.yarnpkg.com/memfs/-/memfs-2.10.0.tgz#c0f80b432bed05fa9263bc179dcded6fa5904f06"
+  dependencies:
+    fast-extend "0.0.2"
+    fs-monkey "^0.3.3"
 
 memory-fs@^0.4.0:
   version "0.4.1"
