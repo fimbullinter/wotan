@@ -324,7 +324,10 @@ export class Runner {
 }
 
 function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
-    const references = program.getProjectReferences && program.getProjectReferences();
+    const references = program.getResolvedProjectReferences === undefined
+        // for compatibility with TypeScript@<3.1.1
+        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>program.getProjectReferences()
+        : program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
     const seen: string[] = [];
