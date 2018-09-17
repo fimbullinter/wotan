@@ -235,14 +235,12 @@ export class ProjectHost implements ts.CompilerHost {
         // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
         sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
-        const references = program.getProjectReferences && // for compatibility with TypeScript@<3.0.0
-            program.getProjectReferences();
 
         program = this.createProgram(
             program.getRootFileNames(),
             program.getCompilerOptions(),
             program,
-            references && mapDefined(references, (ref) => ref && {path: ref.sourceFile.fileName}),
+            getReferencesOfProgram(program),
         );
         return {sourceFile, program};
     }
@@ -257,4 +255,15 @@ export class ProjectHost implements ts.CompilerHost {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
     }
+}
+
+function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectReference> | undefined {
+    // for compatibility with TypeScript@<3.0.0
+    const references = program.getProjectReferences && program.getProjectReferences();
+    if (references === undefined)
+        return;
+    // for compatibility with TypeScript@<3.1.1
+    if (program.getResolvedProjectReferences === undefined)
+        return mapDefined(<ReadonlyArray<ts.ResolvedProjectReference>><{}>references, (ref) => ref && {path: ref.sourceFile.fileName});
+    return references;
 }

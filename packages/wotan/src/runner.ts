@@ -324,7 +324,10 @@ export class Runner {
 }
 
 function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
-    const references = program.getProjectReferences && program.getProjectReferences();
+    const references = program.getResolvedProjectReferences === undefined
+        // for compatibility with TypeScript@<3.1.1
+        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>program.getProjectReferences()
+        : program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
     const seen: string[] = [];
@@ -344,7 +347,8 @@ function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
 
 /** recurse into every transitive project reference to exclude all of their outputs from linting */
 function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: string[], host: ProjectHost) {
-    const referencePath = ts.resolveProjectReferencePath(host, reference);
+    // wotan-disable-next-line no-unstable-api-use
+    const referencePath = ts.resolveProjectReferencePath(host, reference); // for compatibility with TypeScript@<3.1.1
     if (!addUnique(seen, referencePath))
         return [];
     const sourceFile = host.getSourceFile(referencePath, ts.ScriptTarget.JSON);
