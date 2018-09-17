@@ -1,4 +1,4 @@
-# The Fimbullinter project - Wotan
+# The Fimbullinter project
 
 Pluggable TypeScript and JavaScript linter
 
