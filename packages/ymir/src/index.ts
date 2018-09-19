@@ -384,6 +384,8 @@ export interface FileSystem {
     readDirectory(dir: string): Array<string | Dirent>;
     /** Gets the status of a file or directory. */
     stat(path: string): Stats;
+    /** Gets the status of a file or directory, not resolving symlinks. */
+    lstat(path: string): LStats;
     /** Gets the realpath of a given file or directory. */
     realpath?(path: string): string;
     /** Writes content to the file, overwriting the existing content. Creates the file if necessary. */
@@ -400,9 +402,12 @@ export interface Stats {
     isFile(): boolean;
 }
 
-export interface Dirent extends Stats {
-    name: string;
+export interface LStats extends Stats {
     isSymbolicLink(): boolean;
+}
+
+export interface Dirent extends LStats {
+    name: string;
 }
 
 export interface RuleLoaderHost {

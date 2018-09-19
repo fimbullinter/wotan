@@ -8,6 +8,7 @@ import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
 import { FileSystem, MessageHandler, DirectoryService, FileSummary } from '@fimbul/ymir';
 import { unixifyPath } from '../src/utils';
+import * as fs from 'fs';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
@@ -123,39 +124,15 @@ test('throws if no tsconfig.json can be found', (t) => {
 
 test('reports warnings while parsing tsconfig.json', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
-    const files: {[name: string]: string | undefined} = {
-        'invalid-config.json': '{',
-        'invalid-base.json': '{"extends": "./invalid-config.json"}',
-        'invalid-files.json': '{"files": []}',
-        'no-match.json': '{"include": ["non-existent"], "compilerOptions": {"noLib": true}}',
-    };
-    @injectable()
-    class MockFileSystem extends NodeFileSystem {
-        constructor(logger: MessageHandler) {
-            super(logger);
-        }
-        public stat(file: string) {
-            if (isLibraryFile(file))
-                return super.stat(file);
-            return {
-                isFile() { return files[path.basename(file)] !== undefined; },
-                isDirectory() { return false; },
-            };
-        }
-        public readFile(file: string) {
-            if (isLibraryFile(file))
-                return super.readFile(file);
-            const basename = path.basename(file);
-            const content = files[basename];
-            if (content !== undefined)
-                return content;
-            throw new Error('ENOENT');
-        }
-        public readDirectory(): string[] {
-            throw new Error('ENOENT');
-        }
-    }
-    container.bind(FileSystem).to(MockFileSystem);
+    container.bind(MockFiles).toConstantValue({
+        entries: {
+            'invalid-config.json': {content: '{'},
+            'invalid-base.json': {content: '{"extends": "./invalid-config.json"}'},
+            'invalid-files.json': {content: '{"files": []}'},
+            'no-match.json': {content: '{"include": ["non-existent"], "compilerOptions": {"noLib": true}}'},
+        },
+    });
+    container.bind(FileSystem).to(MemoryFileSystem);
     let warning = '';
     container.bind(MessageHandler).toConstantValue({
         log() {},
@@ -217,12 +194,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
 test.skip('excludes symlinked typeRoots', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
-    interface FileMeta {
-        content?: string;
-        symlink?: string;
-        entries?: Record<string, FileMeta | undefined>;
-    }
-    const files: FileMeta = {
+    container.bind(MockFiles).toConstantValue({
         entries: {
             'tsconfig.json': {content: '{"files": ["a.ts"]}'},
             'a.ts': {content: 'foo;'},
@@ -242,73 +214,8 @@ test.skip('excludes symlinked typeRoots', (t) => {
             },
             '.wotanrc.yaml': {content: 'rules: {trailing-newline: error}'},
         },
-    };
-    @injectable()
-    class MockFileSystem extends NodeFileSystem {
-        constructor(private dirs: DirectoryService, logger: MessageHandler) {
-            super(logger);
-        }
-        public stat(file: string) {
-            if (isLibraryFile(file))
-                return super.stat(file);
-            const f = this.resolvePath(file);
-            if (f === undefined)
-                throw new Error('ENOENT');
-            return {
-                isFile() { return f.resolved.content !== undefined; },
-                isDirectory() { return f.resolved.content === undefined; },
-            };
-        }
-        public readFile(file: string) {
-            if (isLibraryFile(file))
-                return super.readFile(file);
-            const f = this.resolvePath(file);
-            if (f === undefined)
-                throw new Error('ENOENT');
-            if (f.resolved.content === undefined)
-                throw new Error('EISDIR');
-            return f.resolved.content;
-        }
-        public readDirectory(dir: string): string[] {
-            const f = this.resolvePath(dir);
-            if (f === undefined)
-                throw new Error('ENOENT');
-            if (f.resolved.content !== undefined)
-                throw new Error('ENOTDIR');
-            return Object.keys(f.resolved.entries || {});
-        }
-        public realpath(file: string): string {
-            if (isLibraryFile(file))
-                return super.realpath(file);
-            const f = this.resolvePath(file);
-            if (f === undefined)
-                throw new Error('ENOENT');
-            return path.resolve(this.dirs.getCurrentDirectory(), f.realpath);
-        }
-
-        private resolvePath(p: string) {
-            const parts = path.relative(this.normalizePath(this.dirs.getCurrentDirectory()), this.normalizePath(p)).split(/\//g);
-            let current: FileMeta | undefined = files;
-            let part = parts.shift();
-            let realPath = [];
-            while (part !== undefined) {
-                if (part) {
-                    realPath.push(part);
-                    current = current.entries && current.entries[part];
-                    if (current === undefined)
-                        return;
-                    if (current.symlink !== undefined) {
-                        parts.unshift(...current.symlink.split(/\//g));
-                        realPath = [];
-                        current = files;
-                    }
-                }
-                part = parts.shift();
-            }
-            return {resolved: current, realpath: realPath.join('/')};
-        }
-    }
-    container.bind(FileSystem).to(MockFileSystem);
+    });
+    container.bind(FileSystem).to(MemoryFileSystem);
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const result = Array.from(runner.lintCollection({
@@ -323,10 +230,6 @@ test.skip('excludes symlinked typeRoots', (t) => {
     t.is(result.length, 1);
     t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/a.ts')));
 });
-
-function isLibraryFile(name: string) {
-    return /[\\/]typescript[\\/]lib[\\/]lib(\.es\d+(\.\w+)*)?\.d\.ts$/.test(name);
-}
 
 test('works with absolute and relative paths', (t) => {
     const container = new Container();
@@ -380,3 +283,153 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
     );
     t.snapshot(result, {id: 'multi-project'});
 });
+
+test('uses FileSystem for globbing', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(MockFiles).toConstantValue({
+        entries: {
+            'a.ts': {content: 'a;'},
+            foo: {
+                entries: {
+                    'b.ts': {content: 'b;\n'},
+                },
+            },
+            link: {
+                symlink: '.symlinked', // ensures symlinks are handled correctly
+            },
+            '.symlinked': {
+                entries: {
+                    nested: {
+                        entries: {
+                            'c.ts': {content: 'c;'},
+                        },
+                    },
+                },
+            },
+            regular: {
+                entries: {
+                    nested: {
+                        entries: {
+                            'd.ts': {symlink: '.symlinked/nested/c.ts'},
+                        },
+                    },
+                },
+            },
+            '.wotanrc.yaml': {content: 'rules: {}'},
+        },
+    });
+    container.bind(FileSystem).to(MemoryFileSystem);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+    const result = Array.from(
+        runner.lintCollection({
+            config: undefined,
+            files: ['**/*.ts'],
+            exclude: [],
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('', entry[0])), entry[1]],
+    );
+    t.snapshot(result, {id: 'glob-fs'});
+});
+
+function isLibraryFile(name: string) {
+    return /[\\/]typescript[\\/]lib[\\/]lib(\.es\d+(\.\w+)*)?\.d\.ts$/.test(name);
+}
+
+abstract class MockFiles {
+    public content?: string;
+    public symlink?: string;
+    public entries?: Record<string, MockFiles | undefined>;
+}
+@injectable()
+class MemoryFileSystem implements FileSystem {
+    constructor(private files: MockFiles, private dirs: DirectoryService) {}
+
+    public normalizePath(file: string) {
+        return NodeFileSystem.normalizePath(file);
+    }
+    public stat(file: string) {
+        if (isLibraryFile(file))
+            return fs.statSync(file);
+        const f = this.resolvePath(file);
+        if (f === undefined)
+            throw new Error('ENOENT');
+        return {
+            isFile() { return f.resolved.content !== undefined; },
+            isDirectory() { return f.resolved.content === undefined; },
+        };
+    }
+    public lstat(file: string) {
+        const f = this.resolvePath(file);
+        if (f === undefined)
+            throw new Error();
+        return {
+            isFile() { return !f.symlink && f.resolved.content !== undefined; },
+            isDirectory() { return !f.symlink && f.resolved.content === undefined; },
+            isSymbolicLink() { return f.symlink; },
+        };
+    }
+    public readFile(file: string) {
+        if (isLibraryFile(file))
+            return fs.readFileSync(file, 'utf8');
+        const f = this.resolvePath(file);
+        if (f === undefined)
+            throw new Error('ENOENT');
+        if (f.resolved.content === undefined)
+            throw new Error('EISDIR');
+        return f.resolved.content;
+    }
+    public readDirectory(dir: string): string[] {
+        const f = this.resolvePath(dir);
+        if (f === undefined)
+            throw new Error('ENOENT');
+        if (f.resolved.content !== undefined)
+            throw new Error('ENOTDIR');
+        return Object.keys(f.resolved.entries || {});
+    }
+    public realpath(file: string): string {
+        const f = this.resolvePath(file);
+        if (f === undefined)
+            throw new Error('ENOENT');
+        return path.resolve(this.dirs.getCurrentDirectory(), f.realpath);
+    }
+    public deleteFile() {
+        throw new Error('not implemented');
+    }
+    public createDirectory() {
+        throw new Error('not implemented');
+    }
+    public writeFile() {
+        throw new Error('not implemented');
+    }
+
+    private resolvePath(p: string) {
+        const parts = path.relative(this.normalizePath(this.dirs.getCurrentDirectory()), this.normalizePath(p)).split(/\//g);
+        let current: MockFiles | undefined = this.files;
+        let part = parts.shift();
+        let realPath = [];
+        let symlinkedDepth = -1;
+        while (part !== undefined) {
+            --symlinkedDepth;
+            if (part) {
+                realPath.push(part);
+                current = current.entries && current.entries[part];
+                if (current === undefined)
+                    return;
+                if (current.symlink !== undefined) {
+                    const newParts = current.symlink.split(/\//g);
+                    parts.unshift(...newParts);
+                    symlinkedDepth = Math.max(symlinkedDepth, 0) + newParts.length;
+                    realPath = [];
+                    current = this.files;
+                }
+            }
+            part = parts.shift();
+        }
+        return {resolved: current, realpath: realPath.join('/'), symlink: symlinkedDepth >= 0};
+    }
+}

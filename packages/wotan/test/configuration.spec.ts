@@ -12,6 +12,7 @@ import {
     LoadConfigurationContext,
     ConfigurationError,
     BuiltinResolver,
+    LStats,
 } from '@fimbul/ymir';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../src/services/cached-file-system';
@@ -291,6 +292,9 @@ test('DefaultConfigurationProvider.find', (t) => {
                 };
             throw new Error();
         }
+        public lstat(): LStats {
+            throw new Error('Method not implemented.');
+        }
         public writeFile(): void {
             throw new Error('Method not implemented.');
         }
@@ -396,6 +400,9 @@ test('DefaultConfigurationProvider.read', (t) => {
             throw new Error('Method not implemented.');
         }
         public stat(): Stats {
+            throw new Error('Method not implemented.');
+        }
+        public lstat(): LStats {
             throw new Error('Method not implemented.');
         }
         public writeFile(): void {

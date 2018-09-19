@@ -20,6 +20,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import resolveGlob = require('to-absolute-glob');
+import { createGlobProxy } from './glob-proxy';
 
 const log = debug('wotan:runner');
 
@@ -116,7 +117,7 @@ export class Runner {
 
     private *lintFiles(options: LintOptions, config: Configuration | undefined): LintResult {
         let processor: AbstractProcessor | undefined;
-        for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
+        for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory(), this.fs)) {
             if (options.config === undefined)
                 config = this.configManager.find(file);
             const effectiveConfig = config && this.configManager.reduce(config, file);
@@ -403,17 +404,14 @@ function getOutFileDeclarationName(outFile: string) {
     return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
 }
 
-function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
+// TODO make instance method
+function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string>, cwd: string, fs: CachedFileSystem): Iterable<string> {
     const result: string[] = [];
     const globOptions = {
         cwd,
-        absolute: true,
-        cache: {},
         ignore: exclude,
         nodir: true,
-        realpathCache: {},
-        statCache: {},
-        symlinks: {},
+        ...createGlobProxy(fs),
     };
     for (const pattern of patterns) {
         const match = glob.sync(pattern, globOptions);
