@@ -30,7 +30,7 @@
     "@octokit/rest": "^15.9.4",
     "@types/cross-spawn": "^6.0.0",
     "@types/github-url-to-object": "^4.0.0",
-    "@types/glob": "^5.0.35",
+    "@types/glob": "^7.0.0",
     "@types/node": "^10.0.8",
     "@types/parse5-sax-parser": "^5.0.1",
     "ava": "^0.25.0",
