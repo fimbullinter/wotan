@@ -193,9 +193,17 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/github-url-to-object/-/github-url-to-object-4.0.0.tgz#cd84d42c86894aa9a827b1bde23a0605c6823ef3"
 
-"@types/glob@*", "@types/glob@^5.0.33", "@types/glob@^5.0.35":
+"@types/glob@*":
   version "5.0.35"
   resolved "https://registry.yarnpkg.com/@types/glob/-/glob-5.0.35.tgz#1ae151c802cece940443b5ac246925c85189f32a"
+  dependencies:
+    "@types/events" "*"
+    "@types/minimatch" "*"
+    "@types/node" "*"
+
+"@types/glob@^7.0.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@types/glob/-/glob-7.1.0.tgz#55ff6b216e9100b22eccec2cfe2e251ccb09a6ab"
   dependencies:
     "@types/events" "*"
     "@types/minimatch" "*"
