@@ -103,7 +103,7 @@ Baselines are commited and pushed. Please review the changes to baseline files t
 
 ## Pull Requests
 
-Pull requests are the primary mechanism we use to change Rust. GitHub itself has some [great documentation](https://help.github.com/articles/about-pull-requests/) on using the Pull Request feature.
+Pull requests are the primary mechanism we use to change Fimbullinter. GitHub itself has some [great documentation](https://help.github.com/articles/about-pull-requests/) on using the Pull Request feature.
 We use the "fork and pull" model [described here](https://help.github.com/articles/about-collaborative-development-models/), where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
 
 Please make pull requests against the `master` branch.
