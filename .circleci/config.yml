@@ -27,7 +27,7 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -W typescript@$typescriptVersion}
+          yarn ${typescriptVersion:+add -DW typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |
@@ -77,17 +77,17 @@ jobs:
     docker:
       - image: circleci/node:8@sha256:b954f4cc8acad11cb9d3c5942f876aaa98df7ee25d2c9e11f48c4cea18ce51a3
     environment:
-      typescriptVersion: 2.8
+      typescriptVersion: "2.8"
     <<: *base
   test@2.9:
     docker:
       - image: circleci/node:10@sha256:215d373a346dce0aece2d1a16b0d50072bc3d98755c2a299c5eae44df6532563
     environment:
-      typescriptVersion: 2.9
+      typescriptVersion: "2.9"
     <<: *base
   test@3.0:
     docker:
       - image: circleci/node:10@sha256:215d373a346dce0aece2d1a16b0d50072bc3d98755c2a299c5eae44df6532563
     environment:
-      typescriptVersion: 3.0
+      typescriptVersion: "3.0"
     <<: *base
