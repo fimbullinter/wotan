@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
-    "@types/debug": "^0.0.30",
+    "@types/debug": "^0.0.31",
     "@types/diff": "^3.2.2",
     "@types/escape-string-regexp": "^1.0.0",
     "@types/glob": "^5.0.33",
