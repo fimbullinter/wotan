@@ -54,9 +54,9 @@ let a = [...[,],];
    console.log(...[],);
 
 const named = 'bar';
-// don't fix object spread because of possible duplicate key errors
 let myObj = {
     ...{foo: 1},
     bar: 1,
     ...{foo: 2, [named]: 2},
+    ...{},
 };
