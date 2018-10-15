@@ -63,7 +63,7 @@ let myObj = {
     foo: 2, [named]: 2,
 };
 
-<div id={ 'foo'}  {...myObj}  named={named} other={ "1"} valid-jsx-identifier={ true}
+<div id={ 'foo'}  {...myObj}  named={named} other={ 1} valid-jsx-identifier={ true}  prop={ myObj}  str={ `foo`}
     {...{'invalid attribute name': true, baz: 2}}
     {/*...{}*/...myObj}
     {...{['computed' + named]: 1}}
