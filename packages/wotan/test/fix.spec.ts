@@ -78,10 +78,42 @@ test('Fixer', (t) => {
         'merges replacements of a fix',
     );
 
-    t.throws(
-        () => applyFixes('', [{replacements: [Replacement.append(0, 'a'), Replacement.append(0, 'b')]}]),
-        'Multiple insertion replacements at the same position.',
+    t.deepEqual(
+        applyFixes('abc', [
+            {replacements: [Replacement.replace(0, 1, 'd'), Replacement.replace(1, 2, 'e')]},
+        ]),
+        {
+            result: 'dec',
+            fixed: 1,
+            range: {
+                span: {
+                    start: 0,
+                    length: 2,
+                },
+                newLength: 2,
+            },
+        },
+        'merges touching replacements of a fix',
     );
+
+    t.deepEqual(
+        applyFixes('', [
+            {replacements: [Replacement.append(0, 'a'), Replacement.append(0, 'b')]},
+        ]),
+        {
+            result: 'ab',
+            fixed: 1,
+            range: {
+                span: {
+                    start: 0,
+                    length: 0,
+                },
+                newLength: 2,
+            },
+        },
+        'merges insertions at the same position of a fix',
+    );
+
     t.throws(
         () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replace(1, 4, 'b')]}]),
         'Replacements of fix overlap.',

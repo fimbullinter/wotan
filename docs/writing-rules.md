@@ -193,24 +193,31 @@ this.addFailure(start, end, "Type 'any' is forbidden.", [
 
 Both fixes above are treated the same internally. But there are certain restrictions:
 While overlapping replacements of different fixes are filtered out and applied in a subsequent iteration, replacements of the same fix must not overlap.
+Replacements of the same fix are not considered overlapping if their ranges are touching.
 
 * No `replace` or `delete` of the same character more than once.
-* No `replace` or `append` at the same position more than once.
 * You are allowed to `delete` and `append` at the same position as they get merged internally.
+* `append`ing multiple times at the same position merges the insertions in order of occurrence.
 
-Some examples of invalid fixes:
+Some examples:
 
 ```ts
 [
   Replacement.delete(start, end),
   Replacement.append(start, '{'),
-  Replacement.append(start, '}'), // overlaps with the previous replacement
+  Replacement.append(start, '}'),
 ];
+// same as
+Replacement.replace(start, end, '{}');
+
 
 [
   Replacement.replace(start, end, '{'),
-  Replacement.append(start, '}'), // overlaps with the previous replacement
+  Replacement.append(start, '}'), // order matters, swapping with the previous line gives a different result
 ];
+// same as
+Replacement.replace(start, end, '{}');
+
 
 [
   Replacement.delete(start, end),

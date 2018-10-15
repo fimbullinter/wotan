@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { Fix, Replacement } from '@fimbul/ymir';
+import stableSort = require('stable');
 
 export interface FixResult {
     result: string;
@@ -97,18 +98,15 @@ function compareReplacements(a: Replacement, b: Replacement): number {
 function combineReplacements(replacements: ReadonlyArray<Replacement>): ReadonlyArray<Replacement> {
     if (replacements.length === 1)
         return replacements;
-    replacements = replacements.slice().sort(compareReplacements);
+    // use a stable sorting algorithm to avoid shuffling insertions at the same position as these have the same start and end values
+    replacements = stableSort.inplace(replacements.slice(), compareReplacements);
     const result = [];
     let current = replacements[0];
-    let wasInsertion = current.start === current.end;
     for (let i = 1; i < replacements.length; ++i) {
         const replacement = replacements[i];
         if (current.end > replacement.start)
             throw new Error('Replacements of fix overlap.');
-        const isInsertion = replacement.start === replacement.end;
         if (current.end === replacement.start) {
-            if (isInsertion && wasInsertion)
-                throw new Error('Multiple insertion replacements at the same position.');
             current = {
                 start: current.start,
                 end: replacement.end,
@@ -118,7 +116,6 @@ function combineReplacements(replacements: ReadonlyArray<Replacement>): Readonly
             result.push(current);
             current = replacement;
         }
-        wasInsertion = isInsertion;
     }
     result.push(current);
     return result;
