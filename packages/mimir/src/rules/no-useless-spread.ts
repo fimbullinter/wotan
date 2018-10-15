@@ -39,7 +39,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkSpreadElement(node: ts.SpreadElement) {
-        if (!isArrayLiteralExpression(node.expression) || node.expression.elements.some(isOmittedExpression) && isReassignmentTarget(node))
+        if (!isArrayLiteralExpression(node.expression) || node.expression.elements.some(isOmittedExpression) && !isReassignmentTarget(node))
             return;
         this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(node, node.expression.elements));
     }
@@ -83,36 +83,29 @@ function canConvertObjectSpreadToJsx(
 
 function removeUselessJsxSpreadAttribute(node: ts.JsxSpreadAttribute, properties: ts.NodeArray<PropertiesConvertableToJsx>) {
     let prevEnd = node.pos;
-    let append = '';
-    const fix: Replacement[] = [];
+    const fix = [];
     for (const property of properties) {
+        fix.push(Replacement.replace(prevEnd, property.pos, ' ')); // use space instead of comma as separator
         switch (property.kind) {
             case ts.SyntaxKind.SpreadAssignment:
-                replaceLeading(property.expression.pos - 3, '{');
-                replaceTrailing(property.end, '}');
+                fix.push(
+                    Replacement.append(property.expression.pos - 3, '{'),
+                    Replacement.append(property.end, '}'),
+                );
                 break;
             case ts.SyntaxKind.PropertyAssignment:
-                const name = getPropertyName(property.name)!;
-                replaceLeading(property.initializer.pos, `${name}={`);
-                replaceTrailing(property.end, '}');
+                fix.push(
+                    Replacement.replace(property.getStart(), property.initializer.pos, `${getPropertyName(property.name)!}={`),
+                    Replacement.append(property.end, '}'),
+                );
                 break;
             default:
-                replaceLeading(property.getStart(), '');
-                replaceTrailing(property.end, `={${property.name.text}}`);
+                fix.push(Replacement.append(property.end, `={${property.name.text}}`));
         }
+        prevEnd = node.end;
     }
-    fix.push(Replacement.replace(prevEnd, node.end, append));
+    fix.push(Replacement.delete(prevEnd, node.end));
     return fix;
-
-    // we need to merge fixes manually using these functions
-    // otherwise replacement ranges would always start at the beginning of the previous one
-    function replaceLeading(end: number, newText: string) {
-        fix.push(Replacement.replace(prevEnd, end, `${append} ${newText}`));
-    }
-    function replaceTrailing(start: number, newText: string) {
-        prevEnd = start;
-        append = newText;
-    }
 }
 
 function removeUselessSpread(node: ts.SpreadAssignment | ts.SpreadElement, elements: ts.NodeArray<ts.Node>) {
