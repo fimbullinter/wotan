@@ -23,17 +23,18 @@ export class Rule extends AbstractRule {
                 wrappedAst || (wrappedAst = this.context.getWrappedAst()),
                 match.index,
             )!;
-            if (node.getStart(this.sourceFile) !== match.index)
-                continue;
             switch (node.kind) {
                 case ts.SyntaxKind.SpreadElement:
-                    this.checkSpreadElement(<ts.SpreadElement>node);
+                    if ((<ts.SpreadElement>node).expression.pos - 3 === match.index)
+                        this.checkSpreadElement(<ts.SpreadElement>node);
                     break;
                 case ts.SyntaxKind.SpreadAssignment:
-                    this.checkSpreadAssignment(<ts.SpreadAssignment>node);
+                    if ((<ts.SpreadAssignment>node).expression.pos - 3 === match.index)
+                        this.checkSpreadAssignment(<ts.SpreadAssignment>node);
                     break;
                 case ts.SyntaxKind.JsxSpreadAttribute:
-                    this.checkJsxSpreadAttribute(<ts.JsxSpreadAttribute>node);
+                    if ((<ts.JsxSpreadAttribute>node).expression.pos - 3 === match.index)
+                        this.checkJsxSpreadAttribute(<ts.JsxSpreadAttribute>node);
             }
         }
     }
@@ -102,7 +103,7 @@ function removeUselessJsxSpreadAttribute(node: ts.JsxSpreadAttribute, properties
             default:
                 fix.push(Replacement.append(property.end, `={${property.name.text}}`));
         }
-        prevEnd = node.end;
+        prevEnd = property.end;
     }
     fix.push(Replacement.delete(prevEnd, node.end));
     return fix;

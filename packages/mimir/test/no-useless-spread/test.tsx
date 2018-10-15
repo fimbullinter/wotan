@@ -15,7 +15,11 @@ let obj = {
 
 obj = {
     ... // comment
-    {...obj}
+    {...obj},
+    ... // comment
+    obj,
+    // ...{}
+    ...obj,
 };
 
 console.log(/*.../*/...[]);
@@ -60,3 +64,12 @@ let myObj = {
     ...{foo: 2, [named]: 2},
     ...{},
 };
+
+<div
+    {...{id: 'foo', ...myObj, named, ...{other: "1"}}}
+    {...{'valid-jsx-identifier': true,}}
+    {...{'invalid attribute name': true, baz: 2}}
+    {/*...{}*/...myObj}
+    {...{['computed' + named]: 1}}
+    {...{method(){}}}
+></div>

@@ -23,8 +23,12 @@ let obj = {
 obj = {
     ... // comment
     ~~~~~~~~~~~~~~
-    {...obj}
-~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
+    {...obj},
+~~~~~~~~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
+    ... // comment
+    obj,
+    // ...{}
+    ...obj,
 };
 
 console.log(/*.../*/...[]);
@@ -83,3 +87,15 @@ let myObj = {
     ...{},
     ~~~~~  [error no-useless-spread: Using the spread operator here is not necessary.]
 };
+
+<div
+    {...{id: 'foo', ...myObj, named, ...{other: "1"}}}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
+                                     ~~~~~~~~~~~~~~~   [error no-useless-spread: Using the spread operator here is not necessary.]
+    {...{'valid-jsx-identifier': true,}}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-spread: Using the spread operator here is not necessary.]
+    {...{'invalid attribute name': true, baz: 2}}
+    {/*...{}*/...myObj}
+    {...{['computed' + named]: 1}}
+    {...{method(){}}}
+></div>
