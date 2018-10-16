@@ -36,7 +36,7 @@ export class NodeFileSystem implements FileSystem {
         return buf.toString('utf8'); // default to UTF8 without BOM
     }
     public readDirectory(dir: string): Array<string | Dirent> {
-        return fs.readdirSync(dir, <any>{withFileTypes: true});
+        return fs.readdirSync(dir, {withFileTypes: true});
     }
     public stat(path: string): Stats {
         return fs.statSync(path);
@@ -51,6 +51,6 @@ export class NodeFileSystem implements FileSystem {
         return fs.unlinkSync(path);
     }
     public createDirectory(dir: string): void {
-        return fs.mkdirSync(dir);
+        return fs.mkdirSync(dir, {recursive: true});
     }
 }
