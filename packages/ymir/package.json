@@ -25,11 +25,13 @@
   "dependencies": {
     "inversify": "^4.10.0",
     "reflect-metadata": "^0.1.12",
-    "tslib": "^1.8.1",
-    "tsutils": "^3.0.0"
+    "tslib": "^1.8.1"
+  },
+  "devDependencies": {
+    "tsutils": "^3.1.0"
   },
   "peerDependencies": {
-    "tsutils": ">2.19.0",
+    "tsutils": ">2.29.0",
     "typescript": ">= 2.8.1 || >= 3.0.0-dev || >= 3.0.0-insiders || 3.0.0-rc || >= 3.1.0-dev"
   }
 }

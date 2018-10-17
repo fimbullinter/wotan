@@ -14,7 +14,7 @@ TypeScript doesn't perform all possible checks on object literals containing spr
 
 :thumbsdown: Examples of incorrect code
 
-```ts
+```tsx
 let obj = {
   foo: 1,
   ...{
@@ -30,11 +30,13 @@ let arr = [
 ];
 
 Math.max(...[1, 2]);
+
+<div {...{id: 'foo'}}></div>
 ```
 
 :thumbsup: Examples of correct code
 
-```ts
+```tsx
 let obj = {
   foo: 1,
   bar: 2,
@@ -52,6 +54,12 @@ let arr = [
 ];
 
 Math.max(1, ...arr, 2);
+
+<div
+  id="foo"
+  {...{[computedKey]: 1}}
+  {...{'not a valid jsx property name': true}}
+></div>
 ```
 
 ## Further Reading
