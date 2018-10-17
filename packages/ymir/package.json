@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "dependencies": {
-    "inversify": "^4.10.0",
+    "inversify": "^5.0.0",
     "reflect-metadata": "^0.1.12",
     "tslib": "^1.8.1"
   },
