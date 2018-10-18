@@ -232,13 +232,13 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^10.0.8":
+"@types/node@*":
   version "10.11.4"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.11.4.tgz#e8bd933c3f78795d580ae41d86590bfc1f4f389d"
 
-"@types/node@^9.3.0":
-  version "9.6.34"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.34.tgz#e03f9008f5fba43feb21223a82d3983531e004a2"
+"@types/node@^10.12.0":
+  version "10.12.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.0.tgz#ea6dcbddbc5b584c83f06c60e82736d8fbb0c235"
 
 "@types/parse5-sax-parser@^5.0.1":
   version "5.0.1"
