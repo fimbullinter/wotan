@@ -8,7 +8,7 @@ declare namespace JSX {
 
 /** @deprecated */
 function FooComponent(props: {foo: string}): false;
-function FooComponent(props: {bar: number}): false;
+function FooComponent(props: {bar: string}): false;
 function FooComponent() {
     return false;
 }
