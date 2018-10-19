@@ -30,6 +30,7 @@ import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
 import { FormatterLoader } from '../src/services/formatter-loader';
 import { ProcessorLoader } from '../src/services/processor-loader';
+import { satisfies } from 'semver';
 
 test('CacheFactory', (t) => {
     const cm = new DefaultCacheFactory();
@@ -328,9 +329,11 @@ test('FileSystem', (t) => {
 
     const dir = path.posix.join(tmpDir, 'sub');
     const deepDir = path.posix.join(dir, 'dir');
-    t.throws(() => fileSystem.createDirectory(deepDir));
-    t.throws(() => fileSystem.createDirectory(tmpDir));
-    fileSystem.createDirectory(dir);
+    if (!satisfies(process.version, '>=10.12.0')) {
+        t.throws(() => fileSystem.createDirectory(deepDir));
+        t.throws(() => fileSystem.createDirectory(tmpDir));
+        fileSystem.createDirectory(dir);
+    }
     fileSystem.createDirectory(deepDir);
     t.true(fs.existsSync(dir));
     t.true(fs.existsSync(deepDir));
