@@ -15,6 +15,9 @@ workflows:
       - test@3.0:
           requires:
             - build
+      - test@3.1:
+          requires:
+            - build
 
 base: &base
   working_directory: '~/Project' # to really test case sensitivity
@@ -90,4 +93,10 @@ jobs:
       - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
     environment:
       typescriptVersion: "3.0"
+    <<: *base
+  test@3.1:
+    docker:
+      - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
+    environment:
+      typescriptVersion: "3.1"
     <<: *base

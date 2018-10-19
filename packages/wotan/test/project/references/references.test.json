@@ -1,4 +1,4 @@
 {
   "references": true,
-  "typescriptVersion": ">= 3.0.0"
+  "typescriptVersion": "~3.0.0 || >= 3.2.0"
 }
