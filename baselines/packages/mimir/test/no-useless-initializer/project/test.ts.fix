@@ -55,7 +55,7 @@ declare function get<T>(): T;
         prop: 'foo',
     };
     let {['prop']: noDefault} = obj;
-    let {prop} = obj;
+    let {prop = 'foo'} = obj;
     let {foo = 'oof'} = get<{foo: 'foo'}>();
     let {foo2 = null as any} = get<{foo2: 'foo'}>();
     let {foo3 = null as unknown} = get<{foo3: 'foo'}>();
@@ -65,7 +65,7 @@ declare function get<T>(): T;
     let {something = 'something'} = get<{[key: string]: string}>();
     let {any = 'any'} = get<{any: any}>();
     let {unknown = 'unknown'} = get<{unknown: unknown}>();
-    let {'prop': renamed} = obj;
+    let {'prop': renamed = 'renamed'} = obj;
     const propName = 'prop';
     const {[propName]: computed = null} = obj;
     const propName2: string = null as any;
@@ -73,8 +73,8 @@ declare function get<T>(): T;
     const propName3 = 1;
     const {[propName3]: computed3 = null} = get<{1: string, 2: string}>();
     const {[Symbol.iterator]: iterator = () => get<IterableIterator<string>>()} = [1];
-    let {nested: {prop: nestedProp}} = get<{nested: typeof obj}>();
-    let {toString} = 1;
+    let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
+    let {toString = () => 'foo'} = 1;
 
     ({toString} = 2);
 
@@ -97,7 +97,7 @@ declare function get<T>(): T;
     let [first = 2, second = 3, third = 1] = [1, undefined];
 }
 {
-    let {0: first = 1, 1: second = 2, length} = [1];
+    let {0: first = 1, 1: second = 2, length = 1} = [1];
     let {0: a = 1, 1: b = 2} = get<[number]>();
     let {0: c = 1, 1: d = 2} = get<[number, number]>();
 }

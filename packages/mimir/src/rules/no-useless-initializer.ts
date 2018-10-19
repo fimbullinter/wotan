@@ -91,14 +91,10 @@ export class Rule extends AbstractRule {
             const lateBoundNames = propNames(element, i, checker);
             if (!lateBoundNames.known || lateBoundNames.properties.some(maybeUndefined))
                 continue;
-            const fix = checker.getTypeAtLocation(element.name)!.flags & (ts.TypeFlags.Union | ts.TypeFlags.Any | ts.TypeFlags.Unknown)
-                // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
-                // destructured type. The type of the variable then includes the type of the initializer as well.
-                // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
-                // We try to prevent errors by checking if the resulting type is a union type.
-                ? undefined
-                : Replacement.delete(getChildOfKind(element, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, element.end);
-            this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.", fix);
+            // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
+            // destructured type. The type of the variable then includes the type of the initializer as well.
+            // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
+            this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
         }
 
         function maybeUndefined({symbolName}: LateBoundPropertyName) {
