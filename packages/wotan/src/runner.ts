@@ -298,6 +298,7 @@ export class Runner {
             );
             if (parsed.errors.length !== 0) {
                 let {errors} = parsed;
+                // for compatibility with typescript@<3.1.0
                 if (references && parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
                     errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
                 if (errors.length !== 0)
@@ -326,7 +327,7 @@ export class Runner {
 function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
     const references = program.getResolvedProjectReferences === undefined
         // for compatibility with TypeScript@<3.1.1
-        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>program.getProjectReferences()
+        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
         : program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
@@ -337,11 +338,29 @@ function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
         if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
             continue;
         result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
-        if (ref.commandLine.projectReferences !== undefined)
+        if ('references' in ref) {
+            result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
+        } else if (ref.commandLine.projectReferences !== undefined) {
+            // for compatibility with typescript@<3.2.0
             moreReferences.push(...ref.commandLine.projectReferences);
+        }
     }
     for (const ref of moreReferences)
         result.push(...getOutputFileNamesOfProjectReferenceRecursive(ref, seen, host));
+    return result;
+}
+
+// TODO unifiy with code in getOutputsOfProjectReferences once we can get rid of getOutputFileNamesOfProjectReferenceRecursive
+function getOutputFileNamesOfResolvedProjectReferencesRecursive(references: ts.ResolvedProjectReference['references'], seen: string[]) {
+    if (references === undefined)
+        return [];
+    const result: string[] = [];
+    for (const ref of references) {
+        if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
+            continue;
+        result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
+        result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
+    }
     return result;
 }
 
