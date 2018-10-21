@@ -8,10 +8,11 @@ import {
     getPreviousToken,
     getNextToken,
     getPropertyName,
-    unionTypeParts,
     isReassignmentTarget,
     isBinaryExpression,
     isStrictCompilerOptionEnabled,
+    isInstantiableType,
+    isUnionType,
 } from 'tsutils';
 import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName } from '../utils';
 
@@ -159,8 +160,19 @@ function getArrayPropertyName(_: ts.BindingElement, i: number) {
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
     if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.escapedName) ? 0 : ts.SymbolFlags.Transient)))
         return true;
-    return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
-        .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0);
+    return typeMaybeUndefined(checker, checker.getTypeOfSymbolAtLocation(symbol, node));
+}
+
+function typeMaybeUndefined(checker: ts.TypeChecker, type: ts.Type): boolean {
+    if (isInstantiableType(type)) {
+        const constraint = checker.getBaseConstraintOfType(type);
+        if (constraint === undefined)
+        return true;
+        type = constraint;
+    }
+    if (isUnionType(type))
+        return type.types.some((t) => typeMaybeUndefined(checker, t));
+    return (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0;
 }
 
 function isUndefined(node: ts.Expression) {

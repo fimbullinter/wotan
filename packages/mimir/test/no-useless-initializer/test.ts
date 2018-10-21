@@ -101,3 +101,12 @@ declare function get<T>(): T;
     let {0: a = 1, 1: b = 2} = get<[number]>();
     let {0: c = 1, 1: d = 2} = get<[number, number]>();
 }
+
+function test<T, U extends any, V extends T, W extends string, X extends boolean | undefined>(param: {t: T, u: U, v: V, w: W, x: X}) {
+    let {t = '', u = '', v = '', w = '', x = ''} = param;
+    let {wx = ''} = get<{wx: W | X}>();
+}
+
+function test2<T>(t: T, u: T extends string ? boolean : undefined, v: T extends string ? string : boolean, w: T extends string ? T : number) {
+    let {t: _t = '', u: _u = '', v: _v = '', w: _w = ''} = get<{t: typeof t, u: typeof u, v: typeof v, w: typeof w}>();
+}
