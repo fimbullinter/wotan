@@ -1,5 +1,21 @@
 # Change Log
 
+## v0.15.0
+
+**Features:**
+
+* `wotan test` now validates test configurations
+* Performance improvements using recently added Node.js file system features
+* Improved caching of directory entries
+* Work around breaking changes in TypeScript API regarding project references
+* `--fix` now merges replacements of a single fix instead of throwing an error
+* `no-useless-spread`: added check for JSX spread attributes
+
+**Bugfixes:**
+
+* `no-useless-initializer`: removed unreliable fix for object destructuring
+* `no-useless-initializer`: fixed false positive in destructuring when property is a type parameter or conditional type
+
 ## v0.14.0
 
 **Features:**
