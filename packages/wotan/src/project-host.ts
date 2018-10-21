@@ -264,6 +264,9 @@ function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectRe
         return;
     // for compatibility with TypeScript@<3.1.1
     if (program.getResolvedProjectReferences === undefined)
-        return mapDefined(<ReadonlyArray<ts.ResolvedProjectReference>><{}>references, (ref) => ref && {path: ref.sourceFile.fileName});
+        return mapDefined(
+            <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>references,
+            (ref) => ref && {path: ref.sourceFile.fileName},
+        );
     return references;
 }
