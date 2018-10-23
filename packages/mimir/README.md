@@ -62,7 +62,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`prefer-dot-notation`](docs/prefer-dot-notation.md) | :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
 [`prefer-for-of`](docs/prefer-for-of.md) | :mag: Prefer `for...of` loops over regular `for` loops where possible. | Avoids the false positives of TSLint's `prefer-for-of` rule.
 [`prefer-namespace-keyword`](docs/prefer-namespace-keyword.md) | :wrench: Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
-`prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
+[`prefer-number-methods`](docs/prefer-number-methods.md) | :mag: :wrench: Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite`. | No similar rule in TSLint.
 `prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
 [`return-never-call`](docs/return-never-call.md) | :mag: Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`. | TSLint has no similar rule.
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
