@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as ts from 'typescript';
-import { WrappedAst, isStrictCompilerOptionEnabled, BooleanCompilerOptions, isCompilerOptionEnabled } from 'tsutils';
+import { WrappedAst, BooleanCompilerOptions, isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
 
 export class ConfigurationError extends Error {}
@@ -143,14 +143,6 @@ export function requiresCompilerOption(option: BooleanCompilerOptions) {
             (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option),
         );
     };
-}
-
-/** @deprecated Use `requiresCompilerOption` instead. */
-export function requiresStrictNullChecks(target: typeof TypedRule) {
-    target.supports = combinePredicates(
-        target.supports,
-        (_, context) => isStrictCompilerOptionEnabled(context.program!.getCompilerOptions(), 'strictNullChecks'),
-    );
 }
 
 export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
