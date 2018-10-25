@@ -5,8 +5,8 @@ import {
     FileSummary,
     RuleConstructor,
     FormatterConstructor,
-    isTypescriptFile,
     Replacement,
+    typescriptOnly,
 } from '@fimbul/ymir';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
@@ -16,7 +16,7 @@ import { convertAst } from 'tsutils';
 
 // tslint:disable-next-line:naming-convention
 export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
-    return class extends AbstractRule {
+    class R extends AbstractRule {
         public static requiresTypeInformation = // wotan-disable-next-line no-useless-predicate
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
@@ -25,11 +25,6 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
         public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
-
-        // wotan-disable-next-line no-useless-predicate
-        public static supports = Rule.metadata && Rule.metadata.typescriptOnly
-            ? isTypescriptFile
-            : undefined;
 
         private delegate: TSLint.IRule;
 
@@ -65,7 +60,11 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
                 );
             }
         }
-    };
+    }
+    // wotan-disable-next-line no-useless-predicate
+    if (Rule.metadata && Rule.metadata.typescriptOnly)
+        typescriptOnly(R);
+    return R;
 }
 
 function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
@@ -134,7 +133,7 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
     function apply(options: TSLint.IOptions, sourceFile: ts.SourceFile, program?: ts.Program): TSLint.RuleFailure[] {
         const args = options.ruleArguments.length < 2 ? options.ruleArguments[0] : options.ruleArguments;
         const failures: TSLint.RuleFailure[] = [];
-        if (Rule.supports !== undefined && !Rule.supports(sourceFile, {program, options: args, settings: new Map()}))
+        if (Rule.supports !== undefined && Rule.supports(sourceFile, {program, options: args, settings: new Map()}) === true)
             return failures;
         const context: RuleContext = {
             sourceFile,
