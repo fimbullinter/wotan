@@ -133,7 +133,7 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
     function apply(options: TSLint.IOptions, sourceFile: ts.SourceFile, program?: ts.Program): TSLint.RuleFailure[] {
         const args = options.ruleArguments.length < 2 ? options.ruleArguments[0] : options.ruleArguments;
         const failures: TSLint.RuleFailure[] = [];
-        if (Rule.supports !== undefined && Rule.supports(sourceFile, {program, options: args, settings: new Map()}) === true)
+        if (Rule.supports !== undefined && Rule.supports(sourceFile, {program, options: args, settings: new Map()}) !== true)
             return failures;
         const context: RuleContext = {
             sourceFile,
