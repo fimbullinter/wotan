@@ -30,7 +30,10 @@ test('correctly wraps TSLint rule', (t) => {
     t.true(rule.deprecated);
     t.truthy(rule.supports);
     t.true(rule.supports!(ts.createSourceFile('foo.tsx', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
-    t.false(rule.supports!(ts.createSourceFile('foo.jsx', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
+    t.is(
+        rule.supports!(ts.createSourceFile('foo.jsx', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}),
+        'TypeScript only',
+    );
 
     class TypescriptOnlyTypedRule extends TSLint.Rules.AbstractRule {
         public static metadata = <any>{
@@ -46,7 +49,10 @@ test('correctly wraps TSLint rule', (t) => {
     t.false(rule.deprecated);
     t.truthy(rule.supports);
     t.true(rule.supports!(ts.createSourceFile('foo.ts', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
-    t.false(rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}));
+    t.is(
+        rule.supports!(ts.createSourceFile('foo.js', '', ts.ScriptTarget.Latest), {options: undefined, settings: new Map()}),
+        'TypeScript only',
+    );
 
     class MyTypedRule extends TSLint.Rules.TypedRule {
         public static metadata = <any>{
