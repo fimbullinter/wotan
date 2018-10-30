@@ -288,10 +288,10 @@ var v: any;
 ({
     bar: 1,
     ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
-    ...get<{bar: number} & Record<number, number>>(),
+    ...get<{bar: number} & Record<string, number>>(),
 });
 
 ({
-    ...get<{bar: number} & Record<number, number>>(),
+    ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
 });

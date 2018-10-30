@@ -256,10 +256,10 @@ var v: any;
 
 ({
     bar: 1,
-    ...get<{bar: number} & Record<number, number>>(),
+    ...get<{bar: number} & Record<string, number>>(),
 });
 
 ({
-    ...get<{bar: number} & Record<number, number>>(),
+    ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
 });
