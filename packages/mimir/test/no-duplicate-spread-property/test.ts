@@ -232,3 +232,34 @@ var v: any;
     get foo() { return 2; },
     set foo(v: number) {},
 });
+
+({
+    foo: 1,
+    bar: 1,
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    bas: 1,
+});
+
+({
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    foo: 1,
+    bar: 1,
+    bas: 1,
+});
+
+({
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    foo: 1,
+    bar: 1,
+    baz: 1,
+});
+
+({
+    bar: 1,
+    ...get<{bar: number} & Record<string, number>>(),
+});
+
+({
+    ...get<{bar: number} & Record<string, number>>(),
+    bar: 1,
+});

@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration, getPropertyName } from 'tsutils';
+import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration, getPropertyName, isIntersectionType } from 'tsutils';
 import { lateBoundPropertyNames } from '../utils';
 
 interface PropertyInfo {
@@ -88,11 +88,13 @@ export class Rule extends TypedRule {
 
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
         const type = this.checker.getTypeAtLocation(node)!;
-        return unionTypeParts(type).map(getPropertyInfoFromType).reduce(combinePropertyInfo);
+        return unionTypeParts(type).map(getPropertyInfoFromType).reduce(unionPropertyInfo);
     }
 }
 
 function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
+    if (isIntersectionType(type))
+        return type.types.map(getPropertyInfoFromType).reduce(intersectPropertyInfo);
     if (!isObjectType(type))
         return emptyPropertyInfo;
     const result: PropertyInfo = {
@@ -118,10 +120,18 @@ function isSpreadableProperty(prop: ts.Symbol): boolean | undefined {
     return true;
 }
 
-function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
+function unionPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
     return {
         known: a.known && b.known,
         names: [...a.names, ...b.names],
         assignedNames: a.assignedNames.filter((name) => b.assignedNames.includes(name)),
+    };
+}
+
+function intersectPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
+    return {
+        known: a.known && b.known,
+        names: [...a.names, ...b.names],
+        assignedNames: [...a.assignedNames, ...b.assignedNames],
     };
 }

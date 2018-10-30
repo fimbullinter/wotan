@@ -260,3 +260,38 @@ var v: any;
     get foo() { return 2; },
     set foo(v: number) {},
 });
+
+({
+    foo: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+    bar: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    bas: 1,
+});
+
+({
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    foo: 1,
+    bar: 1,
+    bas: 1,
+});
+
+({
+    ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    foo: 1,
+    bar: 1,
+    baz: 1,
+});
+
+({
+    bar: 1,
+    ~~~     [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    ...get<{bar: number} & Record<string, number>>(),
+});
+
+({
+    ...get<{bar: number} & Record<string, number>>(),
+    bar: 1,
+});
