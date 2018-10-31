@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration, getPropertyName, isIntersectionType } from 'tsutils';
+import { isReassignmentTarget, isObjectType, isClassLikeDeclaration, getPropertyName, isIntersectionType, isUnionType } from 'tsutils';
 import { lateBoundPropertyNames } from '../utils';
 
 interface PropertyInfo {
@@ -87,19 +87,25 @@ export class Rule extends TypedRule {
     }
 
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
-        const type = this.checker.getTypeAtLocation(node)!;
-        return unionTypeParts(type).map(getPropertyInfoFromType).reduce(unionPropertyInfo);
+        return getPropertyInfoFromType(this.checker.getTypeAtLocation(node)!);
     }
 }
 
 function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
+    if (isUnionType(type))
+        return type.types.map(getPropertyInfoFromType).reduce(unionPropertyInfo);
     if (isIntersectionType(type))
         return type.types.map(getPropertyInfoFromType).reduce(intersectPropertyInfo);
+    if (type.flags & ts.TypeFlags.Instantiable) {
+        const constraint = type.getConstraint();
+        if (constraint === undefined)
+            return emptyPropertyInfo;
+        return {...getPropertyInfoFromType(constraint), known: false};
+    }
     if (!isObjectType(type))
         return emptyPropertyInfo;
     const result: PropertyInfo = {
-        known: (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0 ||
-            type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
+        known: type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
         names: [],
         assignedNames: [],
     };

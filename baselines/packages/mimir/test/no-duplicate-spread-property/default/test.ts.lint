@@ -295,3 +295,36 @@ var v: any;
     ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
 });
+
+function test<T, U extends T, V extends any>(t: T, u: U, v: V) {
+    ({foo: 1, ...t, ...u, ...v});
+}
+
+function test2<T extends Record<'foo', number>, U extends T, V extends T & Record<'bar', number>>(t: T, u: U, v: V) {
+    ({foo: 1, bar: 1, ...t});
+      ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+    ({foo: 1, bar: 1, ...u});
+      ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+    ({...t, ...u});
+    ({...t, ...get<T>()});
+    ({...u, ...t});
+    ({...t, ...u, foo: 1});
+    ({foo: 1, bar: 1, ...get<T & {bar: number}>()});
+      ~~~                                            [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+              ~~~                                    [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+    ({foo: 1, bar: 1, ...v});
+      ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+              ~~~             [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+}
+
+function test3<T>(t: T) {
+    ({foo: 1, bar: 1, ...get<T extends number ? {foo: 1} : {bar: 1}>()});
+    ({foo: 1, bar: 1, ...get<T extends number ? {foo: 1} : {foo: 2}>()});
+      ~~~                                                                 [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+}
+
+function test4<T extends {foo: 1} | {bar: 1}, U extends {foo: 1} | {foo: 2}>(t: T, u: U) {
+    ({foo: 1, bar: 1, ...t});
+    ({foo: 1, bar: 1, ...u});
+      ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
+}
