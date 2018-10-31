@@ -296,8 +296,9 @@ var v: any;
     bar: 1,
 });
 
-function test<T, U extends T, V extends any>(t: T, u: U, v: V) {
+function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
     ({foo: 1, ...t, ...u, ...v});
+    ({valueOf: null, toString: null, ...w}); // make sure we don't use the apparent type
 }
 
 function test2<T extends Record<'foo', number>, U extends T, V extends T & Record<'bar', number>>(t: T, u: U, v: V) {
