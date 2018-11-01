@@ -5001,10 +5001,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-typescript@3.2.0-dev.20181031:
-  version "3.2.0-dev.20181031"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.2.0-dev.20181031.tgz#25042e2584246c9810ea4f08106e248fd84877c6"
-  integrity sha512-MkAdVLdevMLrCQjkbei2yPP2OtgxsVL1i0mgC1k2iGlhGvEoBFhKQvmDU4peOkW8wxvGEq+PmxHV/kOo9+pAJQ==
+typescript@3.2.0-dev.20181101:
+  version "3.2.0-dev.20181101"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.2.0-dev.20181101.tgz#bd38f9b2977c396e8225ee66ad75c4593e31b763"
+  integrity sha512-7OL68e1Ab4L5EyKsscjgta0i6tiwzzeYCnmd6sLOJyy0GAvvuNKbtHQlICBhF227z8K0P8r/OQoL32If5So2Cw==
 
 uglify-js@^3.1.4:
   version "3.4.9"
