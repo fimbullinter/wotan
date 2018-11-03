@@ -263,3 +263,29 @@ var v: any;
     ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
 });
+
+function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
+    ({foo: 1, ...t, ...u, ...v});
+    ({valueOf: null, toString: null, ...w}); // make sure we don't use the apparent type
+}
+
+function test2<T extends Record<'foo', number>, U extends T, V extends T & Record<'bar', number>>(t: T, u: U, v: V) {
+    ({foo: 1, bar: 1, ...t});
+    ({foo: 1, bar: 1, ...u});
+    ({...t, ...u});
+    ({...t, ...get<T>()});
+    ({...u, ...t});
+    ({...t, ...u, foo: 1});
+    ({foo: 1, bar: 1, ...get<T & {bar: number}>()});
+    ({foo: 1, bar: 1, ...v});
+}
+
+function test3<T>(t: T) {
+    ({foo: 1, bar: 1, ...get<T extends number ? {foo: 1} : {bar: 1}>()});
+    ({foo: 1, bar: 1, ...get<T extends number ? {foo: 1} : {foo: 2}>()});
+}
+
+function test4<T extends {foo: 1} | {bar: 1}, U extends {foo: 1} | {foo: 2}>(t: T, u: U) {
+    ({foo: 1, bar: 1, ...t});
+    ({foo: 1, bar: 1, ...u});
+}
