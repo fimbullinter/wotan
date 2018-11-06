@@ -124,6 +124,8 @@ This one tries to avoid design decisions of other linters that turned out to be 
 * Testing
   * Tests are configured in JSON files that can configure everything you can specify though the CLI
   * Test files don't contain error markup. That avoids syntax errors and makes them easier to maintain. Lint results and fixed content are stored in separate baseline files.
+* Supports TypeScript project references
+* Loads default values for CLI options from `.fimbullinter.yaml`
 
 ## Supported Environments
 
