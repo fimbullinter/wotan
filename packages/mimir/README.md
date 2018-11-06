@@ -68,7 +68,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 [`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
 [`try-catch-return-await`](docs/try-catch-return-await.md) | :mag: :wrench: Enforces the use of `return await foo;` inside `try-catch` in async functions where `foo` is a `Promise`-like value. | TSLint has no similar rule.
-]`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
+[`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
 [`typecheck`](docs/typecheck.md) | :mag: :x: TypeScript's compile errors as lint errors. | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
 
 ## Formatters
