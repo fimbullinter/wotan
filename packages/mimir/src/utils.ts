@@ -240,3 +240,8 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
             return false;
     }
 }
+
+// TODO move to tsutils
+export function commentText(sourceText: string, comment: ts.CommentRange): string {
+    return sourceText.substring(comment.pos + 2, comment.end - (comment.kind === ts.SyntaxKind.MultiLineCommentTrivia ? 2 : 0));
+}

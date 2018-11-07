@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
-import { typescriptOnly, AbstractRule } from '@fimbul/ymir';
+import { typescriptOnly, AbstractRule, Replacement } from '@fimbul/ymir';
 import { WrappedAst, isTypeNodeKind, getWrappedNodeAtPosition, getCommentAtPosition, getTokenAtPosition } from 'tsutils';
+import { commentText } from '../utils';
 
 @typescriptOnly
 export class Rule extends AbstractRule {
@@ -15,7 +16,7 @@ export class Rule extends AbstractRule {
             if (comment === undefined)
                 continue;
             if (this.sourceFile.isDeclarationFile) {
-                this.addFailure(match.index, match[0].length, "'@internal' comments have no effect in declaration files.");
+                this.fail(match.index, "'@internal' comments have no effect in declaration files.", token, comment);
                 continue;
             }
             // if (this.program !== undefined && !isCompilerOptionEnabled(this.program.getCompilerOptions(), 'stripInternal')) {
@@ -26,29 +27,38 @@ export class Rule extends AbstractRule {
             //     );
             //     continue;
             // }
-            if (!(match.index > ts.forEachLeadingCommentRange(this.sourceFile.text, token.pos, getPos)!)) {
-                this.addFailure(
-                    match.index,
-                    match[0].length,
-                    "'@internal' needs to a be in a leading comment, currently it's a trailing comment.",
-                );
+            let isLeadingComment = false;
+            ts.forEachLeadingCommentRange(this.sourceFile.text, token.pos, (pos) => {
+                isLeadingComment = match!.index > pos;
+                return true;
+            });
+            if (!isLeadingComment) {
+                this.fail(match.index, "'@internal' needs to a be in a leading comment, currently it's a trailing comment.");
                 continue;
             }
             const maybeInternalNode = getTopmostNodeAtPosition(node);
             if (!canNodeBeInternal(maybeInternalNode)) {
-                this.addFailure(match.index, match[0].length, "'@internal' has no effect on this node.");
+                this.fail(match.index, "'@internal' has no effect on this node.", token, comment);
                 continue;
             }
             if (positionIsContainedInRanges(internalRanges, match.index)) {
-                this.addFailure(
-                    match.index,
-                    match[0].length,
-                    "'@internal' is redundant as a parent declaration is already internal",
-                );
+                this.fail(match.index, "'@internal' is redundant as a parent declaration is already internal", token, comment);
                 continue;
             }
             internalRanges.push(maybeInternalNode);
         }
+    }
+
+    private fail(start: number, message: string, token: ts.Node, comment: ts.CommentRange): void;
+    private fail(start: number, message: string): void;
+    private fail(start: number, message: string, token?: ts.Node, comment?: ts.CommentRange) {
+        let fix;
+        if (comment !== undefined && commentText(this.sourceFile.text, comment).trim() === '@internal') {
+            const fixEnd = ts.forEachLeadingCommentRange(this.sourceFile.text, token!.pos, (pos) => pos > start ? pos : undefined) ||
+                token!.getStart(this.sourceFile);
+            fix = Replacement.delete(comment.pos, fixEnd);
+        }
+        this.addFailure(start, start + '@internal'.length, message, fix);
     }
 }
 
@@ -63,10 +73,6 @@ function getTopmostNodeAtPosition(node: ts.Node) {
     while (node.parent.pos === node.pos && node.parent.kind !== ts.SyntaxKind.SourceFile)
         node = node.parent!;
     return node;
-}
-
-function getPos(pos: number) {
-    return pos;
 }
 
 function canNodeBeInternal(node: ts.Node): boolean {
