@@ -34,7 +34,7 @@ export class Rule extends AbstractRule {
                 );
                 continue;
             }
-            const maybeInternalNode = getTopmostNodeAtPosition(node, match.index);
+            const maybeInternalNode = getTopmostNodeAtPosition(node);
             if (!canNodeBeInternal(maybeInternalNode)) {
                 this.addFailure(match.index, match[0].length, "'@internal' has no effect on this node.");
                 continue;
@@ -59,9 +59,9 @@ function positionIsContainedInRanges(ranges: ts.TextRange[], pos: number): boole
     return false;
 }
 
-function getTopmostNodeAtPosition(node: ts.Node, pos: number) {
-    while (node.parent !== undefined && node.parent.pos < pos)
-        node = node.parent;
+function getTopmostNodeAtPosition(node: ts.Node) {
+    while (node.parent.pos === node.pos && node.parent.kind !== ts.SyntaxKind.SourceFile)
+        node = node.parent!;
     return node;
 }
 
@@ -83,6 +83,7 @@ function canNodeBeInternal(node: ts.Node): boolean {
         case ts.SyntaxKind.EnumMember:
         case ts.SyntaxKind.ModuleDeclaration:
         case ts.SyntaxKind.InterfaceDeclaration:
+        case ts.SyntaxKind.ClassDeclaration:
         case ts.SyntaxKind.MethodDeclaration:
         case ts.SyntaxKind.MethodSignature:
         case ts.SyntaxKind.PropertyDeclaration:
