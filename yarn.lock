@@ -4982,10 +4982,10 @@ tsutils@^2.24.0, tsutils@^2.27.0, tsutils@^2.27.2:
   dependencies:
     tslib "^1.8.1"
 
-tsutils@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.1.0.tgz#9136fdbc347799941db4eb326af4dcb81454820e"
-  integrity sha512-rmGhespW+nZMtdkc4JJefYSjux2uCDZxCTLU+nu8gvm+gM+YT0W5XAygHxaeOwRAHZ+SoPdrovZmAlZ2a0KSlw==
+tsutils@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.4.0.tgz#72a56f2a9eebd9bb8a38d018485ab529aa0cb113"
+  integrity sha512-lJOYR+rsCnso8k7C/D1IVSgOmJS9Ds8U4P2H7CxBtTf1w227Zg2nk+Fod8AsUzu3msg8AjZVsNBJb5QgCZsBjQ==
   dependencies:
     tslib "^1.8.1"
 

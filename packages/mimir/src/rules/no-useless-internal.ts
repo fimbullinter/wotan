@@ -1,7 +1,6 @@
 import * as ts from 'typescript';
 import { typescriptOnly, AbstractRule, Replacement } from '@fimbul/ymir';
-import { WrappedAst, isTypeNodeKind, getWrappedNodeAtPosition, getCommentAtPosition, getTokenAtPosition } from 'tsutils';
-import { commentText } from '../utils';
+import { WrappedAst, isTypeNodeKind, getWrappedNodeAtPosition, getCommentAtPosition, getTokenAtPosition, commentText } from 'tsutils';
 
 @typescriptOnly
 export class Rule extends AbstractRule {
