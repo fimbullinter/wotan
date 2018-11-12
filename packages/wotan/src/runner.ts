@@ -11,7 +11,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, mapDefined, addUnique } from './utils';
+import { unixifyPath, hasSupportedExtension, mapDefined, addUnique, flatMap } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -20,6 +20,8 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import resolveGlob = require('to-absolute-glob');
+import expandBraces = require('brace-expansion');
+import isNegatedGlob = require('is-negated-glob');
 
 const log = debug('wotan:runner');
 
@@ -31,6 +33,10 @@ export interface LintOptions {
     references: boolean;
     fix: boolean | number;
     extensions: ReadonlyArray<string> | undefined;
+}
+
+interface NormalizedOptions extends Pick<LintOptions, Exclude<keyof LintOptions, 'files'>> {
+    files: ReadonlyArray<NormalizedGlob>;
 }
 
 @injectable()
@@ -46,20 +52,16 @@ export class Runner {
 
     public lintCollection(options: LintOptions): LintResult {
         const config = options.config !== undefined ? this.configManager.loadLocalOrResolved(options.config) : undefined;
-        const resolveOptions = {cwd: this.directories.getCurrentDirectory()};
-        const files = options.files.map(resolve);
-        const exclude = options.exclude.map(resolve);
+        const cwd = this.directories.getCurrentDirectory();
+        const files = options.files.map((pattern) => normalizeGlob(pattern, cwd));
+        const exclude = flatMap(options.exclude, (pattern) => normalizeGlob(pattern, cwd).normalized);
         if (options.project.length === 0 && options.files.length !== 0)
             return this.lintFiles({...options, files, exclude}, config);
 
         return this.lintProject({...options, files, exclude}, config);
-
-        function resolve(pattern: string) {
-            return resolveGlob(pattern, resolveOptions);
-        }
     }
 
-    private *lintProject(options: LintOptions, config: Configuration | undefined): LintResult {
+    private *lintProject(options: NormalizedOptions, config: Configuration | undefined): LintResult {
         const processorHost = new ProjectHost(
             this.directories.getCurrentDirectory(),
             config,
@@ -114,7 +116,7 @@ export class Runner {
         }
     }
 
-    private *lintFiles(options: LintOptions, config: Configuration | undefined): LintResult {
+    private *lintFiles(options: NormalizedOptions, config: Configuration | undefined): LintResult {
         let processor: AbstractProcessor | undefined;
         for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
             if (options.config === undefined)
@@ -189,7 +191,7 @@ export class Runner {
 
     private* getFilesAndProgram(
         projects: ReadonlyArray<string>,
-        patterns: ReadonlyArray<string>,
+        patterns: ReadonlyArray<NormalizedGlob>,
         exclude: ReadonlyArray<string>,
         host: ProjectHost,
         references: boolean,
@@ -207,7 +209,13 @@ export class Runner {
         }
 
         const allMatchedFiles: string [] = [];
-        const include = patterns.map((p) => new Minimatch(p));
+        const include: IMinimatch[] = [];
+        const nonMagicGlobs = [];
+        for (const pattern of patterns) {
+            if (!pattern.hasMagic)
+                nonMagicGlobs.push(pattern.normalized[0]);
+            include.push(...pattern.normalized.map((p) => new Minimatch(p)));
+        }
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
         let filesOfPreviousProject: string[] | undefined;
@@ -251,7 +259,7 @@ export class Runner {
             if (files.length !== 0)
                 yield {files, program};
         }
-        ensurePatternsMatch(include, ex, allMatchedFiles, projectsSeen);
+        ensurePatternsMatch(nonMagicGlobs, ex, allMatchedFiles, projectsSeen);
 
         function isFileIncluded(fileName: string) {
             return (include.length === 0 || include.some((p) => p.match(fileName))) && !ex.some((p) => p.match(fileName));
@@ -422,7 +430,7 @@ function getOutFileDeclarationName(outFile: string) {
     return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
 }
 
-function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
+function getFiles(patterns: ReadonlyArray<NormalizedGlob>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
     const result: string[] = [];
     const globOptions = {
         cwd,
@@ -435,28 +443,24 @@ function getFiles(patterns: ReadonlyArray<string>, exclude: ReadonlyArray<string
         symlinks: {},
     };
     for (const pattern of patterns) {
-        const match = glob.sync(pattern, globOptions);
-        if (match.length !== 0) {
-            result.push(...match);
-        } else if (!glob.hasMagic(pattern)) {
-            const normalized = new Minimatch(pattern).set[0].join('/');
-            if (!isExcluded(normalized, exclude.map((p) => new Minimatch(p, {dot: true}))))
-                throw new ConfigurationError(`'${normalized}' does not exist.`);
+        let matched = pattern.hasMagic;
+        for (const normalized of pattern.normalized) {
+            const match = glob.sync(normalized, globOptions);
+            if (match.length !== 0) {
+                matched = true;
+                result.push(...match);
+            }
         }
+        if (!matched && !isExcluded(pattern.normalized[0], exclude.map((p) => new Minimatch(p, {dot: true}))))
+            throw new ConfigurationError(`'${pattern.normalized[0]}' does not exist.`);
     }
     return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
-function ensurePatternsMatch(include: IMinimatch[], exclude: IMinimatch[], files: string[], projects: ReadonlyArray<string>) {
-    for (const pattern of include) {
-        if (!glob.hasMagic(pattern.pattern)) {
-            const normalized = pattern.set[0].join('/');
-            if (!files.includes(normalized) && !isExcluded(normalized, exclude))
-                throw new ConfigurationError(
-                    `'${normalized}' is not included in any of the projects: '${projects.join("', '")}'.`,
-                );
-        }
-    }
+function ensurePatternsMatch(include: string[], exclude: IMinimatch[], files: string[], projects: ReadonlyArray<string>) {
+    for (const pattern of include)
+        if (!files.includes(pattern) && !isExcluded(pattern, exclude))
+            throw new ConfigurationError(`'${pattern}' is not included in any of the projects: '${projects.join("', '")}'.`);
 }
 
 function isExcluded(file: string, exclude: IMinimatch[]): boolean {
@@ -466,11 +470,54 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
     return false;
 }
 
+interface NormalizedGlob {
+    hasMagic: boolean;
+    normalized: string[];
+}
+
+function normalizeGlob(input: string, cwd: string): NormalizedGlob {
+    const hasMagic = glob.hasMagic(input);
+    const normalized = flatMap(expandBraces(input), (pattern) => {
+        pattern = resolveGlob(pattern, {cwd});
+        const ing = isNegatedGlob(pattern);
+        pattern = ing.pattern;
+        let {root} = path.parse(pattern);
+        pattern = pattern.substr(root.length);
+        if (root.endsWith('/'))
+            root = root.slice(0, -1);
+        return appendPath([], pattern.split(/\/+/g), 0, root);
+    });
+    return {
+        normalized,
+        hasMagic,
+    };
+}
+
+function* appendPath(result: string[], parts: string[], i: number, root: string): IterableIterator<string> {
+    for (; i < parts.length; ++i) {
+        switch (parts[i]) {
+            case '':
+            case '.':
+                break;
+            case '..':
+                if (result.pop() === '**') {
+                    yield* appendPath(result.slice(), parts, i + 1, root);
+                    result.push('**');
+                }
+                break;
+            default:
+                result.push(parts[i]);
+        }
+    }
+    result.unshift(root);
+    yield result.join('/');
+}
+
 function hasParseErrors(sourceFile: ts.SourceFile) {
     return sourceFile.parseDiagnostics.length !== 0;
 }
 
-function shouldFix(sourceFile: ts.SourceFile, options: LintOptions, originalName: string) {
+function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>, originalName: string) {
     if (options.fix && hasParseErrors(sourceFile)) {
         log("Not fixing '%s' because of parse errors.", originalName);
         return false;

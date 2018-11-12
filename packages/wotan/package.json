@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
+    "@types/brace-expansion": "^1.1.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.2.2",
     "@types/escape-string-regexp": "^1.0.0",
@@ -48,6 +49,7 @@
     "@fimbul/mimir": "^0.15.0",
     "@fimbul/ymir": "^0.15.0",
     "bind-decorator": "^1.0.11",
+    "brace-expansion": "^1.1.11",
     "chalk": "^2.3.0",
     "debug": "^4.0.0",
     "diff": "^3.4.0",

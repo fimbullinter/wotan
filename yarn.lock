@@ -183,6 +183,11 @@
     universal-user-agent "^2.0.0"
     url-template "^2.0.8"
 
+"@types/brace-expansion@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@types/brace-expansion/-/brace-expansion-1.1.0.tgz#fbce69132b7277e35e4d4bfc13a69c0d1ab6ebf8"
+  integrity sha512-SaU/Kgp6z40CiF9JxlsrSrBEa+8YIry9IiCPhhYSNekeEhIAkY7iyu9aZ+5dSQIdo7mf86MUVvxWYm5GAzB/0g==
+
 "@types/cross-spawn@^6.0.0":
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/@types/cross-spawn/-/cross-spawn-6.0.0.tgz#320aaf1d1a12979f1b84fe7a5590a7e860bf3a80"
@@ -1095,7 +1100,7 @@ boxen@^1.2.1:
     term-size "^1.2.0"
     widest-line "^2.0.0"
 
-brace-expansion@^1.1.7:
+brace-expansion@^1.1.11, brace-expansion@^1.1.7:
   version "1.1.11"
   resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.11.tgz#3c7fcbf529d87226f3d2f52b966ff5271eb441dd"
   integrity sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==
