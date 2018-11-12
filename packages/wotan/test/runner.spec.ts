@@ -340,14 +340,14 @@ test('works with absolute and relative paths', (t) => {
         const result = Array.from(runner.lintCollection({
             config: undefined,
             files: [
-                path.resolve('packages/wotan/test/fixtures/paths/a.ts'),
-                path.resolve('packages/wotan/test/fixtures/paths/b.ts'),
+                unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')),
+                unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/b.ts')),
                 'test/fixtures/paths/c.ts',
                 './test/fixtures/paths/d.ts',
             ],
             exclude: [
                 './test/fixtures/paths/b.ts',
-                path.resolve('packages/wotan/test/fixtures/paths/c.ts'),
+                unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/c.ts')),
                 'test/fixtures/paths/d.ts',
             ],
             project: project ? ['test/fixtures/paths/tsconfig.json'] : [],

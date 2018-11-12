@@ -478,6 +478,7 @@ interface NormalizedGlob {
 function normalizeGlob(input: string, cwd: string): NormalizedGlob {
     const hasMagic = glob.hasMagic(input);
     const normalized = flatMap(expandBraces(input), (pattern) => {
+        // TODO add back trailing slash if it was there previously
         pattern = resolveGlob(pattern, {cwd});
         const ing = isNegatedGlob(pattern);
         pattern = ing.pattern;
