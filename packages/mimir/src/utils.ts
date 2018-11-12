@@ -240,3 +240,7 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
             return false;
     }
 }
+
+export function formatPseudoBigInt(v: ts.PseudoBigInt) {
+    return `${v.negative ? '-' : ''}${v.base10Value}n`;
+}

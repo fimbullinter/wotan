@@ -24,8 +24,8 @@ interface Equals {
     strict: boolean;
 }
 
-const primitiveFlags = ts.TypeFlags.BooleanLike | ts.TypeFlags.NumberLike | ts.TypeFlags.StringLike | ts.TypeFlags.ESSymbolLike |
-    ts.TypeFlags.Undefined | ts.TypeFlags.Void;
+const primitiveFlags = ts.TypeFlags.BigIntLike | ts.TypeFlags.BooleanLike | ts.TypeFlags.NumberLike | ts.TypeFlags.StringLike |
+    ts.TypeFlags.ESSymbolLike | ts.TypeFlags.Undefined | ts.TypeFlags.Void;
 
 const predicates: Record<string, TypePredicate> = {
     object: {
@@ -37,6 +37,10 @@ const predicates: Record<string, TypePredicate> = {
     number: {
         nullable: false,
         check: checkFlags(ts.TypeFlags.NumberLike),
+    },
+    bigint: {
+        nullable: false,
+        check: checkFlags(ts.TypeFlags.BigIntLike),
     },
     string: {
         nullable: false,
@@ -190,6 +194,7 @@ export class Rule extends TypedRule {
                 case 'object':
                 case 'function':
                 case 'undefined':
+                case 'bigint':
                     predicate = predicates[literal];
             }
         } else if (right.kind === ts.SyntaxKind.NullKeyword) {
