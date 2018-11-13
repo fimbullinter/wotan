@@ -125,6 +125,13 @@ export function mapDefined<T, U>(input: Iterable<T>, cb: (item: T) => U | undefi
     return result;
 }
 
+export function flatMap<T, U>(input: Iterable<T>, cb: (item: T) => Iterable<U>) {
+    const result = [];
+    for (const item of input)
+        result.push(...cb(item));
+    return result;
+}
+
 /**
  * Adds an item to an array if it's not already included.
  * @returns true if the item was not present in the array
