@@ -19,9 +19,7 @@ import { CachedFileSystem, FileKind } from './services/cached-file-system';
 import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
-import resolveGlob = require('to-absolute-glob');
-import expandBraces = require('brace-expansion');
-import isNegatedGlob = require('is-negated-glob');
+import { normalizeGlob } from 'normalize-glob';
 
 const log = debug('wotan:runner');
 
@@ -39,6 +37,11 @@ interface NormalizedOptions extends Pick<LintOptions, Exclude<keyof LintOptions,
     files: ReadonlyArray<NormalizedGlob>;
 }
 
+interface NormalizedGlob {
+    hasMagic: boolean;
+    normalized: string[];
+}
+
 @injectable()
 export class Runner {
     constructor(
@@ -53,8 +56,10 @@ export class Runner {
     public lintCollection(options: LintOptions): LintResult {
         const config = options.config !== undefined ? this.configManager.loadLocalOrResolved(options.config) : undefined;
         const cwd = this.directories.getCurrentDirectory();
-        const files = options.files.map((pattern) => normalizeGlob(pattern, cwd));
-        const exclude = flatMap(options.exclude, (pattern) => normalizeGlob(pattern, cwd).normalized);
+        const files = options.files.map(
+            (pattern) => ({hasMagic: glob.hasMagic(pattern), normalized: Array.from(normalizeGlob(pattern, cwd))}),
+        );
+        const exclude = flatMap(options.exclude, (pattern) => normalizeGlob(pattern, cwd));
         if (options.project.length === 0 && options.files.length !== 0)
             return this.lintFiles({...options, files, exclude}, config);
 
@@ -468,50 +473,6 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
         if (e.match(file))
             return true;
     return false;
-}
-
-interface NormalizedGlob {
-    hasMagic: boolean;
-    normalized: string[];
-}
-
-function normalizeGlob(input: string, cwd: string): NormalizedGlob {
-    const hasMagic = glob.hasMagic(input);
-    const normalized = flatMap(expandBraces(input), (pattern) => {
-        // TODO add back trailing slash if it was there previously
-        pattern = resolveGlob(pattern, {cwd});
-        const ing = isNegatedGlob(pattern);
-        pattern = ing.pattern;
-        let {root} = path.parse(pattern);
-        pattern = pattern.substr(root.length);
-        if (root.endsWith('/'))
-            root = root.slice(0, -1);
-        return appendPath([], pattern.split(/\/+/g), 0, root);
-    });
-    return {
-        normalized,
-        hasMagic,
-    };
-}
-
-function* appendPath(result: string[], parts: string[], i: number, root: string): IterableIterator<string> {
-    for (; i < parts.length; ++i) {
-        switch (parts[i]) {
-            case '':
-            case '.':
-                break;
-            case '..':
-                if (result.pop() === '**') {
-                    yield* appendPath(result.slice(), parts, i + 1, root);
-                    result.push('**');
-                }
-                break;
-            default:
-                result.push(parts[i]);
-        }
-    }
-    result.unshift(root);
-    yield result.join('/');
 }
 
 function hasParseErrors(sourceFile: ts.SourceFile) {

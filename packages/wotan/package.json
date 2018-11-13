@@ -28,7 +28,6 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
-    "@types/brace-expansion": "^1.1.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.2.2",
     "@types/escape-string-regexp": "^1.0.0",
@@ -41,7 +40,6 @@
     "@types/resolve": "^0.0.8",
     "@types/rimraf": "^2.0.2",
     "@types/semver": "^5.4.0",
-    "@types/to-absolute-glob": "^2.0.0",
     "escape-string-regexp": "^1.0.5",
     "rimraf": "^2.6.2"
   },
@@ -49,7 +47,6 @@
     "@fimbul/mimir": "^0.15.0",
     "@fimbul/ymir": "^0.15.0",
     "bind-decorator": "^1.0.11",
-    "brace-expansion": "^1.1.11",
     "chalk": "^2.3.0",
     "debug": "^4.0.0",
     "diff": "^3.4.0",
@@ -60,11 +57,11 @@
     "js-yaml": "^3.10.0",
     "json5": "^2.0.0",
     "minimatch": "^3.0.4",
+    "normalize-glob": "^0.0.1",
     "reflect-metadata": "^0.1.12",
     "resolve": "^1.5.0",
     "semver": "^5.4.1",
     "stable": "^0.1.8",
-    "to-absolute-glob": "^2.0.2",
     "tslib": "^1.8.1",
     "tsutils": "^3.1.0"
   },
