@@ -56,7 +56,7 @@ export class Rule extends AbstractRule {
         if (isNumericLiteral(node))
             return [formatPrimitive(prefixFn(+node.text))];
         if (isBigIntLiteral(node))
-            return [formatPrimitive(prefixFn({base10Value: node.text, negative: false}))];
+            return [formatPrimitive(prefixFn({base10Value: node.text.slice(0, -1), negative: false}))];
         if (node.kind === ts.SyntaxKind.NullKeyword)
             return [formatPrimitive(prefixFn(null))]; // tslint:disable-line:no-null-keyword
         if (isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword)
@@ -102,7 +102,8 @@ function makePrefixFn(node: ts.PrefixUnaryExpression, next: ApplyPrefixFn): Appl
         case ts.SyntaxKind.PlusToken:
             return (v) => isBigInt(v) ? next(v) : next(+v!);
         case ts.SyntaxKind.MinusToken:
-            return (v) => isBigInt(v) ? next({...v, negative: !v.negative}) : next(-v!);
+            // there's no '-0n'
+            return (v) => isBigInt(v) ? next({...v, negative: !v.negative && v.base10Value !== '0'}) : next(-v!);
         case ts.SyntaxKind.TildeToken:
             return (v) => isBigInt(v) ? negateBigint(v) : next(~v!);
         case ts.SyntaxKind.ExclamationToken:
@@ -123,7 +124,7 @@ function negateBigint(v: ts.PseudoBigInt): ts.PseudoBigInt {
         for (let i = digits.length - 1; i >= 0; --i) {
             const current = +digits[i] - 1;
             if (current !== -1) {
-                if (current === 0 && i === 0) {
+                if (current === 0 && i === 0 && digits.length !== 1) {
                     // remove leading zero
                     digits.shift();
                 } else {
@@ -131,7 +132,7 @@ function negateBigint(v: ts.PseudoBigInt): ts.PseudoBigInt {
                 }
                 break;
             }
-            digits[i] = '0';
+            digits[i] = '9';
         }
     } else {
         // positive values are incremented by one and become negative

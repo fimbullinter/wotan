@@ -1,3 +1,4 @@
 {
-  "files": "test.ts"
+  "files": "*.ts",
+  "typescriptVersion": ">= 3.2.0"
 }
