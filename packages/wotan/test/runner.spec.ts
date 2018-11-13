@@ -360,6 +360,38 @@ test('works with absolute and relative paths', (t) => {
     }
 });
 
+test('normalizes globs', (t) => {
+    const container = new Container();
+    container.bind(DirectoryService).toConstantValue({
+        getCurrentDirectory() {
+            return path.resolve('packages/wotan/test/fixtures/configuration');
+        },
+    });
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+    testRunner(true);
+    testRunner(false);
+
+    function testRunner(project: boolean) {
+        const result = Array.from(runner.lintCollection({
+            config: undefined,
+            files: [
+                '../paths/a.ts',
+                '../paths/b.ts',
+            ],
+            exclude: [
+                '../**/b.ts',
+            ],
+            project: project ? ['../paths/tsconfig.json'] : [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+        }));
+        t.is(result.length, 1);
+        t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
+    }
+});
+
 test('supports linting multiple (overlapping) projects in one run', (t) => {
     const container = new Container();
     container.bind(DirectoryService).toConstantValue(directories);

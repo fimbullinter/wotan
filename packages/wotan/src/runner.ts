@@ -437,9 +437,9 @@ function getOutFileDeclarationName(outFile: string) {
 
 function getFiles(patterns: ReadonlyArray<NormalizedGlob>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
     const result: string[] = [];
-    const globOptions = {
+    const globOptions: glob.IOptions = {
         cwd,
-        absolute: true,
+        nobrace: true, // braces are already expanded
         cache: {},
         ignore: exclude,
         nodir: true,
