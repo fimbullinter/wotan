@@ -1,6 +1,14 @@
 import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier, isLiteralType, unionTypeParts } from 'tsutils';
+import {
+    isTextualLiteral,
+    isNumericLiteral,
+    isPrefixUnaryExpression,
+    isIdentifier,
+    isLiteralType,
+    unionTypeParts,
+    isStrictCompilerOptionEnabled,
+} from 'tsutils';
 import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
 import { switchStatements, formatPseudoBigInt } from '../utils';
 
@@ -66,7 +74,7 @@ export class Rule extends AbstractRule {
         if (node.kind === ts.SyntaxKind.FalseKeyword)
             return [formatPrimitive(prefixFn(false))];
 
-        if (this.program === undefined)
+        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
             return [];
         const checker = this.program.getTypeChecker();
         let type = checker.getTypeAtLocation(node)!;
