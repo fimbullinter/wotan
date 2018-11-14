@@ -1,6 +1,14 @@
 import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier, isLiteralType, unionTypeParts, isStrictCompilerOptionEnabled } from 'tsutils';
+import {
+    isTextualLiteral,
+    isNumericLiteral,
+    isPrefixUnaryExpression,
+    isIdentifier,
+    isLiteralType,
+    unionTypeParts,
+    isStrictCompilerOptionEnabled,
+} from 'tsutils';
 import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
 import { switchStatements, formatPseudoBigInt } from '../utils';
 
