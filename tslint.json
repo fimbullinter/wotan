@@ -59,7 +59,7 @@
     "no-shadowed-variable": true,
     "no-sparse-arrays": true,
     "no-string-literal": true,
-    "no-submodule-imports": true,
+    "no-submodule-imports": [true, "tsutils"],
     "no-switch-case-fall-through": true,
     "no-this-assignment": true,
     "no-trailing-whitespace": true,

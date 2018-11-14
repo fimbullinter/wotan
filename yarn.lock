@@ -4955,10 +4955,10 @@ tsutils@^2.24.0, tsutils@^2.27.0, tsutils@^2.27.2:
   dependencies:
     tslib "^1.8.1"
 
-tsutils@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.1.0.tgz#9136fdbc347799941db4eb326af4dcb81454820e"
-  integrity sha512-rmGhespW+nZMtdkc4JJefYSjux2uCDZxCTLU+nu8gvm+gM+YT0W5XAygHxaeOwRAHZ+SoPdrovZmAlZ2a0KSlw==
+tsutils@^3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.5.0.tgz#42602f7df241e753a2105cc3627a664abf11f745"
+  integrity sha512-/FZ+pEJQixWruFejFxNPRSwg+iF6aw7PYZVRqUscJ7EnzV3zieI8byfZziUR7QjCuJFulq8SEe9JcGflO4ze4Q==
   dependencies:
     tslib "^1.8.1"
 
@@ -4974,10 +4974,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-typescript@3.2.0-dev.20181103:
-  version "3.2.0-dev.20181103"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.2.0-dev.20181103.tgz#14647f81e20f5127a89c4713b77ef51cbe8f15bc"
-  integrity sha512-BFpfAJDjz9VXYxu7x+atT108mE9ED8nKqG/QY2QRV5zdhn3079FDLCL9SrBR2pLKH6LPUQNzybB1SIKBy5NN5A==
+typescript@^3.2.0-dev.20181114:
+  version "3.2.0-dev.20181114"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.2.0-dev.20181114.tgz#0a1f6669eeb9d8ea264d0a9da5a033f9cec887a6"
+  integrity sha512-b4fOrD957l7EWDaHFeSLrr696gPHnG+Qv6i2q8M53oqmk/2gHRqXGAJjrOeXzgymLaHXXwPbiw6laSyiDUfdlQ==
 
 uglify-js@^3.1.4:
   version "3.4.9"
