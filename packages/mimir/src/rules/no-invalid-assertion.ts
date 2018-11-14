@@ -64,7 +64,10 @@ function intersects<T>(arr: Iterable<T>, other: Set<T>): boolean {
 }
 
 function isEmpty(literals: LiteralInfo) {
-    return literals.string === undefined && literals.number === undefined && literals.boolean === undefined;
+    return literals.string === undefined &&
+        literals.number === undefined &&
+        literals.bigint === undefined &&
+        literals.boolean === undefined;
 }
 
 interface LiteralInfo {
