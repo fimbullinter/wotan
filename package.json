@@ -47,7 +47,7 @@
     "tslint-consistent-codestyle": "^1.11.1"
   },
   "devDependencies": {
-    "typescript": "^3.2.0-dev.20181110"
+    "typescript": "^3.2.0-dev.20181114"
   },
   "peerDependencies": {
     "typescript": ">= 2.8.1 || >= 3.2.0-dev || >= 3.3.0-dev"

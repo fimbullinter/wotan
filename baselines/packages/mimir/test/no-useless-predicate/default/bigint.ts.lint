@@ -1,0 +1,10 @@
+export {};
+
+declare function get<T>(): T;
+
+typeof 1n === 'bigint';
+~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+typeof 1n === 'object';
+~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof 1n === 'number';
+~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]

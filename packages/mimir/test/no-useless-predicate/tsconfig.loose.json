@@ -2,5 +2,6 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "strict": false
-  }
+  },
+  "exclude": ["bigint.ts"]
 }
