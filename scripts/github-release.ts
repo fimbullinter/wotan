@@ -23,7 +23,7 @@ ghClient.authenticate({
 });
 
 (async () => {
-    console.log('Logged into GitHub as', (await ghClient.users.get({})).data.login);
+    console.log('Logged into GitHub as', (await ghClient.users.getAuthenticated({})).data.login);
     const release = await ghClient.repos.createRelease({
         repo,
         body,
