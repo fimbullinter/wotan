@@ -54,7 +54,6 @@ class D extends C<void> implements I<void> {
     }
     async [get<'bas'>()]() {}
 
-    // overloaded methods are ignored for now
     async overloaded(): Promise<void>;
     async overloaded(param: string): Promise<void>;
     async overloaded() {

@@ -73,7 +73,6 @@ class D extends C<void> implements I<void> {
     }
     async [get<'bas'>()]() {}
 
-    // overloaded methods are ignored for now
     async overloaded(): Promise<void>;
     ~~~~~                              [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
     async overloaded(param: string): Promise<void>;
