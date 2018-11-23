@@ -26,6 +26,7 @@ This library contains all core rules, formatters and configuration presets of th
 
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
+[`async-function-assignability`](docs/async-function-assignability.md) | :mag: Diallows assinging a `Promise`-returning function to a `void`-returning type. | No such rule in TSLint.
 [`await-async-result`](docs/await-async-result.md) | :mag: Warns about not using the result of a call to an async function inside async functions. | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 [`await-only-promise`](docs/await-only-promise.md) | :mag: :wrench: Finds uses of `await` on non-Promise values. Also checks `for await` loops. | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 [`ban-dom-globals`](docs/ban-dom-globals.md) | :mag: Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
