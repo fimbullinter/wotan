@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/ymir",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Core library for the Fimbullinter project",
   "publishConfig": {
     "access": "public"
@@ -32,6 +32,6 @@
   },
   "peerDependencies": {
     "tsutils": ">=2.29.0",
-    "typescript": ">= 2.8.1 || >= 3.2.0-dev || >= 3.3.0-dev"
+    "typescript": ">= 2.8.1 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev"
   }
 }

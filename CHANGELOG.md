@@ -1,5 +1,22 @@
 # Change Log
 
+## v0.16.0
+
+**Features:**
+
+* new rule: `async-function-assignability`
+* handle `BigInt` types and literals
+* `no-duplicate-case`: correctly handles BigInt and (bitwise) negation thereof
+* `no-invalid-assertion`: adds an additional check for asserting BigInts
+* `no-useless-predicage`: allows comparing `typeof v === "bigint"`
+* `no-duplicate-spread-property`: handle spreading of type variables introduced in typescript@3.2
+
+**Bugfixes:**
+
+* `no-duplicate-case`: only use type information if `strictNullChecks` is enabled to avoid false positives
+* CLI normalizes `..` and `.` in glob patterns and file names
+* `no-duplicate-spread-property`: works with intersection types
+
 ## v0.15.0
 
 **Features:**
