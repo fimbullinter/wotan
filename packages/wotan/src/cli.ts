@@ -28,7 +28,7 @@ export function loadConfig(dir: string) {
                 log("Not using '%s': %s", fileName, err.code);
                 return resolve({});
             }
-            return import('js-yaml').then((yaml) => {
+            import('js-yaml').then((yaml) => {
                 try {
                     resolve(<GlobalOptions | undefined>yaml.safeLoad(content, {schema: yaml.JSON_SCHEMA, strict: true}) || {});
                     log("Using global options from '%s'", fileName);
