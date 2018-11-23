@@ -1,5 +1,6 @@
 ---
 rules:
+  async-function-assignability: error
   await-async-result: error
   await-only-promise: error
   ban-dom-globals: error

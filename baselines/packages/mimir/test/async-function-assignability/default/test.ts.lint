@@ -1,0 +1,99 @@
+export {};
+declare function take<T>(arg: T): void;
+declare function get<T>(): T;
+
+take<() => void>(async () => {});
+                 ~~~~~            [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => Promise<void>>(async () => {});
+take<() => () => void>(() => async () => {});
+                             ~~~~~            [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(() => Promise.resolve());
+                    ~~                     [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(Promise.resolve);
+                 ~~~~~~~~~~~~~~~   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(get<() => PromiseLike<void>>());
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(get<() => Promise<void> | void>());
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take(async () => {});
+take<any>(async () => {});
+take<() => any>(async () => {});
+
+take<() => void>(async function foo() {});
+                 ~~~~~                     [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(function foo() { return Promise.resolve(); });
+                          ~~~                                   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<() => void>(function() { return Promise.resolve(); });
+                 ~~~~~~~~                                   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+
+[1, 2, 3].forEach(async (v) => Promise.resolve(v));
+                  ~~~~~                             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+
+const foo = {async foo() {}};
+take({async foo() {}});
+take<{foo?: () => void}>({async foo() {}});
+                          ~~~~~             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<{foo: () => void}>({foo() { return Promise.resolve(); }});
+                         ~~~                                    [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<{foo: () => void}>({foo() {}});
+take<{foo: () => void}>({async [get<'foo'>()]() {}});
+take<{[x: string]: () => void}>({async foo() {}, async '1'() {}});
+                                 ~~~~~                             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+                                                 ~~~~~             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<{[x: string]: () => void; [x: number]: () => PromiseLike<void>}>({async foo() {}, async '1'() {}});
+                                                                       ~~~~~                             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+
+declare class C<T> {
+    foo(): T;
+    bar(): Promise<T>;
+
+    overloaded(): void;
+}
+
+declare interface I<T> {
+    baz(): T;
+    bas(): void;
+}
+
+class D extends C<void> implements I<void> {
+    async foo() {}
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    baz = async () => {};
+    ~~~                   [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    bas() {}
+}
+
+(class extends C<void> implements I<void>{
+    async foo() {}
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    async bar() {}
+    baz() {
+    ~~~     [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+        return Promise.resolve();
+    }
+    async [get<'bas'>()]() {}
+
+    async overloaded(): Promise<void>;
+    ~~~~~                              [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    async overloaded(param: string): Promise<void>;
+    ~~~~~                                           [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    async overloaded() {
+    ~~~~~                [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+        return;
+    }
+});
+
+(class implements C<void> {
+    async foo() {}
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    async bar() {}
+    async baz() {}
+});
+
+(class implements I<void> {
+    async foo() {}
+    async bar() {}
+    async baz() {}
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    bas() {}
+});
