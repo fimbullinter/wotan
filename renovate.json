@@ -17,14 +17,15 @@
   "timezone": "Europe/Berlin",
   "schedule": [
     "after 10pm",
-    "before 5am"
+    "before 6am"
   ],
   "peerDependencies": {
     "enabled": false
   },
   "lockFileMaintenance": {
     "enabled": true,
-    "automerge": true
+    "automerge": true,
+    "schedule": "before 6am on Monday"
   },
   "node": {
     "enabled": true,
@@ -32,7 +33,7 @@
   },
   "docker": {
     "enabled": true,
-    "schedule": "before 2am on Sunday",
+    "schedule": "before 6am on Sunday",
     "packageRules": [
       {
         "groupName": "Node Docker digests",
