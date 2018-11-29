@@ -19,6 +19,11 @@ take(async () => {});
 take<any>(async () => {});
 take<() => any>(async () => {});
 
+take<(() => void) | undefined>(async () => {});
+                               ~~~~~            [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+take<(() => void) | undefined>(get<(() => Promise<void>) | undefined>());
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+
 take<() => void>(async function foo() {});
                  ~~~~~                     [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
 take<() => void>(function foo() { return Promise.resolve(); });
@@ -32,16 +37,26 @@ take<() => void>(function() { return Promise.resolve(); });
 const foo = {async foo() {}};
 take({async foo() {}});
 take<{foo?: () => void}>({async foo() {}});
-                          ~~~~~             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+                          ~~~~~             [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
 take<{foo: () => void}>({foo() { return Promise.resolve(); }});
-                         ~~~                                    [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+                         ~~~                                    [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
 take<{foo: () => void}>({foo() {}});
 take<{foo: () => void}>({async [get<'foo'>()]() {}});
+                         ~~~~~                        [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
 take<{[x: string]: () => void}>({async foo() {}, async '1'() {}});
-                                 ~~~~~                             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
-                                                 ~~~~~             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+                                 ~~~~~                             [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
+                                                 ~~~~~             [error async-function-assignability: 'Promise'-returning method '1' should not be assigned to a 'void'-returning function type.]
 take<{[x: string]: () => void; [x: number]: () => PromiseLike<void>}>({async foo() {}, async '1'() {}});
-                                                                       ~~~~~                             [error async-function-assignability: A 'Promise'-returning function should not be assigned to a 'void'-returning function type.]
+                                                                       ~~~~~                             [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
+
+const name = 'foo';
+take<{foo: () => void}>({async [name]() {}});
+                         ~~~~~                [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
+take<{[x: string]: (() => void) | undefined; bar?: () => Promise<void>}>({async [get<'foo' | 'bar'>()]() {}});
+                                                                          ~~~~~                                [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
+take<{[x: string]: (() => void) | undefined}>({async [get<'foo' | 'bar'>()]() {}});
+                                               ~~~~~                                [error async-function-assignability: 'Promise'-returning method 'foo' should not be assigned to a 'void'-returning function type.]
+take<{[x: string]: (() => Promise<void>) | undefined}>({async [get<'foo' | 'bar'>()]() {}});
 
 declare class C<T> {
     foo(): T;
@@ -57,43 +72,68 @@ declare interface I<T> {
 
 class D extends C<void> implements I<void> {
     async foo() {}
-    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'foo' of base type with a 'Promise'-returning method is unsafe.]
     baz = async () => {};
-    ~~~                   [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~                   [error async-function-assignability: Overriding 'void'-returning method 'baz' of base type with a 'Promise'-returning method is unsafe.]
     bas() {}
 }
 
+const otherName = 'overloaded';
+(class extends C<void> {
+    async [name]() {}
+    ~~~~~             [error async-function-assignability: Overriding 'void'-returning method 'foo' of base type with a 'Promise'-returning method is unsafe.]
+    [otherName](): void;
+    [otherName](foo?: boolean): Promise<void>;
+    ~~~~~~~~~~~                                [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
+    async [otherName]() {}
+    ~~~~~                  [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
+});
+
+(class extends C<void> {
+    [name]: () => Promise<void>;
+    ~~~~~~                       [error async-function-assignability: Overriding 'void'-returning method 'foo' of base type with a 'Promise'-returning method is unsafe.]
+    [otherName]: () => void;
+});
+
 (class extends C<void> implements I<void>{
     async foo() {}
-    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'foo' of base type with a 'Promise'-returning method is unsafe.]
     async bar() {}
     baz() {
-    ~~~     [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~     [error async-function-assignability: Overriding 'void'-returning method 'baz' of base type with a 'Promise'-returning method is unsafe.]
         return Promise.resolve();
     }
     async [get<'bas'>()]() {}
+    ~~~~~                     [error async-function-assignability: Overriding 'void'-returning method 'bas' of base type with a 'Promise'-returning method is unsafe.]
+    async bas() {}
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'bas' of base type with a 'Promise'-returning method is unsafe.]
 
     async overloaded(): Promise<void>;
-    ~~~~~                              [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~                              [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
     async overloaded(param: string): Promise<void>;
-    ~~~~~                                           [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~                                           [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
     async overloaded() {
-    ~~~~~                [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~                [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
         return;
     }
 });
 
 (class implements C<void> {
     async foo() {}
-    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'foo' of base type with a 'Promise'-returning method is unsafe.]
     async bar() {}
     async baz() {}
+    overloaded(): void;
+    overloaded(foo?: boolean): Promise<void>;
+    ~~~~~~~~~~                                [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
+    async overloaded(foo?: boolean) {}
+    ~~~~~                              [error async-function-assignability: Overriding 'void'-returning method 'overloaded' of base type with a 'Promise'-returning method is unsafe.]
 });
 
 (class implements I<void> {
     async foo() {}
     async bar() {}
     async baz() {}
-    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method in base type with a 'Promise'-returning method is unsafe.]
+    ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'baz' of base type with a 'Promise'-returning method is unsafe.]
     bas() {}
 });
