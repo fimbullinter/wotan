@@ -4908,10 +4908,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-typescript@3.3.0-dev.20181128:
-  version "3.3.0-dev.20181128"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.3.0-dev.20181128.tgz#0ece127a35df76b5bb9e2f177956366416e8455c"
-  integrity sha512-qTLx4xuqp2CPP2XhPg7jANCLBQWXKiwQuoDDJC48CsXbgVWtpnII7UjkHqUXg9MJlsHLgVE+g9BJwnfMutYUXQ==
+typescript@3.3.0-dev.20181129:
+  version "3.3.0-dev.20181129"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.3.0-dev.20181129.tgz#0e774721b32910b45e906df731a0554e11023edc"
+  integrity sha512-N0Woqzxa4XnhTBREUUirSsmEYnB3tm6XMlJqTzOc5Bb6+t6sD2+OsovSSQ428G8o1/GTb0HZ+bXP0/v3mwvgjw==
 
 uglify-js@^3.1.4:
   version "3.4.9"
