@@ -11,7 +11,7 @@
     ":automergeBranchPush",
     ":automergeRequireAllStatusChecks",
     "group:definitelyTyped",
-    "group:linters",
+    "group:linters"
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
