@@ -11,11 +11,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        if (
-            // for compatibility with typescript@<2.9
-            node.argumentExpression === undefined || // wotan-disable-line no-useless-predi
-            !isTextualLiteral(node.argumentExpression)
-        )
+        if (!isTextualLiteral(node.argumentExpression))
             return;
         const {text} = node.argumentExpression;
         if (!isValidPropertyAccess(text))

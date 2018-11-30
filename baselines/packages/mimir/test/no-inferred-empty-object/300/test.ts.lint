@@ -287,3 +287,9 @@ myOtherTag``;
 myOtherTag`${''}`;
 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myOtherTag<string>``;
+
+interface SomeConstructor<T> {
+    new(arg: T): unknown;
+}
+declare const Ctor: SomeConstructor<any>;
+new Ctor(''); // don't crash here

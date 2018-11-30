@@ -215,15 +215,7 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
-        return projectReferences === undefined
-            ? ts.createProgram(rootNames, options, this, oldProgram) // for compatibility with TypeScript@<3.0.0
-            : ts.createProgram({
-                rootNames,
-                options,
-                oldProgram,
-                projectReferences,
-                host: this,
-            });
+        return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
     }
 
     public updateSourceFile(
@@ -258,8 +250,7 @@ export class ProjectHost implements ts.CompilerHost {
 }
 
 function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectReference> | undefined {
-    // for compatibility with TypeScript@<3.0.0
-    const references = program.getProjectReferences && program.getProjectReferences();
+    const references = program.getProjectReferences();
     if (references === undefined)
         return;
     // for compatibility with TypeScript@<3.1.1

@@ -20,9 +20,6 @@ export class Rule extends TypedRule {
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        // for compatibility with typescript@<2.9.0
-        if (node.argumentExpression === undefined || node.argumentExpression.pos === node.argumentExpression.end)
-            return;
         const {properties} = lateBoundPropertyNames(node.argumentExpression, this.checker);
         if (properties.length === 0)
             return;
