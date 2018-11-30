@@ -245,3 +245,9 @@ myTagFn<string | number>`${1}${''}`;
 myOtherTag``;
 myOtherTag`${''}`;
 myOtherTag<string>``;
+
+interface SomeConstructor<T> {
+    new(arg: T): unknown;
+}
+declare const Ctor: SomeConstructor<any>;
+new Ctor(''); // don't crash here
