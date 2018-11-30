@@ -11,8 +11,7 @@
     ":automergeBranchPush",
     ":automergeRequireAllStatusChecks",
     "group:definitelyTyped",
-    "group:linters",
-    ":followTag(typescript, next)"
+    "group:linters"
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
@@ -27,6 +26,13 @@
     "automerge": true,
     "schedule": "before 6am on Monday"
   },
+  "packageRules": [
+    {
+      "packageNames": ["typescript"],
+      "rangeStrategy": "pin",
+      "followTag": "next"
+    }
+  ],
   "node": {
     "enabled": true,
     "supportPolicy": ["current"]
