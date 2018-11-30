@@ -9,7 +9,7 @@ exports.Rule = class extends AbstractRule {
             this.addFailureAtNode(
                 this.sourceFile.statements[2],
                 'import is unused',
-                Replacement.delete(this.sourceFile.statements[2].pos, this.sourceFile.statements[2].end),
+                Replacement.delete(this.sourceFile.statements[2].pos, this.sourceFile.statements[2].end)
             );
         }
     }
