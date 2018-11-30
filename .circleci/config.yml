@@ -6,12 +6,6 @@ workflows:
       - test:
           requires:
             - build
-      - test@2.8:
-          requires:
-            - build
-      - test@2.9:
-          requires:
-            - build
       - test@3.0:
           requires:
             - build
@@ -77,23 +71,11 @@ jobs:
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
-    <<: *base
-  test@2.8:
-    docker:
-      - image: circleci/node:8@sha256:ec589ea6cf22b380bf85be70aad4cda36cb5cf0d174816b2eb5e771c8f94182d
-    environment:
-      typescriptVersion: "2.8"
-    <<: *base
-  test@2.9:
-    docker:
-      - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
-    environment:
-      typescriptVersion: "2.9"
+      - image: circleci/node:11
     <<: *base
   test@3.0:
     docker:
-      - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
+      - image: circleci/node:8@sha256:ec589ea6cf22b380bf85be70aad4cda36cb5cf0d174816b2eb5e771c8f94182d
     environment:
       typescriptVersion: "3.0"
     <<: *base
@@ -105,7 +87,7 @@ jobs:
     <<: *base
   test@3.2:
     docker:
-      - image: circleci/node:10@sha256:8809e53afae1661dd5c6915f649ab1e42e4d3c4ca4fe559e8b50e425a816742a
+      - image: circleci/node:11
     environment:
       typescriptVersion: "3.2"
     <<: *base
