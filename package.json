@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,src/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
-    "compile": "tsc -p tsconfig.build.json",
+    "compile": "ttsc -p tsconfig.build.json",
     "lint:valtyr": "wotan -m @fimbul/valtyr",
     "lint:wotan": "wotan",
     "lint": "run-p \"lint:* {@}\" --",
@@ -43,8 +43,10 @@
     "rimraf": "^2.6.2",
     "semver": "^5.5.0",
     "travis-ci": "^2.1.1",
+    "ts-transform-const-enum": "^0.0.1",
     "tslib": "^1.9.3",
-    "tslint-consistent-codestyle": "^1.11.1"
+    "tslint-consistent-codestyle": "^1.11.1",
+    "ttypescript": "^1.5.5"
   },
   "devDependencies": {
     "typescript": "3.3.0-dev.20181201"
