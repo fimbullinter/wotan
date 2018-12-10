@@ -80,8 +80,6 @@ export class Runner {
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
             for (const file of files) {
-                if (!hasSupportedExtension(file))
-                    continue;
                 if (options.config === undefined)
                     config = this.configManager.find(file);
                 const mapped = processorHost.getProcessedFileInfo(file);

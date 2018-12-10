@@ -27,7 +27,7 @@ class DefaultFileFilter implements FileFilter {
         if (this.program.isSourceFileFromExternalLibrary(file))
             return false;
         if (!fileName.endsWith('.d.ts'))
-            return true;
+            return !fileName.endsWith('.json');
         if (
             // lib.xxx.d.ts
             fileName.startsWith(this.libDirectory) ||
