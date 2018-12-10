@@ -54,7 +54,7 @@ class DefaultFileFilter implements FileFilter {
 function getOutputsOfProjectReferences(program: ts.Program, host: FileFilterContext['host']) {
     const references = program.getResolvedProjectReferences === undefined
         // for compatibility with TypeScript@<3.1.1
-        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
+        ? <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
         : program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
