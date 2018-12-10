@@ -31,14 +31,13 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                     const program = info.languageService.getProgram()!;
                     const file = program.getSourceFile(fileName);
                     if (file !== undefined) {
-                        const library = loadLibrary(fileName, directoryToLinter, info.serverHost, info.project.projectService.logger);
+                        const library = loadLibrary(fileName, directoryToLinter, info.project, info.project.projectService.logger, info.serverHost);
                         if (library != undefined) {
-                            const failures = getFailures(library, file, program);
+                            const failures = getFailures(library, <import('typescript').SourceFile>file, <import('typescript').Program>program, info.project);
                             failuresForFile.set(file, failures);
                             diagnostics = diagnostics.concat(failures.map((f) => failureToDiagnostic(f, file, typescript.DiagnosticCategory)));
                         }
                     }
-
                     return diagnostics;
                 },
                 getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences) {
@@ -64,7 +63,7 @@ function nothingToDoHere(ls: any): boolean {
     return typeof ls[alreadyWrapped] === 'function' && ls[alreadyWrapped]();
 }
 
-function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan') | null>, host: ts.System, logger: ts.server.Logger): typeof import('@fimbul/wotan') | null {
+function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan') | null>, host: {directoryExists(path: string): boolean}, logger: ts.server.Logger, requireHost: Pick<ts.server.ServerHost, 'require'>): typeof import('@fimbul/wotan') | null {
     f = path.dirname(f);
     while (path.basename(f) === 'node_modules')
         f = path.dirname(f);
@@ -73,7 +72,7 @@ function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan'
         const moduleDirectory = f + '/node_modules/@fimbul/wotan';
         if (host.directoryExists(moduleDirectory)) {
             try {
-                result = <typeof import('@fimbul/wotan')>require(moduleDirectory);
+                result = <typeof import('@fimbul/wotan')>tryRequire(requireHost, f, moduleDirectory);
             } catch (e) {
                 logger.info(`failed to load linter from '${moduleDirectory}': ${e && e.message}`);
                 result = null;
@@ -83,7 +82,7 @@ function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan'
             if (parent === f) {
                 result = null;
             } else {
-                result = loadLibrary(parent, cache, host, logger);
+                result = loadLibrary(parent, cache, host, logger, requireHost);
             }
         }
         cache.set(f, result);
@@ -91,23 +90,35 @@ function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan'
     return result;
 }
 
-function getFailures(library: typeof import('@fimbul/wotan'), file: ts.SourceFile, program: ts.Program) {
+function tryRequire(host: Pick<ts.server.ServerHost, 'require'>, from: string, id: string) {
+    if (host.require === undefined)
+        return require(id); // fall back to `require` if necessary
+    const result = host.require(from, id);
+    if (result.module === undefined)
+        throw result.error;
+    return result.module;
+}
+
+function getFailures(library: typeof import('@fimbul/wotan'), file: import('typescript').SourceFile, program: import('typescript').Program, project: ts.server.Project) {
     // TODO load .fimbullinter.yaml and
     //  use it to load plugin modules
     //  use include and exclude options
     //  use config option
     // TODO guard with try-catch to avoid completely sabotaging semantic diagnostics
     // TODO use CancellationToken to abort if necessary
-    // TODO only lint user code
+    // TODO use project for file system IO
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.load(library.createCoreModule({}), library.createDefaultModule()); // TODO pass global options
+    const fileFilter = container.get(library.FileFilterFactory).create({program, host: project});
+    if (!fileFilter.filter(file))
+        return [];
     const configManager = container.get(library.ConfigurationManager);
     const config = configManager.find(file.fileName);
     const effectiveConfig = config && configManager.reduce(config, file.fileName);
     if (effectiveConfig === undefined)
         return [];
     const linter = container.get(library.Linter);
-    return linter.lintFile(<import('typescript').SourceFile>file, effectiveConfig, <import('typescript').Program>program);
+    return linter.lintFile(file, effectiveConfig, program);
 }
 
 function failureToDiagnostic(failure: import('@fimbul/wotan').Failure, sourceFile: ts.SourceFile, category: typeof import('typescript/lib/tsserverlibrary').DiagnosticCategory): ts.Diagnostic {
