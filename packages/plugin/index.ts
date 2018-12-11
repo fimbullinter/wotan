@@ -1,7 +1,6 @@
 /// <reference types="typescript/lib/tsserverlibrary" />
 
 import mockRequire = require('mock-require');
-import path = require('path');
 import { Container, BindingScopeEnum } from 'inversify';
 
 const alreadyWrapped = Symbol();
@@ -13,13 +12,23 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                 info.project.projectService.logger.info('plugin is already set up in this project');
                 return info.languageService;
             }
+            if (info.serverHost.require === undefined) {
+                info.project.projectService.logger.info("cannot load linter because ServerHost doesn't support `require`");
+                return info.languageService;
+            }
+            mockRequire('typescript', typescript); // force every library to use the TypeScript version of the LanguageServer
+            // TypeScript only allows language service plugins in node_modules next to itself or in a parent directory
+            const required = info.serverHost.require(info.serverHost.getExecutingFilePath() + '/../../..', '@fimbul/wotan');
+            if (required.error !== undefined) {
+                info.project.projectService.logger.info(`failed to load linter: ${required.error.message}`);
+                return info.languageService;
+            }
+            const library = <typeof import('@fimbul/wotan')>required.module;
             // TODO use info.config
             info.project.projectService.logger.info('setting up plugin');
-            mockRequire('typescript', typescript); // force every library to use the TypeScript version of the LanguageServer
             // use a map to store previously found failues
             // WeakMap allows releasing failures when the file is updated
             const failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<import('@fimbul/wotan').Failure>>();
-            const directoryToLinter = new Map<string, typeof import('@fimbul/wotan') | null>();
             return createProxy(info.languageService, {
                 dispose() {
                     // TODO clean up after ourselves
@@ -31,12 +40,9 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                     const program = info.languageService.getProgram()!;
                     const file = program.getSourceFile(fileName);
                     if (file !== undefined) {
-                        const library = loadLibrary(fileName, directoryToLinter, info.project, info.project.projectService.logger, info.serverHost);
-                        if (library != undefined) {
-                            const failures = getFailures(library, <import('typescript').SourceFile>file, <import('typescript').Program>program, info.project);
-                            failuresForFile.set(file, failures);
-                            diagnostics = diagnostics.concat(failures.map((f) => failureToDiagnostic(f, file, typescript.DiagnosticCategory)));
-                        }
+                        const failures = getFailures(library, <import('typescript').SourceFile>file, <import('typescript').Program>program, info.project);
+                        failuresForFile.set(file, failures);
+                        diagnostics = diagnostics.concat(failures.map((f) => failureToDiagnostic(f, file, typescript.DiagnosticCategory)));
                     }
                     return diagnostics;
                 },
@@ -63,40 +69,48 @@ function nothingToDoHere(ls: any): boolean {
     return typeof ls[alreadyWrapped] === 'function' && ls[alreadyWrapped]();
 }
 
-function loadLibrary(f: string, cache: Map<string, typeof import('@fimbul/wotan') | null>, host: {directoryExists(path: string): boolean}, logger: ts.server.Logger, requireHost: Pick<ts.server.ServerHost, 'require'>): typeof import('@fimbul/wotan') | null {
-    f = path.dirname(f);
-    while (path.basename(f) === 'node_modules')
-        f = path.dirname(f);
-    let result = cache.get(f);
-    if (result === undefined) {
-        const moduleDirectory = f + '/node_modules/@fimbul/wotan';
-        if (host.directoryExists(moduleDirectory)) {
-            try {
-                result = <typeof import('@fimbul/wotan')>tryRequire(requireHost, f, moduleDirectory);
-            } catch (e) {
-                logger.info(`failed to load linter from '${moduleDirectory}': ${e && e.message}`);
-                result = null;
-            }
-        } else {
-            const parent = path.dirname(f);
-            if (parent === f) {
-                result = null;
-            } else {
-                result = loadLibrary(parent, cache, host, logger, requireHost);
-            }
-        }
-        cache.set(f, result);
-    }
-    return result;
-}
+type FileSystem = import('@fimbul/wotan').FileSystem;
 
-function tryRequire(host: Pick<ts.server.ServerHost, 'require'>, from: string, id: string) {
-    if (host.require === undefined)
-        return require(id); // fall back to `require` if necessary
-    const result = host.require(from, id);
-    if (result.module === undefined)
-        throw result.error;
-    return result.module;
+class ProjectFileSystem implements FileSystem {
+    public realpath = this.project.realpath && ((f: string) => this.project.realpath!(f));
+    constructor(private project: ts.server.Project) {}
+    public createDirectory() {
+        throw new Error('should not be called.');
+    }
+    public deleteFile() {
+        throw new Error('should not be called.');
+    }
+    public writeFile() {
+        throw new Error('should not be called.');
+    }
+    public normalizePath(f: string) {
+        f = f.replace(/\\/g, '/');
+        return this.project.useCaseSensitiveFileNames() ? f : f.toLowerCase();
+    }
+    public readFile(f: string) {
+        const result = this.project.readFile(f);
+        if (result === undefined)
+            throw new Error('ENOENT');
+        return result;
+    }
+    public readDirectory(dir: string) {
+        return this.project.readDirectory(dir, undefined, undefined, ['*']);
+    }
+    public stat(f: string) {
+        const isFile = this.project.fileExists(f)
+            ? true
+            : this.project.directoryExists(f)
+                ? false
+                : undefined;
+        return {
+            isDirectory() {
+                return isFile === false;
+            },
+            isFile() {
+                return isFile === true;
+            },
+        };
+    }
 }
 
 function getFailures(library: typeof import('@fimbul/wotan'), file: import('typescript').SourceFile, program: import('typescript').Program, project: ts.server.Project) {
@@ -106,8 +120,8 @@ function getFailures(library: typeof import('@fimbul/wotan'), file: import('type
     //  use config option
     // TODO guard with try-catch to avoid completely sabotaging semantic diagnostics
     // TODO use CancellationToken to abort if necessary
-    // TODO use project for file system IO
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(library.FileSystem).toConstantValue(new ProjectFileSystem(project));
     container.load(library.createCoreModule({}), library.createDefaultModule()); // TODO pass global options
     const fileFilter = container.get(library.FileFilterFactory).create({program, host: project});
     if (!fileFilter.filter(file))
