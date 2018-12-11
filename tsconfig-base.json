@@ -17,7 +17,7 @@
     "declaration": true,
     "stripInternal": true,
     "plugins": [
-      {"name": "@fimbul/plugin"}
+      {"name": "@fimbul/plugin", "displayErrorsAsWarnings": true}
     ]
   },
   "include": [

@@ -6,26 +6,32 @@ import { Container, BindingScopeEnum } from 'inversify';
 const alreadyWrapped = Symbol();
 
 const init: ts.server.PluginModuleFactory = ({typescript}) => {
+    let config: Record<string, unknown>;
     return {
+        onConfigurationChanged(newConfig) {
+            config = newConfig;
+        },
         create(info) {
+            const project = info.project;
+            const logger = project.projectService.logger;
             if (nothingToDoHere(info.languageService)) {
-                info.project.projectService.logger.info('plugin is already set up in this project');
+                logger.info('plugin is already set up in this project');
                 return info.languageService;
             }
             if (info.serverHost.require === undefined) {
-                info.project.projectService.logger.info("cannot load linter because ServerHost doesn't support `require`");
+                logger.info("cannot load linter because ServerHost doesn't support `require`");
                 return info.languageService;
             }
             mockRequire('typescript', typescript); // force every library to use the TypeScript version of the LanguageServer
             // TypeScript only allows language service plugins in node_modules next to itself or in a parent directory
             const required = info.serverHost.require(info.serverHost.getExecutingFilePath() + '/../../..', '@fimbul/wotan');
             if (required.error !== undefined) {
-                info.project.projectService.logger.info(`failed to load linter: ${required.error.message}`);
+                logger.info(`failed to load linter: ${required.error.message}`);
                 return info.languageService;
             }
             const library = <typeof import('@fimbul/wotan')>required.module;
-            // TODO use info.config
-            info.project.projectService.logger.info('setting up plugin');
+            logger.info('setting up plugin');
+            ({config} = info);
             // use a map to store previously found failues
             // WeakMap allows releasing failures when the file is updated
             const failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<import('@fimbul/wotan').Failure>>();
@@ -35,22 +41,58 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                     return info.languageService.dispose();
                 },
                 getSemanticDiagnostics(fileName) {
-                    info.project.projectService.logger.info(`called getSemanticDiagnostics: ${fileName}`);
                     let diagnostics = info.languageService.getSemanticDiagnostics(fileName);
                     const program = info.languageService.getProgram()!;
                     const file = program.getSourceFile(fileName);
                     if (file !== undefined) {
-                        const failures = getFailures(library, <import('typescript').SourceFile>file, <import('typescript').Program>program, info.project);
-                        failuresForFile.set(file, failures);
-                        diagnostics = diagnostics.concat(failures.map((f) => failureToDiagnostic(f, file, typescript.DiagnosticCategory)));
+                        logger.info(`started linting ${fileName}`);
+                        try {
+                            const failures = getFailures(file, program);
+                            failuresForFile.set(file, failures);
+                            diagnostics = diagnostics.concat(failures.map((failure) => ({
+                                file,
+                                category: failure.severity === 'error' && !config.displayErrorsAsWarnings
+                                    ? typescript.DiagnosticCategory.Error
+                                    : typescript.DiagnosticCategory.Warning,
+                                code: <any>failure.ruleName,
+                                source: 'wotan',
+                                messageText: failure.message,
+                                start: failure.start.position,
+                                length: failure.end.position - failure.start.position,
+                            })));
+                            logger.info(`finished linting ${fileName}, found ${failures.length} failures`);
+                        } catch (e) {
+                            logger.info(`linting ${fileName} failed: ${e && e.message}`);
+                        }
                     }
                     return diagnostics;
                 },
                 getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences) {
-                    info.project.projectService.logger.info(`called getCodeFixesAtPosition: ${fileName} ${start}-${end} [${errorCodes}]`);
+                    logger.info(`called getCodeFixesAtPosition: ${fileName} ${start}-${end} [${errorCodes}]`);
                     return info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
                 },
             });
+
+            function getFailures(file: ts.SourceFile, program: ts.Program) {
+                // TODO load .fimbullinter.yaml and
+                //  use it to load plugin modules
+                //  use include and exclude options
+                //  use config option
+                // TODO use CancellationToken to abort if necessary
+                const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+                container.bind(library.FileSystem).toConstantValue(new ProjectFileSystem(project));
+                container.load(library.createCoreModule({}), library.createDefaultModule()); // TODO pass global options
+                const fileFilter = container.get(library.FileFilterFactory).create({program, host: project});
+                if (!fileFilter.filter(file))
+                    return [];
+                const configManager = container.get(library.ConfigurationManager);
+                const config = configManager.find(file.fileName);
+                const effectiveConfig = config && configManager.reduce(config, file.fileName);
+                if (effectiveConfig === undefined)
+                    return [];
+                const linter = container.get(library.Linter);
+                return linter.lintFile(file, effectiveConfig, program);
+            }
         },
     };
 };
@@ -110,39 +152,5 @@ class ProjectFileSystem implements FileSystem {
                 return isFile === true;
             },
         };
-    }
-}
-
-function getFailures(library: typeof import('@fimbul/wotan'), file: import('typescript').SourceFile, program: import('typescript').Program, project: ts.server.Project) {
-    // TODO load .fimbullinter.yaml and
-    //  use it to load plugin modules
-    //  use include and exclude options
-    //  use config option
-    // TODO guard with try-catch to avoid completely sabotaging semantic diagnostics
-    // TODO use CancellationToken to abort if necessary
-    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
-    container.bind(library.FileSystem).toConstantValue(new ProjectFileSystem(project));
-    container.load(library.createCoreModule({}), library.createDefaultModule()); // TODO pass global options
-    const fileFilter = container.get(library.FileFilterFactory).create({program, host: project});
-    if (!fileFilter.filter(file))
-        return [];
-    const configManager = container.get(library.ConfigurationManager);
-    const config = configManager.find(file.fileName);
-    const effectiveConfig = config && configManager.reduce(config, file.fileName);
-    if (effectiveConfig === undefined)
-        return [];
-    const linter = container.get(library.Linter);
-    return linter.lintFile(file, effectiveConfig, program);
-}
-
-function failureToDiagnostic(failure: import('@fimbul/wotan').Failure, sourceFile: ts.SourceFile, category: typeof import('typescript/lib/tsserverlibrary').DiagnosticCategory): ts.Diagnostic {
-    return {
-        category: failure.severity === 'error' ? category.Error : category.Warning,
-        code: <any>failure.ruleName,
-        file: sourceFile,
-        source: 'wotan',
-        messageText: failure.message,
-        start: failure.start.position,
-        length: failure.end.position - failure.start.position,
     }
 }
