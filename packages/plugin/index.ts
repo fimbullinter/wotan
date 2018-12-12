@@ -3,35 +3,29 @@
 import mockRequire = require('mock-require');
 import { Container, BindingScopeEnum } from 'inversify';
 
-const alreadyWrapped = Symbol();
-
+// TODO move all of the logic to a module within @fimbul/wotan so we don't have any version incompatibility issues
 const init: ts.server.PluginModuleFactory = ({typescript}) => {
-    let config: Record<string, unknown>;
+    let pluginConfig: Record<string, unknown>;
     return {
         onConfigurationChanged(newConfig) {
-            config = newConfig;
+            pluginConfig = newConfig;
         },
         create(info) {
             const project = info.project;
             const logger = project.projectService.logger;
-            if (nothingToDoHere(info.languageService)) {
-                logger.info('plugin is already set up in this project');
-                return info.languageService;
-            }
-            if (info.serverHost.require === undefined) {
-                logger.info("cannot load linter because ServerHost doesn't support `require`");
-                return info.languageService;
-            }
             mockRequire('typescript', typescript); // force every library to use the TypeScript version of the LanguageServer
-            // TypeScript only allows language service plugins in node_modules next to itself or in a parent directory
-            const required = info.serverHost.require(info.serverHost.getExecutingFilePath() + '/../../..', '@fimbul/wotan');
-            if (required.error !== undefined) {
-                logger.info(`failed to load linter: ${required.error.message}`);
+            // always load locally installed linter
+            const required = typescript.server.Project.resolveModule(
+                '@fimbul/wotan',
+                project.getCurrentDirectory(),
+                info.serverHost,
+                (msg) => logger.info(msg),
+            );
+            if (required === undefined)
                 return info.languageService;
-            }
-            const library = <typeof import('@fimbul/wotan')>required.module;
+            const library = <typeof import('@fimbul/wotan')>required;
             logger.info('setting up plugin');
-            ({config} = info);
+            pluginConfig = info.config;
             // use a map to store previously found failues
             // WeakMap allows releasing failures when the file is updated
             const failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<import('@fimbul/wotan').Failure>>();
@@ -51,7 +45,7 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                             failuresForFile.set(file, failures);
                             diagnostics = diagnostics.concat(failures.map((failure) => ({
                                 file,
-                                category: failure.severity === 'error' && !config.displayErrorsAsWarnings
+                                category: failure.severity === 'error' && !pluginConfig.displayErrorsAsWarnings
                                     ? typescript.DiagnosticCategory.Error
                                     : typescript.DiagnosticCategory.Warning,
                                 code: <any>failure.ruleName,
@@ -67,10 +61,6 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                     }
                     return diagnostics;
                 },
-                getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences) {
-                    logger.info(`called getCodeFixesAtPosition: ${fileName} ${start}-${end} [${errorCodes}]`);
-                    return info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
-                },
             });
 
             function getFailures(file: ts.SourceFile, program: ts.Program) {
@@ -79,6 +69,7 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                 //  use include and exclude options
                 //  use config option
                 // TODO use CancellationToken to abort if necessary
+                // TODO redirect Log messages to Logger
                 const container = new Container({defaultScope: BindingScopeEnum.Singleton});
                 container.bind(library.FileSystem).toConstantValue(new ProjectFileSystem(project));
                 container.load(library.createCoreModule({}), library.createDefaultModule()); // TODO pass global options
@@ -100,15 +91,10 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
 export = init;
 
 function createProxy(ls: any, overrides: Partial<ts.LanguageService>) {
-    const proxy = Object.create(null);
+    const proxy = Object.create(null); // tslint:disable-line:no-null-keyword
     for (const method of Object.keys(ls))
         proxy[method] = method in overrides ? (<any>overrides)[method] : ls[method].bind(ls);
-    proxy[alreadyWrapped] = () => true;
     return proxy;
-}
-
-function nothingToDoHere(ls: any): boolean {
-    return typeof ls[alreadyWrapped] === 'function' && ls[alreadyWrapped]();
 }
 
 type FileSystem = import('@fimbul/wotan').FileSystem;
