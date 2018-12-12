@@ -1,0 +1,11 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "no-submodule-imports": {
+      "options": ["@fimbul/wotan/language-service"]
+    },
+    "no-implicit-dependencies": {
+      "options": ["dev"]
+    }
+  }
+}

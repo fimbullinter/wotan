@@ -12,7 +12,8 @@
     "custom-typings/*.d.ts",
     "packages/*/src",
     "packages/*/index.ts",
-    "packages/*/test/*.spec.ts"
+    "packages/*/test/*.spec.ts",
+    "packages/wotan/language-service/"
   ],
   "exclude": [
     "scripts/*.d.ts",
