@@ -1,6 +1,5 @@
 import * as ts from 'typescript';
-import { FileSystem, MessageHandler, Failure, FileFilterFactory } from '@fimbul/ymir';
-import bind from 'bind-decorator';
+import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService } from '@fimbul/ymir';
 import { Container, BindingScopeEnum } from 'inversify';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
@@ -8,7 +7,15 @@ import { ConfigurationManager } from '../src/services/configuration-manager';
 import { Linter } from '../src/linter';
 import { addUnique } from '../src/utils';
 
-export class LanguageServicePlugin {
+export type PartialLanguageServiceInterceptor = {
+    // https://github.com/ajafff/tslint-consistent-codestyle/issues/85
+    // tslint:disable-next-line: no-unused
+    [K in keyof ts.LanguageService]?: ts.LanguageService[K] extends (...args: infer Parameters) => infer Return
+        ? (prev: Return, ...args: Parameters) => Return
+        : ts.LanguageService[K]
+};
+
+export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
     private failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Failure>>();
     public getExternalFiles?: () => string[]; // can be implemented later
 
@@ -27,12 +34,12 @@ export class LanguageServicePlugin {
         this.config = config;
     }
 
-    @bind
-    private getSemanticDiagnostics(fileName: string): ts.Diagnostic[] {
-        let diagnostics = this.languageService.getSemanticDiagnostics(fileName);
+    public getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[] {
         const program = this.languageService.getProgram()!;
         const file = program.getSourceFile(fileName);
-        if (file !== undefined) {
+        if (file === undefined) {
+            this.log(`file ${fileName} is not included in the Program`);
+        } else {
             this.log(`started linting ${fileName}`);
             try {
                 const failures = this.getFailures(file, program);
@@ -62,8 +69,12 @@ export class LanguageServicePlugin {
         //  use include and exclude options
         //  use config option
         // TODO use CancellationToken to abort if necessary
+        // TODO use this.require in Resolver
         const container = new Container({defaultScope: BindingScopeEnum.Singleton});
         container.bind(FileSystem).toConstantValue(new ProjectFileSystem(this.project));
+        container.bind(DirectoryService).toConstantValue({
+            getCurrentDirectory: () => this.project.getCurrentDirectory(),
+        });
         const warnings: string[] = [];
         container.bind(MessageHandler).toConstantValue({
             log: this.log,
@@ -88,15 +99,11 @@ export class LanguageServicePlugin {
         return linter.lintFile(file, effectiveConfig, program);
     }
 
-    public createInterceptor(): Partial<ts.LanguageService> {
-        return {
-            dispose: this.dispose,
-            getSemanticDiagnostics: this.getSemanticDiagnostics,
-        };
+    public getSupportedCodeFixes(fixes: string[]) {
+        return fixes;
     }
 
-    @bind
-    private dispose() {
+    public dispose() {
         // TODO clean up after ourselves
         return this.languageService.dispose();
     }
