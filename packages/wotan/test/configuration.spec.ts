@@ -12,6 +12,7 @@ import {
     LoadConfigurationContext,
     ConfigurationError,
     BuiltinResolver,
+    DirectoryService,
 } from '@fimbul/ymir';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../src/services/cached-file-system';
@@ -26,6 +27,7 @@ import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { DefaultBuiltinResolver } from '../src/services/default/builtin-resolver';
+import { NodeDirectoryService } from '../src/services/default/directory-service';
 
 // tslint:disable:no-null-keyword
 
@@ -246,6 +248,7 @@ test('DefaultConfigurationProvider.find', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
     container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
 
     const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
 
@@ -344,6 +347,7 @@ test('DefaultConfigurationProvider.resolve', (t) => {
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const builtinResolver: BuiltinResolver = {
         resolveConfig(name) { return path.join(__dirname, '../../mimir', name + '.yaml'); },
         resolveFormatter() { throw new Error(); },
@@ -367,6 +371,9 @@ test('DefaultConfigurationProvider.read', (t) => {
 
     const empty = {};
     const resolver: Resolver = {
+        getDefaultExtensions() {
+            return [];
+        },
         resolve() {
             return '';
         },
@@ -428,6 +435,7 @@ test('ConfigurationProvider.parse', (t) => {
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
 
     const cp = container.resolve(DefaultConfigurationProvider);
     const mockContext: LoadConfigurationContext = {
