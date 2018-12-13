@@ -1,4 +1,4 @@
-import { RuleLoaderHost, RuleConstructor, BuiltinResolver } from '@fimbul/ymir';
+import { RuleLoaderHost, RuleConstructor, BuiltinResolver, Resolver } from '@fimbul/ymir';
 import * as debug from 'debug';
 import * as path from 'path';
 import { injectable } from 'inversify';
@@ -7,31 +7,26 @@ const log = debug('wotan:ruleLoaderHost');
 
 @injectable()
 export class NodeRuleLoader implements RuleLoaderHost {
-    constructor(private resolver: BuiltinResolver) {}
+    constructor(private builtinResolver: BuiltinResolver, private resolver: Resolver) {}
 
     public loadCoreRule(name: string): RuleConstructor | undefined {
+        name = this.builtinResolver.resolveRule(name);
         try {
-            name = this.resolver.resolveRule(name);
-            const rule = require(name).Rule;
-            log('Found %s', name);
-            return rule;
-        } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND')
-                return;
-            throw e;
+            name = this.resolver.resolve(name);
+        } catch {
+            return;
         }
+        log('Found %s', name);
+        return this.resolver.require(name).Rule;
     }
 
     public loadCustomRule(name: string, directory: string): RuleConstructor | undefined {
         try {
-            name = path.join(directory, name);
-            const rule = require(name).Rule;
-            log('Found %s', name);
-            return rule;
-        } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && e.message === `Cannot find module '${name}'`)
-                return;
-            throw e;
+            name = this.resolver.resolve(path.join(directory, name), directory);
+        } catch {
+            return;
         }
+        log('Found %s', name);
+        return this.resolver.require(name).Rule;
     }
 }

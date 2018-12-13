@@ -41,21 +41,8 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                         log(message);
                     },
                 );
-                if (required === undefined) {
-                    const prefix = `Failed to load module '${id}': `;
-                    let errorMessage = lastMessage.substr(prefix.length);
-                    if (errorMessage.startsWith('Error: '))
-                        errorMessage = errorMessage.substr('Error: '.length).split('\n')[0];
-                    let error: Error & {code?: string};
-                    if (errorMessage.startsWith(`Could not resolve JS module '${id}' starting at '`)) {
-                        // emulate Node's module not found error
-                        error = new Error(`Cannot find module '${id}'`);
-                        error.code = 'MODULE_NOT_FOUND';
-                    } else {
-                        error = new Error(errorMessage);
-                    }
-                    throw error;
-                }
+                if (required === undefined)
+                    throw new Error(lastMessage);
                 return required;
             }
         },

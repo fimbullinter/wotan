@@ -43,24 +43,20 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
             this.log(`file ${fileName} is not included in the Program`);
         } else {
             this.log(`started linting ${fileName}`);
-            try {
-                const failures = this.getFailures(file, program);
-                this.failuresForFile.set(file, failures);
-                diagnostics = diagnostics.concat(failures.map((failure) => ({
-                    file,
-                    category: failure.severity === 'error' && !this.config.displayErrorsAsWarnings
-                        ? ts.DiagnosticCategory.Error
-                        : ts.DiagnosticCategory.Warning,
-                    code: <any>failure.ruleName,
-                    source: 'wotan',
-                    messageText: failure.message,
-                    start: failure.start.position,
-                    length: failure.end.position - failure.start.position,
-                })));
-                this.log(`finished linting ${fileName}, found ${failures.length} failures`);
-            } catch (e) {
-                this.log(`linting ${fileName} failed: ${e && e.message}`);
-            }
+            const failures = this.getFailures(file, program);
+            this.failuresForFile.set(file, failures);
+            diagnostics = diagnostics.concat(failures.map((failure) => ({
+                file,
+                category: failure.severity === 'error' && !this.config.displayErrorsAsWarnings
+                    ? ts.DiagnosticCategory.Error
+                    : ts.DiagnosticCategory.Warning,
+                code: <any>failure.ruleName,
+                source: 'wotan',
+                messageText: failure.message,
+                start: failure.start.position,
+                length: failure.end.position - failure.start.position,
+            })));
+            this.log(`finished linting ${fileName}, found ${failures.length} failures`);
         }
         return diagnostics;
     }
@@ -79,7 +75,10 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         container.bind(Resolver).toDynamicValue((context) => {
             const fs = context.container.get(CachedFileSystem);
             return {
-                resolve(id, basedir, extensions, paths) {
+                getDefaultExtensions() {
+                    return ['.js'];
+                },
+                resolve(id, basedir, extensions = ['.js'], paths) {
                     return resolve.sync(id, {
                         basedir,
                         extensions,
