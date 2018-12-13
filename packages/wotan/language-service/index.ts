@@ -1,11 +1,13 @@
 import * as ts from 'typescript';
-import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService } from '@fimbul/ymir';
+import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService, Resolver } from '@fimbul/ymir';
 import { Container, BindingScopeEnum } from 'inversify';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { ConfigurationManager } from '../src/services/configuration-manager';
 import { Linter } from '../src/linter';
 import { addUnique } from '../src/utils';
+import { CachedFileSystem } from '../src/services/cached-file-system';
+import resolve = require('resolve');
 
 export type PartialLanguageServiceInterceptor = {
     // https://github.com/ajafff/tslint-consistent-codestyle/issues/85
@@ -69,11 +71,25 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         //  use include and exclude options
         //  use config option
         // TODO use CancellationToken to abort if necessary
-        // TODO use this.require in Resolver
         const container = new Container({defaultScope: BindingScopeEnum.Singleton});
         container.bind(FileSystem).toConstantValue(new ProjectFileSystem(this.project));
         container.bind(DirectoryService).toConstantValue({
             getCurrentDirectory: () => this.project.getCurrentDirectory(),
+        });
+        container.bind(Resolver).toDynamicValue((context) => {
+            const fs = context.container.get(CachedFileSystem);
+            return {
+                resolve(id, basedir, extensions, paths) {
+                    return resolve.sync(id, {
+                        basedir,
+                        extensions,
+                        paths,
+                        isFile: (f) => fs.isFile(f),
+                        readFileSync: (f) => fs.readFile(f),
+                    });
+                },
+                require: this.require,
+            };
         });
         const warnings: string[] = [];
         container.bind(MessageHandler).toConstantValue({
