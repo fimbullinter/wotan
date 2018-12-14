@@ -11,6 +11,9 @@ test('loads TSLint formatter if no wotan formatter is found', (t) => {
         }
     }
     const resolver: Resolver = {
+        getDefaultExtensions() {
+            return [];
+        },
         resolve() {
             return 'foo';
         },

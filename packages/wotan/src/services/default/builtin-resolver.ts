@@ -1,13 +1,12 @@
 import { injectable } from 'inversify';
 import { BuiltinResolver, Resolver } from '@fimbul/ymir';
 import * as path from 'path';
-import { OFFSET_TO_NODE_MODULES } from '../../utils';
 
 @injectable()
 export class DefaultBuiltinResolver implements BuiltinResolver {
     private get builtinPackagePath() {
         const resolved = path.dirname(
-            this.resolver.resolve('@fimbul/mimir', path.join(__dirname, '../'.repeat(OFFSET_TO_NODE_MODULES)), []),
+            this.resolver.resolve('@fimbul/mimir', path.join(__dirname, '../'.repeat(/*offset to package root*/ 3)), []),
         );
         Object.defineProperty(this, 'builtinPackagePath', {value: resolved});
 
