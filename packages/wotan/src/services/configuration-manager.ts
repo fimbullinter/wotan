@@ -89,7 +89,7 @@ export class ConfigurationManager {
         return reduceSettings(config, path.resolve(this.directories.getCurrentDirectory(), fileName), new Map());
     }
 
-    /** Load a configuration from the specified file using the ConfigurationProvider, recursively resolving and loading base configs. */
+    /** Load a configuration from a resolved path using the ConfigurationProvider, recursively resolving and loading base configs. */
     public load(fileName: string): Configuration {
         const stack: string[] = [];
         const loadResolved = (file: string): Configuration => {
