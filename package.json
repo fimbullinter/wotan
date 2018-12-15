@@ -33,7 +33,7 @@
     "@types/glob": "^5.0.35",
     "@types/node": "^10.12.0",
     "@types/parse5-sax-parser": "^5.0.1",
-    "ava": "^0.25.0",
+    "ava": "^1.0.0",
     "codecov": "^3.0.0",
     "dependency-cruiser": "^4.0.0",
     "github-url-to-object": "^4.0.4",
