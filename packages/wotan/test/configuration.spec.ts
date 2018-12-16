@@ -50,36 +50,36 @@ test('ConfigurationManager', (t) => {
     const cm = container.get(ConfigurationManager);
     t.throws(
         () => cm.find('foo.ts'),
-        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
+        { instanceOf: ConfigurationError, message: `Error finding configuration for '${path.resolve('foo.ts')}': undefined` },
     );
     configProvider.find = () => {
         throw new Error();
     };
     t.throws(
         () => cm.find('foo.ts'),
-        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': `,
+        { instanceOf: ConfigurationError, message: `Error finding configuration for '${path.resolve('foo.ts')}': ` },
     );
     t.throws(
         () => cm.resolve('config.yaml', 'dir'),
-        (e) => e instanceof ConfigurationError && e.message === 'null',
+        { instanceOf: ConfigurationError, message: 'null' },
     );
     configProvider.resolve = () => {
         throw 'foo';
     };
     t.throws(
         () => cm.resolve('config.yaml', 'dir'),
-        (e) => e instanceof ConfigurationError && e.message === 'undefined',
+        { instanceOf: ConfigurationError, message: 'undefined' },
     );
     t.throws(
         () => cm.load('config.yaml'),
-        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: undefined`,
+        { instanceOf: ConfigurationError, message: `Error loading ${path.resolve('config.yaml')}: undefined` },
     );
     configProvider.load = () => {
         throw new Error('foo');
     };
     t.throws(
         () => cm.load('config.yaml'),
-        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: foo`,
+        { instanceOf: ConfigurationError, message: `Error loading ${path.resolve('config.yaml')}: foo` },
     );
 
     configProvider.find = (f) => {
@@ -105,9 +105,11 @@ test('ConfigurationManager', (t) => {
     };
     t.throws(
         () => cm.load('subdir/config.yaml'),
-        (e) => e instanceof ConfigurationError &&
-            e.message === `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
+        {
+            instanceOf: ConfigurationError,
+            message: `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
                 path.resolve('./subdir/config.yaml')}: Circular configuration dependency.`,
+        },
     );
 
     const loaded: string[] = [];

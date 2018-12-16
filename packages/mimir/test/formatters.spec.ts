@@ -1,4 +1,4 @@
-import test, { TestContext } from 'ava';
+import test, { ExecutionContext } from 'ava';
 import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '@fimbul/ymir';
 import { Formatter as JsonFormatter} from '../src/formatters/json';
 import { Formatter as StylishFormatter } from '../src/formatters/stylish';
@@ -150,7 +150,7 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
     },
 ]]);
 
-function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, transform?: (s: string) => string) {
+function testFormatter(formatterCtor: FormatterConstructor, t: ExecutionContext, transform?: (s: string) => string) {
     testOutput(emptySummary, 'empty');
     testOutput(noFailureSummary, 'success');
     testOutput(fixedSummary, 'fixed');
