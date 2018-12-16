@@ -34,7 +34,7 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                 let lastMessage!: string;
                 const required = typescript.server.Project.resolveModule(
                     id,
-                    project.getCurrentDirectory(),
+                    project.getCurrentDirectory(), // TODO require should be relative to the location of the linter
                     serverHost,
                     (message) => {
                         lastMessage = message;
