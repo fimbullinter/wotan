@@ -477,3 +477,23 @@ export interface RawLineSwitch {
     readonly enable: boolean;
     readonly position: number;
 }
+
+export interface FileFilterContext {
+    program: ts.Program;
+    host: Required<
+        Pick<
+            ts.CompilerHost,
+            'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists' | 'getCurrentDirectory'
+        >
+    >;
+}
+
+export interface FileFilterFactory {
+    create(context: FileFilterContext): FileFilter;
+}
+export abstract class FileFilterFactory {}
+
+export interface FileFilter {
+    /** @returns `true` if the file should be linted, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
+    filter(file: ts.SourceFile): boolean;
+}
