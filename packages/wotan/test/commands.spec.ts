@@ -49,7 +49,7 @@ test('ShowCommand', async (t) => {
     }
     container.bind(FileSystem).to(MockFileSystem);
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: ['non-existent'],
@@ -60,7 +60,7 @@ test('ShowCommand', async (t) => {
         `Cannot find module 'non-existent' from '${process.cwd()}'`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: ['./packages/wotan/test/fixtures/node_modules/my-config'],
@@ -71,7 +71,7 @@ test('ShowCommand', async (t) => {
         `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: [],
@@ -82,7 +82,7 @@ test('ShowCommand', async (t) => {
         "Cannot find configuration for '../foo.ts'.",
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: [],
@@ -436,7 +436,7 @@ test('TestCommand', async (t) => {
         getCurrentDirectory() { return cwd; },
     };
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Test,
             bail: false,
@@ -448,7 +448,7 @@ test('TestCommand', async (t) => {
         `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Test,
             bail: false,
@@ -462,7 +462,7 @@ test('TestCommand', async (t) => {
         }: Expected a value of type 'string | string[]' for option 'project'.`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Test,
             bail: false,

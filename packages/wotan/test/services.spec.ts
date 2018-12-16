@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { test } from 'ava';
+import test from 'ava';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import {
     FileSystem,
