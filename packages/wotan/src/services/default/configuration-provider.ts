@@ -176,7 +176,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
         return processor && this.resolver.resolve(
             processor,
             basedir,
-            Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+            undefined,
             module.paths.slice(OFFSET_TO_NODE_MODULES + 2),
         );
     }

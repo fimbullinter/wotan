@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { test } from 'ava';
+import test from 'ava';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import {
     FileSystem,
@@ -79,7 +79,13 @@ test('RuleLoaderHost', (t) => {
             return path.join(__dirname, '../../mimir/src/rules', name + '.js');
         },
     };
-    const loader = new NodeRuleLoader(builtinResolver);
+    const loader = new NodeRuleLoader(
+        builtinResolver,
+        new NodeResolver(
+            new CachedFileSystem(new NodeFileSystem(new ConsoleMessageHandler()), new DefaultCacheFactory()),
+            new NodeDirectoryService(),
+        ),
+    );
     t.is(loader.loadCoreRule('no-debugger'), Rule);
     t.is(loader.loadCoreRule('fooBarBaz'), undefined);
     builtinResolver.resolveRule = (name) => path.join(__dirname, 'fixtures', name + '.js');
@@ -171,6 +177,7 @@ test('Resolver', (t) => {
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const resolver = container.resolve(NodeResolver);
     t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
@@ -191,6 +198,7 @@ test('FormatterLoaderHost', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const builtinResolver: BuiltinResolver = {
         resolveConfig() { throw new Error(); },
         resolveRule() { throw new Error(); },
@@ -392,6 +400,9 @@ test.after.always(() => {
 test('ProcessorLoader', (t) => {
     let r: (id: string) => any;
     const resolver: Resolver = {
+        getDefaultExtensions() {
+            return [];
+        },
         resolve(): never {
             throw new Error('should not be called');
         },
@@ -415,7 +426,5 @@ test('ProcessorLoader', (t) => {
     r = () => ({});
     t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
     r = require;
-    t.throws(() => loader.loadProcessor('./fooBarBaz'), (err) => {
-        return (err instanceof ConfigurationError) && /Cannot find module '\.\/fooBarBaz'/.test(err.message);
-    });
+    t.throws(() => loader.loadProcessor('./fooBarBaz'), "Cannot find module './fooBarBaz'");
 });

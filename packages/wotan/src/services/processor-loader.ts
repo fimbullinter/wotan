@@ -1,7 +1,6 @@
 import { ProcessorConstructor, Resolver, CacheFactory, Cache, ConfigurationError } from '@fimbul/ymir';
 import { injectable } from 'inversify';
 import { resolveCachedResult } from '../utils';
-import bind from 'bind-decorator';
 
 @injectable()
 export class ProcessorLoader {
@@ -11,20 +10,11 @@ export class ProcessorLoader {
     }
 
     public loadProcessor(path: string): ProcessorConstructor {
-        return resolveCachedResult(this.cache, path, this.requireProcessor);
-    }
-
-    @bind
-    private requireProcessor(path: string): ProcessorConstructor {
-        try {
-            const result = this.resolver.require(path).Processor;
+        return resolveCachedResult(this.cache, path, (p) => {
+            const result = this.resolver.require(p).Processor;
             if (result === undefined)
-                throw new ConfigurationError(`'${path}' has no export named 'Processor'.`);
+                throw new ConfigurationError(`'${p}' has no export named 'Processor'.`);
             return result;
-        } catch (e) {
-            if (e != undefined && e.code === 'MODULE_NOT_FOUND' && e.message === `Cannot find module '${path}'`)
-                throw new ConfigurationError(e.message);
-            throw e;
-        }
+        });
     }
 }

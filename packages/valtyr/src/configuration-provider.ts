@@ -58,7 +58,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
     }
 
     public resolve(name: string, basedir: string) {
-        const extensions = Object.keys(require.extensions).filter((e) => e !== '.node');
+        const extensions = [...this.resolver.getDefaultExtensions(), '.json'];
         if (name.startsWith('tslint:')) {
             try {
                 if (this.tslintConfigDir === undefined)
