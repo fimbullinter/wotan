@@ -41,6 +41,10 @@ Provides core types for custom rules and plugin authors.
 
 Contains all core rules, formatters and configuration presets.
 
+### Mithotyn [![docs](https://img.shields.io/badge/%40fimbul%2Fmithotyn-docs-blue.svg)](https://github.com/fimbullinter/wotan/tree/master/packages/mithotyn/README.md)
+
+LanguageService Plugin for TypeScript. Provides real-time in-editor linting while you type.
+
 ## Further Documentation
 
 * [Writing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/writing-rules.md)
@@ -78,6 +82,8 @@ He is constantly striving for wisdom. From his throne he can see everything in t
 **Ymir** is the giant of whose body the whole world was created. He is the ancestor of all jötnar.
 
 **Mímir** ("The rememberer, the wise one") renowned for his knowledge and wisdom. The god Odin carries around Mímir's head and it recites secret knowledge and counsel to him.
+
+**Mithotyn** (actually "Mitoðinn", meaning "dispenser of fate") introduces rules where there were none. Fills Odin's place during his travels to foreign lands.
 
 ### Why yet another linter?
 

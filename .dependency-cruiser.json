@@ -84,6 +84,28 @@
       }
     },
     {
+      "name": "no-language-service",
+      "comment": "Library code shouldn't use LanguageService.",
+      "severity": "error",
+      "from": {
+        "pathNot": "^packages/wotan/language-service/"
+      },
+      "to": {
+        "path": "^packages/wotan/language-service/"
+      }
+    },
+    {
+      "name": "restrict-language-service-plugin",
+      "comment": "LanguageServicePlugin shouldn't import anything but 'mock-require'.",
+      "severity": "error",
+      "from": {
+        "path": "^packages/mithotyn/"
+      },
+      "to": {
+        "pathNot": "(^|/)node_modules/mock-require/"
+      }
+    },
+    {
       "name": "no-deprecated-npm",
       "comment": "These npm modules are deprecated - find an alternative.",
       "severity": "warn",
@@ -139,7 +161,7 @@
   "allowed": [
     {
       "from": {
-        "path": "^packages/[^/]+/(src/|bin/|index.[jt]s$)"
+        "path": "^packages/[^/]+/(src/|bin/|language-service/|index.[jt]s$)"
       },
       "to": {
         "dependencyTypes": [

@@ -1,0 +1,40 @@
+{
+  "name": "@fimbul/mithotyn",
+  "version": "0.16.0",
+  "description": "TypeScript LanguageService plugin for the Fimbullinter project",
+  "main": "index",
+  "files": [
+    "index.js"
+  ],
+  "author": "Klaus Meinhardt",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/fimbullinter/wotan/issues"
+  },
+  "homepage": "https://github.com/fimbullinter/wotan#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/mithotyn"
+  },
+  "keywords": [
+    "typescript",
+    "ts",
+    "lint",
+    "linter",
+    "wotan",
+    "fimbullinter",
+    "languageservice",
+    "plugin",
+    "editor"
+  ],
+  "dependencies": {
+    "mock-require": "^3.0.2"
+  },
+  "devDependencies": {
+    "@fimbul/wotan": "^0.16.0",
+    "@types/mock-require": "^2.0.0"
+  }
+}

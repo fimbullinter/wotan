@@ -385,7 +385,7 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
 }
 
 function hasParseErrors(sourceFile: ts.SourceFile) {
-    return sourceFile.parseDiagnostics.length !== 0;
+    return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
 }
 
 function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>, originalName: string) {
@@ -411,9 +411,5 @@ declare module 'typescript' {
     interface FileSystemEntries {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
-    }
-
-    interface SourceFile {
-        parseDiagnostics: ts.DiagnosticWithLocation[];
     }
 }

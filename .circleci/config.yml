@@ -66,6 +66,7 @@ jobs:
           root: '.'
           paths:
             - "packages/*/index.*"
+            - "packages/wotan/language-service"
             - "packages/*/src"
             - "packages/*/test"
             - yarn.lock
