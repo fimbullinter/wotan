@@ -17,6 +17,8 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
             const logger = project.projectService.logger;
             // always load locally installed linter
             const lsPlugin = <typeof import('@fimbul/wotan/language-service')>r('@fimbul/wotan/language-service');
+            if (lsPlugin.version !== '1') // in case we need to make breaking changes to the plugin API
+                throw new Error(`Unsupported version of '@fimbul/wotan'. Consider updating '${config.name}'.`);
             log('setting up plugin');
             plugin = new lsPlugin.LanguageServiceInterceptor(config, project, serverHost, languageService, r, log);
             const proxy = createProxy(languageService, plugin, log);

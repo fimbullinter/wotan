@@ -17,6 +17,8 @@ export type PartialLanguageServiceInterceptor = {
         : ts.LanguageService[K]
 };
 
+export const version = '1';
+
 export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
     private failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Failure>>();
     public getExternalFiles?: () => string[]; // can be implemented later
@@ -66,7 +68,7 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         //  use it to load plugin modules
         //  use include and exclude options
         //  use config option
-        // TODO use CancellationToken to abort if necessary
+        // TODO use CancellationToken to abort if necessary?
         const container = new Container({defaultScope: BindingScopeEnum.Singleton});
         container.bind(FileSystem).toConstantValue(new ProjectFileSystem(this.project));
         container.bind(DirectoryService).toConstantValue({
