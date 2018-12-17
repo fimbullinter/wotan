@@ -301,7 +301,7 @@ export class Runner {
             if (commandLine.errors.length !== 0) {
                 let {errors} = commandLine;
                 // for compatibility with typescript@<3.1.0
-                if (references && commandLine.projectReferences !== undefined && commandLine.projectReferences.length !== 0)
+                if (commandLine.projectReferences !== undefined && commandLine.projectReferences.length !== 0)
                     errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
                 if (errors.length !== 0)
                     this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));

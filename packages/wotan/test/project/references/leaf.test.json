@@ -1,5 +1,6 @@
 {
-  "project": "a",
+  "project": ["a", "outfile/tsconfig.a.json"],
   "references": true,
-  "fix": false
+  "fix": false,
+  "files": "outfile/**"
 }
