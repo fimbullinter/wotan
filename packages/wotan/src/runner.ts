@@ -7,11 +7,12 @@ import {
     DirectoryService,
     ConfigurationError,
     MessageHandler,
+    FileFilterFactory,
 } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, mapDefined, addUnique, flatMap } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -51,6 +52,7 @@ export class Runner {
         private processorLoader: ProcessorLoader,
         private directories: DirectoryService,
         private logger: MessageHandler,
+        private filterFactory: FileFilterFactory,
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
@@ -78,8 +80,6 @@ export class Runner {
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
             for (const file of files) {
-                if (!hasSupportedExtension(file))
-                    continue;
                 if (options.config === undefined)
                     config = this.configManager.find(file);
                 const mapped = processorHost.getProcessedFileInfo(file);
@@ -226,27 +226,13 @@ export class Runner {
         let filesOfPreviousProject: string[] | undefined;
         for (const program of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
             const ownFiles = [];
-            const options = program.getCompilerOptions();
             const files: string[] = [];
-            const libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(options))) + '/';
-            const typeRoots = ts.getEffectiveTypeRoots(options, host) || [];
-            const rootFileNames = program.getRootFileNames();
-            const outputsOfReferencedProjects = getOutputsOfProjectReferences(program, host);
+            const fileFilter = this.filterFactory.create({program, host});
 
             for (const sourceFile of program.getSourceFiles()) {
-                const {fileName} = sourceFile;
-                if (
-                    options.composite && !rootFileNames.includes(fileName) || // composite projects need to specify all files as rootFiles
-                    program.isSourceFileFromExternalLibrary(sourceFile) ||
-                    fileName.endsWith('.d.ts') && (
-                        fileName.startsWith(libDirectory) || // lib.xxx.d.ts
-                        // tslib implicitly gets added while linting a project where a dependency in node_modules contains typescript files
-                        fileName.endsWith('/node_modules/tslib/tslib.d.ts') ||
-                        outputsOfReferencedProjects.includes(fileName) ||
-                        typeRoots.some((typeRoot) => !path.relative(typeRoot, fileName).startsWith('..' + path.sep))
-                    )
-                )
+                if (!fileFilter.filter(sourceFile))
                     continue;
+                const {fileName} = sourceFile;
                 ownFiles.push(fileName);
                 const originalName = host.getFileSystemFile(fileName)!;
                 if (!isFileIncluded(originalName))
@@ -358,104 +344,6 @@ export class Runner {
     }
 }
 
-function getOutputsOfProjectReferences(program: ts.Program, host: ProjectHost) {
-    const references = program.getResolvedProjectReferences === undefined
-        // for compatibility with TypeScript@<3.1.1
-        ? program.getProjectReferences && <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
-        : program.getResolvedProjectReferences();
-    if (references === undefined)
-        return [];
-    const seen: string[] = [];
-    const result = [];
-    const moreReferences = [];
-    for (const ref of references) {
-        if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
-            continue;
-        result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
-        if ('references' in ref) {
-            result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
-        } else if (ref.commandLine.projectReferences !== undefined) {
-            // for compatibility with typescript@<3.2.0
-            moreReferences.push(...ref.commandLine.projectReferences);
-        }
-    }
-    for (const ref of moreReferences)
-        result.push(...getOutputFileNamesOfProjectReferenceRecursive(ref, seen, host));
-    return result;
-}
-
-// TODO unifiy with code in getOutputsOfProjectReferences once we can get rid of getOutputFileNamesOfProjectReferenceRecursive
-function getOutputFileNamesOfResolvedProjectReferencesRecursive(references: ts.ResolvedProjectReference['references'], seen: string[]) {
-    if (references === undefined)
-        return [];
-    const result: string[] = [];
-    for (const ref of references) {
-        if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
-            continue;
-        result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
-        result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
-    }
-    return result;
-}
-
-/** recurse into every transitive project reference to exclude all of their outputs from linting */
-function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: string[], host: ProjectHost) {
-    // wotan-disable-next-line no-unstable-api-use
-    const referencePath = ts.resolveProjectReferencePath(host, reference); // for compatibility with TypeScript@<3.1.1
-    if (!addUnique(seen, referencePath))
-        return [];
-    const sourceFile = host.getSourceFile(referencePath, ts.ScriptTarget.JSON);
-    if (sourceFile === undefined)
-        return [];
-    const projectDirectory = path.dirname(referencePath);
-    const commandLine = ts.parseJsonSourceFileConfigFileContent(
-        <ts.TsConfigSourceFile>sourceFile,
-        createParseConfigHost(host),
-        projectDirectory,
-        undefined,
-        referencePath,
-    );
-    const result = getOutputFileNamesOfProjectReference(projectDirectory, commandLine);
-    if (commandLine.projectReferences !== undefined)
-        for (const ref of commandLine.projectReferences)
-            result.push(...getOutputFileNamesOfProjectReferenceRecursive(ref, seen, host));
-    return result;
-}
-
-function getOutputFileNamesOfProjectReference(projectDirectory: string, commandLine: ts.ParsedCommandLine) {
-    const options = commandLine.options;
-    if (options.outFile)
-        return [getOutFileDeclarationName(options.outFile)];
-    return mapDefined(commandLine.fileNames, (fileName) => getDeclarationOutputName(fileName, options, projectDirectory));
-}
-
-// TODO remove once https://github.com/Microsoft/TypeScript/issues/26410 is resolved
-function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
-    const extension = path.extname(fileName);
-    switch (extension) {
-        case '.tsx':
-            break;
-        case '.ts':
-            if (path.extname(fileName.slice(0, -extension.length)) !== '.d')
-                break;
-            // falls through: .d.ts files produce no output
-        default:
-            return;
-    }
-    fileName = fileName.slice(0, -extension.length) + '.d.ts';
-    return unixifyPath(
-        path.resolve(
-            options.declarationDir || options.outDir || projectDirectory,
-            path.relative(options.rootDir || projectDirectory, fileName),
-        ),
-    );
-}
-
-function getOutFileDeclarationName(outFile: string) {
-    // outFile ignores declarationDir
-    return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
-}
-
 function getFiles(patterns: ReadonlyArray<NormalizedGlob>, exclude: ReadonlyArray<string>, cwd: string): Iterable<string> {
     const result: string[] = [];
     const globOptions: glob.IOptions = {
@@ -528,19 +416,4 @@ declare module 'typescript' {
     interface SourceFile {
         parseDiagnostics: ts.DiagnosticWithLocation[];
     }
-}
-
-function createParseConfigHost(host: ProjectHost): ts.ParseConfigHost {
-    return {
-        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
-        readDirectory(rootDir, extensions, excludes, includes, depth) {
-            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
-        },
-        fileExists(f) {
-            return host.fileExists(f);
-        },
-        readFile(f) {
-            return host.readFile(f);
-        },
-    };
 }

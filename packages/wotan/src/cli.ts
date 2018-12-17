@@ -30,7 +30,7 @@ export function loadConfig(dir: string) {
             }
             import('js-yaml').then((yaml) => {
                 try {
-                    resolve(<GlobalOptions | undefined>yaml.safeLoad(content, {schema: yaml.JSON_SCHEMA, strict: true}) || {});
+                    resolve(<GlobalOptions | undefined>yaml.safeLoad(content) || {});
                     log("Using global options from '%s'", fileName);
                 } catch (e) {
                     log("Not using '%s': %s", fileName, e && e.message);
