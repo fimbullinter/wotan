@@ -273,53 +273,73 @@ export class Runner {
     }
 
     private* createPrograms(
-        projects: ReadonlyArray<string>,
+        projects: ReadonlyArray<string> | ReadonlyArray<ts.ResolvedProjectReference | undefined>,
         host: ProjectHost,
         seen: string[],
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
         for (const configFile of projects) {
-            if (!addUnique(seen, configFile))
+            if (configFile === undefined || !addUnique(seen, typeof configFile === 'string' ? configFile : configFile.sourceFile.fileName))
                 continue;
 
-            const config = ts.readConfigFile(configFile, (file) => host.readFile(file));
-            if (config.error !== undefined) {
-                this.logger.warn(ts.formatDiagnostics([config.error], host));
-                config.config = {};
+            let commandLine: ts.ParsedCommandLine;
+            if (typeof configFile !== 'string') {
+                ({commandLine} = configFile);
+            } else {
+                const sourceFile = host.getSourceFile(configFile, ts.ScriptTarget.JSON);
+                if (sourceFile === undefined)
+                    continue;
+                commandLine = ts.parseJsonSourceFileConfigFileContent(
+                    <ts.TsConfigSourceFile>sourceFile,
+                    createParseConfigHost(host),
+                    path.dirname(configFile),
+                    {noEmit: true},
+                    configFile,
+                );
             }
-            const parsed = ts.parseJsonConfigFileContent(
-                config.config,
-                createParseConfigHost(host),
-                path.dirname(configFile),
-                {noEmit: true},
-                configFile,
-            );
-            if (parsed.errors.length !== 0) {
-                let {errors} = parsed;
+            if (commandLine.errors.length !== 0) {
+                let {errors} = commandLine;
                 // for compatibility with typescript@<3.1.0
-                if (references && parsed.projectReferences !== undefined && parsed.projectReferences.length !== 0)
+                if (commandLine.projectReferences !== undefined && commandLine.projectReferences.length !== 0)
                     errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
                 if (errors.length !== 0)
-                    this.logger.warn(ts.formatDiagnostics(parsed.errors, host));
+                    this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
             }
-            if (parsed.fileNames.length !== 0) {
-                if (parsed.options.composite && !parsed.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
-                    log("Project '%s' contains no file to lint", configFile);
-                } else {
+            if (commandLine.fileNames.length !== 0) {
+                if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
                     log("Using project '%s'", configFile);
-                    yield host.createProgram(parsed.fileNames, parsed.options, undefined, parsed.projectReferences);
+                    let program: ts.Program | undefined =
+                        host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
+                    yield program;
+                    if (references) {
+                        const resolvedReferences = program.getResolvedProjectReferences === undefined
+                            // for compatibility with typescript@<3.1.1
+                            ? <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
+                            : program.getResolvedProjectReferences();
+                        if (resolvedReferences !== undefined) {
+                            program = undefined; // allow garbage collection
+                            yield* this.createPrograms(resolvedReferences, host, seen, true, isFileIncluded);
+                        }
+                    }
+                    continue;
+                }
+                log("Project '%s' contains no file to lint", configFile);
+            }
+            if (references) {
+                if (typeof configFile !== 'string') {
+                    if (configFile.references !== undefined)
+                        yield* this.createPrograms(configFile.references, host, seen, true, isFileIncluded);
+                } else if (commandLine.projectReferences !== undefined) {
+                    yield* this.createPrograms(
+                        commandLine.projectReferences.map((ref) => this.checkConfigDirectory(ref.path)),
+                        host,
+                        seen,
+                        true,
+                        isFileIncluded,
+                    );
                 }
             }
-            // TODO use `program.getResolvedProjectReferences` if available`
-            if (references && parsed.projectReferences !== undefined)
-                yield* this.createPrograms(
-                    parsed.projectReferences.map((ref) => this.checkConfigDirectory(ref.path)),
-                    host,
-                    seen,
-                    true,
-                    isFileIncluded,
-                );
         }
     }
 }
