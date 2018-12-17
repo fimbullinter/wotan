@@ -99,7 +99,7 @@
       "comment": "LanguageServicePlugin shouldn't import anything but 'mock-require'.",
       "severity": "error",
       "from": {
-        "path": "^packages/plugin/"
+        "path": "^packages/mithotyn/"
       },
       "to": {
         "pathNot": "(^|/)node_modules/mock-require/"
