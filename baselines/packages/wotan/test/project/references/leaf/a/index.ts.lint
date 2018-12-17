@@ -1,0 +1,2 @@
+export * from "./a";
+              ~~~~~  [error local/quotemark: Prefer single quotes]
