@@ -483,7 +483,7 @@ export interface FileFilterContext {
     host: Required<
         Pick<
             ts.CompilerHost,
-            'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists' | 'getCurrentDirectory'
+            'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists' | 'directoryExists'
         >
     >;
 }

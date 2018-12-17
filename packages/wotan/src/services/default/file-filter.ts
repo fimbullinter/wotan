@@ -40,7 +40,10 @@ class DefaultFileFilter implements FileFilter {
 
     private isInTypeRoot(fileName: string) {
         if (this.typeRoots === undefined)
-            this.typeRoots = ts.getEffectiveTypeRoots(this.options, this.host) || [];
+            this.typeRoots = ts.getEffectiveTypeRoots(this.options, {
+                directoryExists: (dir) => this.host.directoryExists(dir),
+                getCurrentDirectory: () => this.program.getCurrentDirectory(),
+            }) || [];
         return !this.typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep));
     }
 

@@ -198,7 +198,9 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         fix: false,
         extensions: undefined,
     }));
-    t.is(warning, `error TS18002: The 'files' list in config file '${unixifyPath(path.resolve('invalid-files.json'))}' is empty.\n`);
+    t.is(warning, `invalid-files.json(1,11): error TS18002: The 'files' list in config file '${
+        unixifyPath(path.resolve('invalid-files.json'))
+    }' is empty.\n`);
     warning = '';
 
     Array.from(runner.lintCollection({
