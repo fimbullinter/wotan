@@ -38,6 +38,18 @@ To enable this plugin, you need to add `@fimbul/mithotyn` as plugin in your `tsc
 
 Make sure you have `@fimbul/wotan` installed in the project directory or a parent directory.
 
+### Using your existing `.fimbullinter.yaml`
+
+Like the CLI this plugin uses your configurations from a file named `.fimbullinter.yaml`. The main difference is that it doesn't only look for this file in the current directory but also in all parent directories.
+This is necessary because there is likely only one `.fimbullinter.yaml` in the root of your workspace, but multiple TypeScript projects may exist in subdirectories.
+
+The following options are used if present in that file. Note that all paths and modules are resolved relative to the directory containing this configuration file.
+
+* `modules`: loads the specified plugin modules to customize linter behavior
+* `config`: use the specified configuration file for all files
+* `files`: only lint files matching one of the given glob patterns
+* `exclude`: exclude files matching one of the given glob patterns
+
 ### Configuration Options
 
 To customize your in-editor linting experience you can use the following configuration options:
@@ -79,11 +91,6 @@ To work around this limitation there will be an editor plugin that automatically
 There are some limitations of the current implementation. These are subject to change in future releases.
 
 * Currently only works with TypeScript installed in your workspace, see [Usage in VS Code](#usage-in-vs-code)
-* doesn't use global options from `.fimbullinter.yaml`
-  * no plugin modules
-  * no fixed `config` option
-  * no `files` matching
-  * no `exclude` option
 * doesn't provide code fixes for rule failures
 * doesn't validate `.wotanrc.yaml` and `.fimbullinter.yaml` files
 * doesn't refresh lint failures if configuration changes; you need to reopen or change the file
