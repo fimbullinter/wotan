@@ -45,9 +45,9 @@ export class ConfigurationManager {
     }
 
     /** Load the given config from a local file if it exists or from the resolved path otherwise */
-    public loadLocalOrResolved(pathOrName: string): Configuration {
-        const absolute = path.resolve(this.directories.getCurrentDirectory(), pathOrName);
-        return this.load(this.fs.isFile(absolute) ? absolute : this.resolve(pathOrName, this.directories.getCurrentDirectory()));
+    public loadLocalOrResolved(pathOrName: string, basedir = this.directories.getCurrentDirectory()): Configuration {
+        const absolute = path.resolve(basedir, pathOrName);
+        return this.load(this.fs.isFile(absolute) ? absolute : this.resolve(pathOrName, basedir));
     }
 
     /**

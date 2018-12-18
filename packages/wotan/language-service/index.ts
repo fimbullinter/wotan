@@ -1,13 +1,18 @@
 import * as ts from 'typescript';
-import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService, Resolver } from '@fimbul/ymir';
-import { Container, BindingScopeEnum } from 'inversify';
+import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService, Resolver, GlobalOptions } from '@fimbul/ymir';
+import { Container, BindingScopeEnum, ContainerModule } from 'inversify';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { ConfigurationManager } from '../src/services/configuration-manager';
 import { Linter } from '../src/linter';
 import { addUnique } from '../src/utils';
 import { CachedFileSystem } from '../src/services/cached-file-system';
-import resolve = require('resolve');
+import * as resolve from 'resolve';
+import * as path from 'path';
+import * as yaml from 'js-yaml';
+import { parseGlobalOptions, ParsedGlobalOptions } from '../src/argparse';
+import { normalizeGlob } from 'normalize-glob';
+import { Minimatch } from 'minimatch';
 
 export type PartialLanguageServiceInterceptor = {
     // https://github.com/ajafff/tslint-consistent-codestyle/issues/85
@@ -64,12 +69,30 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
     }
 
     private getFailures(file: ts.SourceFile, program: ts.Program) {
-        // TODO load .fimbullinter.yaml and
-        //  use it to load plugin modules
-        //  use include and exclude options
-        //  use config option
-        // TODO use CancellationToken to abort if necessary?
+        let globalConfigDir = this.project.getCurrentDirectory();
+        let globalOptions;
+        while (true) {
+            const scriptSnapshot = this.project.getScriptSnapshot(globalConfigDir + '/.fimbullinter.yaml');
+            if (scriptSnapshot !== undefined) {
+                this.log(`Using '${globalConfigDir}/.fimbullinter.yaml' for global options.`);
+                globalOptions = yaml.safeLoad(scriptSnapshot.getText(0, scriptSnapshot.getLength())) || {};
+                break;
+            }
+            const parentDir = path.dirname(globalConfigDir);
+            if (parentDir === globalConfigDir) {
+                this.log("Cannot find '.fimbullinter.yaml'.");
+                globalOptions = {};
+                break;
+            }
+            globalConfigDir = parentDir;
+        }
+        const globalConfig = parseGlobalOptions(globalOptions);
+        if (!isIncluded(file.fileName, globalConfigDir, globalConfig))
+            return [];
         const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+        for (const module of globalConfig.modules)
+            container.load(this.loadPluginModule(module, globalConfigDir, globalOptions));
+
         container.bind(FileSystem).toConstantValue(new ProjectFileSystem(this.project));
         container.bind(DirectoryService).toConstantValue({
             getCurrentDirectory: () => this.project.getCurrentDirectory(),
@@ -103,17 +126,32 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
                 this.log(e.message);
             },
         });
-        container.load(createCoreModule({}), createDefaultModule()); // TODO pass global options
+        container.load(createCoreModule(globalOptions), createDefaultModule());
         const fileFilter = container.get(FileFilterFactory).create({program, host: this.project});
         if (!fileFilter.filter(file))
             return [];
         const configManager = container.get(ConfigurationManager);
-        const config = configManager.find(file.fileName);
+        const config = globalConfig.config === undefined
+            ? configManager.find(file.fileName)
+            : configManager.loadLocalOrResolved(globalConfig.config, globalConfigDir);
         const effectiveConfig = config && configManager.reduce(config, file.fileName);
         if (effectiveConfig === undefined)
             return [];
         const linter = container.get(Linter);
         return linter.lintFile(file, effectiveConfig, program);
+    }
+
+    private loadPluginModule(moduleName: string, basedir: string, options: GlobalOptions) {
+        moduleName = resolve.sync(moduleName, {
+            basedir,
+            extensions: ['.js'],
+            isFile: (f) => this.project.fileExists(f),
+            readFileSync: (f) => this.project.readFile(f)!,
+        });
+        const m = <{createModule?(options: GlobalOptions): ContainerModule} | null | undefined>this.require(moduleName);
+        if (!m || typeof m.createModule !== 'function')
+            throw new Error(`Module '${moduleName}' does not export a function 'createModule'.`);
+        return m.createModule(options);
     }
 
     public getSupportedCodeFixes(fixes: string[]) {
@@ -124,6 +162,22 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         // TODO clean up after ourselves
         return this.languageService.dispose();
     }
+}
+
+function isIncluded(fileName: string, basedir: string, options: ParsedGlobalOptions): boolean {
+    outer: if (options.files.length !== 0) {
+        for (const include of options.files)
+            for (const normalized of normalizeGlob(include, basedir))
+                if (new Minimatch(normalized).match(fileName))
+                    break outer;
+        return false;
+    }
+
+    for (const exclude of options.exclude)
+        for (const normalized of normalizeGlob(exclude, basedir))
+            if (new Minimatch(normalized, {dot: true}).match(fileName))
+                return false;
+    return true;
 }
 
 class ProjectFileSystem implements FileSystem {
