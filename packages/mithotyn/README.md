@@ -86,6 +86,7 @@ There are some limitations of the current implementation. These are subject to c
   * no `exclude` option
 * doesn't provide code fixes for rule failures
 * doesn't validate `.wotanrc.yaml` and `.fimbullinter.yaml` files
+* doesn't refresh lint failures if configuration changes; you need to reopen or change the file
 
 ## License
 
