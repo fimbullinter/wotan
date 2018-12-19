@@ -30,13 +30,13 @@ export class Rule extends TypedRule {
                 grandParent.arguments.length === 0 || !isObjectLiteralExpression(grandParent.arguments[0]))
                 continue;
             if (grandParent.arguments.length === 1) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     grandParent,
                     "No need for 'Object.assign', use the object directly.",
                     createFix(grandParent, this.sourceFile),
                 );
             } else if (grandParent.arguments.every(this.isSpreadableObject, this)) {
-                this.addFailureAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
+                this.addFindingAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
             }
         }
     }

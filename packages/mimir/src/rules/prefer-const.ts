@@ -97,7 +97,7 @@ export class Rule extends ConfigurableRule<Options> {
                 if (declaration.identifiers.length === 0 || !declaration.fixable && this.options.destructuring === 'all')
                     continue;
                 for (const name of declaration.identifiers)
-                    this.addFailureAtNode(
+                    this.addFindingAtNode(
                         name,
                         `Variable '${name.text}' is never reassigned. Prefer 'const' instead of '${keyword}'.`,
                         fix,

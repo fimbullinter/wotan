@@ -134,7 +134,7 @@ export class Rule extends TypedRule {
 
     private maybeFail(node: ts.Node, result: boolean | undefined) {
         if (result !== undefined)
-            return this.addFailureAtNode(node, result ? 'Expression is always truthy.' : 'Expression is always falsy.');
+            return this.addFindingAtNode(node, result ? 'Expression is always truthy.' : 'Expression is always falsy.');
     }
 
     private isTruthyFalsy(node: ts.Expression): boolean | undefined {

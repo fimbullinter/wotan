@@ -2,10 +2,10 @@ import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { getCommentAtPosition, WrappedAst, getWrappedNodeAtPosition } from 'tsutils';
 import {
-    FailureFilterFactory,
-    FailureFilter,
-    Failure,
-    FailureFilterContext,
+    FindingFilterFactory,
+    FindingFilter,
+    Finding,
+    FindingFilterContext,
     LineSwitchParser,
     LineSwitchParserContext,
     RawLineSwitch,
@@ -14,14 +14,14 @@ import {
 export const LINE_SWITCH_REGEX = /^\s*wotan-(enable|disable)((?:-next)?-line)?(\s+(?:(?:[\w-]+\/)*[\w-]+\s*,\s*)*(?:[\w-]+\/)*[\w-]+)?\s*$/;
 
 @injectable()
-export class LineSwitchFilterFactory implements FailureFilterFactory {
+export class LineSwitchFilterFactory implements FindingFilterFactory {
     constructor(private parser: LineSwitchParser) {}
 
-    public create(context: FailureFilterContext): FailureFilter {
+    public create(context: FindingFilterContext): FindingFilter {
         return new Filter(this.getDisabledRanges(context));
     }
 
-    public getDisabledRanges(context: FailureFilterContext) {
+    public getDisabledRanges(context: FindingFilterContext) {
         const {sourceFile, ruleNames} = context;
         let wrappedAst: WrappedAst | undefined;
         const raw = this.parser.parse({
@@ -63,13 +63,13 @@ export class LineSwitchFilterFactory implements FailureFilterFactory {
 
 type DisableMap = Map<string, ts.TextRange[]>;
 
-class Filter implements FailureFilter {
+class Filter implements FindingFilter {
     constructor(private disables: DisableMap) {}
 
-    public filter(failure: Failure) {
-        const ruleDisables = this.disables.get(failure.ruleName);
+    public filter(finding: Finding) {
+        const ruleDisables = this.disables.get(finding.ruleName);
         if (ruleDisables !== undefined) {
-            const {start: {position: pos}, end: {position: end}} = failure;
+            const {start: {position: pos}, end: {position: end}} = finding;
             for (const disabledRange of ruleDisables)
                 if (end > disabledRange.pos && pos < disabledRange.end)
                     return false;

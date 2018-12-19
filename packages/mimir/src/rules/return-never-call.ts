@@ -7,7 +7,7 @@ export class Rule extends TypedRule {
     public apply() {
         for (const node of this.context.getFlatAst())
             if (isExpressionStatement(node) && isCallExpression(node.expression) && this.returnsNever(node.expression))
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     node,
                     `This call never returns. Consider ${
                         isReturnAllowed(node) ? 'return' : 'throw'

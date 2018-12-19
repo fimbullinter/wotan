@@ -10,9 +10,9 @@ import {
     AbstractRule,
     DeprecationHandler,
     EffectiveConfiguration,
-    Failure,
+    Finding,
     Replacement,
-    FailureFilterFactory,
+    FindingFilterFactory,
     LineSwitchParser,
 } from '@fimbul/ymir';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
@@ -24,19 +24,19 @@ import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../src/service
 
 class MyTypedRule extends TypedRule {
     public apply() {
-        this.addFailure(0, 0, 'message');
+        this.addFinding(0, 0, 'message');
     }
 }
 class MyDeprecatedRule extends AbstractRule {
     public static deprecated: boolean | string = true;
     public apply() {
-        this.addFailure(0, 0, 'message', []);
+        this.addFinding(0, 0, 'message', []);
     }
 }
 class MyCustomDeprecatedRule extends AbstractRule {
     public static deprecated = 'Use that other rule instead.';
     public apply() {
-        this.addFailure(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
+        this.addFinding(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
     }
 }
 
@@ -46,7 +46,7 @@ test('Linter', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(RuleLoader).toSelf();
     container.bind(DeprecationHandler).to(DefaultDeprecationHandler);
-    container.bind(FailureFilterFactory).to(LineSwitchFilterFactory);
+    container.bind(FindingFilterFactory).to(LineSwitchFilterFactory);
     container.bind(LineSwitchParser).to(DefaultLineSwitchParser);
     container.bind(MessageHandler).toConstantValue({
         log() {
@@ -103,7 +103,7 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 1);
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -122,7 +122,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 2);
     t.is(warnings[1], "Rule 'my/alias' is deprecated.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -143,7 +143,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 3);
     t.is(warnings[2], "Rule 'my/other/alias' is deprecated: Use that other rule instead.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -155,7 +155,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 4);
     t.is(warnings[3], "Could not find core rule 'non-existent'.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([

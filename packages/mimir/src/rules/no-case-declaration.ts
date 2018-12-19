@@ -10,7 +10,7 @@ export class Rule extends AbstractRule {
                 for (const clause of clauses)
                     for (const statement of clause.statements)
                         if (isForbiddenDeclaration(statement))
-                            this.addFailureAtNode(statement, 'Unexpected lexical declaration in case block.');
+                            this.addFindingAtNode(statement, 'Unexpected lexical declaration in case block.');
 
     }
 }

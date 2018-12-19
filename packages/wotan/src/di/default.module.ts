@@ -9,7 +9,7 @@ import {
     DirectoryService,
     DeprecationHandler,
     ConfigurationProvider,
-    FailureFilterFactory,
+    FindingFilterFactory,
     LineSwitchParser,
     BuiltinResolver,
     FileFilterFactory,
@@ -47,8 +47,8 @@ export function createDefaultModule() {
             bind(DirectoryService).to(NodeDirectoryService);
         if (!isBound(ConfigurationProvider))
             bind(ConfigurationProvider).to(DefaultConfigurationProvider);
-        if (!isBound(FailureFilterFactory))
-            bind(FailureFilterFactory).to(LineSwitchFilterFactory);
+        if (!isBound(FindingFilterFactory))
+            bind(FindingFilterFactory).to(LineSwitchFilterFactory);
         if (!isBound(LineSwitchParser))
             bind(LineSwitchParser).to(DefaultLineSwitchParser);
         if (!isBound(BuiltinResolver))

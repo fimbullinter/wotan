@@ -14,13 +14,13 @@ WARNING: /baz.ts[1, 1]: a`);
     function testFormatter(ctor: TSLint.FormatterConstructor, expected: string) {
         const formatter = wrapTslintFormatter(ctor);
         const f = new formatter();
-        t.is(f.format('/foo.ts', {fixes: 2, failures: [], content: ''}), undefined);
+        t.is(f.format('/foo.ts', {fixes: 2, findings: [], content: ''}), undefined);
         t.is(
             f.format(
                 '/bar.ts',
                 {
                     fixes: 0,
-                    failures: [{
+                    findings: [{
                         ruleName: 'foo',
                         severity: 'error',
                         message: 'message',
@@ -38,7 +38,7 @@ WARNING: /baz.ts[1, 1]: a`);
                 '/baz.ts',
                 {
                     fixes: 1,
-                    failures: [{
+                    findings: [{
                         ruleName: 'rule',
                         severity: 'warning',
                         message: 'a',

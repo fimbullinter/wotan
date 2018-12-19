@@ -53,7 +53,7 @@ export class Rule extends TypedRule {
         if (node.kind === ts.SyntaxKind.AwaitExpression)
             return;
         if (isThenableType(this.checker, node))
-            this.addFailure(
+            this.addFinding(
                 pos - 'return'.length,
                 pos,
                 "Missing 'await' of Promise returned inside try-catch.",

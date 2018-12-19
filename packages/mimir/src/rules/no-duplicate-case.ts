@@ -23,7 +23,7 @@ export class Rule extends AbstractRule {
                     continue;
                 const text = clause.expression.getText(this.sourceFile);
                 if (expressionsSeen.has(text)) {
-                    this.addFailureAtNode(clause.expression, `Duplicate 'case ${text}'.`);
+                    this.addFindingAtNode(clause.expression, `Duplicate 'case ${text}'.`);
                     continue;
                 }
                 expressionsSeen.add(text);
@@ -33,7 +33,7 @@ export class Rule extends AbstractRule {
                         break;
                     case 1:
                         if (valuesSeen.has(literals[0])) {
-                            this.addFailureAtNode(clause.expression, `Duplicate 'case ${literals[0]}'.`);
+                            this.addFindingAtNode(clause.expression, `Duplicate 'case ${literals[0]}'.`);
                         } else {
                             valuesSeen.add(literals[0]);
                         }
@@ -41,7 +41,7 @@ export class Rule extends AbstractRule {
                     default:
                         // union of literal types, do not add these to `valuesSeen`, but display an error if all literals were already seen
                         if (literals.every((v) => valuesSeen.has(v)))
-                            this.addFailureAtNode(
+                            this.addFindingAtNode(
                                 clause.expression,
                                 `Duplicate 'case ${literals.sort().join(' | ')}'.`,
                             );

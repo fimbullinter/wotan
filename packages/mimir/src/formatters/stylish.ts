@@ -1,8 +1,8 @@
-import { Failure, AbstractFormatter, FileSummary, Severity } from '@fimbul/ymir';
+import { Finding, AbstractFormatter, FileSummary, Severity } from '@fimbul/ymir';
 import chalk from 'chalk';
 import * as path from 'path';
 
-interface FailureInfo {
+interface FindingInfo {
     severity: Severity;
     ruleName: string;
     position: string;
@@ -17,21 +17,21 @@ export class Formatter extends AbstractFormatter {
     private maxPositionWidth = 0;
     private maxNameWidth = 0;
 
-    private files = new Map<string, FailureInfo[]>();
+    private files = new Map<string, FindingInfo[]>();
 
     public format(fileName: string, summary: FileSummary): undefined {
         this.fixed += summary.fixes;
-        if (summary.failures.length === 0)
+        if (summary.findings.length === 0)
             return;
-        const mapped: FailureInfo[] = [];
-        for (const failure of summary.failures.slice().sort(Failure.compare)) {
-            if (failure.fix !== undefined)
+        const mapped: FindingInfo[] = [];
+        for (const finding of summary.findings.slice().sort(Finding.compare)) {
+            if (finding.fix !== undefined)
                 ++this.fixable;
-            if (failure.severity.length > this.maxSeverityWidth)
-                this.maxSeverityWidth = failure.severity.length;
-            if (failure.ruleName.length > this.maxNameWidth)
-                this.maxNameWidth = failure.ruleName.length;
-            let {character, line} = failure.start;
+            if (finding.severity.length > this.maxSeverityWidth)
+                this.maxSeverityWidth = finding.severity.length;
+            if (finding.ruleName.length > this.maxNameWidth)
+                this.maxNameWidth = finding.ruleName.length;
+            let {character, line} = finding.start;
             if (line !== 0 || character === 0 || !summary.content.startsWith('\uFEFF'))
                 character += 1; // avoid incrementing the character position on the first line if BOM is present, editors ignore BOM
             const position = `${line + 1}:${character}`;
@@ -39,9 +39,9 @@ export class Formatter extends AbstractFormatter {
                 this.maxPositionWidth = position.length;
             mapped.push({
                 position,
-                severity: failure.severity,
-                ruleName: failure.ruleName,
-                message: failure.message,
+                severity: finding.severity,
+                ruleName: finding.ruleName,
+                message: finding.message,
             });
         }
         this.files.set(fileName, mapped);
@@ -53,14 +53,14 @@ export class Formatter extends AbstractFormatter {
         let warnings = 0;
         const lines: string[] = [];
 
-        for (const [fileName, failures] of this.files) {
+        for (const [fileName, findings] of this.files) {
             lines.push(
                 '',
-                `${chalk.underline(path.normalize(fileName))}${chalk.hidden(':' + failures[0].position)}`,
+                `${chalk.underline(path.normalize(fileName))}${chalk.hidden(':' + findings[0].position)}`,
             );
-            for (const failure of failures) {
+            for (const finding of findings) {
                 let positionColor: typeof chalk;
-                if (failure.severity === 'error') {
+                if (finding.severity === 'error') {
                     positionColor = chalk.red;
                     ++errors;
                 } else {
@@ -69,14 +69,14 @@ export class Formatter extends AbstractFormatter {
                 }
                 lines.push(
                     positionColor(
-                        pad(failure.severity.toUpperCase(), this.maxSeverityWidth) + ' ' + pad(failure.position, this.maxPositionWidth),
-                    ) + `  ${chalk.grey(pad(failure.ruleName, this.maxNameWidth))}  ${chalk.blueBright(failure.message)}`,
+                        pad(finding.severity.toUpperCase(), this.maxSeverityWidth) + ' ' + pad(finding.position, this.maxPositionWidth),
+                    ) + `  ${chalk.grey(pad(finding.ruleName, this.maxNameWidth))}  ${chalk.blueBright(finding.message)}`,
                 );
             }
         }
         if (this.fixed !== 0)
             lines.push(
-                '', chalk.green(`Automatically fixed ${addCount(this.fixed, 'failure')}.`),
+                '', chalk.green(`Automatically fixed ${addCount(this.fixed, 'finding')}.`),
             );
         if (this.files.size !== 0) {
             const summaryLine = [];
@@ -88,7 +88,7 @@ export class Formatter extends AbstractFormatter {
             if (this.fixable !== 0)
                 lines.push(
                     chalk.grey(
-                        addCount(this.fixable, 'failure') + ' ' +
+                        addCount(this.fixable, 'finding') + ' ' +
                         (this.fixable === 1 ? 'is' : 'are') + " potentially fixable with the '--fix' option.",
                     ),
                 );

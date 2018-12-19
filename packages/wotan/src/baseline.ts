@@ -1,29 +1,29 @@
-import { Failure, FileSummary } from '@fimbul/ymir';
+import { Finding, FileSummary } from '@fimbul/ymir';
 
 export function isCodeLine(line: string): boolean {
     return !/^ *~(~*|nil)( +\[.+\])?$/.test(line);
 }
 
 export function createBaseline(summary: FileSummary): string {
-    if (summary.failures.length === 0)
+    if (summary.findings.length === 0)
         return summary.content;
 
-    const failures = summary.failures.slice().sort(Failure.compare);
+    const findings = summary.findings.slice().sort(Finding.compare);
     const lines: string[] = [];
     let lineStart = 0;
-    let failurePosition = 0;
-    let pendingFailures: Failure[] = [];
+    let findingPosition = 0;
+    let pendingFindings: Finding[] = [];
     for (const line of summary.content.split(/\n/g)) {
         lines.push(line);
         const nextLineStart = lineStart + line.length + 1;
         const lineLength = line.length - (line.endsWith('\r') ? 1 : 0);
-        const pending: Failure[] = [];
-        for (const failure of pendingFailures)
-            lines.push(formatFailure(failure, lineStart, lineLength, nextLineStart, pending));
-        pendingFailures = pending;
+        const pending: Finding[] = [];
+        for (const finding of pendingFindings)
+            lines.push(formatFinding(finding, lineStart, lineLength, nextLineStart, pending));
+        pendingFindings = pending;
 
-        for (; failurePosition < failures.length && failures[failurePosition].start.position < nextLineStart; ++failurePosition)
-            lines.push(formatFailure(failures[failurePosition], lineStart, lineLength, nextLineStart, pendingFailures));
+        for (; findingPosition < findings.length && findings[findingPosition].start.position < nextLineStart; ++findingPosition)
+            lines.push(formatFinding(findings[findingPosition], lineStart, lineLength, nextLineStart, pendingFindings));
 
         lineStart = nextLineStart;
     }
@@ -31,16 +31,16 @@ export function createBaseline(summary: FileSummary): string {
     return lines.join('\n');
 }
 
-function formatFailure(failure: Failure, lineStart: number, lineLength: number, nextLineStart: number, remaining: Failure[]): string {
+function formatFinding(finding: Finding, lineStart: number, lineLength: number, nextLineStart: number, remaining: Finding[]): string {
     const lineEnd = lineStart + lineLength;
-    const failureStart = Math.max(failure.start.position, lineStart);
-    let errorLine = ' '.repeat(failureStart - lineStart);
-    const failureLength = Math.min(lineEnd, failure.end.position) - failureStart;
-    errorLine += failureLength === 0 ? '~nil' : '~'.repeat(failureLength);
-    if (failure.end.position <= nextLineStart)
+    const findingStart = Math.max(finding.start.position, lineStart);
+    let errorLine = ' '.repeat(findingStart - lineStart);
+    const findingLength = Math.min(lineEnd, finding.end.position) - findingStart;
+    errorLine += findingLength === 0 ? '~nil' : '~'.repeat(findingLength);
+    if (finding.end.position <= nextLineStart)
         return errorLine + ' '.repeat(Math.max(1, lineLength - errorLine.length + 1)) +
-            `[${failure.severity} ${failure.ruleName}: ${failure.message.replace(/[\r\n]/g, '\\$&')}]`;
+            `[${finding.severity} ${finding.ruleName}: ${finding.message.replace(/[\r\n]/g, '\\$&')}]`;
 
-    remaining.push(failure);
+    remaining.push(finding);
     return errorLine;
 }

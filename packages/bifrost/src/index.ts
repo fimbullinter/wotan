@@ -55,9 +55,9 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
             const {fileName} = this.sourceFile;
             for (const failure of result) {
                 if (failure.getFileName() !== fileName)
-                    throw new Error(`Adding failures for a different SourceFile is not supported. Expected '${
+                    throw new Error(`Adding findings for a different SourceFile is not supported. Expected '${
                         fileName}' but received '${failure.getFileName()}' from rule '${this.delegate.getOptions().ruleName}'.`);
-                this.addFailure(
+                this.addFinding(
                     failure.getStartPosition().getPosition(),
                     failure.getEndPosition().getPosition(),
                     failure.getFailure(),
@@ -90,10 +90,10 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
             let sourceFile: ts.SourceFile | undefined;
             for (let i = 0; i < summary.fixes; ++i)
                 this.fixed.push(new TSLint.RuleFailure(getSourceFile(), 0, 0, '', '', TSLint.Replacement.appendText(0, '')));
-            if (summary.failures.length === 0)
+            if (summary.findings.length === 0)
                 return;
             this.failures.push(
-                ...summary.failures.map((f) => {
+                ...summary.findings.map((f) => {
                     const failure = new TSLint.RuleFailure(
                         getSourceFile(),
                         f.start.position,
@@ -147,7 +147,7 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
             getWrappedAst() {
                 return convertAst(sourceFile).wrapped;
             },
-            addFailure(start, end, message, fix) {
+            addFinding(start, end, message, fix) {
                 failures.push(
                     new TSLint.RuleFailure(
                         sourceFile,

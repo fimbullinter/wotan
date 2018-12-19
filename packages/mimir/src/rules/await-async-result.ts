@@ -21,7 +21,7 @@ export class Rule extends TypedRule {
     private visitStatement(node: ts.Statement) {
         if (isExpressionStatement(node)) {
             if (isCallExpression(node.expression) && isThenableType(this.checker, node.expression))
-                this.addFailureAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
+                this.addFindingAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
             return;
         }
         for (const statement of childStatements(node))

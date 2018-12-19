@@ -51,7 +51,7 @@ export class Rule extends TypedRule {
                 !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks') ||
                 getNullableFlags(this.checker.getTypeAtLocation(node.name)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
-            this.addFailure(
+            this.addFinding(
                 node.exclamationToken.end - 1,
                 node.exclamationToken.end,
                 FAIL_DEFINITE_ASSIGNMENT,
@@ -68,7 +68,7 @@ export class Rule extends TypedRule {
                 !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictPropertyInitialization') ||
                 getNullableFlags(this.checker.getTypeAtLocation(node)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
-            this.addFailure(
+            this.addFinding(
                 node.exclamationToken.end - 1,
                 node.exclamationToken.end,
                 FAIL_DEFINITE_ASSIGNMENT,
@@ -92,7 +92,7 @@ export class Rule extends TypedRule {
                 return;
             }
         }
-        this.addFailure(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
+        this.addFinding(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
@@ -122,7 +122,7 @@ export class Rule extends TypedRule {
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
         if (node.kind === ts.SyntaxKind.AsExpression) {
-            this.addFailure(
+            this.addFinding(
                 node.type.pos - 'as'.length,
                 node.end,
                 message,
@@ -136,7 +136,7 @@ export class Rule extends TypedRule {
                     Replacement.append(start, '('),
                     Replacement.append(node.end, ')'),
                 );
-            this.addFailure(start, node.expression.pos, message, fix);
+            this.addFinding(start, node.expression.pos, message, fix);
         }
     }
 

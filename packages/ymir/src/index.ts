@@ -15,7 +15,7 @@ export type FileSummary = LintAndFixFileResult;
 
 export interface LintAndFixFileResult {
     content: string;
-    failures: ReadonlyArray<Failure>;
+    findings: ReadonlyArray<Finding>;
     fixes: number;
 }
 
@@ -41,18 +41,18 @@ export interface Fix {
     readonly replacements: ReadonlyArray<Replacement>;
 }
 
-export interface Failure {
-    readonly start: FailurePosition;
-    readonly end: FailurePosition;
+export interface Finding {
+    readonly start: FindingPosition;
+    readonly end: FindingPosition;
     readonly message: string;
     readonly ruleName: string;
     readonly severity: Severity;
     readonly fix: Fix | undefined;
 }
 
-export const Failure = {
-    /** Compare two Failures. Intended to be used in `Array.prototype.sort`. */
-    compare(a: Failure, b: Failure): number {
+export const Finding = {
+    /** Compare two Findings. Intended to be used in `Array.prototype.sort`. */
+    compare(a: Finding, b: Finding): number {
         return a.start.position - b.start.position
             || a.end.position - b.end.position
             || compareStrings(a.ruleName, b.ruleName)
@@ -68,7 +68,7 @@ function compareStrings(a: string, b: string): number {
             : 0;
 }
 
-export interface FailurePosition {
+export interface FindingPosition {
     readonly line: number;
     readonly character: number;
     readonly position: number;
@@ -94,7 +94,7 @@ export interface RuleContext {
     readonly sourceFile: ts.SourceFile;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
-    addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
+    addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
@@ -163,12 +163,12 @@ export abstract class AbstractRule {
 
     public abstract apply(): void;
 
-    public addFailure(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
-        return this.context.addFailure(start, end, message, fix);
+    public addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
+        return this.context.addFinding(start, end, message, fix);
     }
 
-    public addFailureAtNode(node: ts.Node, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
-        return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix);
+    public addFindingAtNode(node: ts.Node, message: string, fix?: Replacement | ReadonlyArray<Replacement>) {
+        return this.addFinding(node.getStart(this.sourceFile), node.end, message, fix);
     }
 }
 
@@ -341,7 +341,7 @@ export abstract class AbstractProcessor {
 
     public abstract preprocess(): string;
 
-    public abstract postprocess(failures: ReadonlyArray<Failure>): ReadonlyArray<Failure>;
+    public abstract postprocess(findings: ReadonlyArray<Finding>): ReadonlyArray<Finding>;
 
     public abstract updateSource(newSource: string, changeRange: ts.TextChangeRange): ProcessorUpdateResult;
 }
@@ -446,20 +446,20 @@ export interface DirectoryService {
 }
 export abstract class DirectoryService {}
 
-export interface FailureFilterFactory {
-    create(context: FailureFilterContext): FailureFilter;
+export interface FindingFilterFactory {
+    create(context: FindingFilterContext): FindingFilter;
 }
-export abstract class FailureFilterFactory {}
+export abstract class FindingFilterFactory {}
 
-export interface FailureFilterContext {
+export interface FindingFilterContext {
     sourceFile: ts.SourceFile;
     ruleNames: ReadonlyArray<string>;
     getWrappedAst(): WrappedAst;
 }
 
-export interface FailureFilter {
-    /** @returns `true` if the failure should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
-    filter(failure: Failure): boolean;
+export interface FindingFilter {
+    /** @returns `true` if the finding should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
+    filter(finding: Finding): boolean;
 }
 
 export interface LineSwitchParser {

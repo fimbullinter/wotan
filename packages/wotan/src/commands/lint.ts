@@ -22,7 +22,7 @@ class LintCommandRunner extends AbstractCommandRunner {
         if (formatter.prefix !== undefined)
             this.logger.log(formatter.prefix);
         for (const [file, summary] of result) {
-            if (summary.failures.some((f) => f.severity === 'error'))
+            if (summary.findings.some((f) => f.severity === 'error'))
                 success = false;
             const formatted = formatter.format(file, summary);
             if (formatted !== undefined)

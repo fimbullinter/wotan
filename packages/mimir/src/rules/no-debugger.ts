@@ -13,7 +13,7 @@ export class Rule extends AbstractRule {
             if (node.kind === ts.SyntaxKind.DebuggerStatement) {
                 const start = node.getStart(this.sourceFile);
                 if (start === match.index)
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         node.end,
                         "'debugger' statements are forbidden.",

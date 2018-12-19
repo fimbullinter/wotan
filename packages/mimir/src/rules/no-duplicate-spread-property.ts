@@ -41,9 +41,9 @@ export class Rule extends TypedRule {
             const isAccessor = property.kind === ts.SyntaxKind.GetAccessor || property.kind === ts.SyntaxKind.SetAccessor;
             if (info.known && info.names.every((name) => isAccessor ? propertiesSeen.get(name) === false : propertiesSeen.has(name))) {
                 if (property.kind === ts.SyntaxKind.SpreadAssignment) {
-                    this.addFailureAtNode(property, 'All properties of this object are overridden later.');
+                    this.addFindingAtNode(property, 'All properties of this object are overridden later.');
                 } else {
-                    this.addFailureAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
+                    this.addFindingAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
                     if (isAccessor)
                         continue; // avoid overriding the isAccessor state
                 }

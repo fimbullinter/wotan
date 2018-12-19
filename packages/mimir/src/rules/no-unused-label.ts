@@ -11,7 +11,7 @@ export class Rule extends AbstractRule {
                 const {label, statement} = <ts.LabeledStatement>node;
                 if (!usesLabel(statement, label.text)) {
                     const start = label.getStart(this.sourceFile);
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         label.end,
                         `Unused label '${label.text}'.`,

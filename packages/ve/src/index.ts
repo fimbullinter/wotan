@@ -1,11 +1,11 @@
 import {
     AbstractProcessor,
     ProcessorUpdateResult,
-    Failure,
+    Finding,
     Replacement,
     ProcessorSuffixContext,
     ProcessorContext,
-    FailurePosition,
+    FindingPosition,
 } from '@fimbul/ymir';
 import * as path from 'path';
 import * as SAXParser from 'parse5-sax-parser';
@@ -97,11 +97,11 @@ export class Processor extends AbstractProcessor {
         };
     }
 
-    public postprocess(failures: Failure[]): Failure[] {
-        return failures.map(this.mapFailure, this);
+    public postprocess(findings: Finding[]): Finding[] {
+        return findings.map(this.mapFinding, this);
     }
 
-    private mapFailure(f: Failure): Failure {
+    private mapFinding(f: Finding): Finding {
         return {
             ...f,
             start: this.adjustPosition(f.start),
@@ -114,7 +114,7 @@ export class Processor extends AbstractProcessor {
         };
     }
 
-    private adjustPosition(pos: FailurePosition): FailurePosition {
+    private adjustPosition(pos: FindingPosition): FindingPosition {
         return {
             // special handling for first line if there is no line break after opening tag
             character: pos.line === 0 ? pos.character + this.range.firstLineOffset : pos.character,

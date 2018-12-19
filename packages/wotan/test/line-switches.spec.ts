@@ -3,7 +3,7 @@ import test from 'ava';
 import * as ts from 'typescript';
 import { convertAst } from 'tsutils';
 import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../src/services/default/line-switches';
-import { Failure } from '@fimbul/ymir';
+import { Finding } from '@fimbul/ymir';
 
 test('getDisabledRanges', (t) => {
     const source = `#! shebang
@@ -32,12 +32,12 @@ let foo /* wotan-disable-line */ = true;
     );
 
     const filter = lineSwitchService.create({sourceFile, ruleNames: ['foobar'], getWrappedAst: () => wrapped});
-    t.true(filter.filter(createFailure('foobaz', 0, 100)));
-    t.false(filter.filter(createFailure('foobar', 0, 100)));
-    t.true(filter.filter(createFailure('foobar', 0, 11)));
-    t.false(filter.filter(createFailure('foobar', 0, 12)));
-    t.false(filter.filter(createFailure('foobar', 48, 50)));
-    t.true(filter.filter(createFailure('foobar', 49, 50)));
+    t.true(filter.filter(createFinding('foobaz', 0, 100)));
+    t.false(filter.filter(createFinding('foobar', 0, 100)));
+    t.true(filter.filter(createFinding('foobar', 0, 11)));
+    t.false(filter.filter(createFinding('foobar', 0, 12)));
+    t.false(filter.filter(createFinding('foobar', 48, 50)));
+    t.true(filter.filter(createFinding('foobar', 49, 50)));
 
     t.deepEqual(
         new LineSwitchFilterFactory({
@@ -53,7 +53,7 @@ let foo /* wotan-disable-line */ = true;
         new Map([['baz', [{pos: 5, end: 10}]]]),
     );
 
-    function createFailure(ruleName: string, start: number, end: number): Failure {
+    function createFinding(ruleName: string, start: number, end: number): Finding {
         return {
             ruleName,
             message: '',

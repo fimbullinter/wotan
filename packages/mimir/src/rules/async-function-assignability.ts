@@ -59,7 +59,7 @@ export class Rule extends TypedRule {
                     node.name ||
                     getChildOfKind(node, ts.SyntaxKind.FunctionKeyword)!;
             }
-            this.addFailureAtNode(errorNode, "A 'Promise'-returning function should not be assigned to a 'void'-returning function type.");
+            this.addFindingAtNode(errorNode, "A 'Promise'-returning function should not be assigned to a 'void'-returning function type.");
         }
     }
 
@@ -82,7 +82,7 @@ export class Rule extends TypedRule {
             for (const heritageClause of clazz.heritageClauses)
                 for (const base of heritageClause.types)
                     if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
-                        return this.addFailureAtNode(
+                        return this.addFindingAtNode(
                             getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
                             `Overriding 'void'-returning method '${name}' of base type with a 'Promise'-returning method is unsafe.`,
                         );
@@ -111,7 +111,7 @@ export class Rule extends TypedRule {
                 continue;
             const signature = this.checker.getSignatureFromDeclaration(node);
             if (signature !== undefined && typeContainsThenable(signature.getReturnType(), this.checker, node))
-                return this.addFailureAtNode(
+                return this.addFindingAtNode(
                     getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
                     `'Promise'-returning method '${name}' should not be assigned to a 'void'-returning function type.`,
                 );

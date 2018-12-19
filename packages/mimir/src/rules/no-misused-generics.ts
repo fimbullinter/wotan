@@ -28,12 +28,12 @@ export class Rule extends AbstractRule {
                 }
             }
             if (!usedInParameters) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     typeParameter,
                     `TypeParameter '${typeParameter.name.text}' cannot be inferred from any parameter.`,
                 );
             } else if (!usedInReturnOrExtends && !this.isConstrainedByOtherTypeParameter(typeParameter, typeParameters)) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     typeParameter,
                     `TypeParameter '${typeParameter.name.text}' is not used to enforce a constraint between types and can be replaced with \
 '${typeParameter.constraint ? typeParameter.constraint.getText(this.sourceFile) : 'any'}'.`,

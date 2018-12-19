@@ -165,9 +165,9 @@ In theory every change to a rule can break users and could be considered a break
 ### Minor Releases
 
 * adds new rules, rule options, formatters, processors, APIs
-* rules can add new checks that may lead to new failures
+* rules can add new checks that may lead to new findings
 * new rules and options are enabled in `wotan:latest`
-* rules can change their failure messages
+* rules can change their finding messages
 * formatters intended for human consumtion (e.g. `stylish`) can change their output
 * rules, rule options, formatters, processors and APIs can be deprecated
 * new configuration options can be added to configuration files

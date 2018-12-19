@@ -23,7 +23,7 @@ export class Rule extends AbstractRule {
                 node.label.pos - match[1].length === match.index &&
                 !isLabelNecessary(node.label)
             )
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     node.label,
                     `Jump label '${node.label.text}' is unnecessary.`,
                     Replacement.delete(node.label.pos, node.label.end),
