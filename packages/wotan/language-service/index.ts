@@ -54,9 +54,13 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
             this.findingsForFile.set(file, findings);
             diagnostics = diagnostics.concat(findings.map((finding) => ({
                 file,
-                category: finding.severity === 'error' && !this.config.displayErrorsAsWarnings
-                    ? ts.DiagnosticCategory.Error
-                    : ts.DiagnosticCategory.Warning,
+                category: finding.severity === 'error'
+                    ? this.config.displayErrorsAsWarnings
+                        ? ts.DiagnosticCategory.Warning
+                        : ts.DiagnosticCategory.Error
+                    : finding.severity === 'warning'
+                        ? ts.DiagnosticCategory.Warning
+                        : ts.DiagnosticCategory.Suggestion,
                 code: <any>finding.ruleName,
                 source: 'wotan',
                 messageText: finding.message,
