@@ -17,7 +17,7 @@ export class Rule extends TypedRule {
                 this.isCorrectArgumentType(parent.arguments[0]))
                 this.addFailure(
                     match.index,
-                    re.lastIndex,
+                    node.end,
                     `Prefer 'Number.${node.text}' over '${node.text}'.`,
                     Replacement.append(match.index, 'Number.'),
                 );
