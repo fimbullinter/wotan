@@ -74,7 +74,7 @@ export interface FindingPosition {
     readonly position: number;
 }
 
-export type Severity = 'error' | 'warning';
+export type Severity = 'error' | 'warning' | 'suggestion';
 
 export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
@@ -235,7 +235,7 @@ export interface Configuration {
 
 export namespace Configuration {
     export type RulesDirectoryMap = ReadonlyMap<string, ReadonlyArray<string>>;
-    export type RuleSeverity = 'off' | 'warning' | 'error';
+    export type RuleSeverity = 'off' | 'warning' | 'error' | 'suggestion';
     export interface RuleConfig {
         readonly severity?: RuleSeverity;
         readonly options?: any;

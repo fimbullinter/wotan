@@ -101,7 +101,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
                         f.message,
                         f.ruleName,
                         f.fix && f.fix.replacements.map(convertToTslintReplacement));
-                    failure.setRuleSeverity(f.severity);
+                    failure.setRuleSeverity(f.severity === 'suggestion' ? 'warning' : f.severity);
                     return failure;
                 }),
             );

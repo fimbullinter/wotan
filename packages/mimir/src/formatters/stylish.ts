@@ -9,6 +9,18 @@ interface FindingInfo {
     message: string;
 }
 
+const COLORS: Record<Severity, typeof chalk> = {
+    error: chalk.red,
+    warning: chalk.yellow,
+    suggestion: chalk.cyan,
+};
+
+const SYMBOLS: Record<Severity, string> = {
+    error: '✖',
+    warning: '⚠',
+    suggestion: '💡',
+};
+
 export class Formatter extends AbstractFormatter {
     private fixed = 0;
     private fixable = 0;
@@ -49,8 +61,11 @@ export class Formatter extends AbstractFormatter {
     }
 
     public flush() {
-        let errors = 0;
-        let warnings = 0;
+        const counts: Record<Severity, number> = {
+            error: 0,
+            warning: 0,
+            suggestion: 0,
+        };
         const lines: string[] = [];
 
         for (const [fileName, findings] of this.files) {
@@ -59,14 +74,8 @@ export class Formatter extends AbstractFormatter {
                 `${chalk.underline(path.normalize(fileName))}${chalk.hidden(':' + findings[0].position)}`,
             );
             for (const finding of findings) {
-                let positionColor: typeof chalk;
-                if (finding.severity === 'error') {
-                    positionColor = chalk.red;
-                    ++errors;
-                } else {
-                    positionColor = chalk.yellow;
-                    ++warnings;
-                }
+                const positionColor = COLORS[finding.severity];
+                ++counts[finding.severity];
                 lines.push(
                     positionColor(
                         pad(finding.severity.toUpperCase(), this.maxSeverityWidth) + ' ' + pad(finding.position, this.maxPositionWidth),
@@ -80,10 +89,11 @@ export class Formatter extends AbstractFormatter {
             );
         if (this.files.size !== 0) {
             const summaryLine = [];
-            if (errors !== 0)
-                summaryLine.push(chalk.red.bold(`✖ ${addCount(errors, 'error')}`));
-            if (warnings !== 0)
-                summaryLine.push(chalk.yellow.bold(`⚠ ${addCount(warnings, 'warning')}`));
+            for (const severity of <Severity[]>Object.keys(counts)) {
+                const count = counts[severity];
+                if (count !== 0)
+                    summaryLine.push(COLORS[severity].bold(`${SYMBOLS[severity]} ${addCount(count, severity)}`));
+            }
             lines.push('', summaryLine.join('  '));
             if (this.fixable !== 0)
                 lines.push(

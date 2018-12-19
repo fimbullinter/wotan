@@ -97,9 +97,10 @@ If you want to limit the pattern to the current directory, you can prefix it wit
 
 ### Configuring Rules
 
-Rules can have one of 3 different severities: `error`, `warning` (or `warn`) and `off`.
-`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified
-`warning` is only reported.
+Rules can have one of 4 different severities: `error`, `warning` (or `warn`), `suggestion` (or `hint`) and `off`.
+`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified.
+`warning` is reported but doesn't cause a non-zero exit code.
+`suggestion` treated like `warning` but displayed differently.
 `off` turns the rule off, of course.
 
 Configurable rules get their options through an object. The content of the `"options"` property varies based on the rule.

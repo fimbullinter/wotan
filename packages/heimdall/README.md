@@ -34,6 +34,7 @@ wotan -m @fimbul/heimdall -f code-frame
 
 The `-m @fimbul/heimdall` argument enables a hook that loads TSLint formatters if no Wotan formatter is found.
 That means you cannot use a TSLint formatter when a builtin Wotan formatter with the same name exists.
+Note that findings with severity `suggestion` are reported as `warning` through TSLint formatters.
 
 ## Using TSLint Rules
 
