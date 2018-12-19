@@ -34,8 +34,11 @@ test('load processor config from .fimbullinter.yaml', async (t) => {
     const result = await execCli(['-m', '../..', '-f', 'prose', '*.vue'], 'packages/valtyr/test/fixtures');
     t.is(result.stderr, '');
     t.is(result.code, 2);
-    t.is(result.stdout.trim(), `ERROR: ${resolve('processed.vue')}[4, 19]: test message
-WARNING: ${resolve('processed.vue')}[5, 17]: ' should be "`);
+    t.is(result.stdout.trim(), `ERROR: ${resolve('processed.vue')}[5, 1]: test message
+WARNING: ${resolve('processed.vue')}[5, 17]: ' should be "
+ERROR: ${resolve('processed2.vue')}[4, 19]: test message
+WARNING: ${resolve('processed2.vue')}[5, 11]: ' should be "
+ERROR: ${resolve('processed3.vue')}[1, 19]: test message`);
 });
 
 function resolve(p: string) {

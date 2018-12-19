@@ -1,4 +1,12 @@
-import { AbstractProcessor, ProcessorUpdateResult, Failure, Replacement, ProcessorSuffixContext, ProcessorContext } from '@fimbul/ymir';
+import {
+    AbstractProcessor,
+    ProcessorUpdateResult,
+    Failure,
+    Replacement,
+    ProcessorSuffixContext,
+    ProcessorContext,
+    FailurePosition,
+} from '@fimbul/ymir';
 import * as path from 'path';
 import * as SAXParser from 'parse5-sax-parser';
 import * as ts from 'typescript';
@@ -32,6 +40,7 @@ export class Processor extends AbstractProcessor {
         start: 0,
         end: Infinity,
         line: 0,
+        firstLineOffset: 0,
     };
 
     constructor(context: ProcessorContext) {
@@ -53,6 +62,15 @@ export class Processor extends AbstractProcessor {
             });
             parser.write(this.source);
             parser.end();
+            const lineBreakAfterStart = /^\r?\n/.exec(this.source.substr(this.range.start));
+            if (lineBreakAfterStart !== null) {
+                this.range.start += lineBreakAfterStart[0].length;
+            } else {
+                let lineBreakBeforeStart = this.source.lastIndexOf('\n', this.range.start);
+                if (lineBreakBeforeStart === -1)
+                    lineBreakBeforeStart = 0;
+                this.range.firstLineOffset = this.range.start - lineBreakBeforeStart;
+            }
             const match = this.source.substring(0, this.range.start).match(/(\r?\n)/g);
             if (match !== null)
                 this.range.line = match.length;
@@ -86,21 +104,22 @@ export class Processor extends AbstractProcessor {
     private mapFailure(f: Failure): Failure {
         return {
             ...f,
-            start: {
-                character: f.start.character, // TODO handle first line different if these is no line break after <script>
-                line: f.start.line + this.range.line,
-                position: f.start.position + this.range.start,
-            },
-            end: {
-                character: f.end.character,
-                line: f.end.line + this.range.line,
-                position: f.end.position + this.range.start,
-            },
+            start: this.adjustPosition(f.start),
+            end: this.adjustPosition(f.end),
             fix: f.fix === undefined
                 ? undefined
                 : {
                     replacements: f.fix.replacements.map(this.mapReplacement, this),
                 },
+        };
+    }
+
+    private adjustPosition(pos: FailurePosition): FailurePosition {
+        return {
+            // special handling for first line if there is no line break after opening tag
+            character: pos.line === 0 ? pos.character + this.range.firstLineOffset : pos.character,
+            line: pos.line + this.range.line,
+            position: pos.position + this.range.start,
         };
     }
 
