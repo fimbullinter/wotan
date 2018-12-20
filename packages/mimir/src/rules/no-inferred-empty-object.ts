@@ -84,7 +84,7 @@ export class Rule extends TypedRule {
 
     private handleEmptyTypeParameter(typeParameter: ts.TypeParameterDeclaration, node: ts.Node) {
         if (typeParameter.default === undefined)
-            this.addFailureAtNode(
+            this.addFindingAtNode(
                 node,
                 `TypeParameter '${typeParameter.name.text}' is inferred as '{}'. Consider adding type arguments to the call.`,
             );

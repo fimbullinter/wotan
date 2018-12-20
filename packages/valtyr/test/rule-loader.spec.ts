@@ -9,7 +9,7 @@ function testRule(t: ExecutionContext, ctor: RuleConstructor, start: number, end
     const instance = new ctor({
         options: undefined,
         settings: new Map(),
-        addFailure(s, e, m) {
+        addFinding(s, e, m) {
             t.is(s, start);
             t.is(e, end);
             t.is(m, message);

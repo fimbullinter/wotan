@@ -50,7 +50,7 @@ export class Rule extends TypedRule {
         if (!isReadonlyArrayAccess(this.usage.get(indexVariable)!.uses, arrayVariable.getText(this.sourceFile), node, this.sourceFile))
             return;
         if (this.isIterationPossible(arrayVariable))
-            this.addFailure(
+            this.addFinding(
                 node.getStart(this.sourceFile),
                 node.statement.pos,
                 `Prefer a 'for-of' loop over a 'for' loop for this simple iteration.`,

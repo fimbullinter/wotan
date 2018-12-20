@@ -21,7 +21,7 @@ export class Rule extends TypedRule {
                 symbol.flags & (ts.SymbolFlags.Variable | ts.SymbolFlags.Function) &&
                 this.isDomGlobal(symbol.valueDeclaration, text)
             )
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     node,
                     `Referencing global '${text}' is not allowed. Did you mean to use a local variable or parameter with a similar name?`,
                 );

@@ -19,7 +19,7 @@ In the end TSLint 5.7.0 deprecated this option because most of the issues were n
 
 ## The Solution
 
-Wotan has two builtin rules to report syntactic and semantic errors as lint failures: `syntaxcheck` and `typecheck`. Both rules need type information (`-p` CLI argument) to work.
+Wotan has two builtin rules to report syntactic and semantic errors as lint findings: `syntaxcheck` and `typecheck`. Both rules need type information (`-p` CLI argument) to work.
 
 1. Enable both rules in your `.wotanrc.yaml`:
     ```yaml
@@ -35,7 +35,7 @@ Wotan has two builtin rules to report syntactic and semantic errors as lint fail
 
 Note that especially `typecheck` might take some time to complete.
 
-Since errors are reported as lint failures, you can choose the severity, disable specific errors and get the result formatted as expected.
+Since errors are reported as lint findings, you can choose the severity, disable specific errors and get the result formatted as expected.
 In addition these rules, like any other rule, operate only on the files you want to lint.
 
 You can also use these rules in addition with processors. As an example you can apply both rules to Vue Single File Components using [`@fimbul/ve`](../../packages/ve#readme).

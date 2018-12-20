@@ -35,7 +35,7 @@ function enforceClassicTypeAssertion(context: RuleContext) {
         const parent = node.parent!;
         const expressionNeedsParens = node.expression.kind === ts.SyntaxKind.BinaryExpression;
         const needsParens = isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AsteriskAsteriskToken;
-        context.addFailure(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
+        context.addFinding(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
             Replacement.append(
                 node.getStart(context.sourceFile),
                 `${charIf(needsParens, '(')}<${node.type.getText(context.sourceFile)}>${charIf(expressionNeedsParens, '(')}`,
@@ -52,7 +52,7 @@ function enforceAsTypeAssertion(context: RuleContext) {
             const expressionParens = node.expression.kind === ts.SyntaxKind.YieldExpression ||
                 !assertionParens && expressionNeedsParensWhenReplacingNode(node.expression, node);
             const start = node.getStart(context.sourceFile);
-            context.addFailure(start, node.expression.pos, "Use 'obj as T' instead.", [
+            context.addFinding(start, node.expression.pos, "Use 'obj as T' instead.", [
                 Replacement.replace(
                     start,
                     node.expression.getStart(context.sourceFile),

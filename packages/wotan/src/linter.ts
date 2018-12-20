@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import {
-    Failure,
+    Finding,
     EffectiveConfiguration,
     LintAndFixFileResult,
     Replacement,
@@ -11,8 +11,8 @@ import {
     AbstractProcessor,
     DeprecationHandler,
     DeprecationTarget,
-    FailureFilterFactory,
-    FailureFilter,
+    FindingFilterFactory,
+    FindingFilter,
 } from '@fimbul/ymir';
 import { applyFixes } from './fix';
 import * as debug from 'debug';
@@ -36,11 +36,11 @@ export class Linter {
         private ruleLoader: RuleLoader,
         private logger: MessageHandler,
         private deprecationHandler: DeprecationHandler,
-        private filterFactory: FailureFilterFactory,
+        private filterFactory: FindingFilterFactory,
     ) {}
 
-    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): ReadonlyArray<Failure> {
-        return this.getFailures(file, config, program, undefined);
+    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): ReadonlyArray<Finding> {
+        return this.getFindings(file, config, program, undefined);
     }
 
     public lintAndFix(
@@ -53,11 +53,11 @@ export class Linter {
         processor?: AbstractProcessor,
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let failures = this.getFailures(file, config, program, processor);
+        let findings = this.getFindings(file, config, program, processor);
         for (let i = 0; i < iterations; ++i) {
-            if (failures.length === 0)
+            if (findings.length === 0)
                 break;
-            const fixes = failures.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
+            const fixes = findings.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
             if (fixes.length === 0) {
                 log('No fixes');
                 break;
@@ -78,17 +78,17 @@ export class Linter {
                 fixedRange = fixed.range;
             }
             ({program, file} = updateFile(newSource, fixedRange));
-            failures = this.getFailures(file, config, program, processor);
+            findings = this.getFindings(file, config, program, processor);
         }
         return {
             content,
-            failures,
+            findings,
             fixes: totalFixes,
         };
     }
 
     // @internal
-    public getFailures(
+    public getFindings(
         sourceFile: ts.SourceFile,
         config: EffectiveConfiguration,
         program: ts.Program | undefined,
@@ -100,8 +100,8 @@ export class Linter {
             log('No active rules');
             return processor === undefined ? [] : processor.postprocess([]);
         }
-        const failures = this.applyRules(sourceFile, program, rules, config.settings);
-        return processor === undefined ? failures : processor.postprocess(failures);
+        const findings = this.applyRules(sourceFile, program, rules, config.settings);
+        return processor === undefined ? findings : processor.postprocess(findings);
     }
 
     private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
@@ -132,15 +132,15 @@ export class Linter {
     }
 
     private applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, rules: PreparedRule[], settings: Map<string, any>) {
-        const result: Failure[] = [];
-        let failureFilter: FailureFilter | undefined;
+        const result: Finding[] = [];
+        let findingFilter: FindingFilter | undefined;
         let ruleName: string;
         let severity: Severity;
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const addFailure = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
-            const failure: Failure = {
+        const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
+            const finding: Finding = {
                 ruleName,
                 severity,
                 message,
@@ -160,14 +160,14 @@ export class Linter {
                             ? undefined
                             : {replacements: fix},
             };
-            if (failureFilter === undefined)
-                failureFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
-            if (failureFilter.filter(failure))
-                result.push(failure);
+            if (findingFilter === undefined)
+                findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
+            if (findingFilter.filter(finding))
+                result.push(finding);
         };
 
         const context: RuleContext = {
-            addFailure,
+            addFinding,
             getFlatAst,
             getWrappedAst,
             program,
@@ -181,7 +181,7 @@ export class Linter {
             new ctor(context).apply();
         }
 
-        log('Found %d failures', result.length);
+        log('Found %d findings', result.length);
         return result;
 
         function getFlatAst() {

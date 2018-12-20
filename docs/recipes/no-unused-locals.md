@@ -4,7 +4,7 @@ This recipe explains how to configure Wotan to detect unused variables and impor
 
 ## The Problem
 
-TypeScript has the option `noUnusedLocal` to detect unused variables and imports. The resulting failures are treated like any other compile error.
+TypeScript has the option `noUnusedLocal` to detect unused variables and imports. The resulting findings are treated like any other compile error.
 Sometimes you need to keep a variable or import. For example if you are compiling with the `declaration` option enabled and get the error [`XXX has or is using name 'Foo' from external module "../bar" but cannot be named`](https://github.com/Microsoft/TypeScript/issues/9944).
 As a workaround you could just drop in some `// @ts-ignore` comments. But that also disables all other errors on that line.
 
@@ -14,8 +14,8 @@ In addition that rule has some pretty nasty side effects [palantir/tslint#2736](
 
 ## The Solution
 
-Wotan has a builtin rule to report type checking errors as lint failures: `typecheck`.
-You can use this rule together with a special `tsconfig.json` to report `noUnusedLocals` errors as lint failures.
+Wotan has a builtin rule to report type checking errors as lint findings: `typecheck`.
+You can use this rule together with a special `tsconfig.json` to report `noUnusedLocals` errors as lint findings.
 
 1. Enable `typecheck` in your `.wotanrc.yaml`:
     ```yaml
@@ -38,7 +38,7 @@ You can use this rule together with a special `tsconfig.json` to report `noUnuse
     wotan -p tsconfig.lint.json
     ```
 
-You will now see `'Foo' is declared but its value is never read.` as lint failures instead of compile errors.
-You can now use a `// wotan-disable-line typecheck` comment to suppress the failure in that line.
+You will now see `'Foo' is declared but its value is never read.` as lint findings instead of compile errors.
+You can now use a `// wotan-disable-line typecheck` comment to suppress the finding in that line.
 
 You continue to use the original `tsconfig.json` for compiling. That way TypeScript can report any other error while unused variables or imports are reported by Wotan.

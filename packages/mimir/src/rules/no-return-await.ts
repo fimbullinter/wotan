@@ -22,7 +22,7 @@ export class Rule extends AbstractRule {
                         Replacement.append(node.expression.end, ')'),
                     );
 
-                this.addFailure(
+                this.addFinding(
                     keywordStart,
                     node.expression.pos,
                     FAIL_MESSAGE,

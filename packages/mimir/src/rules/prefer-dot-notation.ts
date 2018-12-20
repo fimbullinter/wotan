@@ -17,7 +17,7 @@ export class Rule extends AbstractRule {
         if (!isValidPropertyAccess(text))
             return;
 
-        this.addFailureAtNode(
+        this.addFindingAtNode(
             node.argumentExpression,
             `Prefer 'obj.${text}' over 'obj[${node.argumentExpression.getText(this.sourceFile)}]'.`,
             node.expression.kind === ts.SyntaxKind.NumericLiteral

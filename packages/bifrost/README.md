@@ -56,6 +56,8 @@ const Wrapped = wrapTslintFormatter(Formatter);
 export {Wrapped as Formatter};
 ```
 
+Note that findings with severity `suggestion` are reported as `warning` through TSLint formatters.
+
 ## Using Fimbullinter Rules in TSLint
 
 Given a Fimbullinter rule `my-foo` in a file `my-foo.ts`, you simply create a file `myFooRule.ts` with the following content:

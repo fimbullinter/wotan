@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { FileSystem, MessageHandler, Failure, FileFilterFactory, DirectoryService, Resolver, GlobalOptions } from '@fimbul/ymir';
+import { FileSystem, MessageHandler, Finding, FileFilterFactory, DirectoryService, Resolver, GlobalOptions } from '@fimbul/ymir';
 import { Container, BindingScopeEnum, ContainerModule } from 'inversify';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
@@ -25,7 +25,7 @@ export type PartialLanguageServiceInterceptor = {
 export const version = '1';
 
 export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
-    private failuresForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Failure>>();
+    private findingsForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Finding>>();
     public getExternalFiles?: () => string[]; // can be implemented later
 
     constructor(
@@ -50,25 +50,29 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
             this.log(`file ${fileName} is not included in the Program`);
         } else {
             this.log(`started linting ${fileName}`);
-            const failures = this.getFailures(file, program);
-            this.failuresForFile.set(file, failures);
-            diagnostics = diagnostics.concat(failures.map((failure) => ({
+            const findings = this.getFindings(file, program);
+            this.findingsForFile.set(file, findings);
+            diagnostics = diagnostics.concat(findings.map((finding) => ({
                 file,
-                category: failure.severity === 'error' && !this.config.displayErrorsAsWarnings
-                    ? ts.DiagnosticCategory.Error
-                    : ts.DiagnosticCategory.Warning,
-                code: <any>failure.ruleName,
+                category: finding.severity === 'error'
+                    ? this.config.displayErrorsAsWarnings
+                        ? ts.DiagnosticCategory.Warning
+                        : ts.DiagnosticCategory.Error
+                    : finding.severity === 'warning'
+                        ? ts.DiagnosticCategory.Warning
+                        : ts.DiagnosticCategory.Suggestion,
+                code: <any>finding.ruleName,
                 source: 'wotan',
-                messageText: failure.message,
-                start: failure.start.position,
-                length: failure.end.position - failure.start.position,
+                messageText: finding.message,
+                start: finding.start.position,
+                length: finding.end.position - finding.start.position,
             })));
-            this.log(`finished linting ${fileName}, found ${failures.length} failures`);
+            this.log(`finished linting ${fileName} with ${findings.length} findings`);
         }
         return diagnostics;
     }
 
-    private getFailures(file: ts.SourceFile, program: ts.Program) {
+    private getFindings(file: ts.SourceFile, program: ts.Program) {
         let globalConfigDir = this.project.getCurrentDirectory();
         let globalOptions;
         while (true) {

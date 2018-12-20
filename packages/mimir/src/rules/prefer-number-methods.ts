@@ -15,7 +15,7 @@ export class Rule extends TypedRule {
             const parent = node.parent!;
             if (isCallExpression(parent) && parent.expression === node && parent.arguments.length === 1 &&
                 this.isCorrectArgumentType(parent.arguments[0]))
-                this.addFailure(
+                this.addFinding(
                     match.index,
                     node.end,
                     `Prefer 'Number.${node.text}' over '${node.text}'.`,

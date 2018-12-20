@@ -27,7 +27,7 @@ export interface RawConfiguration {
 }
 
 export namespace RawConfiguration {
-    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
+    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error' | 'suggestion' | 'hint';
     export interface RuleConfig {
         severity?: RuleSeverity;
         options?: any;
@@ -296,6 +296,9 @@ function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration
         case 'warn':
         case 'warning':
             return 'warning';
+        case 'hint':
+        case 'suggestion':
+            return 'suggestion';
         default:
             return 'error';
     }

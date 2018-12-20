@@ -97,9 +97,10 @@ If you want to limit the pattern to the current directory, you can prefix it wit
 
 ### Configuring Rules
 
-Rules can have one of 3 different severities: `error`, `warning` (or `warn`) and `off`.
-`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified
-`warning` is only reported.
+Rules can have one of 4 different severities: `error`, `warning` (or `warn`), `suggestion` (or `hint`) and `off`.
+`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified.
+`warning` is reported but doesn't cause a non-zero exit code.
+`suggestion` treated like `warning` but displayed differently.
 `off` turns the rule off, of course.
 
 Configurable rules get their options through an object. The content of the `"options"` property varies based on the rule.
@@ -141,7 +142,7 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 
 * `-c --config <name>` specifies the configuration to use for all files instead of looking for configuration files in parent directories. This can either be a file name, the name of a node module containing a shareable config, or the name of a builtin config like `wotan:recommended`
 * `-e --exclude <glob>` excludes all files that match the given glob pattern from linting. This option can be used multiple times to specify multiple patterns. For example `-e '**/*.js' -e '**/*.d.ts'`. It is recommended to wrap the glob patterns in single quotes to prevent the shell from expanding them.
-* `--fix [true|false|number]` automatically fixes all fixable failures in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Given a number it will at most use the specified number of iterations for fixing before returning the result.
+* `--fix [true|false|number]` automatically fixes all fixable findings in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Given a number it will at most use the specified number of iterations for fixing before returning the result.
 * `-f --formatter <name>` the name or path of a formatter. This can either be a file name, the name of a node module contianing a formatter, or the name of a builtin formatter. Currently available builtin formatters are `json` and `stylish` (default).
 * `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information. This option can be used multiple times to specify multiple projects to lint.

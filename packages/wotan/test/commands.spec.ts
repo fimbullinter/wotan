@@ -397,7 +397,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
     t.deepEqual(filesWritten, {
         [NodeFileSystem.normalizePath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
     });
-    t.is(output.join('\n'), 'Automatically fixed 1 failure.');
+    t.is(output.join('\n'), 'Automatically fixed 1 finding.');
 
     output = [];
     filesWritten = {};
@@ -425,7 +425,7 @@ ${path.join(cwd, '3.ts')}:2:1
 ERROR 2:1  no-unused-label  Unused label 'label'.
 
 ✖ 1 error
-1 failure is potentially fixable with the '--fix' option.
+1 finding is potentially fixable with the '--fix' option.
 `.trim());
 
 });

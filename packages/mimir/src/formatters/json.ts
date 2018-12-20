@@ -4,9 +4,9 @@ export class Formatter extends AbstractFormatter {
     public prefix = '[';
 
     public format(fileName: string, summary: FileSummary) {
-        if (summary.failures.length === 0)
+        if (summary.findings.length === 0)
             return;
-        return summary.failures.map((f) => JSON.stringify({...f, fileName})).join();
+        return summary.findings.map((f) => JSON.stringify({...f, fileName})).join();
     }
 
     public flush() {

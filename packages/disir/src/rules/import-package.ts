@@ -14,7 +14,7 @@ export class Rule extends AbstractRule {
             const importedPackage = getPackageName(path.resolve(dirname, name.text));
             if (importedPackage !== currentPackage) {
                 const start = name.getStart(this.sourceFile);
-                this.addFailure(
+                this.addFinding(
                     start,
                     name.end,
                     `Import directly from '@fimbul/${importedPackage}'.`,

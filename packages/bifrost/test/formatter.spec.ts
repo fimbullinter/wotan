@@ -10,24 +10,35 @@ test('returns expected output', (t) => {
 Fixed 1 error(s) in /baz.ts
 
 ERROR: /bar.ts[1, 1]: message
+WARNING: /bar.ts[1, 1]: hint
 WARNING: /baz.ts[1, 1]: a`);
     function testFormatter(ctor: TSLint.FormatterConstructor, expected: string) {
         const formatter = wrapTslintFormatter(ctor);
         const f = new formatter();
-        t.is(f.format('/foo.ts', {fixes: 2, failures: [], content: ''}), undefined);
+        t.is(f.format('/foo.ts', {fixes: 2, findings: [], content: ''}), undefined);
         t.is(
             f.format(
                 '/bar.ts',
                 {
                     fixes: 0,
-                    failures: [{
-                        ruleName: 'foo',
-                        severity: 'error',
-                        message: 'message',
-                        start: {position: 0, line: 0, character: 0},
-                        end: {position: 0, line: 0, character: 0},
-                        fix: undefined,
-                    }],
+                    findings: [
+                        {
+                            ruleName: 'foo',
+                            severity: 'error',
+                            message: 'message',
+                            start: {position: 0, line: 0, character: 0},
+                            end: {position: 0, line: 0, character: 0},
+                            fix: undefined,
+                        },
+                        {
+                            ruleName: 'bar',
+                            severity: 'suggestion',
+                            message: 'hint',
+                            start: {position: 0, line: 0, character: 0},
+                            end: {position: 0, line: 0, character: 0},
+                            fix: undefined,
+                        },
+                    ],
                     content: '',
                 },
             ),
@@ -38,7 +49,7 @@ WARNING: /baz.ts[1, 1]: a`);
                 '/baz.ts',
                 {
                     fixes: 1,
-                    failures: [{
+                    findings: [{
                         ruleName: 'rule',
                         severity: 'warning',
                         message: 'a',

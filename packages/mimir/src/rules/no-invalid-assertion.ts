@@ -28,7 +28,7 @@ export class Rule extends TypedRule {
             return;
         match(originalTypeParts, assertedLiterals);
         if (!isEmpty(assertedLiterals))
-            this.addFailureAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedLiterals)}'.`);
+            this.addFindingAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedLiterals)}'.`);
     }
 }
 

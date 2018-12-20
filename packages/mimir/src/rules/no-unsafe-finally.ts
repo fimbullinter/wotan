@@ -10,7 +10,7 @@ export class Rule extends AbstractRule {
             const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
             if (isTryStatement(node) && node.finallyBlock !== undefined && node.finallyBlock.pos === match.index + 'finally'.length)
                 for (const statement of getControlFlowEnd(node.finallyBlock).statements)
-                    this.addFailureAtNode(
+                    this.addFindingAtNode(
                         statement.getChildAt(0, this.sourceFile),
                         "Unsafe use of control flow statement inside 'finally'.",
                     );

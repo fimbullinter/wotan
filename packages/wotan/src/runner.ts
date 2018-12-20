@@ -106,7 +106,7 @@ export class Runner {
                     );
                 } else {
                     summary = {
-                        failures: this.linter.getFailures(
+                        findings: this.linter.getFindings(
                             sourceFile,
                             effectiveConfig,
                             program,
@@ -180,7 +180,7 @@ export class Runner {
                 );
             } else {
                 summary = {
-                    failures: this.linter.getFailures(
+                    findings: this.linter.getFindings(
                         sourceFile,
                         effectiveConfig,
                         undefined,

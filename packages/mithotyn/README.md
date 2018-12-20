@@ -54,7 +54,7 @@ The following options are used if present in that file. Note that all paths and 
 
 To customize your in-editor linting experience you can use the following configuration options:
 
-* `displayErrorsAsWarnings: boolean`: Report failures with severity `error` as warning to make them distinguishable from real type errors (e.g. green instead of red squiggles in VS Code)
+* `displayErrorsAsWarnings: boolean`: Report findings with severity `error` as warning to make them distinguishable from real type errors (e.g. green instead of red squiggles in VS Code)
 
 Example:
 
@@ -91,9 +91,9 @@ To work around this limitation there will be an editor plugin that automatically
 There are some limitations of the current implementation. These are subject to change in future releases.
 
 * Currently only works with TypeScript installed in your workspace, see [Usage in VS Code](#usage-in-vs-code)
-* doesn't provide code fixes for rule failures
+* doesn't provide code fixes for findings
 * doesn't validate `.wotanrc.yaml` and `.fimbullinter.yaml` files
-* doesn't refresh lint failures if configuration changes; you need to reopen or change the file
+* doesn't refresh lint findings if configuration changes; you need to reopen or change the file
 
 ## License
 
