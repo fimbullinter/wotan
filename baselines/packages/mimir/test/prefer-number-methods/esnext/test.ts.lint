@@ -6,16 +6,16 @@ declare function get<T>(): T;
 Number.isNaN(1);
 // isNaN
 isNaN(num);
-~~~~~~      [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+~~~~~       [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
 isNaN // isNaN()
-~~~~~~~          [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+~~~~~            [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
     (1);
 isNaN/* comment */(1);
-~~~~~~                 [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+~~~~~                  [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
 isNaN(1 + 1);
-~~~~~~        [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+~~~~~         [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
 !isNaN(get<1 | 2>());
- ~~~~~~               [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+ ~~~~~                [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
 
 Object.assign(isNaN /* comment */);
 
@@ -24,25 +24,25 @@ isNaN(get<any>());
 
 Number.isFinite(1);
 isFinite(1);
-~~~~~~~~~    [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
+~~~~~~~~     [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
 isFinite(get<any>());
 
 foo.isFinite(1);
 
 function generic<T extends number, U extends 1 | 2, V extends T | U, W>(p1: T, p2: U, p3: V, p4: W) {
     isNaN(p1);
-    ~~~~~~     [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+    ~~~~~      [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
     isNaN(p2);
-    ~~~~~~     [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+    ~~~~~      [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
     isNaN(p3);
-    ~~~~~~     [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
+    ~~~~~      [error prefer-number-methods: Prefer 'Number.isNaN' over 'isNaN'.]
     isNaN(p4);
 
     isFinite(p1);
-    ~~~~~~~~~     [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
+    ~~~~~~~~      [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
     isFinite(p2);
-    ~~~~~~~~~     [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
+    ~~~~~~~~      [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
     isFinite(p3);
-    ~~~~~~~~~     [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
+    ~~~~~~~~      [error prefer-number-methods: Prefer 'Number.isFinite' over 'isFinite'.]
     isFinite(p4);
 }

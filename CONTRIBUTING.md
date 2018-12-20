@@ -113,11 +113,7 @@ Before submitting big changesets, consider opening an issue first to discuss you
 Make sure to add a test that fails without your change and succeeds with your change. Also update the baselines and add them to your pull request.
 
 Your changes will automatically be tested on a Windows and Ubuntu machine to ensure it works across all platforms.
-It's also tested with a subset of the supported TypeScript versions. While your code only needs to compile with `typescript@latest`, it needs to function correctly with all versions supported by this project.
-
-Testing with `typescript@next` may fail CI because of changes in the TypeScript compiler. If the failures are not related to your change, it's not your responsibility to fix that before your pull request can be merged.
-You may fix this failure in your pull request, but ideally you open another pull request specifically for this fix. That way both changes can be reviewed and merged independent from each other.
-If you are not able to fix the failure, a core committer will take care of this.
+It's also tested with a subset of the supported TypeScript versions. While your code only needs to compile with `typescript@next`, it needs to function correctly with all versions supported by this project.
 
 Test coverage is also reported in the pull request. Please try to maintain a high coverage for all your changes.
 
