@@ -598,6 +598,24 @@ test('ConfigurationProvider.parse', (t) => {
         },
     );
 
+    t.deepEqual(
+        cp.parse({rules: {a: 'hint', b: {severity: 'suggestion'}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a', {rulesDirectories: undefined, rule: 'a', severity: 'suggestion'}],
+                ['b', {rulesDirectories: undefined, rule: 'b', severity: 'suggestion'}],
+            ]),
+            settings: undefined,
+            aliases: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+
     const testContext: LoadConfigurationContext = {
         stack: [],
         load(file) {
