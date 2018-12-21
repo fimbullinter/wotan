@@ -2,4 +2,3 @@ rulesDirectories:
   local: "."
 rules:
   local/delete: error
-processor: ./processor

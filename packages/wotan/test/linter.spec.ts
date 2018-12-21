@@ -14,6 +14,8 @@ import {
     Replacement,
     FindingFilterFactory,
     LineSwitchParser,
+    AbstractProcessor,
+    LintAndFixFileResult,
 } from '@fimbul/ymir';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { RuleLoader } from '../src/services/rule-loader';
@@ -21,6 +23,7 @@ import { Linter } from '../src/linter';
 import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
 import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../src/services/default/line-switches';
+import { calculateChangeRange } from '../src/utils';
 
 class MyTypedRule extends TypedRule {
     public apply() {
@@ -166,4 +169,61 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 5);
     t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+
+    class Processor extends AbstractProcessor {
+        public preprocess(): never {
+            throw new Error('should not be called');
+        }
+        public postprocess(findings: ReadonlyArray<Finding>) {
+            return findings;
+        }
+        public updateSource(newSource: string, changeRange: ts.TextChangeRange) {
+            t.deepEqual(changeRange, calculateChangeRange(this.source, newSource));
+            this.source = newSource;
+            return {
+                changeRange,
+                transformed: newSource,
+            };
+        }
+        public getSource() {
+            return this.source;
+        }
+    }
+    const processor = new Processor({
+        settings: new Map(),
+        source: sourceFile.text,
+        sourceFileName: sourceFile.fileName,
+        targetFileName: sourceFile.fileName,
+    });
+    t.deepEqual<LintAndFixFileResult>(
+        linter.lintAndFix(
+            sourceFile,
+            sourceFile.text,
+            {
+                settings: new Map(),
+                rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                    ['rule', {severity: 'warning', rulesDirectories: undefined, options: undefined, rule: 'deprecation-message'}],
+                ]),
+            },
+            () => undefined,
+            undefined,
+            undefined,
+            processor,
+        ),
+        {
+            content: sourceFile.text,
+            fixes: 0,
+            findings: [{
+                ruleName: 'rule',
+                fix: {
+                    replacements: [{start: 0, end: 0, text: '\uFEFF'}],
+                },
+                message: 'message',
+                severity: 'warning',
+                start: {position: 0, line: 0, character: 0},
+                end: {position: 0, line: 0, character: 0},
+            }],
+        },
+    );
+    t.is(processor.getSource(), sourceFile.text, "didn't correctly reset the processor");
 });
