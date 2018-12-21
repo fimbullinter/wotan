@@ -1,0 +1,8 @@
+rulesDirectories:
+  local: "."
+rules:
+  no-useless-assertion: error
+overrides:
+  - files: "./b.ts"
+    rules:
+      local/delete: error
