@@ -88,7 +88,11 @@ To work around this limitation there will be an editor plugin that automatically
 
 ## Limitations
 
-There are some limitations of the current implementation. These are subject to change in future releases.
+There are some limitations of the current implementation.
+
+* doesn't use processors at all
+
+The following limitations will likely be fixed in future releases.
 
 * Currently only works with TypeScript installed in your workspace, see [Usage in VS Code](#usage-in-vs-code)
 * doesn't provide code fixes for findings
