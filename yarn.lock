@@ -335,10 +335,56 @@
     tslib "^1.8.1"
     tsutils "^3.1.0"
 
+"@fimbul/mimir@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/mimir/-/mimir-0.16.0.tgz#49d6f1c22ae64518c275939e4a21d8c551803adb"
+  integrity sha512-4X5cu+eGlhLMnY+qTwf4Pd5k4uaWwb7gdoeJ32H03cpeuvQOpWoYG8vmX3TjIq63bJtA5BtNRMFVqWiwoRyL7Q==
+  dependencies:
+    "@fimbul/ymir" "^0.16.0"
+    chalk "^2.3.2"
+    debug "^4.0.0"
+    tslib "^1.8.1"
+    tsutils "^3.5.1"
+
+"@fimbul/wotan@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/wotan/-/wotan-0.16.0.tgz#abcd10ef6730a69f0713d006df3b1fd28fad0786"
+  integrity sha512-X8v4cIi4tyRV5tmnBB0PB8brrxov6qdVjTSJD+CQzuF/Kbi3V2Co2O4oglhhDOKSZgRQaK3/zdLZvxL6pFKnjA==
+  dependencies:
+    "@fimbul/mimir" "^0.16.0"
+    "@fimbul/ymir" "^0.16.0"
+    bind-decorator "^1.0.11"
+    chalk "^2.3.0"
+    debug "^4.0.0"
+    diff "^3.4.0"
+    glob "^7.1.2"
+    import-local "^2.0.0"
+    inversify "^5.0.0"
+    is-negated-glob "^1.0.0"
+    js-yaml "^3.10.0"
+    json5 "^2.0.0"
+    minimatch "^3.0.4"
+    normalize-glob "^0.0.1"
+    reflect-metadata "^0.1.12"
+    resolve "^1.5.0"
+    semver "^5.4.1"
+    stable "^0.1.8"
+    tslib "^1.8.1"
+    tsutils "^3.5.0"
+
 "@fimbul/ymir@^0.15.0":
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.15.0.tgz#944c881b14fadf7b43d1ae00b445e42261bb407f"
   integrity sha512-Ow0TfxxQ65vIktHcZyXHeDsGKuzJ9Vt6y77R/aOrXQXLMdYHG+XdbiUWzQbtaGOmNzYVkQfINiFnIdvn5Bn24g==
+  dependencies:
+    inversify "^5.0.0"
+    reflect-metadata "^0.1.12"
+    tslib "^1.8.1"
+
+"@fimbul/ymir@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.16.0.tgz#1fa5f3589cb4043114682540d88138b72d93ccd7"
+  integrity sha512-njz2/CalYeIaCFqQ8CkKXL15UL39LNE6MVp9k7Zw/IUfDbDl4FIpySPxUzZfvh/YG7AlMnZFmLnPVfGeSntc4Q==
   dependencies:
     inversify "^5.0.0"
     reflect-metadata "^0.1.12"

@@ -1,5 +1,37 @@
 # Change Log
 
+## v0.17.0
+
+:tada: This release introduces a plugin for TypeScript's LanguageService. This enables in-editor linting while you type. See the [docs](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md) for more details.
+
+:warning: **Breaking Changes:**
+
+* TypeScript 2.8 and 2.9 is no longer supported
+* API:
+  * `Failure` was renamed to `Finding` throughout the codebase
+  * `Resolver` adds a new required method `getDefaultExtensions`
+  * `Resolver#resolve` makes parameters `basedir` and `extensions` optional
+  * `Runner` requires a new service `FileFilterFactory`
+  * added severity `suggestion`
+
+**Features:**
+
+* new package `@fimbul/mithotyn` provides in-editor linting through a TypeScript LanguageService Plugin
+* new severity: `suggestion`
+* `--fix` can no longer introduce syntax errors
+* `async-function-assignability`: checks methods and properties with computed names
+* `async-function-assignability`: checks method overloads individually
+* new service abstraction `FileFilterFactory` and `FileFilter` allow customizing which files are linted
+* `@fimbul/ve` no longer includes the line break after the opening tag in the linted code
+* `@fimbul/ve` correctly adjusts the column of findings in the first line if there is no line break after the opening tag
+* `prefer-number-methods`: fixed finding location
+
+**Bugfixes:**
+
+* declaration files no longer contain `const enum`
+* core services no longer rely on the existence of `require`
+* YAML configuration can now contain YAML-specific types
+
 ## v0.16.0
 
 **Features:**
