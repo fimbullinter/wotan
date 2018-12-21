@@ -1,1 +1,1 @@
-abcdefg;
+abcdefg; // this comment should stay intact

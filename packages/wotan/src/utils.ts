@@ -159,3 +159,17 @@ export function createParseConfigHost(
         },
     };
 }
+
+export function hasParseErrors(sourceFile: ts.SourceFile) {
+    return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
+}
+
+export function invertChangeRange(range: ts.TextChangeRange): ts.TextChangeRange {
+    return {
+        span: {
+            start: range.span.start,
+            length: range.newLength,
+        },
+        newLength: range.span.length,
+    };
+}

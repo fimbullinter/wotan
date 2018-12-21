@@ -18,7 +18,7 @@ import { applyFixes } from './fix';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
-import { calculateChangeRange } from './utils';
+import { calculateChangeRange, invertChangeRange } from './utils';
 import { ConvertedAst, convertAst } from 'tsutils';
 
 const log = debug('wotan:linter');
@@ -28,7 +28,12 @@ export interface UpdateFileResult {
     program?: ts.Program;
 }
 
-export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
+/**
+ * Creates a new SourceFile and optionally a Program from the updated source.
+ *
+ * @returns the new `SourceFile` and `Program` on success or `undefined` to roll back the latest set of changes.
+ */
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult | undefined;
 
 @injectable()
 export class Linter {
@@ -65,19 +70,26 @@ export class Linter {
             log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
             const fixed = applyFixes(content, fixes);
             log('Applied %d fixes', fixed.fixed);
-            totalFixes += fixed.fixed;
-            content = fixed.result;
             let newSource: string;
             let fixedRange: ts.TextChangeRange;
             if (processor !== undefined) {
-                const {transformed, changeRange} = processor.updateSource(content, fixed.range);
+                const {transformed, changeRange} = processor.updateSource(fixed.result, fixed.range);
                 fixedRange = changeRange !== undefined ? changeRange : calculateChangeRange(file.text, transformed);
                 newSource = transformed;
             } else {
-                newSource = content;
+                newSource = fixed.result;
                 fixedRange = fixed.range;
             }
-            ({program, file} = updateFile(newSource, fixedRange));
+            const updateResult = updateFile(newSource, fixedRange);
+            if (updateResult === undefined) {
+                log('Rolling back latest fixes and abort linting');
+                if (processor !== undefined) // reset processor state
+                    processor.updateSource(content, invertChangeRange(fixed.range));
+                break;
+            }
+            ({program, file} = updateResult);
+            content = fixed.result;
+            totalFixes += fixed.fixed;
             findings = this.getFindings(file, config, program, processor);
         }
         return {

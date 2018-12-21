@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension, mapDefined } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined, hasParseErrors } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -223,9 +223,17 @@ export class ProjectHost implements ts.CompilerHost {
         program: ts.Program,
         newContent: string,
         _changeRange: ts.TextChangeRange,
-    ): {sourceFile: ts.SourceFile, program: ts.Program} {
+    ): {sourceFile: ts.SourceFile, program: ts.Program, error: boolean} {
         // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
-        sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
+        const newSourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
+        if (hasParseErrors(newSourceFile)) {
+            // if we ever switch back to using 'ts.updateSourceFile' above,
+            // we need to create a new Program because the old SourceFile it references is now corrupted
+            log("Not using updated content of '%s' because of syntax errors", sourceFile.fileName);
+            return {program, sourceFile, error: true};
+        }
+
+        sourceFile = newSourceFile;
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
 
         program = this.createProgram(
@@ -234,7 +242,7 @@ export class ProjectHost implements ts.CompilerHost {
             program,
             getReferencesOfProgram(program),
         );
-        return {sourceFile, program};
+        return {sourceFile, program, error: false};
     }
 
     public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {

@@ -12,7 +12,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost, hasParseErrors } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -97,8 +97,9 @@ export class Runner {
                         originalContent,
                         effectiveConfig,
                         (content, range) => {
-                            ({sourceFile, program} = processorHost.updateSourceFile(sourceFile, program, content, range));
-                            return {program, file: sourceFile};
+                            let error;
+                            ({sourceFile, program, error} = processorHost.updateSourceFile(sourceFile, program, content, range));
+                            return error ? undefined : {program, file: sourceFile};
                         },
                         fix === true ? undefined : fix,
                         program,
@@ -172,6 +173,11 @@ export class Runner {
                     effectiveConfig,
                     (newContent, range) => {
                         sourceFile = ts.updateSourceFile(sourceFile, newContent, range);
+                        if (hasParseErrors(sourceFile)) {
+                            log("Autofixing caused syntax errors in '%s', rolling back", sourceFile.fileName);
+                            // Note: 'sourceFile' shouldn't be used after this as it contains invalid code
+                            return;
+                        }
                         return {file: sourceFile};
                     },
                     fix === true ? undefined : fix,
@@ -382,10 +388,6 @@ function isExcluded(file: string, exclude: IMinimatch[]): boolean {
         if (e.match(file))
             return true;
     return false;
-}
-
-function hasParseErrors(sourceFile: ts.SourceFile) {
-    return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
 }
 
 function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>, originalName: string) {
