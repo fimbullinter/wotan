@@ -41,7 +41,7 @@ wotan -p tsconfig.json -r # lint the specified project and all projects in its '
 
 ## Editor Integration
 
-For instructions how to integrate the linter into your editor, see the [documentation of the `@fimbul/mithotyn` package](https://github.com/fimbullinter/wotan/blob/master/packages/mimir/README.md).
+For instructions how to integrate the linter into your editor, see the [documentation of the `@fimbul/mithotyn` package](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md).
 
 ## Available Rules
 
