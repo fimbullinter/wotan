@@ -145,7 +145,7 @@ function matchesGlobs(file: string, patterns: ReadonlyArray<string>): boolean {
         const local = glob.pattern.startsWith('./');
         if (local)
             glob.pattern = glob.pattern.substr(2);
-        if (new Minimatch(glob.pattern, {matchBase: !local}).match(file))
+        if (new Minimatch(glob.pattern, {matchBase: !local, dot: true}).match(file))
             return !glob.negated;
     }
     return false;

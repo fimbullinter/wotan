@@ -92,8 +92,10 @@ overrides:
 
 Overrides are processed in order and applied in order. The latter one overrides all prior overrides.
 
-Note that in the example above `*.spec.ts` matches in all directories. Normally patterns are matched relative to the configuration file they are specified in. Patterns without any slash are treated special. These will only be matched against the basename of every file in every directory.
+Note that in the example above `*.spec.ts` matches in all directories. Normally patterns are matched relative to the configuration file they are specified in. Patterns without any slash are treated special. They will only be matched against the basename of every file in every directory.
 If you want to limit the pattern to the current directory, you can prefix it with `./` resulting in `./*.spec.ts`.
+
+`*` also matches the leading do if present, so you don't need a second glob pattern for dotfiles. That means `*.spec.ts` matches `.some.spec.ts` as well as `some.spec.ts`.
 
 ### Configuring Rules
 

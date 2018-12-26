@@ -59,7 +59,7 @@ test('parse', (t) => {
             exclude: undefined,
             overrides: [
                 {
-                    files: ['*', '.*', '!*.js?(x)'],
+                    files: ['*', '!*.js?(x)'],
                     rules: new Map<string, Configuration.RuleConfig>([
                         ['foo', {rule: 'foo', options: undefined, rulesDirectories: undefined, severity: 'error'}],
                         ['bar', {rule: 'bar', options: ['test'], rulesDirectories: undefined, severity: 'off'}],
@@ -88,7 +88,7 @@ test('parse', (t) => {
             exclude: undefined,
             overrides: [
                 {
-                    files: ['*.js?(x)', '.*.js?(x)'],
+                    files: ['*.js?(x)'],
                     rules: new Map<string, Configuration.RuleConfig>([
                         ['foo', {rule: 'foo', options: undefined, rulesDirectories: ['/foo'], severity: 'error'}],
                         ['bar', {rule: 'bar', options: ['test'], rulesDirectories: ['/foo'], severity: 'off'}],
