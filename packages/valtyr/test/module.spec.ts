@@ -19,26 +19,26 @@ test('can be used with --module flag', async (t) => {
     const result = await execCli(['-m', '.', '-f', 'prose', 'test/fixtures/*', 'test/fixtures/.*'], 'packages/valtyr');
     t.is(result.code, 2);
     t.is(result.stderr, '');
-    t.is(result.stdout.trim(), `ERROR: ${resolve('.dotfile.ts')}[1, 1]: test message
-WARNING: ${resolve('.dotfile.ts')}[1, 2]: ' should be "
-WARNING: ${resolve('.dotjs.jsx')}[1, 1]: test message
-WARNING: ${resolve('.dotjs.jsx')}[1, 3]: Missing semicolon
-WARNING: ${resolve('myRuleRule.js')}[1, 1]: test message
-WARNING: ${resolve('myRuleRule.js')}[5, 78]: Missing semicolon
-WARNING: ${resolve('myRuleRule.js')}[7, 2]: Missing semicolon
-ERROR: ${resolve('test.tsx')}[1, 1]: test message
-WARNING: ${resolve('test.tsx')}[2, 1]: ' should be "`);
+    t.is(result.stdout.trim(), `ERROR: ${resolve('.dotfile.ts')}:1:1 - test message
+WARNING: ${resolve('.dotfile.ts')}:1:2 - ' should be "
+WARNING: ${resolve('.dotjs.jsx')}:1:1 - test message
+WARNING: ${resolve('.dotjs.jsx')}:1:3 - Missing semicolon
+WARNING: ${resolve('myRuleRule.js')}:1:1 - test message
+WARNING: ${resolve('myRuleRule.js')}:5:78 - Missing semicolon
+WARNING: ${resolve('myRuleRule.js')}:7:2 - Missing semicolon
+ERROR: ${resolve('test.tsx')}:1:1 - test message
+WARNING: ${resolve('test.tsx')}:2:1 - ' should be "`);
 });
 
 test('load processor config from .fimbullinter.yaml', async (t) => {
     const result = await execCli(['-m', '../..', '-f', 'prose', '*.vue'], 'packages/valtyr/test/fixtures');
     t.is(result.stderr, '');
     t.is(result.code, 2);
-    t.is(result.stdout.trim(), `ERROR: ${resolve('processed.vue')}[5, 1]: test message
-WARNING: ${resolve('processed.vue')}[5, 17]: ' should be "
-ERROR: ${resolve('processed2.vue')}[4, 19]: test message
-WARNING: ${resolve('processed2.vue')}[5, 11]: ' should be "
-ERROR: ${resolve('processed3.vue')}[1, 19]: test message`);
+    t.is(result.stdout.trim(), `ERROR: ${resolve('processed.vue')}:5:1 - test message
+WARNING: ${resolve('processed.vue')}:5:17 - ' should be "
+ERROR: ${resolve('processed2.vue')}:4:19 - test message
+WARNING: ${resolve('processed2.vue')}:5:11 - ' should be "
+ERROR: ${resolve('processed3.vue')}:1:19 - test message`);
 });
 
 function resolve(p: string) {
