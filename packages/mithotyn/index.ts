@@ -60,7 +60,6 @@ function createProxy(
 ) {
     const proxy = Object.create(null); // tslint:disable-line:no-null-keyword
     for (const method of Object.keys(ls)) {
-        // wotan-disable-next-line no-unstable-api-use
         if (typeof (<any>interceptor)[method] === 'function') {
             proxy[method] = (...args: any[]) => {
                 const prev = (<any>ls)[method](...args);

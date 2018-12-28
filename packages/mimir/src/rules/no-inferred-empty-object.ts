@@ -55,7 +55,6 @@ export class Rule extends TypedRule {
         for (const declaration of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(declaration);
             for (let i = 0; i < typeParameters.length; ++i)
-                // wotan-disable-next-line no-useless-predicate
                 if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
                     typeParameterResult[i] = typeParameters[i];
         }

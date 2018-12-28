@@ -20,7 +20,7 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
             command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions), CommandName.Save);
             break;
         default:
-            command = // wotan-disable-next-line no-useless-assertion
+            command =
                 parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions), CommandName.Lint);
             break;
         case CommandName.Test:
