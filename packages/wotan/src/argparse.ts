@@ -1,5 +1,5 @@
 import { Command, CommandName, TestCommand, ShowCommand, ValidateCommand, BaseLintCommand } from './commands';
-import { ConfigurationError, Format, GlobalOptions } from '@fimbul/ymir';
+import { ConfigurationError, Format, GlobalOptions, Severity } from '@fimbul/ymir';
 import { LintOptions } from './runner';
 import debug = require('debug');
 import { OptionParser } from './optparse';
@@ -53,6 +53,27 @@ export const GLOBAL_OPTIONS_SPEC = {
     formatter: OptionParser.Factory.parsePrimitive('string'),
     fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
     extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
+    reportUselessDirectives: OptionParser.Transform.transform(
+        OptionParser.Factory.parsePrimitive('string', 'boolean'),
+        (value): Severity | boolean => {
+            switch (value) {
+                case true:
+                case false:
+                case 'error':
+                case 'warning':
+                case 'suggestion':
+                    return value;
+                case 'warn':
+                    return 'warning';
+                case 'hint':
+                    return 'suggestion';
+                case undefined:
+                    return false;
+                default:
+                    return 'error';
+            }
+        },
+    ),
 };
 
 export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
@@ -117,6 +138,9 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
             case '--module':
                 result.modules = modules;
                 modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
+                break;
+            case '--report-useless-directives':
+                ({index: i, argument: result.reportUselessDirectives} = parseOptionalSeverityOrBoolean(args, i));
                 break;
             case '--':
                 result.files = files;
@@ -259,6 +283,26 @@ function parseOptionalBooleanOrNumber(args: string[], index: number): {index: nu
                 if (!Number.isNaN(num))
                     return {index: index + 1, argument: num};
             }
+        }
+    }
+    return {index, argument: true};
+}
+
+function parseOptionalSeverityOrBoolean(args: string[], index: number): {index: number, argument: Severity | boolean} {
+    if (index + 1 !== args.length) {
+        switch (args[index + 1]) {
+            case 'true':
+                return {index: index + 1, argument: true};
+            case 'false':
+                return {index: index + 1, argument: false};
+            case 'error':
+                return {index: index + 1, argument: 'error'};
+            case 'warn':
+            case 'warning':
+                return {index: index + 1, argument: 'warning'};
+            case 'hint':
+            case 'suggestion':
+                return {index: index + 1, argument: 'suggestion'};
         }
     }
     return {index, argument: true};

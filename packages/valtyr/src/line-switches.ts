@@ -5,69 +5,64 @@ import { getCommentAtPosition } from 'tsutils';
 
 @injectable()
 export class TslintLineSwitchParser implements LineSwitchParser {
-    public parse({sourceFile, ruleNames}: LineSwitchParserContext) {
-        const result = new Map<string, RawLineSwitch[]>();
+    public parse({sourceFile}: LineSwitchParserContext) {
+        const result: RawLineSwitch[] = [];
         const re = /\/[/*]\s*tslint:(enable|disable)(-line|-next-line)?($|[ *:])/gm;
         for (let match = re.exec(sourceFile.text); match !== null; match = re.exec(sourceFile.text)) {
             // not using `context.getCommentAtPosition` here is intentional, because it doesn't benefit from caching the converted AST
             const comment = getCommentAtPosition(sourceFile, match.index);
             if (comment === undefined || comment.pos !== match.index)
                 continue;
-            const rules = sourceFile.text
+            const rulesNames = sourceFile.text
                 .substring(
                     comment.pos + match[0].length,
                     comment.kind === ts.SyntaxKind.SingleLineCommentTrivia ? comment.end : comment.end - 2,
                 )
                 .trim();
-            let switchedRules: ReadonlyArray<string>;
-            if (rules === '') {
-                if (match[3] === ':')
-                    continue;
-                switchedRules = ruleNames;
+            let rules: RawLineSwitch['rules'];
+            if (rulesNames === '') {
+                rules = match[3] === ':' ? [] : [{predicate: matchAll}];
             } else {
-                switchedRules = rules.split(/\s+/);
-                if (switchedRules.includes('all'))
-                    switchedRules = ruleNames;
+                rules = rulesNames.split(/\s+/).map((rule) => ({predicate: rule === 'all' ? matchAll : rule}));
             }
             const enable = match[1] === 'enable';
             switch (match[2]) {
                 case '-line': {
                     const lineStarts = sourceFile.getLineStarts();
-                    let {line} = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos);
-                    this.switch(result, ruleNames, switchedRules, {enable, position: lineStarts[line]});
-                    ++line;
-                    if (lineStarts.length !== line) // no need to switch back if there is no next line
-                        this.switch(result, ruleNames, switchedRules, {enable: !enable, position: lineStarts[line]});
+                    const {line} = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos);
+                    result.push({
+                        rules,
+                        enable,
+                        pos: lineStarts[line],
+                        // no need to switch back if there is no next line
+                        end: lineStarts.length === line + 1 ? undefined : lineStarts[line + 1],
+                        location: comment,
+                    });
                     break;
                 }
                 case '-next-line': {
                     const lineStarts = sourceFile.getLineStarts();
-                    let line = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos).line + 1;
+                    const line = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos).line + 1;
                     if (lineStarts.length === line)
                         continue; // no need to switch if there is no next line
-                    this.switch(result, ruleNames, switchedRules, {enable, position: lineStarts[line]});
-                    ++line;
-                    if (lineStarts.length > line) // no need to switch back if there is no next line
-                        this.switch(result, ruleNames, switchedRules, {enable: !enable, position: lineStarts[line]});
+                    result.push({
+                        rules,
+                        enable,
+                        pos: lineStarts[line],
+                        // no need to switch back if there is no next line
+                        end: lineStarts.length === line + 1 ? undefined : lineStarts[line + 1],
+                        location: comment,
+                    });
                     break;
                 }
                 default:
-                    this.switch(result, ruleNames, switchedRules, {enable, position: comment.pos});
+                result.push({rules, enable, pos: comment.pos, end: undefined, location: comment});
             }
         }
         return result;
     }
+}
 
-    private switch(map: Map<string, RawLineSwitch[]>, enabled: ReadonlyArray<string>, rules: ReadonlyArray<string>, s: RawLineSwitch) {
-        for (const rule of rules) {
-            if (!enabled.includes(rule))
-                continue;
-            const existing = map.get(rule);
-            if (existing === undefined) {
-                map.set(rule, [s]);
-            } else {
-                existing.push(s);
-            }
-        }
-    }
+function matchAll() {
+    return true;
 }

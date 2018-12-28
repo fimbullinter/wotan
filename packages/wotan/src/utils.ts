@@ -95,7 +95,6 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
         ;
     if (start !== minEnd) {
         const maxStart = end - minEnd + start;
-        // tslint:disable-next-line:ban-comma-operator
         for (let changedEnd = changed.length; maxStart < end && original[end - 1] === changed[changedEnd - 1]; --end, --changedEnd)
             ;
     }

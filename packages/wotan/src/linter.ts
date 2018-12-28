@@ -28,6 +28,10 @@ export interface UpdateFileResult {
     program?: ts.Program;
 }
 
+export interface LinterOptions {
+    reportUselessDirectives?: Severity;
+}
+
 /**
  * Creates a new SourceFile and optionally a Program from the updated source.
  *
@@ -44,8 +48,13 @@ export class Linter {
         private filterFactory: FindingFilterFactory,
     ) {}
 
-    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): ReadonlyArray<Finding> {
-        return this.getFindings(file, config, program, undefined);
+    public lintFile(
+        file: ts.SourceFile,
+        config: EffectiveConfiguration,
+        program?: ts.Program,
+        options: LinterOptions = {},
+    ): ReadonlyArray<Finding> {
+        return this.getFindings(file, config, program, undefined, options);
     }
 
     public lintAndFix(
@@ -56,9 +65,10 @@ export class Linter {
         iterations: number = 10,
         program?: ts.Program,
         processor?: AbstractProcessor,
+        options: LinterOptions = {},
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let findings = this.getFindings(file, config, program, processor);
+        let findings = this.getFindings(file, config, program, processor, options);
         for (let i = 0; i < iterations; ++i) {
             if (findings.length === 0)
                 break;
@@ -90,7 +100,7 @@ export class Linter {
             ({program, file} = updateResult);
             content = fixed.result;
             totalFixes += fixed.fixed;
-            findings = this.getFindings(file, config, program, processor);
+            findings = this.getFindings(file, config, program, processor, options);
         }
         return {
             content,
@@ -105,14 +115,23 @@ export class Linter {
         config: EffectiveConfiguration,
         program: ts.Program | undefined,
         processor: AbstractProcessor | undefined,
+        options: LinterOptions,
     ) {
         log('Linting file %s', sourceFile.fileName);
         const rules = this.prepareRules(config, sourceFile, program);
+        let findings;
         if (rules.length === 0) {
             log('No active rules');
-            return processor === undefined ? [] : processor.postprocess([]);
+            if (options.reportUselessDirectives !== undefined) {
+                findings = this.filterFactory
+                    .create({sourceFile, getWrappedAst() { return convertAst(sourceFile).wrapped; }, ruleNames: []})
+                    .reportUseless(options.reportUselessDirectives);
+                log('Found %d useless directives', findings.length);
+            } else {
+                findings = [];
+            }
         }
-        const findings = this.applyRules(sourceFile, program, rules, config.settings);
+        findings = this.applyRules(sourceFile, program, rules, config.settings, options);
         return processor === undefined ? findings : processor.postprocess(findings);
     }
 
@@ -143,7 +162,13 @@ export class Linter {
         return rules;
     }
 
-    private applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, rules: PreparedRule[], settings: Map<string, any>) {
+    private applyRules(
+        sourceFile: ts.SourceFile,
+        program: ts.Program | undefined,
+        rules: PreparedRule[],
+        settings: Map<string, any>,
+        options: LinterOptions,
+    ) {
         const result: Finding[] = [];
         let findingFilter: FindingFilter | undefined;
         let ruleName: string;
@@ -151,6 +176,10 @@ export class Linter {
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
+        const getFindingFilter = () => {
+            return findingFilter ||
+                (findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)}));
+        };
         const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
             const finding: Finding = {
                 ruleName,
@@ -172,9 +201,7 @@ export class Linter {
                             ? undefined
                             : {replacements: fix},
             };
-            if (findingFilter === undefined)
-                findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
-            if (findingFilter.filter(finding))
+            if (getFindingFilter().filter(finding))
                 result.push(finding);
         };
 
@@ -194,6 +221,11 @@ export class Linter {
         }
 
         log('Found %d findings', result.length);
+        if (options.reportUselessDirectives !== undefined) {
+            const useless = getFindingFilter().reportUseless(options.reportUselessDirectives);
+            log('Found %d useless directives', useless.length);
+            result.push(...useless);
+        }
         return result;
 
         function getFlatAst() {

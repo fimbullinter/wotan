@@ -67,6 +67,12 @@ export namespace OptionParser {
                 return <any>(result === undefined ? undefined : result.map(cb));
             };
         }
+
+        export function transform<T, U>(parseFn: ParseFunction<T>, cb: (value: T) => U): ParseFunction<U> {
+            return (value, report) => {
+                return cb(parseFn(value, report));
+            };
+        }
     }
 
     export namespace Factory {

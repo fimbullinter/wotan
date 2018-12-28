@@ -1,4 +1,4 @@
-import { Linter } from './linter';
+import { Linter, LinterOptions } from './linter';
 import {
     LintResult,
     FileSummary,
@@ -8,6 +8,7 @@ import {
     ConfigurationError,
     MessageHandler,
     FileFilterFactory,
+    Severity,
 } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
@@ -32,6 +33,7 @@ export interface LintOptions {
     references: boolean;
     fix: boolean | number;
     extensions: ReadonlyArray<string> | undefined;
+    reportUselessDirectives: Severity | boolean | undefined;
 }
 
 interface NormalizedOptions extends Pick<LintOptions, Exclude<keyof LintOptions, 'files'>> {
@@ -62,13 +64,20 @@ export class Runner {
             (pattern) => ({hasMagic: glob.hasMagic(pattern), normalized: Array.from(normalizeGlob(pattern, cwd))}),
         );
         const exclude = flatMap(options.exclude, (pattern) => normalizeGlob(pattern, cwd));
+        const linterOptions: LinterOptions = {
+            reportUselessDirectives: options.reportUselessDirectives
+                ? options.reportUselessDirectives === true
+                    ? 'error'
+                    : options.reportUselessDirectives
+                : undefined,
+        };
         if (options.project.length === 0 && options.files.length !== 0)
-            return this.lintFiles({...options, files, exclude}, config);
+            return this.lintFiles({...options, files, exclude}, config, linterOptions);
 
-        return this.lintProject({...options, files, exclude}, config);
+        return this.lintProject({...options, files, exclude}, config, linterOptions);
     }
 
-    private *lintProject(options: NormalizedOptions, config: Configuration | undefined): LintResult {
+    private *lintProject(options: NormalizedOptions, config: Configuration | undefined, linterOptions: LinterOptions): LintResult {
         const processorHost = new ProjectHost(
             this.directories.getCurrentDirectory(),
             config,
@@ -104,6 +113,7 @@ export class Runner {
                         fix === true ? undefined : fix,
                         program,
                         mapped === undefined ? undefined : mapped.processor,
+                        linterOptions,
                     );
                 } else {
                     summary = {
@@ -112,6 +122,7 @@ export class Runner {
                             effectiveConfig,
                             program,
                             mapped === undefined ? undefined : mapped.processor,
+                            linterOptions,
                         ),
                         fixes: 0,
                         content: originalContent,
@@ -122,7 +133,7 @@ export class Runner {
         }
     }
 
-    private *lintFiles(options: NormalizedOptions, config: Configuration | undefined): LintResult {
+    private *lintFiles(options: NormalizedOptions, config: Configuration | undefined, linterOptions: LinterOptions): LintResult {
         let processor: AbstractProcessor | undefined;
         for (const file of getFiles(options.files, options.exclude, this.directories.getCurrentDirectory())) {
             if (options.config === undefined)
@@ -183,6 +194,7 @@ export class Runner {
                     fix === true ? undefined : fix,
                     undefined,
                     processor,
+                    linterOptions,
                 );
             } else {
                 summary = {
@@ -191,6 +203,7 @@ export class Runner {
                         effectiveConfig,
                         undefined,
                         processor,
+                        linterOptions,
                     ),
                     fixes: 0,
                     content: originalContent,
