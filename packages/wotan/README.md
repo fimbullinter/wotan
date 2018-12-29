@@ -132,6 +132,7 @@ Just use `wotan show <filename>` to display the configuration file and the exact
 ## Enable or disable rules with comments
 
 Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`. Multiple rule names are separated by comma.
+It's not possible to enable a rule with a comment if that rule is not already enabled in the configuration for that file. That means comments can only enable rules that were previously disabled by a comment.
 
 * `// wotan-disable` disables all rules from the start of the comment until the end of the file (or until it is enabled again)
 * `// wotan-enable` enables all rules from the start of the comment until the end of the file. Enable comments have the same mechanics as disable comments.
@@ -139,6 +140,8 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 * `// wotan-disable-next-line` disables all rules in the next line (also works with enable)
 * `// wotan-enable-line foo` enables the rule `foo` in the current line
 * `// wotan-enable-next-line bar, local/baz` enables the rules `bar` and `local/baz` in the next line
+
+To detect unused or redundant comments you can use the `--report-useless-directives` CLI option.
 
 ## CLI Options
 
@@ -149,6 +152,7 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 * `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information. This option can be used multiple times to specify multiple projects to lint.
 * `-r --references [true|false]` enables project references. Starting from the project specified with `-p --project` or the `tsconfig.json` in the current directory it will recursively follow all `"references"` and lint those projects.
+* `--report-useless-directives [true|false|error|warning|suggestion]` reports `// wotan-disable` and `// wotan-enable` comments that are redundant (i.e. rules are already disabled) or unused (there are no findings for the specified rules). Useless directives are reported as lint findings with the specified severity (`true` is converted to `error`). Those findings cannot be disabled by a disable comment. The findings are fixable which allow autofixing when used with the `--fix` option.
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
 Note that all file paths are relative to the current working directory. Therefore `**/*.ts` doesn't match `../foo.ts`.
