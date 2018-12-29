@@ -68,6 +68,7 @@ export const GLOBAL_OPTIONS_SPEC = {
                 case 'hint':
                     return 'suggestion';
                 case undefined:
+                case 'off':
                     return false;
                 default:
                     return 'error';
@@ -294,6 +295,7 @@ function parseOptionalSeverityOrBoolean(args: string[], index: number): {index: 
             case 'true':
                 return {index: index + 1, argument: true};
             case 'false':
+            case 'off':
                 return {index: index + 1, argument: false};
             case 'error':
                 return {index: index + 1, argument: 'error'};
