@@ -18,7 +18,7 @@ import { assertNever } from '../../utils';
 
 export const LINE_SWITCH_REGEX = /^ *wotan-(enable|disable)((?:-next)?-line)?( +(?:(?:[\w-]+\/)*[\w-]+ *, *)*(?:[\w-]+\/)*[\w-]+)? *$/;
 
-const enum SwitchState {
+export const enum SwitchState {
     NoChange,
     Redundant,
     NoMatch,

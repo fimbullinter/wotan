@@ -163,6 +163,7 @@ test('SaveCommand', async (t) => {
             files: [],
             extensions: undefined,
             formatter: undefined,
+            reportUselessDirectives: false,
             modules: [],
         }),
         {
@@ -183,6 +184,7 @@ test('SaveCommand', async (t) => {
                 files: [],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: false,
                 modules: [],
             },
             {
@@ -208,12 +210,14 @@ test('SaveCommand', async (t) => {
                 files: ['**/*.d.ts'],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: true,
                 modules: [],
             },
             {
                 project: 'foo.json',
                 references: true,
                 modules: ['foo', 'bar'],
+                reportUselessDirectives: true,
             },
         ),
         {
@@ -234,6 +238,7 @@ test('SaveCommand', async (t) => {
                 files: [],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: false,
                 modules: [],
             },
             {
@@ -337,6 +342,7 @@ test('LintCommand', async (t) => {
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: false,
             },
             container,
         ),
@@ -352,12 +358,95 @@ test('LintCommand', async (t) => {
                 modules: [],
                 files: ['*.ts'],
                 exclude: [],
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: true,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+ERROR 2:1  useless-line-switch  This line switch has no effect. All specifiec rules have no failures to disable.
+
+✖ 1 error
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: 'warning',
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+WARNING 2:1  useless-line-switch  This line switch has no effect. All specifiec rules have no failures to disable.
+
+⚠ 1 warning
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: true,
+                extensions: undefined,
+                reportUselessDirectives: true,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {
+        [NodeFileSystem.normalizePath(path.join(cwd, '1.ts'))]: `"export {};\n\n`,
+    });
+    t.is(output.join('\n'), '');
+
+    filesWritten = {};
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
                 config: '.wotanrc.fail.yaml',
                 project: [],
                 references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: false,
             },
             container,
         ),
@@ -389,6 +478,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: false,
             },
             container,
         ),
@@ -414,6 +504,7 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 formatter: undefined,
                 fix: false,
                 extensions: undefined,
+                reportUselessDirectives: false,
             },
             container,
         ),
