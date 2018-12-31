@@ -170,6 +170,82 @@ test('Linter', (t) => {
     t.is(warnings.length, 5);
     t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
 
+    t.deepEqual<ReadonlyArray<Finding>>(
+        linter.lintFile(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['my/typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, 'Should emit a warning about missing type information in an unchecked JS file');
+    t.is(warnings[5], "Rule 'my/typed' requires type information.");
+
+    function lintWithProgram(file: ts.SourceFile, options: ts.CompilerOptions, config: EffectiveConfiguration) {
+        return linter.lintFile(file, config, createFakeProgram(file, options));
+    }
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {allowJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked JS file");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', '// @ts-nocheck\nfoo;', ts.ScriptTarget.ESNext), {allowJs: true, checkJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked JS file");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {allowJs: true, checkJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [{
+            ruleName: 'typed',
+            fix: undefined,
+            message: 'message',
+            severity: 'error',
+            start: {position: 0, line: 0, character: 0},
+            end: {position: 0, line: 0, character: 0},
+        }],
+        'Should lint checked JS file with type information',
+    );
+    t.is(warnings.length, 6);
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', '// @ts-check\nfoo;', ts.ScriptTarget.ESNext), {allowJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [{
+            ruleName: 'typed',
+            fix: undefined,
+            message: 'message',
+            severity: 'error',
+            start: {position: 0, line: 0, character: 0},
+            end: {position: 0, line: 0, character: 0},
+        }],
+        'Should lint checked JS file with type information',
+    );
+    t.is(warnings.length, 6);
+
     class Processor extends AbstractProcessor {
         public preprocess(): never {
             throw new Error('should not be called');
@@ -227,3 +303,21 @@ test('Linter', (t) => {
     );
     t.is(processor.getSource(), sourceFile.text, "didn't correctly reset the processor");
 });
+
+function createFakeProgram(sourceFile: ts.SourceFile, options: ts.CompilerOptions) {
+    return ts.createProgram([sourceFile.fileName], {...options, noLib: true, noEmit: true}, {
+        getSourceFile(fileName) {
+            return fileName === sourceFile.fileName ? sourceFile : undefined;
+        },
+        directoryExists() { return false; },
+        fileExists() { return false; },
+        getCanonicalFileName(f) { return f; },
+        getCurrentDirectory: process.cwd,
+        getDirectories() { return []; },
+        getDefaultLibFileName() { return ts.getDefaultLibFileName(options); },
+        getNewLine() { return '\n'; },
+        readFile(): undefined { return; },
+        useCaseSensitiveFileNames() { return true; },
+        writeFile() {},
+    });
+}
