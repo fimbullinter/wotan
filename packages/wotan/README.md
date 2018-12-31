@@ -49,7 +49,7 @@ For a list of available rules, see the [documentation of the `@fimbul/mimir` pac
 
 ## Configuration
 
-Wotan is configured with a YAML, JSON5 or JSON file named `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closes parent folder is used to lint each file.
+Wotan is configured with a YAML, JSON5 or JSON file named `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closest parent folder is used to lint each file.
 
 You can use different configurations for different directories. Consider the following setup:
 
@@ -71,6 +71,8 @@ extends: wotan:recommended # use all recommended rules
     }
 }
 ```
+
+Note: this describes the default configuration file name and content. Plugin modules are able to override this behavior to read files with different name or content.
 
 ### Overrides
 
@@ -140,6 +142,8 @@ Sometimes you need to enable or disable a specific rule or all rules for a secti
 * `// wotan-enable-line foo` enables the rule `foo` in the current line
 * `// wotan-enable-next-line bar, local/baz` enables the rules `bar` and `local/baz` in the next line
 
+This is the default behavior which can be overridden by plugin modules.
+
 ## CLI Options
 
 * `-c --config <name>` specifies the configuration to use for all files instead of looking for configuration files in parent directories. This can either be a file name, the name of a node module containing a shareable config, or the name of a builtin config like `wotan:recommended`
@@ -207,6 +211,19 @@ wotan save -c '' # clear 'config' option and update .fimbullinter.yaml
 ```
 
 Note that `.fimbullinter.yaml` can also be used to store configuration for plugin modules. See the documentation of the plugins you use if this applies to you. In that case you need to edit the file manually. Using `wotan save` will not alter third party configuration.
+
+## Excluded files
+
+When linting a project (`--project` CLI option) Wotan excludes all files you haven't written yourself. The following files are always excluded so you cannot explicitly include them:
+
+* any files of dependencies in `node_modules` (unless imported using a relative path, e.g. `./node_modules/foo/index`)
+* declaration files from `@types` (or `typeRoots` declared in your `tsconfig.json`)
+* declaration files included by TypeScript, e.g. `lib.es5.d.ts`
+* declaration files of project references (`references` in `tsconfig.json`)
+
+This is the default behavior which can be overridden by plugin modules.
+
+If you don't lint a project, but lint individual files using the file's path or a glob pattern, you are responsible for excluding all files you don't want to lint.
 
 ## Diagnosing Misbehavior
 
