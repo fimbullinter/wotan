@@ -233,7 +233,7 @@ class Filter implements FindingFilter {
                     default:
                         throw assertNever(ruleSwitch.state);
                 }
-                result.push(this.createFinding(`This rule ${message}.`, severity, ruleSwitch.location));
+                result.push(this.createFinding(`This rule ${message}.`, severity, ruleSwitch.location, ruleSwitch.fixLocation));
             }
         }
         return result;
@@ -286,7 +286,7 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
             const comment = context.getCommentAtPosition(match.index);
             if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
                 continue;
-            const rules = match[4] === undefined ? [{predicate: /^/}] : parseRules(match[4], match[1].length);
+            const rules = match[4] === undefined ? [{predicate: /^/}] : parseRules(match[4], match.index + match[1].length);
             const enable = match[2] === 'enable';
             switch (match[3]) {
                 case '-line': {
@@ -336,14 +336,15 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
 
 function parseRules(raw: string, offset: number) {
     const result: RawLineSwitchRule[] = [];
-    const re = /( *, *|$)/g;
+    const re = /(?: *, *|$)/g;
     let pos = raw.search(/[^ ]/);
     let fixPos = pos;
     for (let match = re.exec(raw)!; ; match = re.exec(raw)!) {
         result.push({
             predicate: raw.slice(pos, match.index),
             location: {pos: pos + offset, end: match.index + offset},
-            fixLocation: {pos: fixPos + offset, end: match.index + offset},
+            // fix of first rule needs to remove the comma after it, all other rule fixes need to remove the comma before it
+            fixLocation: {pos: fixPos + offset, end: (result.length === 0 ? re.lastIndex : match.index) + offset},
         });
         if (match[0].length === 0)
             break;

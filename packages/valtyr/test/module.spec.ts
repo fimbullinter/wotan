@@ -27,6 +27,7 @@ ERROR: ${resolve('.dotfile.ts')}:2:44 - This rule doesn't match any rules enable
 ERROR: ${resolve('.dotfile.ts')}:2:54 - This rule was already specified in this disable switch.
 ERROR: ${resolve('.dotfile.ts')}:3:36 - This rule has no failures to disable.
 ERROR: ${resolve('.dotfile.ts')}:4:30 - This rule was already specified in this disable switch.
+ERROR: ${resolve('.dotfile.ts')}:5:1 - Disable switch doesn't specify any rule names.
 WARNING: ${resolve('.dotjs.jsx')}:1:1 - test message
 WARNING: ${resolve('.dotjs.jsx')}:1:3 - Missing semicolon
 WARNING: ${resolve('myRuleRule.js')}:1:1 - test message
