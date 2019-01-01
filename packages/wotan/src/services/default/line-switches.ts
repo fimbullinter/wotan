@@ -171,12 +171,13 @@ class Filter implements FindingFilter {
     public reportUseless(severity: Severity) {
         const result: Finding[] = [];
         for (const current of this.switches) {
+            const mode = current.enable ? 'enable' : 'disable';
             if (current.rules.length === 0) {
                 result.push(
                     this.createFinding(
                         current.outOfRange
-                            ? `${current.enable ? 'Enable' : 'Disable'} switch has no effect. The specified range doesn't exits..`
-                            : `${current.enable ? 'Enable' : 'Disable'} switch doesn't specify any rule names.`,
+                            ? `${titlecase(mode)} switch has no effect. The specified range doesn't exits.`
+                            : `${titlecase(mode)} switch doesn't specify any rule names.`,
                         severity,
                         current.location,
                     ),
@@ -192,16 +193,16 @@ class Filter implements FindingFilter {
                 {},
             );
             if (!counts[SwitchState.Used] && (!current.enable || !counts[SwitchState.Unused])) {
-                const states = [];
+                const errorStates = [];
                 if (counts[SwitchState.NoChange])
-                    states.push('are already ' + (current.enable ? 'enabled' : 'disabled'));
+                    errorStates.push(`are already ${mode}d`);
                 if (counts[SwitchState.NoMatch])
-                    states.push("don't match any rules enabled for this file");
+                    errorStates.push("don't match any rules enabled for this file");
                 if (counts[SwitchState.Unused])
-                    states.push('have no failures to disable');
+                    errorStates.push('have no failures to disable');
                 result.push(
                     this.createFinding(
-                        `${current.enable ? 'Enable' : 'Disable'} switch has no effect. All specified rules ${join(states)}.`,
+                        `${titlecase(mode)} switch has no effect. All specified rules ${join(errorStates)}.`,
                         severity,
                         current.location,
                     ),
@@ -218,13 +219,13 @@ class Filter implements FindingFilter {
                 let message: string;
                 switch (ruleSwitch.state) {
                     case SwitchState.Redundant:
-                        message = `was already specified in this ${current.enable ? 'enable' : 'disable'} switch`;
+                        message = `was already specified in this ${mode} switch`;
                         break;
                     case SwitchState.NoMatch:
                         message = "doesn't match any rules enabled for this file";
                         break;
                     case SwitchState.NoChange:
-                        message = `is already ${current.enable ? 'enabled' : 'disabled'}`;
+                        message = `is already ${mode}d`;
                         break;
                     case SwitchState.Unused:
                         message = 'has no failures to disable';
@@ -255,6 +256,10 @@ class Filter implements FindingFilter {
             fix: {replacements: [Replacement.delete(fixLocation.pos, fixLocation.end)]},
         };
     }
+}
+
+function titlecase(str: string) {
+    return str.charAt(0).toUpperCase() + str.substr(1);
 }
 
 function join(parts: string[]): string {

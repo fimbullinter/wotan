@@ -16,11 +16,17 @@ function execCli(args: string[], cwd: string): Promise<{err: Error | null, stdou
 }
 
 test('can be used with --module flag', async (t) => {
-    const result = await execCli(['-m', '.', '-f', 'prose', 'test/fixtures/*', 'test/fixtures/.*'], 'packages/valtyr');
+    const result =
+        await execCli(['-m', '.', '-f', 'prose', '--report-useless-directives', 'test/fixtures/*', 'test/fixtures/.*'], 'packages/valtyr');
     t.is(result.code, 2);
     t.is(result.stderr, '');
     t.is(result.stdout.trim(), `ERROR: ${resolve('.dotfile.ts')}:1:1 - test message
 WARNING: ${resolve('.dotfile.ts')}:1:2 - ' should be "
+ERROR: ${resolve('.dotfile.ts')}:2:26 - This rule has no failures to disable.
+ERROR: ${resolve('.dotfile.ts')}:2:44 - This rule doesn't match any rules enabled for this file.
+ERROR: ${resolve('.dotfile.ts')}:2:54 - This rule was already specified in this disable switch.
+ERROR: ${resolve('.dotfile.ts')}:3:36 - This rule has no failures to disable.
+ERROR: ${resolve('.dotfile.ts')}:4:30 - This rule was already specified in this disable switch.
 WARNING: ${resolve('.dotjs.jsx')}:1:1 - test message
 WARNING: ${resolve('.dotjs.jsx')}:1:3 - Missing semicolon
 WARNING: ${resolve('myRuleRule.js')}:1:1 - test message
