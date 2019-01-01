@@ -460,6 +460,10 @@ export interface FindingFilterContext {
 export interface FindingFilter {
     /** @returns `true` if the finding should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(finding: Finding): boolean;
+    /**
+     * @returns Findings to report redundant or unused filter directives.
+     * This is called after calling `filter` for all findings in the file.
+     */
     reportUseless(severity: Severity): ReadonlyArray<Finding>;
 }
 
@@ -482,7 +486,7 @@ export interface RawLineSwitch {
 }
 
 export interface RawLineSwitchRule {
-    readonly predicate: string | ((ruleName: string) => boolean);
+    readonly predicate: string | RegExp | ((ruleName: string) => boolean);
     readonly location?: Readonly<ts.TextRange>;
     readonly fixLocation?: Readonly<ts.TextRange>;
 }

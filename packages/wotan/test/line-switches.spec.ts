@@ -15,20 +15,18 @@ let foo /* wotan-disable-line */ = true;
     const {wrapped} = convertAst(sourceFile);
 
     const lineSwitchService = new LineSwitchFilterFactory(new DefaultLineSwitchParser());
-    const expected = new Map([['foobar', [
-        {
-            pos: 11,
-            end: 49,
-        },
-        {
-            pos: 67,
-            end: 108,
-        },
-    ]]]);
     t.deepEqual(
         lineSwitchService.getDisabledRanges({sourceFile, ruleNames: ['foobar'], getWrappedAst: () => wrapped}),
-        expected,
-        'without WrappedAst',
+        new Map([['foobar', [
+            {
+                pos: 11,
+                end: 49,
+            },
+            {
+                pos: 67,
+                end: 108,
+            },
+        ]]]),
     );
 
     const filter = lineSwitchService.create({sourceFile, ruleNames: ['foobar'], getWrappedAst: () => wrapped});
@@ -43,14 +41,60 @@ let foo /* wotan-disable-line */ = true;
         new LineSwitchFilterFactory({
             parse(context) {
                 t.is(context.getCommentAtPosition(-1), undefined); // should not throw here
-                return new Map([
-                    ['foo', [{enable: true, position: 0}]], // is discarded, because unnecessary
-                    ['bar', []], // is ignored
-                    ['baz', [{enable: true, position: 10}, {enable: false, position: 5}]], // is correctly sorted
-                ]);
+                return [
+                    { // is discarded because unnecessary for 'foo' and no matching rule 'bar'
+                        rules: [{predicate: 'foo'}, {predicate: 'bar'}],
+                        enable: true,
+                        pos: 0,
+                        end: 0,
+                        location: {pos: 0, end: 1},
+                    },
+                    { // ignored because it's out of range
+                        rules: [{predicate: 'baz'}],
+                        enable: false,
+                        pos: -10,
+                        end: -5,
+                        location: {pos: 0, end: 1},
+                    },
+                    {
+                        rules: [{predicate: 'baz'}],
+                        enable: false,
+                        pos: 5,
+                        end: 10,
+                        location: {pos: 5, end: 6},
+                    },
+                    {
+                        rules: [{predicate: 'baz'}],
+                        enable: false,
+                        pos: 15,
+                        end: undefined,
+                        location: {pos: 15, end: 16},
+                    },
+                    {
+                        rules: [{predicate: 'baz'}],
+                        enable: true,
+                        pos: 20,
+                        end: 25,
+                        location: {pos: 20, end: 21},
+                    },
+                    { // has no effect as the rule is already disabled
+                        rules: [{predicate: 'baz'}],
+                        enable: false,
+                        pos: 30,
+                        end: 35,
+                        location: {pos: 30, end: 31},
+                    },
+                    { // ignored because out of range
+                        rules: [{predicate: 'baz'}],
+                        enable: false,
+                        pos: Infinity,
+                        end: undefined,
+                        location: {pos: 1000, end: 1001},
+                    },
+                ];
             },
         }).getDisabledRanges({sourceFile, ruleNames: ['foo', 'baz'], getWrappedAst: () => wrapped}),
-        new Map([['baz', [{pos: 5, end: 10}]]]),
+        new Map([['baz', [{pos: 5, end: 10}, {pos: 15, end: 20}, {pos: 25, end: Infinity}]]]),
     );
 
     function createFinding(ruleName: string, start: number, end: number): Finding {

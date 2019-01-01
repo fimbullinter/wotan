@@ -18,10 +18,10 @@ import { assertNever } from '../../utils';
 
 export const LINE_SWITCH_REGEX = /^ *wotan-(enable|disable)((?:-next)?-line)?( +(?:(?:[\w-]+\/)*[\w-]+ *, *)*(?:[\w-]+\/)*[\w-]+)? *$/;
 
-export const enum SwitchState {
+const enum SwitchState {
+    NoMatch,
     NoChange,
     Redundant,
-    NoMatch,
     Unused,
     Used,
 }
@@ -34,6 +34,7 @@ interface Switch {
     location: ts.TextRange;
     enable: boolean;
     rules: RuleSwitch[];
+    outOfRange: boolean;
 }
 
 @injectable()
@@ -41,11 +42,19 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
     constructor(private parser: LineSwitchParser) {}
 
     public create(context: FindingFilterContext): FindingFilter {
-        const {disables, switches} = this.getDisabledRanges(context);
+        const {disables, switches} = this.parseLineSwitches(context);
         return new Filter(disables, switches, context.sourceFile);
     }
 
     public getDisabledRanges(context: FindingFilterContext) {
+        // remove internal `switch` property from ranges
+        return new Map(Array.from(this.parseLineSwitches(context).disables, (entry): [string, ts.TextRange[]] => [
+            entry[0],
+            entry[1].map((range) => ({pos: range.pos, end: range.end})),
+        ]));
+    }
+
+    private parseLineSwitches(context: FindingFilterContext) {
         const {sourceFile, ruleNames} = context;
         let wrappedAst: WrappedAst | undefined;
         const raw = this.parser.parse({
@@ -65,47 +74,39 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
                 location: lineSwitch.location,
                 enable: lineSwitch.enable,
                 rules: [],
+                outOfRange: lineSwitch.end! <= 0 || lineSwitch.pos > sourceFile.end,
             };
             switches.push(currentSwitch);
+            if (currentSwitch.outOfRange)
+                continue;
             const rules = new Map<string, RuleSwitch>();
             for (const switchedName of lineSwitch.rules) {
                 const ruleSwitch: RuleSwitch = {
                     location: switchedName.location,
                     fixLocation: switchedName.fixLocation || switchedName.location,
-                    state: SwitchState.NoChange,
+                    state: SwitchState.NoMatch,
                 };
                 currentSwitch.rules.push(ruleSwitch);
-                switch (typeof switchedName.predicate) {
-                    case 'string':
-                        if (!ruleNames.includes(switchedName.predicate)) {
-                            ruleSwitch.state = SwitchState.NoMatch;
-                        } else if (rules.has(switchedName.predicate)) {
+                if (typeof switchedName.predicate === 'string') {
+                    if (ruleNames.includes(switchedName.predicate)) {
+                        if (rules.has(switchedName.predicate)) {
                             ruleSwitch.state = SwitchState.Redundant;
                         } else {
                             rules.set(switchedName.predicate, ruleSwitch);
+                            ruleSwitch.state = SwitchState.NoChange;
                         }
-                        break;
-                    case 'function': {
-                        let matched = false;
-                        let added = false;
-                        for (const rule of ruleNames) {
-                            if (switchedName.predicate(rule)) {
-                                matched = true;
-                                if (!rules.has(rule)) {
-                                    added = true;
-                                    rules.set(rule, ruleSwitch);
-                                }
+                    }
+                } else {
+                    const matchingNames = ruleNames.filter(makeFilterPredicate(switchedName.predicate));
+                    if (matchingNames.length !== 0) {
+                        ruleSwitch.state = SwitchState.Redundant;
+                        for (const rule of matchingNames) {
+                            if (!rules.has(rule)) {
+                                rules.set(rule, ruleSwitch);
+                                ruleSwitch.state = SwitchState.NoChange;
                             }
                         }
-                        if (!matched) {
-                            ruleSwitch.state = SwitchState.NoMatch;
-                        } else if (!added) {
-                            ruleSwitch.state = SwitchState.Redundant;
-                        }
-                        break;
                     }
-                    default:
-                        throw assertNever(switchedName.predicate);
                 }
             }
             for (const [rule, ruleSwitch] of rules) {
@@ -173,7 +174,9 @@ class Filter implements FindingFilter {
             if (current.rules.length === 0) {
                 result.push(
                     this.createFinding(
-                        `${current.enable ? 'Enable' : 'Disable'} switch doesn't specify any rule names.`,
+                        current.outOfRange
+                            ? `${current.enable ? 'Enable' : 'Disable'} switch has no effect. The specified range doesn't exits..`
+                            : `${current.enable ? 'Enable' : 'Disable'} switch doesn't specify any rule names.`,
                         severity,
                         current.location,
                     ),
@@ -260,6 +263,12 @@ function join(parts: string[]): string {
     return parts.slice(0, -1).join(', ') + ' or ' + parts[parts.length - 1];
 }
 
+function makeFilterPredicate(
+    predicate: Exclude<RawLineSwitchRule['predicate'], string>,
+): Extract<RawLineSwitchRule['predicate'], Function> {
+    return typeof predicate === 'function' ? predicate : (ruleName) => predicate.test(ruleName);
+}
+
 @injectable()
 export class DefaultLineSwitchParser implements LineSwitchParser {
     public parse(context: LineSwitchParserContext) {
@@ -272,7 +281,7 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
             const comment = context.getCommentAtPosition(match.index);
             if (comment === undefined || comment.pos !== match.index || comment.end !== match.index + match[0].length)
                 continue;
-            const rules = match[4] === undefined ? [{predicate: () => true}] : parseRules(match[4], match[1].length);
+            const rules = match[4] === undefined ? [{predicate: /^/}] : parseRules(match[4], match[1].length);
             const enable = match[2] === 'enable';
             switch (match[3]) {
                 case '-line': {
@@ -284,27 +293,36 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
                         pos: lineStarts[line],
                         // no need to switch back if there is no next line
                         end: lineStarts.length === line + 1 ? undefined : lineStarts[line + 1],
-                        location: comment,
+                        location: {pos: comment.pos, end: comment.end},
                     });
                     break;
                 }
                 case '-next-line': {
                     const lineStarts = sourceFile.getLineStarts();
                     const line = ts.getLineAndCharacterOfPosition(sourceFile, comment.pos).line + 1;
-                    if (lineStarts.length === line)
-                        continue; // no need to switch if there is no next line
-                    result.push({
-                        rules,
-                        enable,
-                        pos: lineStarts[line],
-                        // no need to switch back if there is no next line
-                        end: lineStarts.length === line + 1 ? undefined : lineStarts[line + 1],
-                        location: comment,
-                    });
+                    if (lineStarts.length === line) {
+                        // there is no next line, return an out-of-range switch that can be reported
+                        result.push({
+                            rules,
+                            enable,
+                            pos: sourceFile.end + 1,
+                            end: undefined,
+                            location: {pos: comment.pos, end: comment.end},
+                        });
+                    } else {
+                        result.push({
+                            rules,
+                            enable,
+                            pos: lineStarts[line],
+                            // no need to switch back if there is no next line
+                            end: lineStarts.length === line + 1 ? undefined : lineStarts[line + 1],
+                            location: {pos: comment.pos, end: comment.end},
+                        });
+                    }
                     break;
                 }
                 default:
-                    result.push({rules, enable, pos: comment.pos, end: undefined, location: comment});
+                    result.push({rules, enable, pos: comment.pos, end: undefined, location: {pos: comment.pos, end: comment.end}});
             }
         }
         return result;
