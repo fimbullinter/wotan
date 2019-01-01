@@ -67,73 +67,73 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
             },
         });
 
-        const switches = [];
+        const lineSwitches = [];
         const result: DisableMap = new Map();
-        for (const lineSwitch of raw) {
-            const currentSwitch: Switch = {
-                location: lineSwitch.location,
-                enable: lineSwitch.enable,
+        for (const rawLineSwitch of raw) {
+            const lineSwitch: Switch = {
+                location: rawLineSwitch.location,
+                enable: rawLineSwitch.enable,
                 rules: [],
-                outOfRange: lineSwitch.end! <= 0 || lineSwitch.pos > sourceFile.end,
+                outOfRange: rawLineSwitch.end! <= 0 || rawLineSwitch.pos > sourceFile.end,
             };
-            switches.push(currentSwitch);
-            if (currentSwitch.outOfRange)
+            lineSwitches.push(lineSwitch);
+            if (lineSwitch.outOfRange)
                 continue;
-            const rules = new Map<string, RuleSwitch>();
-            for (const switchedName of lineSwitch.rules) {
+            const rulesToSwitch = new Map<string, RuleSwitch>();
+            for (const rawRuleSwitch of rawLineSwitch.rules) {
                 const ruleSwitch: RuleSwitch = {
-                    location: switchedName.location,
-                    fixLocation: switchedName.fixLocation || switchedName.location,
+                    location: rawRuleSwitch.location,
+                    fixLocation: rawRuleSwitch.fixLocation || rawRuleSwitch.location,
                     state: SwitchState.NoMatch,
                 };
-                currentSwitch.rules.push(ruleSwitch);
-                if (typeof switchedName.predicate === 'string') {
-                    if (ruleNames.includes(switchedName.predicate)) {
-                        if (rules.has(switchedName.predicate)) {
+                lineSwitch.rules.push(ruleSwitch);
+                if (typeof rawRuleSwitch.predicate === 'string') {
+                    if (ruleNames.includes(rawRuleSwitch.predicate)) {
+                        if (rulesToSwitch.has(rawRuleSwitch.predicate)) {
                             ruleSwitch.state = SwitchState.Redundant;
                         } else {
-                            rules.set(switchedName.predicate, ruleSwitch);
+                            rulesToSwitch.set(rawRuleSwitch.predicate, ruleSwitch);
                             ruleSwitch.state = SwitchState.NoChange;
                         }
                     }
                 } else {
-                    const matchingNames = ruleNames.filter(makeFilterPredicate(switchedName.predicate));
+                    const matchingNames = ruleNames.filter(makeFilterPredicate(rawRuleSwitch.predicate));
                     if (matchingNames.length !== 0) {
                         ruleSwitch.state = SwitchState.Redundant;
                         for (const rule of matchingNames) {
-                            if (!rules.has(rule)) {
-                                rules.set(rule, ruleSwitch);
+                            if (!rulesToSwitch.has(rule)) {
+                                rulesToSwitch.set(rule, ruleSwitch);
                                 ruleSwitch.state = SwitchState.NoChange;
                             }
                         }
                     }
                 }
             }
-            for (const [rule, ruleSwitch] of rules) {
+            for (const [rule, ruleSwitch] of rulesToSwitch) {
                 const ranges = result.get(rule);
                 if (ranges === undefined) {
-                    if (lineSwitch.enable)
+                    if (rawLineSwitch.enable)
                         continue; // rule is already enabled
                     result.set(
                         rule,
-                        [{pos: lineSwitch.pos, end: lineSwitch.end === undefined ? Infinity : lineSwitch.end, switch: ruleSwitch}],
+                        [{pos: rawLineSwitch.pos, end: rawLineSwitch.end === undefined ? Infinity : rawLineSwitch.end, switch: ruleSwitch}],
                     );
                 } else {
                     const last = ranges[ranges.length - 1];
                     if (last.end === Infinity) {
-                        if (!lineSwitch.enable)
+                        if (!rawLineSwitch.enable)
                             continue; // rule is already disabled
-                        last.end = lineSwitch.pos;
-                        if (lineSwitch.end !== undefined)
-                            ranges.push({pos: lineSwitch.end, end: Infinity, switch: ruleSwitch});
-                    } else if (lineSwitch.enable || lineSwitch.pos < last.end) {
+                        last.end = rawLineSwitch.pos;
+                        if (rawLineSwitch.end !== undefined)
+                            ranges.push({pos: rawLineSwitch.end, end: Infinity, switch: ruleSwitch});
+                    } else if (rawLineSwitch.enable || rawLineSwitch.pos < last.end) {
                         // rule is already enabled
                         // or disabled range is nested inside the previous range
                         continue;
                     } else {
                         ranges.push({
-                            pos: lineSwitch.pos,
-                            end: lineSwitch.end === undefined ? Infinity : lineSwitch.end,
+                            pos: rawLineSwitch.pos,
+                            end: rawLineSwitch.end === undefined ? Infinity : rawLineSwitch.end,
                             switch: ruleSwitch,
                         });
                     }
@@ -141,7 +141,7 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
                 ruleSwitch.state = SwitchState.Unused;
             }
         }
-        return {switches, disables: result};
+        return {switches: lineSwitches, disables: result};
     }
 }
 
