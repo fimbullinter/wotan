@@ -949,9 +949,9 @@ bcrypt-pbkdf@^1.0.0:
     tweetnacl "^0.14.3"
 
 before-after-hook@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-1.2.0.tgz#1079c10312cd4d4ad0d1676d37951ef8bfc3a563"
-  integrity sha512-wI3QtdLppHNkmM1VgRVLCrlWCKk/YexlPicYbXPs4eYdd1InrUCTFsx5bX1iUQzzMsoRXXPpM1r+p7JEJJydag==
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-1.3.1.tgz#1c23c7789ad3ed76b06c9cb38d1169ac094c3704"
+  integrity sha512-BIjg60OP/sQvG7Q2L9Xkc77gyyFw1B4T73LIfZVQtXbutJinC1+t2HRl4qeR3EWAmY+tA6z9vpRi02q6ZXyluQ==
 
 big.js@^5.2.2:
   version "5.2.2"
@@ -2757,9 +2757,9 @@ load-json-file@^4.0.0:
     strip-bom "^3.0.0"
 
 loader-utils@^1.1.0:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/loader-utils/-/loader-utils-1.2.1.tgz#64bbbac69aa5840d03754ba676a963dec568e844"
-  integrity sha512-3Zhx4qDqBQ9U8udWB3RMJ29nLu5a3ObNOSzk87woPvge01pi0wABowgv7F79Z4mL0DGtHRi/oOndT34EVhInoQ==
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/loader-utils/-/loader-utils-1.2.3.tgz#1ff5dc6911c9f0a062531a4c04b609406108c2c7"
+  integrity sha512-fkpz8ejdnEMG3s37wGL07iSBDg99O9D5yflE9RGNH3hRdx9SOwYfnGYdZOUIZitN8E+E2vkq3MUMYMvPYl5ZZA==
   dependencies:
     big.js "^5.2.2"
     emojis-list "^2.0.0"
@@ -4506,10 +4506,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-typescript@3.3.0-dev.20181222:
-  version "3.3.0-dev.20181222"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.3.0-dev.20181222.tgz#f877a356797f35130e7a8e31aac94f3acd58f5e7"
-  integrity sha512-vngsINlRTs0hQjbmlySVBb3QUH/O0Sse2hPsTGXK03KUYFyo8996IYfrnfRKthTx8tymOZ+/W1vH++o+rMhWOw==
+typescript@3.3.0-dev.20181229:
+  version "3.3.0-dev.20181229"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.3.0-dev.20181229.tgz#a850c2f85963e9f166f1648580af39ca481bf5ec"
+  integrity sha512-iGESc1KSi0RmsYk1dxoxWospBoh1V/EvJeshf5Ei56rUawxhhHfS1pwa/TTar6K3NTEHqWHwZczowHZe+m6bmA==
 
 uglify-js@^3.1.4:
   version "3.4.9"

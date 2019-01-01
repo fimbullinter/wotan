@@ -2,12 +2,12 @@
   "version": "0.18.0",
   "private": true,
   "scripts": {
-    "clean": "rimraf \"{packages/*/{index,src/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
+    "clean": "rimraf \"{packages/*/{index,{src,language-service}/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
     "compile": "ttsc -p tsconfig.build.json",
     "lint:valtyr": "wotan -m @fimbul/valtyr",
     "lint:wotan": "wotan",
     "lint": "run-p \"lint:* {@}\" --",
-    "check-dependencies": "depcruise -v .dependency-cruiser.json \"{scripts/*,packages/*/{src/**/*,index,test/*.spec}}.js\"",
+    "check-dependencies": "depcruise -v .dependency-cruiser.json \"{scripts/*,packages/*/{{src,language-service}/**/*,index,test/*.spec}}.js\"",
     "test:unit": "ava \"packages/*/test/*.spec.js\" -v --snapshot-dir baselines",
     "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
     "test": "run-p \"test:* {@}\" --",
@@ -49,7 +49,7 @@
     "ttypescript": "^1.5.5"
   },
   "devDependencies": {
-    "typescript": "3.3.0-dev.20181222"
+    "typescript": "3.3.0-dev.20181229"
   },
   "peerDependencies": {
     "typescript": ">= 3.0.1 || >= 3.3.0-dev || >= 3.4.0-dev"
