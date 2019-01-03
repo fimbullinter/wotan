@@ -216,9 +216,24 @@ wotan save -c '' # clear 'config' option and update .fimbullinter.yaml
 
 Note that `.fimbullinter.yaml` can also be used to store configuration for plugin modules. See the documentation of the plugins you use if this applies to you. In that case you need to edit the file manually. Using `wotan save` will not alter third party configuration.
 
-## Excluded files
+## Linting with Type Information
 
-When linting a project (`--project` CLI option) Wotan excludes all files you haven't written yourself. The following files are always excluded so you cannot explicitly include them:
+When linting a project (`--project` CLI option) rules are able to use type information using TypeScript's API. Some rules report more findings with type information, some other rules require type information for each of their checks.
+If a rule cannot work properly without type information, you will see a warning like `Rule 'foo' requires type information.`
+
+### Special Handling of JavaScript Files
+
+TypeScript can analyze and check JavaScript files. However, it only does this if you explicitly ask for it using `"allowJs": true, "checkJs": true` in your `tsconfig.json` or by adding a `// @ts-check` comment on top of your JS files.
+A `// @ts-nocheck` comment excludes a file from type checking.
+More information is available in the official [TypeScript Handbook: Type Checking JavaScript Files](https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html).
+
+Wotan respects these flags, too. That means it will not provide type information to rules executed on unchecked JS files.
+This ensures you won't get surprising lint findings caused by funky type inference in those files.
+You will still get reports for purely syntactic findings, i.e. rules that don't require type information.
+
+### Excluded Files
+
+If type information is available Wotan excludes all files you haven't written yourself. The following files are always excluded so you cannot explicitly include them:
 
 * any files of dependencies in `node_modules` (unless imported using a relative path, e.g. `./node_modules/foo/index`)
 * declaration files from `@types` (or `typeRoots` declared in your `tsconfig.json`)
@@ -227,7 +242,7 @@ When linting a project (`--project` CLI option) Wotan excludes all files you hav
 
 This is the default behavior which can be overridden by plugin modules.
 
-If you don't lint a project, but lint individual files using the file's path or a glob pattern, you are responsible for excluding all files you don't want to lint.
+If you lint individual files without type information using the file's path or a glob pattern, you are responsible for excluding all files you don't want to lint.
 
 ## Diagnosing Misbehavior
 

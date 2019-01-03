@@ -17,8 +17,7 @@ As of writing the compiler doesn't detect this at all.
 
 Object spread only copies **own enumerable** properties of an object. TypeScript doesn't know about [enumerability and ownership of properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties). Therefore this rule may give some false-positives, for example when prototype methods are involved.
 
-To avoid a common false-positive with class methods, this rule
-treats all class methods as nonexistent. This is what TypeScript does internally during inference of object spread.
+To avoid a common false-positive with class methods, this rule treats all class methods as nonexistent. This is what TypeScript does internally during inference of object spread.
 
 ## Examples
 

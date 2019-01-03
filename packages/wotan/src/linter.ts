@@ -19,7 +19,7 @@ import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange, invertChangeRange } from './utils';
-import { ConvertedAst, convertAst } from 'tsutils';
+import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
 
@@ -117,8 +117,17 @@ export class Linter {
         processor: AbstractProcessor | undefined,
         options: LinterOptions,
     ) {
+        let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
-        const rules = this.prepareRules(config, sourceFile, program);
+        if (program !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
+            const directive = getCheckJsDirective(sourceFile.text);
+            if (directive === undefined ? !isCompilerOptionEnabled(program.getCompilerOptions(), 'checkJs') : !directive.enabled) {
+                log('Not using type information for this unchecked JS file');
+                program = undefined;
+                suppressMissingTypeInfoWarning = true;
+            }
+        }
+        const rules = this.prepareRules(config, sourceFile, program, suppressMissingTypeInfoWarning);
         let findings;
         if (rules.length === 0) {
             log('No active rules');
@@ -135,7 +144,7 @@ export class Linter {
         return processor === undefined ? findings : processor.postprocess(findings);
     }
 
-    private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
+    private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined, noWarn: boolean) {
         const rules: PreparedRule[] = [];
         for (const [ruleName, {options, severity, rulesDirectories, rule}] of config.rules) {
             if (severity === 'off')
@@ -150,11 +159,15 @@ export class Linter {
                     typeof ctor.deprecated === 'string' ? ctor.deprecated : undefined,
                 );
             if (program === undefined && ctor.requiresTypeInformation) {
-                this.logger.warn(`Rule '${ruleName}' requires type information.`);
+                if (noWarn) {
+                    log('Rule %s requires type information', ruleName);
+                } else {
+                    this.logger.warn(`Rule '${ruleName}' requires type information.`);
+                }
                 continue;
             }
             if (ctor.supports !== undefined && !ctor.supports(sourceFile, {program, options, settings: config.settings})) {
-                log(`Rule %s does not support this file`, ruleName);
+                log('Rule %s does not support this file', ruleName);
                 continue;
             }
             rules.push({ruleName, options, severity, ctor});
