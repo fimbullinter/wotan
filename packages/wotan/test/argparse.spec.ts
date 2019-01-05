@@ -85,6 +85,15 @@ test('parseGlobalOptions', (t) => {
         },
         'invalid values are ignored',
     );
+
+    t.is(parseGlobalOptions({reportUselessDirectives: 'error'}).reportUselessDirectives, 'error');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'foo?'}).reportUselessDirectives, 'error');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'warning'}).reportUselessDirectives, 'warning');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'hint'}).reportUselessDirectives, 'suggestion');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'suggestion'}).reportUselessDirectives, 'suggestion');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'off'}).reportUselessDirectives, false);
+    t.is(parseGlobalOptions({reportUselessDirectives: true}).reportUselessDirectives, true);
+    t.is(parseGlobalOptions({reportUselessDirectives: false}).reportUselessDirectives, false);
 });
 
 test('defaults to lint command', (t) => {
