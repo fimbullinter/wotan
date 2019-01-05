@@ -89,6 +89,7 @@ test('parseGlobalOptions', (t) => {
     t.is(parseGlobalOptions({reportUselessDirectives: 'error'}).reportUselessDirectives, 'error');
     t.is(parseGlobalOptions({reportUselessDirectives: 'foo?'}).reportUselessDirectives, 'error');
     t.is(parseGlobalOptions({reportUselessDirectives: 'warning'}).reportUselessDirectives, 'warning');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'warn'}).reportUselessDirectives, 'warning');
     t.is(parseGlobalOptions({reportUselessDirectives: 'hint'}).reportUselessDirectives, 'suggestion');
     t.is(parseGlobalOptions({reportUselessDirectives: 'suggestion'}).reportUselessDirectives, 'suggestion');
     t.is(parseGlobalOptions({reportUselessDirectives: 'off'}).reportUselessDirectives, false);
@@ -498,6 +499,24 @@ test('parses lint command', (t) => {
             reportUselessDirectives: false,
         },
         'uses defaults where not overridden',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        },
+        'value for --report-useless-directives is optional, default is true',
     );
 
     t.deepEqual<Command>(
