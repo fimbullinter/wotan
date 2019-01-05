@@ -47,6 +47,7 @@ LanguageService Plugin for TypeScript. Provides real-time in-editor linting whil
 
 ## Further Documentation
 
+* [Understanding TypeScript's API](https://github.com/fimbullinter/wotan/blob/master/docs/understanding-typescript-api.md)
 * [Writing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/writing-rules.md)
 * [Using local Rules](https://github.com/fimbullinter/wotan/blob/master/docs/local-rules.md)
 * [Writing Shareable Configurations](https://github.com/fimbullinter/wotan/blob/master/docs/shareable-config.md)
@@ -114,30 +115,36 @@ This one tries to avoid design decisions of other linters that turned out to be 
 * To extend a plugin or shareable config, use `extends: plugin-name`. The name will be resolved according to node's module resolution algorithm relative to the config file.
 * To use rules maintained inside your project, use `rulesDirectory: {"my-prefix": "./path/to/rules"}` and configure them as `my-prefix/rule-one: "error"`. The rules directory is a path relative to the config file.
 * Overrides: You can override the main cofiguration by specifying one or more overrides. If the filename matches the glob pattern of the override, all settings provided by that override are applied. Overrides are processed in order, later overrides override settings from preceding overrides.
-  * patterns match relative to the configuration file they are specified in
-  * patterns without a slash are only matched against the basename of each file
-  * to limit a match to the current directory, prefix the pattern with `./`
-  * a negated pattern resets any prior matches
+  * Patterns match relative to the configuration file they are specified in.
+  * Patterns without a slash are only matched against the basename of each file.
+  * To limit a match to the current directory, prefix the pattern with `./`.
+  * Negated patterns can be used to subtract from the matches of preceding patterns.
 * `linterOptions.exclude` -> `exclude`
-  * excludes are not overridden when extending a configuration
-  * pattern matching follows the same rules as overrides (see above)
-* JSON5 support for config files
-* Global settings that rules can pick up
-* Processors, even supports `--project`
+  * Excludes are not overridden when extending a configuration.
+  * Pattern matching follows the same rules as overrides (see above).
+* JSON5 support for config files.
+* Rule-independent settings that rules and processors can pick up.
+* Processors, even supports `--project`.
 * Aliases, see above
-* Fixing excludes overlapping replacements and runs a configurable number of iterations per file
-* Fixing with `--project` does not create the whole program from scratch, which makes it blazingly fast.
+* A sane and safe approach to fixing:
+  * Doesn't fix files with syntax errors.
+  * Excludes overlapping replacements to prevent destroying your code.
+  * Runs a configurable number of iterations per file to apply conflicting changes in the next iteration.
+  * Stops if fixes would introduce syntax errors.
+  * Fixing with `--project` does *not* create the whole program from scratch, which makes it blazingly fast.
 * Testing
   * Tests are configured in JSON files that can configure everything you can specify though the CLI
   * Test files don't contain error markup. That avoids syntax errors and makes them easier to maintain. Lint results and fixed content are stored in separate baseline files.
-* Supports TypeScript project references
+  * The same code can be tested with different settings.
+* Supports TypeScript project references.
 * Loads default values for CLI options from `.fimbullinter.yaml`
+* Doesn't use type information in unchecked JavaScript files (`// @ts-nocheck` or `"checkJs": false`).
 
 ## Supported Environments
 
 This project runs on all actively supported versions of Node.js.
 
-This project officially supports the latest 3 stable version of TypeScript. As of writing this is 2.8 - 3.0. It *should* work with TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
+This project officially supports the latest 3 stable version of TypeScript. As of writing this is 3.0 - 3.2. It *should* work with TypeScript's nightly builds (`typescript@next`), but there is no guarantee.
 
 Custom rules should at least use ES6 to have support for native classes. Otherwise you run into problems when trying to extend classes exported from any of the packages.
 
