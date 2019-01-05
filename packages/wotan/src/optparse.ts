@@ -58,7 +58,7 @@ export namespace OptionParser {
             };
         }
 
-        export function map<T extends U[] | undefined, U, V>(
+        export function map<T extends ReadonlyArray<U> | undefined, U, V>(
             parseFn: ParseFunction<T>,
             cb: (item: U) => V,
         ): ParseFunction<{[K in keyof T]: V}> {
@@ -95,7 +95,7 @@ export namespace OptionParser {
             };
         }
 
-        export function parsePrimitiveOrArray<T extends PrimitiveName>(type: T): ParseFunction<Array<PrimitiveMap<T>> | undefined> {
+        export function parsePrimitiveOrArray<T extends PrimitiveName>(type: T): ParseFunction<ReadonlyArray<PrimitiveMap<T>> | undefined> {
             return (value, report) => {
                 if (Array.isArray(value) && value.every((v) => typeof v === type))
                     return value;

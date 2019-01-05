@@ -39,7 +39,7 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
 }
 
 export interface ParsedGlobalOptions extends LintOptions {
-    modules: string[];
+    modules: ReadonlyArray<string>;
     formatter: string | undefined;
 }
 
@@ -177,9 +177,10 @@ function sanitizeExtensionArgument(ext: string): string {
 }
 
 function parseTestCommand(args: string[]): TestCommand {
+    const modules: string[] = [];
     const result: TestCommand = {
+        modules,
         command: CommandName.Test,
-        modules: [],
         bail: false,
         files: [],
         updateBaselines: false,
@@ -201,7 +202,7 @@ function parseTestCommand(args: string[]): TestCommand {
                 break;
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
+                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1).filter(isTruthy));

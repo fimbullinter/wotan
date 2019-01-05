@@ -500,6 +500,168 @@ test('parses lint command', (t) => {
         'uses defaults where not overridden',
     );
 
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'foo']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: ['foo'],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'false'], {reportUselessDirectives: true}),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'true']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'error']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'error',
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'warning']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'warning',
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'warn']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'warning',
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'suggestion']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'suggestion',
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'hint']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'suggestion',
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'off']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
     t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
 
     t.throws(() => parseArguments(['lint', '-m']), "Option '-m' expects an argument.");
