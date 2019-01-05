@@ -57,7 +57,7 @@ let foo /* wotan-disable-line */ = true;
                         location: {pos: 0, end: 1},
                     },
                     {
-                        rules: [{predicate: 'baz'}],
+                        rules: [{predicate: (rule) => rule === 'baz'}],
                         enable: false,
                         pos: 5,
                         end: 10,

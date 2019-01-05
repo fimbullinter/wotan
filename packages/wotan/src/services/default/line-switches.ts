@@ -14,7 +14,6 @@ import {
     Severity,
     Replacement,
 } from '@fimbul/ymir';
-import { assertNever } from '../../utils';
 
 export const LINE_SWITCH_REGEX = /^ *wotan-(enable|disable)((?:-next)?-line)?( +(?:(?:[\w-]+\/)*[\w-]+ *, *)*(?:[\w-]+\/)*[\w-]+)? *$/;
 
@@ -151,6 +150,13 @@ interface DisabledRange extends ts.TextRange {
 
 type DisableMap = Map<string, DisabledRange[]>;
 
+const stateText: Record<Exclude<SwitchState, SwitchState.Used>, (singular: boolean, mode: 'enable' | 'disable') => string> = {
+    [SwitchState.NoChange](singular, mode) { return `${singular ? 'is' : 'are'} already ${mode}d`; },
+    [SwitchState.NoMatch](singular) { return `do${singular ? 'es' : ''}n't match any rules enabled for this file`; },
+    [SwitchState.Unused](singular) { return `${singular ? 'has' : 'have'} no failures to disable`; },
+    [SwitchState.Redundant](singular, mode) { return singular ? `was already specified in this ${mode} switch` : 'are redundant'; },
+};
+
 class Filter implements FindingFilter {
     constructor(private disables: DisableMap, private switches: Switch[], private sourceFile: ts.SourceFile) {}
 
@@ -184,22 +190,14 @@ class Filter implements FindingFilter {
                 );
                 continue;
             }
-            const counts = current.rules.reduce<Partial<Record<Exclude<SwitchState, SwitchState.Redundant>, number>>>(
-                (acc, {state}) => {
-                    if (state !== SwitchState.Redundant)
-                        acc[state] = (acc[state] || 0) + 1;
-                    return acc;
-                },
-                {},
-            );
-            if (!counts[SwitchState.Used] && (!current.enable || !counts[SwitchState.Unused])) {
+            const counts = new Array<number>(SwitchState.Used + 1).fill(0);
+            for (const rule of current.rules)
+                ++counts[rule.state];
+            if (counts[SwitchState.Used] === 0 && (!current.enable || counts[SwitchState.Unused] === 0)) {
                 const errorStates = [];
-                if (counts[SwitchState.NoChange])
-                    errorStates.push(`are already ${mode}d`);
-                if (counts[SwitchState.NoMatch])
-                    errorStates.push("don't match any rules enabled for this file");
-                if (counts[SwitchState.Unused])
-                    errorStates.push('have no failures to disable');
+                for (let state = SwitchState.NoMatch; state !== SwitchState.Used; ++state)
+                    if (counts[state] !== 0)
+                        errorStates.push(stateText[state](false, mode));
                 result.push(
                     this.createFinding(
                         `${titlecase(mode)} switch has no effect. All specified rules ${join(errorStates)}.`,
@@ -209,32 +207,20 @@ class Filter implements FindingFilter {
                 );
                 continue;
             }
-            for (const ruleSwitch of current.rules) {
+            for (const ruleSwitch of current.rules)
                 if (
-                    ruleSwitch.location === undefined ||
-                    ruleSwitch.state === SwitchState.Used ||
-                    current.enable && ruleSwitch.state === SwitchState.Unused
+                    ruleSwitch.location !== undefined &&
+                    ruleSwitch.state !== SwitchState.Used &&
+                    (!current.enable || ruleSwitch.state !== SwitchState.Unused)
                 )
-                    continue;
-                let message: string;
-                switch (ruleSwitch.state) {
-                    case SwitchState.Redundant:
-                        message = `was already specified in this ${mode} switch`;
-                        break;
-                    case SwitchState.NoMatch:
-                        message = "doesn't match any rules enabled for this file";
-                        break;
-                    case SwitchState.NoChange:
-                        message = `is already ${mode}d`;
-                        break;
-                    case SwitchState.Unused:
-                        message = 'has no failures to disable';
-                        break;
-                    default:
-                        throw assertNever(ruleSwitch.state);
-                }
-                result.push(this.createFinding(`This rule ${message}.`, severity, ruleSwitch.location, ruleSwitch.fixLocation));
-            }
+                    result.push(
+                        this.createFinding(
+                            `This rule ${stateText[ruleSwitch.state](true, mode)}.`,
+                            severity,
+                            ruleSwitch.location,
+                            ruleSwitch.fixLocation,
+                        ),
+                    );
         }
         return result;
     }

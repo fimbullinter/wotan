@@ -6,7 +6,7 @@
 ~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules are already disabled.]
 // wotan-enable no-unused-label
 // wotan-disable baz, my/cool/alias, no-unused-label
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules are already disabled, don't match any rules enabled for this file or have no failures to disable.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules don't match any rules enabled for this file, are already disabled or have no failures to disable.]
 // wotan-enable-line
 // wotan-enable-line baz, bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error useless-line-switch: Enable switch has no effect. All specified rules don't match any rules enabled for this file.]

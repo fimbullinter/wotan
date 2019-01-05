@@ -388,6 +388,35 @@ ERROR 2:1  useless-line-switch  Disable switch has no effect. All specified rule
             {
                 command: CommandName.Lint,
                 modules: [],
+                files: ['1.ts'],
+                exclude: [],
+                config: '.wotanrc-empty.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: true,
+            },
+            container,
+        ),
+        false,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+ERROR 2:1  useless-line-switch  Disable switch has no effect. All specified rules don't match any rules enabled for this file.
+
+✖ 1 error
+1 finding is potentially fixable with the '--fix' option.
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.yaml',
