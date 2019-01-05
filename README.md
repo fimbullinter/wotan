@@ -91,7 +91,7 @@ He is constantly striving for wisdom. From his throne he can see everything in t
 This one tries to avoid design decisions of other linters that turned out to be problematic:
 
 - [x] Avoid name conflicts by prefixing rule names depending on the package they come from.
-  - TSLint puts all rules in a global namespace and searches them in all available rules directories. That the order of the directories matters while core rules override take precedence.
+  - TSLint puts all rules in a global namespace and searches them in all available rules directories. The order of the directories matters while core rules override take precedence.
   - ESLint allows a local rules directory as CLI flag. Rules in that directory can override core rules.
 - [x] Dependencies of config files are resolved relative to that file.
   - TSLint already does that.
@@ -100,7 +100,7 @@ This one tries to avoid design decisions of other linters that turned out to be 
   - TSLint allows you to choose between `extends` and `rulesDirectory`. The rules directory of a package is an implementation detail and should not be part of the user's config.
   - ESLint handles configs and plugins quite different. In fact they tried to deprecate shareable configs in favor of plugins.
 - [x] Lazy loading of rules to reduce startup time.
-  - TSLint already does that
+  - TSLint already does that.
   - ESLint expects plugins to provide the rules as already loaded objects. That causes a lot of overhead if you only use a few rules of a big package.
 - [x] Caching of file system access and configuration. As the Cache is a DI service, API users can clear the cache when needed.
 - [x] Support for processors from the beginning. Enabling linting of *.vue files and many more.
@@ -109,6 +109,9 @@ This one tries to avoid design decisions of other linters that turned out to be 
 - [x] "Global" configuration file (besides `.wotanrc.yaml`) for CLI defaults and plugin configuration: `.fimbullinter.yaml`. This file can be used by editor plugins as well, so there's no need to duplicate common configuration.
   - ESLint doesn't have such a file and declined to add one in the future. Tools like `standard` or `xo` wouldn't need to exist if you just needed to create such a config file with CLI defaults.
   - TSLint startet to stuff it into their `tslint.json` which leads to confused users.
+- [x] Report unused and redundant enable and disable comments (or parts thereof) with `--report-useless-directives`.
+  - ESLint reports only unused disable comments. It only reports comments that are completely unused. Redundant comments are not reported as well as enable comments for non-existent rules.
+  - TSLint does not support that.
 
 ### Differences to TSLint
 
@@ -137,8 +140,9 @@ This one tries to avoid design decisions of other linters that turned out to be 
   * Test files don't contain error markup. That avoids syntax errors and makes them easier to maintain. Lint results and fixed content are stored in separate baseline files.
   * The same code can be tested with different settings.
 * Supports TypeScript project references.
-* Loads default values for CLI options from `.fimbullinter.yaml`
+* Loads default values for CLI options from `.fimbullinter.yaml`.
 * Doesn't use type information in unchecked JavaScript files (`// @ts-nocheck` or `"checkJs": false`).
+* Reports unused and redundant enable and disable comments with `--report-useless-directives`.
 
 ## Supported Environments
 
