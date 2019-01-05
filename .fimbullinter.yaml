@@ -1,1 +1,3 @@
-project: tsconfig.build.json
+project:
+  - tsconfig.build.json
+reportUselessDirectives: true

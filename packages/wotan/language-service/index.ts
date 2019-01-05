@@ -142,7 +142,13 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         if (effectiveConfig === undefined)
             return [];
         const linter = container.get(Linter);
-        return linter.lintFile(file, effectiveConfig, program);
+        return linter.lintFile(file, effectiveConfig, program, {
+            reportUselessDirectives: globalConfig.reportUselessDirectives
+                ? globalConfig.reportUselessDirectives === true
+                    ? 'error'
+                    : globalConfig.reportUselessDirectives
+                : undefined,
+        });
     }
 
     private loadPluginModule(moduleName: string, basedir: string, options: GlobalOptions) {

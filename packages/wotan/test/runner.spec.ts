@@ -31,6 +31,7 @@ test('throws error on non-existing file', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         })),
         `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.`,
     );
@@ -54,6 +55,7 @@ test('throws error on file not included in project', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         })),
         `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in any of the projects: '${
             unixifyPath(path.resolve('packages/wotan/test/project/setup/tsconfig.json'))
@@ -89,6 +91,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         })),
         `Cannot find a tsconfig.json file at the specified directory: '${unixifyPath(root)}'`,
     );
@@ -103,6 +106,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         })),
         `The specified path does not exist: '${unixifyPath(dir)}'`,
     );
@@ -116,6 +120,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         })),
         `Cannot find tsconfig.json for directory '${unixifyPath(process.cwd())}'.`,
     );
@@ -173,6 +178,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         references: false,
         fix: false,
         extensions: undefined,
+        reportUselessDirectives: false,
     }));
     t.regex(warning, /invalid-config.json/);
     warning = '';
@@ -185,6 +191,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         references: false,
         fix: false,
         extensions: undefined,
+        reportUselessDirectives: false,
     }));
     t.regex(warning, /invalid-config.json/);
     warning = '';
@@ -197,6 +204,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         references: false,
         fix: false,
         extensions: undefined,
+        reportUselessDirectives: false,
     }));
     t.is(warning, `invalid-files.json(1,11): error TS18002: The 'files' list in config file '${
         unixifyPath(path.resolve('invalid-files.json'))
@@ -211,6 +219,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
         references: false,
         fix: false,
         extensions: undefined,
+        reportUselessDirectives: false,
     }));
     t.regex(warning, /^error TS18003:/);
 });
@@ -321,6 +330,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
         references: false,
         fix: false,
         extensions: undefined,
+        reportUselessDirectives: false,
     }));
     t.is(result.length, 1);
     t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/a.ts')));
@@ -356,6 +366,7 @@ test('works with absolute and relative paths', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         }));
         t.is(result.length, 1);
         t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
@@ -388,6 +399,7 @@ test('normalizes globs', (t) => {
             references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
         }));
         t.is(result.length, 1);
         t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')));
@@ -409,6 +421,7 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
             references: false,
             fix: true,
             extensions: undefined,
+            reportUselessDirectives: false,
         }),
         (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]],
     );

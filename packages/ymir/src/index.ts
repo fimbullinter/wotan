@@ -460,22 +460,35 @@ export interface FindingFilterContext {
 export interface FindingFilter {
     /** @returns `true` if the finding should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(finding: Finding): boolean;
+    /**
+     * @returns Findings to report redundant or unused filter directives.
+     * This is called after calling `filter` for all findings in the file.
+     */
+    reportUseless(severity: Severity): ReadonlyArray<Finding>;
 }
 
 export interface LineSwitchParser {
-    parse(context: LineSwitchParserContext): ReadonlyMap<string, ReadonlyArray<RawLineSwitch>>;
+    parse(context: LineSwitchParserContext): ReadonlyArray<RawLineSwitch>;
 }
 export abstract class LineSwitchParser {}
 
 export interface LineSwitchParserContext {
     sourceFile: ts.SourceFile;
-    ruleNames: ReadonlyArray<string>;
     getCommentAtPosition(pos: number): ts.CommentRange | undefined;
 }
 
 export interface RawLineSwitch {
+    readonly rules: ReadonlyArray<RawLineSwitchRule>;
     readonly enable: boolean;
-    readonly position: number;
+    readonly pos: number;
+    readonly end?: number;
+    readonly location: Readonly<ts.TextRange>;
+}
+
+export interface RawLineSwitchRule {
+    readonly predicate: string | RegExp | ((ruleName: string) => boolean);
+    readonly location?: Readonly<ts.TextRange>;
+    readonly fixLocation?: Readonly<ts.TextRange>;
 }
 
 export interface FileFilterContext {

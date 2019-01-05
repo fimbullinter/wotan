@@ -12,7 +12,7 @@ export const enum CommandName {
 
 export interface BaseCommand<C extends CommandName> {
     command: C;
-    modules: string[];
+    modules: ReadonlyArray<string>;
 }
 
 export interface BaseLintCommand<T extends CommandName.Lint | CommandName.Save> extends LintOptions, BaseCommand<T> {

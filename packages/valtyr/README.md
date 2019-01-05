@@ -67,6 +67,7 @@ Why should you use Wotan to execute TSLint rules?
 * Debug output to diagnose crashes.
 * Configuration caching avoids unnecessary work when linting many directories with the same config.
 * Optimized line switch parser finds `tslint:disable` comments faster with less overhead, especially in big files.
+* Reports unused and redundant `tslint:disable` comments with `--report-useless-directives` CLI option.
 * [Processor support for TSLint rules](https://github.com/palantir/tslint/issues/2099)
 * Consistently excludes external files and JSON files from linting.
 * Supports project `references`.
@@ -77,6 +78,9 @@ Why should you use Wotan to execute TSLint rules?
 * Additional startup time by loading Wotan and TSLint.
 * Wrapping rules and formatters comes with additional runtime and memory overhead.
 * For most projects there will be no noticeable difference in performance, smaller projects usually take longer to lint while bigger ones get faster.
+* Minor differences in handling disable comments:
+  * Disabling a previously disabled rule for a single line doesn't automatically enable the rule after that line.
+  * Having a disable comment in a line that is affected by a singleline disable comment might work differently: `/* tslint:disable-line */ // tslint:disable`. Since this pattern doesn't make sense most cases this shouldn't be noticeable.
 
 ## Difference to [Heimdall](https://github.com/fimbullinter/wotan/blob/master/packages/heimdall/README.md)
 

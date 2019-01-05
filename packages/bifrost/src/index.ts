@@ -17,16 +17,14 @@ import { convertAst } from 'tsutils';
 // tslint:disable-next-line:naming-convention
 export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
     return class extends AbstractRule {
-        public static requiresTypeInformation = // wotan-disable-next-line no-useless-predicate
+        public static requiresTypeInformation =
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
 
-        // wotan-disable-next-line no-useless-predicate
         public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
 
-        // wotan-disable-next-line no-useless-predicate
         public static supports = Rule.metadata && Rule.metadata.typescriptOnly
             ? isTypescriptFile
             : undefined;
@@ -69,7 +67,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
 }
 
 function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
-    if (Rule.metadata !== undefined && Rule.metadata.ruleName) // wotan-disable-line no-useless-predicate
+    if (Rule.metadata !== undefined && Rule.metadata.ruleName)
         return Rule.metadata.ruleName;
     const caller = getCaller(3);
     return path.basename(caller, path.extname(caller));
