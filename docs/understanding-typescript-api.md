@@ -29,6 +29,8 @@ This page lists some helpful ressources to learn how to use TypeScript's API and
   * Allows you to select the TypeScript version used.
   * Has settings for almost all compilerOptions.
   * Allows sharing code snippets including the compilerOptions.
+* https://github.com/phenomnomnominal/tsquery is a library for querying an AST using a CSS-selector-like syntax. You can try it out in the playground: https://tsquery-playground.firebaseapp.com/
+* https://bigtsquery.firebaseapp.com uses TSQuery to crawl through the AST of all public TypeScript files in GitHub.
 * https://github.com/ajafff/tsutils is a utility library that contains a lot of helper functions to make your life easier.
   * Most things you want to do with TypeScript's AST, there's probably already a function that does that or at least parts of it.
   * Unfortunately there's not so much documentation, so you need to look into the code to know what's available.
