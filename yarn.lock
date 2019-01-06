@@ -1594,6 +1594,11 @@ diff@^3.1.0, diff@^3.2.0, diff@^3.4.0:
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
   integrity sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==
 
+diff@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.0.tgz#1526c9d983672f830821f6a4659ace46d6092bdb"
+  integrity sha512-lUFa9WHaOWUrdd/dHkpwWHreWbGOa8MsUhdidYv+zXFBU1YI70nvshEHtJBmQbcMaK6LaTKWUIBPhbJQDltyGA==
+
 dir-glob@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/dir-glob/-/dir-glob-2.0.0.tgz#0b205d2b6aef98238ca286598a8204d29d0a0034"
