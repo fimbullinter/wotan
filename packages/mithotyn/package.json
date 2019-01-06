@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/mithotyn",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "TypeScript LanguageService plugin for the Fimbullinter project",
   "main": "index",
   "files": [

@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/wotan",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Pluggable TypeScript and JavaScript linter",
   "bin": "bin/main.js",
   "publishConfig": {
@@ -44,8 +44,8 @@
     "rimraf": "^2.6.2"
   },
   "dependencies": {
-    "@fimbul/mimir": "^0.17.0",
-    "@fimbul/ymir": "^0.17.0",
+    "@fimbul/mimir": "^0.18.0",
+    "@fimbul/ymir": "^0.18.0",
     "bind-decorator": "^1.0.11",
     "chalk": "^2.3.0",
     "debug": "^4.0.0",

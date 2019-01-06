@@ -1,5 +1,23 @@
 # Change Log
 
+## v0.18.0
+
+:warning: **Breaking Changes:**
+
+* configuration: patterns (`exclude` and `overrides[].files`) match dotfiles, e.g. `*.spec.ts` now matches `.foo.spec.ts`.
+* disable comments: handling of nested ranges changed. `//wotan-enable-line` in a line disabled by `//wotan-disable-next-line` is ignored
+* API: completely refactored `FileFilterFactory`, `FileFilter`, `LineSwitchFilterFactory`, `LineSwitchParser` and `DefaultLineSwitchParser`
+
+**Features:**
+
+* unchecked JS files (`//@ts-nocheck` or `checkJs: false`) are never linted with type information
+* added `report-useless-directives` CLI option to report unused and redundant enable and disable comments
+
+**Bugfixes:**
+
+* `wotan`: added missing exports to the public API
+* patterns in configuration files match dotfiles (see breaking changes)
+
 ## v0.17.0
 
 :tada: This release introduces a plugin for TypeScript's LanguageService. This enables in-editor linting while you type. See the [docs](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md) for more details.

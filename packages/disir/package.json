@@ -1,11 +1,11 @@
 {
   "name": "@fimbul/disir",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Rules for local development",
   "main": "src/index",
   "private": true,
   "dependencies": {
-    "@fimbul/ymir": "^0.17.0",
+    "@fimbul/ymir": "^0.18.0",
     "tslib": "^1.8.1",
     "tsutils": "^3.5.0"
   },
