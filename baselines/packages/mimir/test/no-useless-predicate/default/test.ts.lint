@@ -266,3 +266,44 @@ typeof 1 === TypeOf.String;
 ~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
 
 typeof true === get<TypeOf>();
+
+declare let arr: Array<true>;
+typeof arr[0] === 'boolean';
+typeof arr[0] === 'undefined';
+typeof arr[0] === 'number';
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!arr[0];
+arr[0] === undefined;
+!arr.length;
+!arr['length'];
+!arr[Symbol.iterator];
+ ~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+declare let tuple: [Date];
+typeof tuple[0] === 'object';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+typeof tuple[0] === 'undefined';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof tuple[0] === 'number';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!tuple[0];
+ ~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+tuple[0] === undefined;
+~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!tuple.length;
+ ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!tuple['length'];
+ ~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+declare let indexer: { [s: string]: true; foo: true; bar: true };
+!indexer.foo;
+ ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer.bar;
+ ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer.baz;
+!indexer[get<'foo'>()];
+ ~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer[get<'foo' | 'bar'>()];
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer[get<'foo' | 'baz'>()];
+!indexer[get<string>()];
