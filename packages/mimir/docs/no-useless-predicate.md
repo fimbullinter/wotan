@@ -16,6 +16,18 @@ This rule consists of 3 distinct checks to detect conditions that are always tru
 
 Types like `{}` or `{toString(): string}` could contain primitive values. Due to a lack of type relationship APIs this rule is currently unable to detect these cases and assumes such types to be always truthy and `typeof` to return `"object"`.
 
+TypeScript doesn't include `undefined` in the type of index signatures. This rule doesn't know whether a certain value came from an index signature. Therefore it reports certain false-positives:
+
+```ts
+declare let arr: Array<Date>;
+
+typeof arr[0] === 'object'; // false positive: reported as always truthy
+arr[0] === undefined; // false positive: reported as always falsy
+
+const v1 = arr[1];
+typeof v1 === 'undefined'; // false positive: reported as always falsy
+```
+
 ## Examples
 
 :thumbsdown: Examples of incorrect code
