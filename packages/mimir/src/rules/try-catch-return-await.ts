@@ -1,28 +1,20 @@
 import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import {
-    isTryStatement,
     isFunctionScopeBoundary,
     isReturnStatement,
     isParenthesizedExpression,
     isThenableType,
-    WrappedAst,
-    getWrappedNodeAtPosition,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { isAsyncFunction, childStatements } from '../utils';
+import { isAsyncFunction, childStatements, tryStatements } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     private reported = new Set<number>();
 
     public apply() {
-        const re = /\btry\s*[/{]/g;
-        let wrappedAst: WrappedAst | undefined;
-        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+        for (const node of tryStatements(this.context)) {
             if (
-                isTryStatement(node) &&
-                match.index === node.tryBlock.pos - 'try'.length &&
                 !this.reported.has(node.pos) &&
                 isInAsyncFunction(node)
             ) {

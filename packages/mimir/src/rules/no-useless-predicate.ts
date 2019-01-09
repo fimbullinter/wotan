@@ -5,7 +5,6 @@ import {
     isPrefixUnaryExpression,
     unionTypeParts,
     isFalsyType,
-    isParenthesizedExpression,
     isTypeOfExpression,
     isTextualLiteral,
     isIdentifier,
@@ -13,6 +12,7 @@ import {
     isIntersectionType,
     isStrictCompilerOptionEnabled,
 } from 'tsutils';
+import { unwrapParens } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -281,12 +281,6 @@ function truthyFalsy(type: ts.Type) {
     }
     // TODO use assignability check
     return isEmptyObjectType(type) ? undefined : true;
-}
-
-function unwrapParens(node: ts.Expression) {
-    while (isParenthesizedExpression(node))
-        node = node.expression;
-    return node;
 }
 
 function isLogicalOperator(kind: ts.BinaryOperator) {

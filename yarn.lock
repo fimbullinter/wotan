@@ -4491,6 +4491,13 @@ tsutils@^3.1.0, tsutils@^3.5.0, tsutils@^3.5.1, tsutils@^3.6.0:
   dependencies:
     tslib "^1.8.1"
 
+tsutils@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.7.0.tgz#f97bdd2f109070bd1865467183e015b25734b477"
+  integrity sha512-n+e+3q7Jx2kfZw7tjfI9axEIWBY0sFMOlC+1K70X0SeXpO/UYSB+PN+E9tIJNqViB7oiXQdqD7dNchnvoneZew==
+  dependencies:
+    tslib "^1.8.1"
+
 ttypescript@^1.5.5:
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/ttypescript/-/ttypescript-1.5.5.tgz#c8f7837764f01672911bfd5047f847c5df524842"
