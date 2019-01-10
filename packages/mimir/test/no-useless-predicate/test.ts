@@ -191,3 +191,31 @@ typeof 1 === TypeOf.Number;
 typeof 1 === TypeOf.String;
 
 typeof true === get<TypeOf>();
+
+declare let arr: Array<true>;
+typeof arr[0] === 'boolean';
+typeof arr[0] === 'undefined';
+typeof arr[0] === 'number';
+!arr[0];
+arr[0] === undefined;
+!arr.length;
+!arr['length'];
+!arr[Symbol.iterator];
+
+declare let tuple: [Date];
+typeof tuple[0] === 'object';
+typeof tuple[0] === 'undefined';
+typeof tuple[0] === 'number';
+!tuple[0];
+tuple[0] === undefined;
+!tuple.length;
+!tuple['length'];
+
+declare let indexer: { [s: string]: true; foo: true; bar: true };
+!indexer.foo;
+!indexer.bar;
+!indexer.baz;
+!indexer[get<'foo'>()];
+!indexer[get<'foo' | 'bar'>()];
+!indexer[get<'foo' | 'baz'>()];
+!indexer[get<string>()];
