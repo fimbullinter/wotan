@@ -140,6 +140,7 @@ It's not possible to enable a rule with a comment if that rule is not already en
 * `// wotan-enable` enables all rules from the start of the comment until the end of the file. Enable comments have the same mechanics as disable comments.
 * `// wotan-disable-line` disables all rules in the current line (also works with enable)
 * `// wotan-disable-next-line` disables all rules in the next line (also works with enable)
+* `// wotan-disable-next-line bar, local/baz` disables the rules `bar` and `local/baz` in the next line
 * `// wotan-enable-line foo` enables the rule `foo` in the current line
 * `// wotan-enable-next-line bar, local/baz` enables the rules `bar` and `local/baz` in the next line
 
