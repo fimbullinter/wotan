@@ -39,7 +39,7 @@ jobs:
   build:
     working_directory: '~/Project'
     docker:
-      - image: circleci/node:10@sha256:0d8db53ca1714322f6cb492155944b2deebbd7dc45f9345655baae9e0dcad2b7
+      - image: circleci/node:10@sha256:a38508c2ad622c1bdbdacaa7cdc386cddbdedb735599cfb8c854b7d7b78258d3
     steps:
       - checkout
       - restore_cache:
@@ -82,13 +82,13 @@ jobs:
     <<: *base
   test@3.1:
     docker:
-      - image: circleci/node:8@sha256:fa335a5e6518c937e4e261e79158a69c9a4c855fbc38bea89e6da720f63a3177
+      - image: circleci/node:8@sha256:38fa37bea9f5e55accb9290d6789bb5e29618f12d89ae54eee5e2db974a2c6e5
     environment:
       typescriptVersion: "3.1"
     <<: *base
   test@3.2:
     docker:
-      - image: circleci/node:10@sha256:0d8db53ca1714322f6cb492155944b2deebbd7dc45f9345655baae9e0dcad2b7
+      - image: circleci/node:10@sha256:a38508c2ad622c1bdbdacaa7cdc386cddbdedb735599cfb8c854b7d7b78258d3
     environment:
       typescriptVersion: "3.2"
     <<: *base
