@@ -1,0 +1,60 @@
+try {
+    console.log('try');
+} catch {
+} finally {
+    console.log('finally');
+}
+
+try {
+    console.log('try');
+} finally {
+    console.log('finally');
+}
+
+console.log('try');
+
+try {
+    console.log('try');
+} catch {
+}
+
+console.log('finally');
+
+console.log('finally');
+
+console.log('try');
+
+console.log('try');
+
+try {
+    console.log('try');
+} finally {
+    console.log('finally');
+}
+
+console.log('try');
+
+try {
+    console.log('try');
+} catch ({message}) {
+    throw new Error(message);
+}
+
+try {
+    console.log('try');
+} catch (e) {
+    console.log(e);
+    throw e;
+}
+
+try {
+    console.log('try');
+} catch {
+    throw e;
+}
+
+try {
+    console.log('try');
+} catch (e) {
+    throw err;
+}

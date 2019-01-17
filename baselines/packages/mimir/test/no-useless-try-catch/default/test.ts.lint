@@ -1,0 +1,139 @@
+try {
+    console.log('try');
+} catch {
+} finally {
+    console.log('finally');
+}
+
+try {
+    console.log('try');
+} finally {
+    console.log('finally');
+}
+
+try {
+~~~~~
+    console.log('try');
+~~~~~~~~~~~~~~~~~~~~~~~
+} finally {}
+~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'finally' block is empty.]
+
+try {
+    console.log('try');
+} catch {
+} finally {}
+  ~~~~~~~~~~ [error no-useless-try-catch: Empty 'finally' clause is unnecessary.]
+
+try {
+~~~~~
+} catch {}
+~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {
+~~~~~
+} catch {
+~~~~~~~~~
+    console.log('catch');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+} finally {}
+~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {
+~~~~~
+} catch {
+~~~~~~~~~
+    console.log('catch');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+} finally {
+~~~~~~~~~~~
+    console.log('finally');
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+}
+~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {
+~~~~~
+} finally {}
+~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {
+~~~~~
+} finally {
+~~~~~~~~~~~
+    console.log('finally');
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+}
+~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {
+~~~~~
+    console.log('try');
+~~~~~~~~~~~~~~~~~~~~~~~
+} catch (e) {
+~~~~~~~~~~~~~
+    throw e;
+~~~~~~~~~~~~
+}
+~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'catch' clause only rethrows the error.]
+
+try {
+~~~~~
+    console.log('try');
+~~~~~~~~~~~~~~~~~~~~~~~
+} catch (e) {
+~~~~~~~~~~~~~
+    throw e;
+~~~~~~~~~~~~
+} finally {}
+~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'catch' clause only rethrows the error.]
+
+try {
+~~~~~
+    console.log('try');
+~~~~~~~~~~~~~~~~~~~~~~~
+} catch (e) {
+~~~~~~~~~~~~~
+    throw e;
+~~~~~~~~~~~~
+} finally {
+~~~~~~~~~~~
+    console.log('finally');
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+}
+~ [error no-useless-try-catch: 'catch' clause is unnecessary because the 'catch' clause only rethrows the error.]
+
+try {
+~~~~~
+    console.log('try');
+~~~~~~~~~~~~~~~~~~~~~~~
+} catch (e) {
+~~~~~~~~~~~~~
+    throw (e);
+~~~~~~~~~~~~~~
+}
+~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'catch' clause only rethrows the error.]
+
+try {
+    console.log('try');
+} catch ({message}) {
+    throw new Error(message);
+}
+
+try {
+    console.log('try');
+} catch (e) {
+    console.log(e);
+    throw e;
+}
+
+try {
+    console.log('try');
+} catch {
+    throw e;
+}
+
+try {
+    console.log('try');
+} catch (e) {
+    throw err;
+}
