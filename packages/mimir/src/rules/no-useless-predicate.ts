@@ -11,8 +11,10 @@ import {
     isEmptyObjectType,
     isIntersectionType,
     isStrictCompilerOptionEnabled,
+    isPropertyAccessExpression,
+    isElementAccessExpression,
 } from 'tsutils';
-import { unwrapParens } from '../utils';
+import { lateBoundPropertyNames, getPropertyOfType, unwrapParens } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -151,7 +153,7 @@ export class Rule extends TypedRule {
                     return;
             }
         }
-        return this.executePredicate(this.checker.getTypeAtLocation(node)!, truthyFalsy);
+        return this.executePredicate(this.getTypeOfExpression(node), truthyFalsy);
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
@@ -178,7 +180,7 @@ export class Rule extends TypedRule {
             if (isTextualLiteral(right)) {
                 literal = right.text;
             } else {
-                let type = this.checker.getTypeAtLocation(right)!;
+                let type = this.getTypeOfExpression(right);
                 type = this.checker.getBaseConstraintOfType(type) || type;
                 if ((type.flags & ts.TypeFlags.StringLiteral) === 0)
                     return;
@@ -204,7 +206,7 @@ export class Rule extends TypedRule {
         } else {
             return;
         }
-        return this.nullAwarePredicate(this.checker.getTypeAtLocation(left)!, predicate);
+        return this.nullAwarePredicate(this.getTypeOfExpression(left), predicate);
     }
 
     private nullAwarePredicate(type: ts.Type, predicate: TypePredicate): boolean | undefined {
@@ -266,6 +268,28 @@ export class Rule extends TypedRule {
             }
         }
         return result;
+    }
+
+    private getTypeOfExpression(node: ts.Expression): ts.Type {
+        const type = this.checker.getTypeAtLocation(node);
+        if (!this.strictNullChecks)
+            return type;
+        if (unionTypeParts(type).some((t) => (t.flags & ts.TypeFlags.Undefined) !== 0))
+            return type;
+        if (!isPropertyAccessExpression(node) && !isElementAccessExpression(node))
+            return type;
+        const objectType = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
+        if (objectType.getStringIndexType() === undefined && objectType.getNumberIndexType() === undefined)
+            return type;
+        if (isPropertyAccessExpression(node)) {
+            if (objectType.getProperty(node.name.text) !== undefined)
+                return type;
+        } else {
+            const names = lateBoundPropertyNames(node.argumentExpression, this.checker);
+            if (names.known && names.properties.every(({symbolName}) => getPropertyOfType(objectType, symbolName) !== undefined))
+                return type;
+        }
+        return this.checker.getNullableType(type, ts.TypeFlags.Undefined);
     }
 }
 
