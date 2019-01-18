@@ -311,3 +311,23 @@ declare let indexer: { [s: string]: true; foo: true; bar: true };
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !indexer[get<'foo' | 'baz'>()];
 !indexer[get<string>()];
+
+'foo' in get<{}>();
+'foo' in get<{foo?: string}>();
+'foo' in get<{foo: string | undefined}>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'foo' in get<{[x: string]: string}>();
+'foo' in get<{foo: string} | {foo?: number}>();
+'foo' in get<{foo: string} | Record<string, string>>();
+
+get<'foo' | 'bar'>() in get<{foo: string}>();
+get<'foo' | 'bar'>() in get<{foo: string, bar: number}>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<string>() in get<{foo: string}>();
+get<string>() in get<{[x: string]: string}>();
+
+0 in get<[unknown]>();
+~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<0 | 'length'>() in get<[unknown]>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+0 in (get<Record<string, [unknown]>>().foo);
