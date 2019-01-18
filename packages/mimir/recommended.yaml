@@ -32,6 +32,7 @@ rules:
   no-useless-predicate: error
   no-useless-strict: error
   no-useless-spread: error
+  no-useless-try-catch: error
   prefer-const: error
   prefer-dot-notation: error
   prefer-for-of: error
