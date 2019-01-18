@@ -88,8 +88,17 @@ try {
     throw e;
 }
 
+// try {}
 try {
     console.log('try');
 } catch (e) {
     throw err;
+}
+
+() => {
+    try {
+        console.log('try');
+    } catch (e) {
+        return e;
+    }
 }
