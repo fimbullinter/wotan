@@ -8,6 +8,9 @@ if (typeof (get<new() => any>()) === 'function') {}
 if (get<any>()) {}
 if (get<unknown>()) {}
 if (get<never>()) {}
+if ((typeof 1 === 'number')) {}
+if ((get<Record<string, Function>>().foo)) {}
+if (!(get<Record<string, Function>>().foo)) {}
 while (typeof get<any>() === 'symbol') {}
 while (typeof get<unknown>() === 'symbol') {}
 while (typeof get<never>() === 'symbol') {}

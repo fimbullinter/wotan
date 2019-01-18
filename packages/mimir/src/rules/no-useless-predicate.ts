@@ -13,6 +13,7 @@ import {
     isStrictCompilerOptionEnabled,
     isPropertyAccessExpression,
     isElementAccessExpression,
+    isParenthesizedExpression,
 } from 'tsutils';
 import { lateBoundPropertyNames, getPropertyOfType, unwrapParens } from '../utils';
 
@@ -124,6 +125,7 @@ export class Rule extends TypedRule {
     }
 
     private checkCondition(node: ts.Expression) {
+        node = unwrapParens(node);
         if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken ||
             isBinaryExpression(node) && isEqualityOperator(node.operatorToken.kind))
             return; // checked later while checking into child nodes
@@ -152,6 +154,8 @@ export class Rule extends TypedRule {
                 default:
                     return;
             }
+        } else if (isParenthesizedExpression(node)) {
+            return this.isTruthyFalsy(node.expression);
         }
         return this.executePredicate(this.getTypeOfExpression(node), truthyFalsy);
     }
@@ -170,7 +174,6 @@ export class Rule extends TypedRule {
     }
 
     private checkEquals(left: ts.Expression, right: ts.Expression, equals: Equals): boolean | undefined {
-        // TODO maybe allow `arr[i] === undefined` and `arr[i] == null`
         let predicate: TypePredicate;
         if (isTypeOfExpression(left)) {
             left = unwrapParens(left.expression);
