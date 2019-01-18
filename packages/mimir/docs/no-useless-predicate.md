@@ -6,15 +6,16 @@ Detects redundant conditions that are either always true or always false.
 
 ## Rationale
 
-This rule consists of 3 distinct checks to detect conditions that are always truthy or always falsy:
+This rule consists of 4 distinct checks to detect conditions that are always truthy or always falsy:
 
 1. Expressions used as condition are checked for being always truthy or always falsy. TypeScript doesn't even try to detect if a condition always results in the same branch being chosen. This check detects when you forget to call a method or await a Promise, for example `if (checkAuthentication) {}` instead of `if (checkAuthentication()) {}`. Not using `strictNullChecks` makes this check almost useless.
 2. Comparing non-nullable values with `null` or `undefined`. TypeScript already detects invalid comparisons. However, it always allows comparing with `null` or `undefined` even if the type indicates that such a value can never occur. This check is disabled without `strictNullChecks`.
 3. Comparing `typeof v` with a type that can never occur. TypeScript only ensures you compare with a valid type.
+4. Using `key in obj` where `key` is known to be always present in `obj`. This check is disabled without `strictNullChecks`.
 
 ## :warning: Limitations
 
-Types like `{}` or `{toString(): string}` could contain primitive values. Due to a lack of type relationship APIs this rule is currently unable to detect these cases and assumes such types to be always truthy and `typeof` to return `"object"`.
+Types like `{toString(): string}` could contain primitive values. Due to a lack of type relationship APIs this rule is currently unable to detect these cases and assumes such types to be always truthy and `typeof` to return `"object"`.
 
 TypeScript doesn't include `undefined` in the type of index signatures (see [Microsoft/TypeScript#13778](https://github.com/Microsoft/TypeScript/issues/13778)). This rule doesn't know whether a certain value came from an index signature. There's some special handling to treat property access in conditions as potentially `undefined`. Unfortunately there's no reliable way to do the same if the value is assigned to an intermediate variable before using it in a condition:
 
@@ -50,6 +51,9 @@ declare var v: string | null;
 
 v === undefined; // always falsy
 typeof v === 'number'; // always falsy
+
+declare var arr: string[];
+'length' in arr; // property 'length' is always present on arrays
 ```
 
 :thumbsup: Examples of correct code
@@ -72,6 +76,10 @@ declare var v: string | null;
 v === null;
 v == undefined; // '== undefined' also includes 'null'
 typeof v === 'object'; // typeof null === 'object'
+
+declare var arr: string[];
+1 in arr; // testing for existence of an index in the array
+'foo' in arr; // property 'foo' could theoretically be present at runtime
 ```
 
 ## Further Reading
