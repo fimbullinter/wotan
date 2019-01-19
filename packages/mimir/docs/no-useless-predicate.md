@@ -6,12 +6,13 @@ Detects redundant conditions that are either always true or always false.
 
 ## Rationale
 
-This rule consists of 4 distinct checks to detect conditions that are always truthy or always falsy:
+This rule consists of 5 distinct checks to detect conditions that are always truthy or always falsy:
 
 1. Expressions used as condition are checked for being always truthy or always falsy. TypeScript doesn't even try to detect if a condition always results in the same branch being chosen. This check detects when you forget to call a method or await a Promise, for example `if (checkAuthentication) {}` instead of `if (checkAuthentication()) {}`. Not using `strictNullChecks` makes this check almost useless.
 2. Comparing non-nullable values with `null` or `undefined`. TypeScript already detects invalid comparisons. However, it always allows comparing with `null` or `undefined` even if the type indicates that such a value can never occur. This check is disabled without `strictNullChecks`.
 3. Comparing `typeof v` with a type that can never occur. TypeScript only ensures you compare with a valid type.
 4. Using `key in obj` where `key` is known to be always present in `obj`. This check is disabled without `strictNullChecks`.
+5. Comparing a literal type with itself, e.g. `true === true` or `'a' !== 'a'`. This check is disabled without `strictNullChecks`.
 
 ## :warning: Limitations
 
@@ -54,6 +55,8 @@ typeof v === 'number'; // always falsy
 
 declare var arr: string[];
 'length' in arr; // property 'length' is always present on arrays
+
+returnTrue() === true; // always truthy
 ```
 
 :thumbsup: Examples of correct code
@@ -80,6 +83,8 @@ typeof v === 'object'; // typeof null === 'object'
 declare var arr: string[];
 1 in arr; // testing for existence of an index in the array
 'foo' in arr; // property 'foo' could theoretically be present at runtime
+
+Boolean() === true;
 ```
 
 ## Further Reading

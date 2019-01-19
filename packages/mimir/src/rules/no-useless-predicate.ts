@@ -14,8 +14,9 @@ import {
     isPropertyAccessExpression,
     isElementAccessExpression,
     isParenthesizedExpression,
+    isLiteralType,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, unwrapParens } from '../utils';
+import { lateBoundPropertyNames, getPropertyOfType, unwrapParens, formatPseudoBigInt } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -198,10 +199,32 @@ export class Rule extends TypedRule {
             predicate = equals.strict ? predicates.null : predicates.nullOrUndefined;
         } else if (isUndefined(right)) {
             predicate = equals.strict ? predicates.undefined : predicates.nullOrUndefined;
+        } else if (this.strictNullChecks) {
+            const leftLiteral = this.getPrimitiveLiteral(left);
+            return leftLiteral !== undefined && leftLiteral === this.getPrimitiveLiteral(right) ? !equals.negated : undefined;
         } else {
             return;
         }
         return this.nullAwarePredicate(this.getTypeOfExpression(left), predicate);
+    }
+
+    private getPrimitiveLiteral(node: ts.Expression) {
+        // TODO reuse some logic from 'no-duplicate-case' to compute prefix unary expressions
+        let type: ts.Type | undefined = this.getTypeOfExpression(node);
+        type = this.checker.getBaseConstraintOfType(type);
+        if (type === undefined)
+            return;
+        for (const t of isIntersectionType(type) ? type.types : [type]) {
+            if (isLiteralType(t))
+                return typeof t.value === 'object' ? formatPseudoBigInt(t.value) : String(t.value);
+            if (t.flags & ts.TypeFlags.BooleanLiteral)
+                return (<{intrinsicName: string}><{}>t).intrinsicName;
+            if (t.flags & ts.TypeFlags.Undefined)
+                return 'undefined';
+            if (t.flags & ts.TypeFlags.Null)
+                return 'null';
+        }
+        return;
     }
 
     private nullAwarePredicate(type: ts.Type, predicate: TypePredicate): boolean | undefined {

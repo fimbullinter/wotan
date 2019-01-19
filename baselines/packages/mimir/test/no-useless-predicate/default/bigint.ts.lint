@@ -8,3 +8,6 @@ typeof 1n === 'object';
 ~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
 typeof 1n === 'number';
 ~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+1n === 1n;
+~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]

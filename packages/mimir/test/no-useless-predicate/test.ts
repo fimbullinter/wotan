@@ -242,3 +242,19 @@ get<0 | 'length'>() in get<[unknown]>();
 Symbol.iterator in [];
 
 if ('length' in []) {}
+
+'a' === 'a';
+'a' !== 'a';
+0 == 0;
+true === true;
+false === false;
+get<null>() === get<null>();
+get<undefined>() === get<undefined>();
+'a' === get<string>();
+get<'a' | 'b'>() === 'a';
+get<'a' | 'b'>() === get<'a' | 'b'>();
+get<Record<string, 'a'>>().foo === 'a';
+get<any>() === get<any>();
+
+type Brand<T> = T & {__brand: never};
+get<Brand<'a'>>() === get<Brand<'a'>>();
