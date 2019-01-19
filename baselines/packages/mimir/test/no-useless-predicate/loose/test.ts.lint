@@ -247,3 +247,23 @@ declare let indexer: { [s: string]: true; foo: true; bar: true };
 !indexer[get<'foo' | 'bar'>()];
 !indexer[get<'foo' | 'baz'>()];
 !indexer[get<string>()];
+
+'foo' in get<{}>();
+'foo' in get<{foo?: string}>();
+'foo' in get<{foo: string | undefined}>();
+'foo' in get<{[x: string]: string}>();
+'foo' in get<{foo: string} | {foo?: number}>();
+'foo' in get<{foo: string} | Record<string, string>>();
+
+get<'foo' | 'bar'>() in get<{foo: string}>();
+get<'foo' | 'bar'>() in get<{foo: string, bar: number}>();
+get<string>() in get<{foo: string}>();
+get<string>() in get<{[x: string]: string}>();
+
+0 in get<[unknown]>();
+get<0 | 'length'>() in get<[unknown]>();
+0 in (get<Record<string, [unknown]>>().foo);
+
+Symbol.iterator in [];
+
+if ('length' in []) {}

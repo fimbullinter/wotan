@@ -105,7 +105,7 @@ export class Rule extends TypedRule {
                 case ts.SyntaxKind.BinaryExpression:
                     if (isLogicalOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
                         this.checkCondition((<ts.BinaryExpression>node).left);
-                    } else if (isEqualityOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
+                    } else if (isEqualityOrInOperator((<ts.BinaryExpression>node).operatorToken.kind)) {
                         this.checkNode(<ts.BinaryExpression>node);
                     }
                     break;
@@ -141,6 +141,8 @@ export class Rule extends TypedRule {
         if (isBinaryExpression(node)) {
             if (isEqualityOperator(node.operatorToken.kind)) // TODO check <, >, <=, >= with literal types
                 return nested ? undefined : this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
+            if (node.operatorToken.kind === ts.SyntaxKind.InKeyword)
+                return nested ? undefined : this.isPropertyPresent(node.right, node.left);
         } else if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
             return;
         } else if (isParenthesizedExpression(node)) {
@@ -284,6 +286,24 @@ export class Rule extends TypedRule {
         }
         return this.checker.getNullableType(type, ts.TypeFlags.Undefined);
     }
+
+    private isPropertyPresent(node: ts.Expression, name: ts.Expression): true | undefined {
+        if (!this.strictNullChecks)
+            return;
+        const names = lateBoundPropertyNames(name, this.checker); // TODO lateBoundPropertyNames should also be aware of index signatures
+        if (!names.known)
+            return;
+        const types = unionTypeParts(this.checker.getApparentType(this.getTypeOfExpression(unwrapParens(node))));
+        for (const {symbolName} of names.properties) {
+            // we check every union type member separately because symbols lose optionality when accessed through union types
+            for (const type of types) {
+                const symbol = getPropertyOfType(type, symbolName);
+                if (symbol === undefined || symbol.flags & ts.SymbolFlags.Optional)
+                    return; // it might be present at runtime, so we don't return false
+            }
+        }
+        return true;
+    }
 }
 
 function isUndefined(node: ts.Expression): node is ts.Identifier {
@@ -306,6 +326,10 @@ function truthyFalsy(type: ts.Type) {
 
 function isLogicalOperator(kind: ts.BinaryOperator) {
     return kind === ts.SyntaxKind.AmpersandAmpersandToken || kind === ts.SyntaxKind.BarBarToken;
+}
+
+function isEqualityOrInOperator(kind: ts.BinaryOperator): kind is ts.EqualityOperator | ts.SyntaxKind.InKeyword {
+    return isEqualityOperator(kind) || kind === ts.SyntaxKind.InKeyword;
 }
 
 function isEqualityOperator(kind: ts.BinaryOperator): kind is ts.EqualityOperator {
