@@ -146,7 +146,8 @@ export class Rule extends TypedRule {
         } else if (isParenthesizedExpression(node)) {
             return this.isTruthyFalsy(node.expression, true);
         }
-        return this.executePredicate(this.getTypeOfExpression(node), truthyFalsy);
+        // in non-strictNullChecks mode we can only detect if a type is definitely falsy
+        return this.executePredicate(this.getTypeOfExpression(node), this.strictNullChecks ? truthyFalsy : falsy);
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
@@ -287,6 +288,10 @@ export class Rule extends TypedRule {
 
 function isUndefined(node: ts.Expression): node is ts.Identifier {
     return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
+}
+
+function falsy(type: ts.Type): false | undefined {
+    return isFalsyType(type) ? false : undefined;
 }
 
 function truthyFalsy(type: ts.Type) {
