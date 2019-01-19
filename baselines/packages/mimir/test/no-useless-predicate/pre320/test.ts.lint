@@ -100,14 +100,11 @@ get<undefined>() == null;
 !!get<boolean>();
 !get<string>();
 !!get<'foo'>();
- ~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
   ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !!get<true>();
- ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
   ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
 !get<{}>();
 !!get<false>()
- ~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
   ~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
 !get<{foo: 'bar'}>();
  ~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]

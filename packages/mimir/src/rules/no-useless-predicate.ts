@@ -111,7 +111,7 @@ export class Rule extends TypedRule {
                     break;
                 case ts.SyntaxKind.PrefixUnaryExpression:
                     if ((<ts.PrefixUnaryExpression>node).operator === ts.SyntaxKind.ExclamationToken)
-                        this.checkNode((<ts.PrefixUnaryExpression>node).operand);
+                        this.checkCondition((<ts.PrefixUnaryExpression>node).operand);
             }
         }
     }
@@ -125,15 +125,11 @@ export class Rule extends TypedRule {
     }
 
     private checkCondition(node: ts.Expression) {
-        node = unwrapParens(node);
-        if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken ||
-            isBinaryExpression(node) && isEqualityOrInOperator(node.operatorToken.kind))
-            return; // checked later while checking into child nodes
-        return this.checkNode(node);
+        return this.maybeFail(node, this.isTruthyFalsy(node, true));
     }
 
     private checkNode(node: ts.Expression) {
-        return this.maybeFail(node, this.isTruthyFalsy(node));
+        return this.maybeFail(node, this.isTruthyFalsy(node, false));
     }
 
     private maybeFail(node: ts.Node, result: boolean | undefined) {
@@ -141,25 +137,19 @@ export class Rule extends TypedRule {
             return this.addFindingAtNode(node, result ? 'Expression is always truthy.' : 'Expression is always falsy.');
     }
 
-    private isTruthyFalsy(node: ts.Expression): boolean | undefined {
+    private isTruthyFalsy(node: ts.Expression, nested: boolean): boolean | undefined {
         if (isBinaryExpression(node)) {
             if (isEqualityOperator(node.operatorToken.kind)) // TODO check <, >, <=, >= with literal types
-                return this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
+                return nested ? undefined : this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
             if (node.operatorToken.kind === ts.SyntaxKind.InKeyword)
-                return this.isPropertyPresent(node.right, node.left);
+                return nested ? undefined : this.isPropertyPresent(node.right, node.left);
         } else if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
-            switch (this.isTruthyFalsy(node.operand)) {
-                case true:
-                    return false;
-                case false:
-                    return true;
-                default:
-                    return;
-            }
+            return;
         } else if (isParenthesizedExpression(node)) {
-            return this.isTruthyFalsy(node.expression);
+            return this.isTruthyFalsy(node.expression, true);
         }
-        return this.executePredicate(this.getTypeOfExpression(node), truthyFalsy);
+        // in non-strictNullChecks mode we can only detect if a type is definitely falsy
+        return this.executePredicate(this.getTypeOfExpression(node), this.strictNullChecks ? truthyFalsy : falsy);
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
@@ -318,6 +308,10 @@ export class Rule extends TypedRule {
 
 function isUndefined(node: ts.Expression): node is ts.Identifier {
     return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
+}
+
+function falsy(type: ts.Type): false | undefined {
+    return isFalsyType(type) ? false : undefined;
 }
 
 function truthyFalsy(type: ts.Type) {
