@@ -240,3 +240,5 @@ get<0 | 'length'>() in get<[unknown]>();
 0 in (get<Record<string, [unknown]>>().foo);
 
 Symbol.iterator in [];
+
+if ('length' in []) {}
