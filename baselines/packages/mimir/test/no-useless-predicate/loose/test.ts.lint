@@ -75,7 +75,6 @@ get<undefined>() == null;
 !!get<true>();
 !get<{}>();
 !!get<false>()
- ~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
   ~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
 !get<{foo: 'bar'}>();
 
