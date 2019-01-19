@@ -142,18 +142,9 @@ export class Rule extends TypedRule {
             if (isEqualityOperator(node.operatorToken.kind)) // TODO check <, >, <=, >= with literal types
                 return nested ? undefined : this.isConstantComparison(node.left, node.right, node.operatorToken.kind);
         } else if (isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
-            if (nested)
-                return;
-            switch (this.isTruthyFalsy(node.operand, true)) {
-                case true:
-                    return false;
-                case false:
-                    return true;
-                default:
-                    return;
-            }
+            return;
         } else if (isParenthesizedExpression(node)) {
-            return this.isTruthyFalsy(node.expression, nested);
+            return this.isTruthyFalsy(node.expression, true);
         }
         return this.executePredicate(this.getTypeOfExpression(node), truthyFalsy);
     }
