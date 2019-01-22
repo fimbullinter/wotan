@@ -77,10 +77,11 @@ export class Rule extends AbstractRule {
         if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
             return [];
         const checker = this.program.getTypeChecker();
-        let type = checker.getTypeAtLocation(node)!;
+        let type = checker.getTypeAtLocation(node);
         type = checker.getBaseConstraintOfType(type) || type;
         const result = new Set<string>();
         for (const t of unionTypeParts(type)) {
+            // TODO handle intersection types
             if (isLiteralType(t)) {
                 result.add(formatPrimitive(prefixFn(t.value)));
             } else if (t.flags & ts.TypeFlags.BooleanLiteral) {

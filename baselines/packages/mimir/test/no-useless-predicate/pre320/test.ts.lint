@@ -334,3 +334,27 @@ Symbol.iterator in [];
 
 if ('length' in []) {}
     ~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+
+'a' === 'a';
+~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'a' !== 'a';
+~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+0 == 0;
+~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+true === true;
+~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+false === false;
+~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<null>() === get<null>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<undefined>() === get<undefined>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'a' === get<string>();
+get<'a' | 'b'>() === 'a';
+get<'a' | 'b'>() === get<'a' | 'b'>();
+get<Record<string, 'a'>>().foo === 'a';
+get<any>() === get<any>();
+
+type Brand<T> = T & {__brand: never};
+get<Brand<'a'>>() === get<Brand<'a'>>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
