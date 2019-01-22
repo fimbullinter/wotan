@@ -1,5 +1,19 @@
 # Change Log
 
+## v0.19.0
+
+**Features:**
+
+* new rule: `no-useless-try-catch`
+* `no-useless-predicate`: detect comparing a literal type with itself
+* `no-useless-predicate`: detect redundant uses of `key in obj` where `key` is known to always be present in `obj`
+
+**Bugfixes:**
+
+* `no-useless-predicate`: treat property access on index signatures as potentially `undefined`
+* `no-useless-predicate`: don't report expressions as "always truthy" without `strictNullChecks`
+* `no-useless-predicate`: avoid nested finding by reporting only the innermost finding
+
 ## v0.18.0
 
 :warning: **Breaking Changes:**

@@ -1,5 +1,5 @@
 {
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,{src,language-service}/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\"",
@@ -25,8 +25,8 @@
   ],
   "dependencies": {
     "@fimbul/disir": "^0.18.0",
-    "@fimbul/valtyr": "^0.18.0",
-    "@fimbul/wotan": "^0.18.0",
+    "@fimbul/valtyr": "^0.19.0",
+    "@fimbul/wotan": "^0.19.0",
     "@octokit/rest": "^16.0.1",
     "@types/cross-spawn": "^6.0.0",
     "@types/github-url-to-object": "^4.0.0",
