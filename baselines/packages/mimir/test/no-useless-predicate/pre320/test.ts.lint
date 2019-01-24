@@ -20,7 +20,6 @@ while (typeof get<unknown>() === 'symbol') {}
 while (typeof get<never>() === 'symbol') {}
 while (typeof get<{}>() === 'number') ;
 while (typeof get<{}>() == 'object') ;
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
 while (typeof get<{}>() == 'undefined') ;
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
 while (typeof get<{a: number} & {b: string}>() === 'object') ;

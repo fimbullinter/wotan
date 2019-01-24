@@ -20,7 +20,7 @@ import { lateBoundPropertyNames, getPropertyOfType, unwrapParens, formatPseudoBi
 
 interface TypePredicate {
     nullable: boolean;
-    check(type: ts.Type): boolean;
+    check(type: ts.Type): boolean | undefined;
 }
 
 interface Equals {
@@ -35,7 +35,7 @@ const predicates: Record<string, TypePredicate> = {
     object: {
         nullable: true,
         check(type) {
-            return (type.flags & primitiveFlags) === 0 && !isTypeofFunction(type);
+            return isEmptyObjectType(type) ? undefined : (type.flags & primitiveFlags) === 0 && !isTypeofFunction(type);
         },
     },
     number: {
