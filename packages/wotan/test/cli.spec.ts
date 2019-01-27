@@ -24,7 +24,7 @@ test('exits with code 0 on success', async (t) => {
 test('prints version', async (t) => {
     const version = require('../package.json').version;
     t.deepEqual(await execCli(['-v']), {stdout: `${version}\n`, stderr: '', code: 0, err: null}); // tslint:disable-line:no-null-keyword
-    t.is((await execCli(['version'])).stdout, `${version}\n`);
+    t.is((await execCli(['--version'])).stdout, `${version}\n`);
 });
 
 test('exits with code 1 on configuration error', async (t) => {

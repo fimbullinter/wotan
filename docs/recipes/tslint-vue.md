@@ -29,7 +29,7 @@ Linting Vue files with a combination of Webpack, vue-loader, ts-loader and tslin
     ```sh
     wotan # finds tsconfig.json and lints the whole project with type information according to your tslint.json
     wotan 'src/**/*.vue' -f verbose # lint all Vue files, use TSLint's verbose formatter
-    wotan -p tsconfig.json -c tslint.json --fix # lint the whole project with tslint.json and fix failures
+    wotan -p tsconfig.json -c tslint.json --fix # lint the whole project with tslint.json and fix findings
     ```
 4. Further Reading
 

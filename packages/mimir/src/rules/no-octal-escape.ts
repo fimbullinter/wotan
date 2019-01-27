@@ -18,7 +18,7 @@ export class Rule extends AbstractRule {
                 case ts.SyntaxKind.TemplateMiddle:
                 case ts.SyntaxKind.TemplateTail:
                     if (match.index >= node.getStart(this.sourceFile))
-                        this.addFailure(
+                        this.addFinding(
                             match.index + match[1].length,
                             re.lastIndex,
                             'Octal escape sequences are deprecated and not allowed in strict mode.',

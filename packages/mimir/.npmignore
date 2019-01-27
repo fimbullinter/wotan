@@ -9,3 +9,4 @@
 /*.tgz
 tsconfig.json
 .DS_Store
+/docs

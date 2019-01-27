@@ -1,7 +1,8 @@
 import { Command, CommandName, TestCommand, ShowCommand, ValidateCommand, BaseLintCommand } from './commands';
-import { ConfigurationError, Format, GlobalOptions } from '@fimbul/ymir';
+import { ConfigurationError, Format, GlobalOptions, Severity } from '@fimbul/ymir';
 import { LintOptions } from './runner';
 import debug = require('debug');
+import { OptionParser } from './optparse';
 
 const log = debug('wotan:argparse');
 
@@ -19,7 +20,7 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
             command = parseLintCommand(args.slice(1), defaults = parseGlobalOptions(globalOptions), CommandName.Save);
             break;
         default:
-            command = // wotan-disable-next-line no-useless-assertion
+            command =
                 parseLintCommand(<AssertNever<typeof commandName>>args, defaults = parseGlobalOptions(globalOptions), CommandName.Lint);
             break;
         case CommandName.Test:
@@ -38,59 +39,46 @@ export function parseArguments(args: string[], globalOptions?: GlobalOptions): C
 }
 
 export interface ParsedGlobalOptions extends LintOptions {
-    modules: string[];
+    modules: ReadonlyArray<string>;
     formatter: string | undefined;
 }
 
-export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
-    if (options === undefined)
-        return {
-            modules: [],
-            config: undefined,
-            files: [],
-            exclude: [],
-            project: undefined,
-            formatter: undefined,
-            fix: false,
-            extensions: undefined,
-        };
-    return {
-        modules: expectStringOrStringArray(options, 'modules') || [],
-        config: expectStringOption(options, 'config'),
-        files: expectStringOrStringArray(options, 'files') || [],
-        exclude: expectStringOrStringArray(options, 'exclude') || [],
-        project: expectStringOption(options, 'project'),
-        formatter: expectStringOption(options, 'formatter'),
-        fix: expectBooleanOrNumberOption(options, 'fix'),
-        extensions: (expectStringOrStringArray(options, 'extensions') || []).map(sanitizeExtensionArgument),
-    };
-}
+export const GLOBAL_OPTIONS_SPEC = {
+    modules: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    config: OptionParser.Factory.parsePrimitive('string'),
+    files: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
+    formatter: OptionParser.Factory.parsePrimitive('string'),
+    fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
+    extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
+    reportUselessDirectives: OptionParser.Transform.transform(
+        OptionParser.Factory.parsePrimitive('string', 'boolean'),
+        (value): Severity | boolean => {
+            switch (value) {
+                case true:
+                case false:
+                case 'error':
+                case 'warning':
+                case 'suggestion':
+                    return value;
+                case 'warn':
+                    return 'warning';
+                case 'hint':
+                    return 'suggestion';
+                case undefined:
+                case 'off':
+                    return false;
+                default:
+                    return 'error';
+            }
+        },
+    ),
+};
 
-function expectStringOrStringArray(options: GlobalOptions, option: string): string[] | undefined {
-    const value = options[option];
-    if (Array.isArray(value) && value.every((v) => typeof v === 'string'))
-        return value;
-    if (typeof value === 'string')
-        return [value];
-    if (value !== undefined)
-        log("Expected a value of type 'string | string[]' for option '%s'.", option);
-    return;
-}
-function expectStringOption(options: GlobalOptions, option: string): string | undefined {
-    const value = options[option];
-    if (typeof value === 'string')
-        return value;
-    if (value !== undefined)
-        log("Expected a value of type 'string' for option '%s'.", option);
-    return;
-}
-function expectBooleanOrNumberOption(options: GlobalOptions, option: string): boolean | number {
-    const value = options[option];
-    if (typeof value === 'boolean' || typeof value === 'number')
-        return value;
-    if (value !== undefined)
-        log("Expected a value of type 'boolean | number' for option '%s'.", option);
-    return false;
+export function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions {
+    return OptionParser.parse(options, GLOBAL_OPTIONS_SPEC, {context: 'global options'});
 }
 
 type AssertNever<T extends never> = T;
@@ -109,13 +97,21 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
     const extensions: string[] = [];
     const modules: string[] = [];
     const files: string[] = [];
+    const projects: string[] = [];
 
     outer: for (let i = 0; i < args.length; ++i) {
         const arg = args[i];
         switch (arg) {
             case '-p':
             case '--project':
-                result.project = expectStringArgument(args, ++i, arg) || undefined;
+                result.project = projects;
+                const project = expectStringArgument(args, ++i, arg);
+                if (project !== '')
+                    projects.push(project);
+                break;
+            case '-r':
+            case '--references':
+                ({index: i, argument: result.references} = parseOptionalBoolean(args, i));
                 break;
             case '-e':
             case '--exclude':
@@ -144,6 +140,9 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
                 result.modules = modules;
                 modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
                 break;
+            case '--report-useless-directives':
+                ({index: i, argument: result.reportUselessDirectives} = parseOptionalSeverityOrBoolean(args, i));
+                break;
             case '--':
                 result.files = files;
                 files.push(...args.slice(i + 1).filter(isTruthy));
@@ -160,7 +159,7 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
     if (result.extensions !== undefined) {
         if (result.extensions.length === 0) {
             result.extensions = undefined;
-        } else if (result.project !== undefined || result.files.length === 0) {
+        } else if (result.project.length !== 0 || result.files.length === 0) {
             throw new ConfigurationError("Options '--ext' and '--project' cannot be used together.");
         }
     }
@@ -178,9 +177,10 @@ function sanitizeExtensionArgument(ext: string): string {
 }
 
 function parseTestCommand(args: string[]): TestCommand {
+    const modules: string[] = [];
     const result: TestCommand = {
+        modules,
         command: CommandName.Test,
-        modules: [],
         bail: false,
         files: [],
         updateBaselines: false,
@@ -202,7 +202,7 @@ function parseTestCommand(args: string[]): TestCommand {
                 break;
             case '-m':
             case '--module':
-                result.modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
+                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
                 break;
             case '--':
                 result.files.push(...args.slice(i + 1).filter(isTruthy));
@@ -285,6 +285,27 @@ function parseOptionalBooleanOrNumber(args: string[], index: number): {index: nu
                 if (!Number.isNaN(num))
                     return {index: index + 1, argument: num};
             }
+        }
+    }
+    return {index, argument: true};
+}
+
+function parseOptionalSeverityOrBoolean(args: string[], index: number): {index: number, argument: Severity | boolean} {
+    if (index + 1 !== args.length) {
+        switch (args[index + 1]) {
+            case 'true':
+                return {index: index + 1, argument: true};
+            case 'false':
+            case 'off':
+                return {index: index + 1, argument: false};
+            case 'error':
+                return {index: index + 1, argument: 'error'};
+            case 'warn':
+            case 'warning':
+                return {index: index + 1, argument: 'warning'};
+            case 'hint':
+            case 'suggestion':
+                return {index: index + 1, argument: 'suggestion'};
         }
     }
     return {index, argument: true};

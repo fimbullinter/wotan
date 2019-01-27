@@ -27,7 +27,7 @@ export interface RawConfiguration {
 }
 
 export namespace RawConfiguration {
-    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
+    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error' | 'suggestion' | 'hint';
     export interface RuleConfig {
         severity?: RuleSeverity;
         options?: any;
@@ -145,10 +145,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
                 return json5.parse(this.fs.readFile(filename));
             case '.yaml':
             case '.yml':
-                return yaml.safeLoad(this.fs.readFile(filename), {
-                    schema: yaml.JSON_SCHEMA,
-                    strict: true,
-                })!;
+                return yaml.safeLoad(this.fs.readFile(filename))!;
             default:
                 return this.resolver.require(filename, {cache: false});
         }
@@ -176,7 +173,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
         return processor && this.resolver.resolve(
             processor,
             basedir,
-            Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+            undefined,
             module.paths.slice(OFFSET_TO_NODE_MODULES + 2),
         );
     }
@@ -299,6 +296,9 @@ function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration
         case 'warn':
         case 'warning':
             return 'warning';
+        case 'hint':
+        case 'suggestion':
+            return 'suggestion';
         default:
             return 'error';
     }

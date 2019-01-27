@@ -1,5 +1,141 @@
 # Change Log
 
+## v0.19.0
+
+**Features:**
+
+* new rule: `no-useless-try-catch`
+* `no-useless-predicate`: detect comparing a literal type with itself
+* `no-useless-predicate`: detect redundant uses of `key in obj` where `key` is known to always be present in `obj`
+
+**Bugfixes:**
+
+* `no-useless-predicate`: treat property access on index signatures as potentially `undefined`
+* `no-useless-predicate`: don't report expressions as "always truthy" without `strictNullChecks`
+* `no-useless-predicate`: avoid nested finding by reporting only the innermost finding
+
+## v0.18.0
+
+:warning: **Breaking Changes:**
+
+* configuration: patterns (`exclude` and `overrides[].files`) match dotfiles, e.g. `*.spec.ts` now matches `.foo.spec.ts`.
+* disable comments: handling of nested ranges changed. `//wotan-enable-line` in a line disabled by `//wotan-disable-next-line` is ignored
+* API: completely refactored `FileFilterFactory`, `FileFilter`, `LineSwitchFilterFactory`, `LineSwitchParser` and `DefaultLineSwitchParser`
+
+**Features:**
+
+* unchecked JS files (`//@ts-nocheck` or `checkJs: false`) are never linted with type information
+* added `report-useless-directives` CLI option to report unused and redundant enable and disable comments
+
+**Bugfixes:**
+
+* `wotan`: added missing exports to the public API
+* patterns in configuration files match dotfiles (see breaking changes)
+
+## v0.17.0
+
+:tada: This release introduces a plugin for TypeScript's LanguageService. This enables in-editor linting while you type. See the [docs](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md) for more details.
+
+:warning: **Breaking Changes:**
+
+* TypeScript 2.8 and 2.9 is no longer supported
+* API:
+  * `Failure` was renamed to `Finding` throughout the codebase
+  * `Resolver` adds a new required method `getDefaultExtensions`
+  * `Resolver#resolve` makes parameters `basedir` and `extensions` optional
+  * `Runner` requires a new service `FileFilterFactory`
+  * added severity `suggestion`
+
+**Features:**
+
+* new package `@fimbul/mithotyn` provides in-editor linting through a TypeScript LanguageService Plugin
+* new severity: `suggestion`
+* `--fix` can no longer introduce syntax errors
+* `async-function-assignability`: checks methods and properties with computed names
+* `async-function-assignability`: checks method overloads individually
+* new service abstraction `FileFilterFactory` and `FileFilter` allow customizing which files are linted
+* `@fimbul/ve` no longer includes the line break after the opening tag in the linted code
+* `@fimbul/ve` correctly adjusts the column of findings in the first line if there is no line break after the opening tag
+* `prefer-number-methods`: fixed finding location
+
+**Bugfixes:**
+
+* declaration files no longer contain `const enum`
+* core services no longer rely on the existence of `require`
+* YAML configuration can now contain YAML-specific types
+
+## v0.16.0
+
+**Features:**
+
+* new rule: `async-function-assignability`
+* handle `BigInt` types and literals
+* `no-duplicate-case`: correctly handles BigInt and (bitwise) negation thereof
+* `no-invalid-assertion`: adds an additional check for asserting BigInts
+* `no-useless-predicage`: allows comparing `typeof v === "bigint"`
+* `no-duplicate-spread-property`: handle spreading of type variables introduced in typescript@3.2
+
+**Bugfixes:**
+
+* `no-duplicate-case`: only use type information if `strictNullChecks` is enabled to avoid false positives
+* CLI normalizes `..` and `.` in glob patterns and file names
+* `no-duplicate-spread-property`: works with intersection types
+
+## v0.15.0
+
+**Features:**
+
+* `wotan test` now validates test configurations
+* Performance improvements using recently added Node.js file system features
+* Improved caching of directory entries
+* Work around breaking changes in TypeScript API regarding project references
+* `--fix` now merges replacements of a single fix instead of throwing an error
+* `no-useless-spread`: added check for JSX spread attributes
+
+**Bugfixes:**
+
+* `no-useless-initializer`: removed unreliable fix for object destructuring
+* `no-useless-initializer`: fixed false positive in destructuring when property is a type parameter or conditional type
+
+## v0.14.0
+
+**Features:**
+
+* Added support for [Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) added in TypeScript 3.0.0
+  * Correctly process `tsconfig.json` containing `references`
+  * Log no warning on empty `files` array if there are `references`
+  * Added `-r` or `--references` CLI option to recursively lint all `references`. This works similar to `tsc --build` but doesn't build a dependency graph. Instead it processes the projects depth-first in their specified order.
+* Allow linting multiple projects in one run by specifiying `-p` or `--project` multiple times
+* If a file was not found, report the projects it was searched in
+
+**Bugfixes:**
+
+* `typecheck`: correctly report declaration errors with `"composite": true`
+
+## v0.13.0
+
+:warning: **Breaking Changes:**
+
+* Node.js v9 is no longer officially supported
+* TypeScript v2.7 is no longer officially supported
+
+**Features:**
+
+* new rule: `no-restricted-property-access`
+* new rule: `no-useless-strict`
+* `no-useless-declare`: `declare` keyword is useless on `export`ed declarations in declaration files
+
+**Bugfixes:**
+
+* `no-duplicate-spread-property`: correctly handles computed names
+* `no-duplicate-spread-property`: exclude class getters and setters like it's already done for class methods
+* `no-duplicate-spread-property`: no error on getter and setter pair
+* `no-invalid-assertion`: handle intersection types
+* `prefer-for-of`: don't suggest `for-of` if implementation of iteration protocol contains `private` or `protected` members
+* CLI: fixed handling of `--version`
+* CLI: correctly handle absolute paths
+* fixed corrupted internal state during autofixing with `--project` without typed rules
+
 ## v0.12.0
 
 **Features:**

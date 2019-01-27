@@ -9,7 +9,13 @@ function next(...params) {
     };
 }
 
+const key = Math.random();
+/** @type {any} */
+const value = null;
+
 exports.jsIterable = {
+    [key]: value,
+    length: key + 1,
     /**
      * @param {number} defaultParam
      * @param {boolean} [optional]
@@ -22,6 +28,8 @@ exports.jsIterable = {
 }
 
 exports.jsNotIterable = {
+    [key]: value,
+    length: key + 1,
     /**
      * @param {boolean} param
      */

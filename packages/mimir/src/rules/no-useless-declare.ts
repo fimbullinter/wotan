@@ -14,7 +14,7 @@ export class Rule extends AbstractRule {
                 const declareKeyword = getModifier(statement, ts.SyntaxKind.DeclareKeyword);
                 if (declareKeyword !== undefined) {
                     const start = declareKeyword.end - 'declare'.length;
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         declareKeyword.end,
                         "Using the 'declare' keyword here is redundant as the statement has no runtime value.",

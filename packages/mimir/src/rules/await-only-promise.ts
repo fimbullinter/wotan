@@ -22,7 +22,7 @@ export class Rule extends TypedRule {
                         Replacement.append(match.index, '('),
                         Replacement.append(node.expression.end, ')'),
                     );
-                this.addFailure(
+                this.addFinding(
                     match.index,
                     node.end,
                     "Unnecessary 'await' of a non-Promise value.",
@@ -32,7 +32,7 @@ export class Rule extends TypedRule {
                 const parent = node.parent!;
                 if (isForOfStatement(parent) && !this.isAsyncIterable(parent.expression)) {
                     const start = node.pos - 'for'.length;
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         parent.statement.pos,
                         "Unnecessary 'for await' of a non-AsyncIterable value.",

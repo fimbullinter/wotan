@@ -1,15 +1,15 @@
-import test, {TestContext} from 'ava';
+import test, {ExecutionContext} from 'ava';
 import { TslintRuleLoaderHost } from '../src/rule-loader';
 import * as ts from 'typescript';
 import { RuleConstructor } from '@fimbul/wotan';
 import * as path from 'path';
 
-function testRule(t: TestContext, ctor: RuleConstructor, start: number, end: number, message: string) {
+function testRule(t: ExecutionContext, ctor: RuleConstructor, start: number, end: number, message: string) {
     let called = false;
     const instance = new ctor({
         options: undefined,
         settings: new Map(),
-        addFailure(s, e, m) {
+        addFinding(s, e, m) {
             t.is(s, start);
             t.is(e, end);
             t.is(m, message);

@@ -26,6 +26,7 @@ This library contains all core rules, formatters and configuration presets of th
 
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
+[`async-function-assignability`](docs/async-function-assignability.md) | :mag: Diallows assinging a `Promise`-returning function to a `void`-returning type. | No such rule in TSLint.
 [`await-async-result`](docs/await-async-result.md) | :mag: Warns about not using the result of a call to an async function inside async functions. | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 [`await-only-promise`](docs/await-only-promise.md) | :mag: :wrench: Finds uses of `await` on non-Promise values. Also checks `for await` loops. | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 [`ban-dom-globals`](docs/ban-dom-globals.md) | :mag: Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
@@ -42,6 +43,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-misused-generics`](docs/no-misused-generics.md) | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 [`no-nan-compare`](docs/no-nan-compare.md) | Disallows comparing with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 [`no-octal-escape`](docs/no-octal-escape.md) | :wrench: Disallows octal escape sequences in strings and template strings. | No such rule in TSLint.
+[`no-restricted-property-access`](docs/no-restricted-property-access.md) | :mag: Disallows accessing properties via computed name that would not be accessible using a static name. | TSLint has no similar rule.
 [`no-return-await`](docs/no-return-await.md) | :wrench: Disallows unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 [`no-unassigned-variable`](docs/no-unassigned-variable.md) | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.
 [`no-unreachable-code`](docs/no-unreachable-code.md) | Disallows statements that will never be executed. | TSLint removed their `no-unreachable` rule in v4.0.0.
@@ -53,21 +55,22 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-useless-declare`](docs/no-useless-declare.md) | :wrench: Disallows the `declare` keyword on statements without runtime value, e.g. `declare type T = any;`. | TSLint has no such rule.
 [`no-useless-initializer`](docs/no-useless-initializer.md) | :mag_right: :wrench: Disallows unnecessary initialization with `undefined` and useless destructuring defaults. | TSLint's rule `no-unnecessary-initializer` doesn't fix all parameter initializers and gives false positives for destructuring.
 [`no-useless-jump-label`](docs/no-useless-jump-label.md) | :wrench: Disallows `continue label;` and `break label;` where the label is not necessary. | There's no similar TSLint rule.
-`no-useless-predicate` | Detects redundant conditions that are either always true or always false. *requires type information* | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
+[`no-useless-predicate`](docs/no-useless-predicate.md) | :mag: Detects redundant conditions that are either always true or always false. | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
 [`no-useless-strict`](docs/no-useless-strict.md) | :mag_right: :wrench: Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
+[`no-useless-try-catch`](docs/no-useless-try-catch.md) | :wrench: Detects `try` statements or parts thereof that can be removed. | There's no similar TSLint rule.
 [`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 [`prefer-const`](docs/prefer-const.md) | :wrench: :nut_and_bolt: Enforces the use of `const` for variables that are never reassigned. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used before being declared which results in a compiler or runtime error after fixing.
 [`prefer-dot-notation`](docs/prefer-dot-notation.md) | :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
-`prefer-for-of` | Prefer `for-of` loops over regular `for` loops where possible. *requires type information* | Avoids the false positives of TSLint's `prefer-for-of` rule.
-`prefer-namespace-keyword` | Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
-`prefer-number-methods` | Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite` mainly for performance. *requires type information* | No similar rule in TSLint.
-`prefer-object-spread` | Prefer object spread over `Object.assign` for copying properties to a new object. *requires type information* | Performance, and better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
+[`prefer-for-of`](docs/prefer-for-of.md) | :mag: Prefer `for...of` loops over regular `for` loops where possible. | Avoids the false positives of TSLint's `prefer-for-of` rule.
+[`prefer-namespace-keyword`](docs/prefer-namespace-keyword.md) | :wrench: Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
+[`prefer-number-methods`](docs/prefer-number-methods.md) | :mag: :wrench: Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite`. | No similar rule in TSLint.
+[`prefer-object-spread`](docs/prefer-object-spread.md) | :mag: :wrench: Prefer object spread over `Object.assign` for copying properties to a new object. | Performance, better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
 [`return-never-call`](docs/return-never-call.md) | :mag: Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`. | TSLint has no similar rule.
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 [`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
 [`try-catch-return-await`](docs/try-catch-return-await.md) | :mag: :wrench: Enforces the use of `return await foo;` inside `try-catch` in async functions where `foo` is a `Promise`-like value. | TSLint has no similar rule.
-]`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
+[`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
 [`typecheck`](docs/typecheck.md) | :mag: :x: TypeScript's compile errors as lint errors. | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
 
 ## Formatters

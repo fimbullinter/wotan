@@ -46,7 +46,7 @@ export class Rule extends AbstractRule {
                         (this.hasUseStrictDirective(this.sourceFile) ? Reason.Parent : undefined);
 
                 if (reason !== undefined)
-                    this.addFailureAtNode(
+                    this.addFindingAtNode(
                         directive,
                         `Redundant 'use strict': ${reason}.`,
                         Replacement.delete(directive.pos, directive.end),

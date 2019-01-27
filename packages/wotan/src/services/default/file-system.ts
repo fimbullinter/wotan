@@ -1,4 +1,4 @@
-import { FileSystem, Stats, MessageHandler } from '@fimbul/ymir';
+import { FileSystem, Stats, MessageHandler, Dirent } from '@fimbul/ymir';
 import * as fs from 'fs';
 import { injectable } from 'inversify';
 import { unixifyPath } from '../../utils';
@@ -6,10 +6,13 @@ import * as ts from 'typescript';
 
 @injectable()
 export class NodeFileSystem implements FileSystem {
+    public static normalizePath(path: string) {
+        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+    }
     constructor(private logger: MessageHandler) {}
 
     public normalizePath(path: string) {
-        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+        return NodeFileSystem.normalizePath(path);
     }
     public readFile(file: string) {
         const buf = fs.readFileSync(file);
@@ -32,8 +35,8 @@ export class NodeFileSystem implements FileSystem {
         }
         return buf.toString('utf8'); // default to UTF8 without BOM
     }
-    public readDirectory(dir: string) {
-        return fs.readdirSync(dir);
+    public readDirectory(dir: string): Array<string | Dirent> {
+        return fs.readdirSync(dir, {withFileTypes: true});
     }
     public stat(path: string): Stats {
         return fs.statSync(path);
@@ -48,6 +51,6 @@ export class NodeFileSystem implements FileSystem {
         return fs.unlinkSync(path);
     }
     public createDirectory(dir: string): void {
-        return fs.mkdirSync(dir);
+        return fs.mkdirSync(dir, {recursive: true});
     }
 }

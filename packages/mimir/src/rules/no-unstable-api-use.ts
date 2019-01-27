@@ -106,7 +106,7 @@ export class Rule extends TypedRule {
     ) {
         for (const tag of s.getJsDocTags())
             if (tag.name === 'deprecated' || tag.name === 'experimental')
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     node,
                     `${descr(s, this.checker, hint, node)} is ${tag.name}${tag.text ? ': ' + tag.text : '.'}`,
                 );

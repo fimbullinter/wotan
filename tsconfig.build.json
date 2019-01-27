@@ -1,14 +1,19 @@
 {
   "extends": "./tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": "."
+    "rootDir": ".",
+    "plugins": [
+      { "transform": "ts-transform-const-enum" },
+      { "transform": "ts-transform-const-enum", "afterDeclarations": true }
+    ]
   },
   "include": [
     "scripts",
     "custom-typings/*.d.ts",
     "packages/*/src",
     "packages/*/index.ts",
-    "packages/*/test/*.spec.ts"
+    "packages/*/test/*.spec.ts",
+    "packages/wotan/language-service/"
   ],
   "exclude": [
     "scripts/*.d.ts",

@@ -17,16 +17,14 @@ import { convertAst } from 'tsutils';
 // tslint:disable-next-line:naming-convention
 export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
     return class extends AbstractRule {
-        public static requiresTypeInformation = // wotan-disable-next-line no-useless-predicate
+        public static requiresTypeInformation =
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
             Rule.prototype instanceof TSLint.Rules.TypedRule;
 
-        // wotan-disable-next-line no-useless-predicate
         public static deprecated = Rule.metadata && typeof Rule.metadata.deprecationMessage === 'string'
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
 
-        // wotan-disable-next-line no-useless-predicate
         public static supports = Rule.metadata && Rule.metadata.typescriptOnly
             ? isTypescriptFile
             : undefined;
@@ -55,9 +53,9 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
             const {fileName} = this.sourceFile;
             for (const failure of result) {
                 if (failure.getFileName() !== fileName)
-                    throw new Error(`Adding failures for a different SourceFile is not supported. Expected '${
+                    throw new Error(`Adding findings for a different SourceFile is not supported. Expected '${
                         fileName}' but received '${failure.getFileName()}' from rule '${this.delegate.getOptions().ruleName}'.`);
-                this.addFailure(
+                this.addFinding(
                     failure.getStartPosition().getPosition(),
                     failure.getEndPosition().getPosition(),
                     failure.getFailure(),
@@ -69,7 +67,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
 }
 
 function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
-    if (Rule.metadata !== undefined && Rule.metadata.ruleName) // wotan-disable-line no-useless-predicate
+    if (Rule.metadata !== undefined && Rule.metadata.ruleName)
         return Rule.metadata.ruleName;
     const caller = getCaller(3);
     return path.basename(caller, path.extname(caller));
@@ -90,10 +88,10 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
             let sourceFile: ts.SourceFile | undefined;
             for (let i = 0; i < summary.fixes; ++i)
                 this.fixed.push(new TSLint.RuleFailure(getSourceFile(), 0, 0, '', '', TSLint.Replacement.appendText(0, '')));
-            if (summary.failures.length === 0)
+            if (summary.findings.length === 0)
                 return;
             this.failures.push(
-                ...summary.failures.map((f) => {
+                ...summary.findings.map((f) => {
                     const failure = new TSLint.RuleFailure(
                         getSourceFile(),
                         f.start.position,
@@ -101,7 +99,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
                         f.message,
                         f.ruleName,
                         f.fix && f.fix.replacements.map(convertToTslintReplacement));
-                    failure.setRuleSeverity(f.severity);
+                    failure.setRuleSeverity(f.severity === 'suggestion' ? 'warning' : f.severity);
                     return failure;
                 }),
             );
@@ -147,7 +145,7 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
             getWrappedAst() {
                 return convertAst(sourceFile).wrapped;
             },
-            addFailure(start, end, message, fix) {
+            addFinding(start, end, message, fix) {
                 failures.push(
                     new TSLint.RuleFailure(
                         sourceFile,

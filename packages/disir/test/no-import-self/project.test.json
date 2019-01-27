@@ -1,4 +1,4 @@
 {
   "project": ".",
-  "files": ["test.ts"]
+  "files": "test.ts"
 }

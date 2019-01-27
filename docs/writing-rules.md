@@ -15,11 +15,11 @@
 
 ## Best Practices
 
-* the failure message should begin with an uppercase letter (unless it starts with `'`), end with a dot and wrap keywords and code snippets in single quotes.
+* the finding message should begin with an uppercase letter (unless it starts with `'`), end with a dot and wrap keywords and code snippets in single quotes.
 * fixes should not introduce any syntax or type errors
 * fixes should not alter the runtime semantics
 * fixes should replace the minimum amount of text necessary to avoid overlapping fixes
-* rules should not produce contradicting failures when run with and without type information
+* rules should not produce contradicting findings when run with and without type information
 
 ## Implementing the Rule
 
@@ -40,9 +40,9 @@ export class Rule extends AbstractRule {
         const cb = (node: ts.Node) => {
             // when we find AnyKeyword, we know this can only occur in type nodes
             if (node.kind === ts.SyntaxKind.AnyKeyword) {
-                // we add a failure from the start of the keyword until the end
+                // we add a finding from the start of the keyword until the end
                 // note that we don't provide any fix, since we cannot safely replace 'any' without possibly introducing type errors
-                this.addFailureAtNode(node, "Type 'any' is forbidden.");
+                this.addFindingAtNode(node, "Type 'any' is forbidden.");
             }
             // continue visiting child nodes
             ts.forEachChild(node, cb);
@@ -58,14 +58,14 @@ Note that we import from `@fimbul/ymir` instead of `@fimbul/wotan`. While the la
 ### Avoid scanning source text
 
 The implementation above works, but we can do better. So we grab the low hanging fruit first:
-`addFailureAtNode` internally calls `node.getStart(sourceFile)` which is not as cheap as it looks. Computing the start of a node is rather expensive.
+`addFindingAtNode` internally calls `node.getStart(sourceFile)` which is not as cheap as it looks. Computing the start of a node is rather expensive.
 Fortunately we know the end of the token and in this case we also know that `any` always has 3 characters.
 
 ```ts
-                this.addFailure(node.end - 3, node.end, "Type 'any' is forbidden.");
+                this.addFinding(node.end - 3, node.end, "Type 'any' is forbidden.");
 ```
 
-Now we avoid computing the start position of the node. But that's only relavant if there is a failure.
+Now we avoid computing the start position of the node. But that's only relavant if there is a finding.
 
 ### Prevent the rule from executing on certain files
 
@@ -101,7 +101,7 @@ Since we are only searching for nodes with a specific kind and are not intereste
     public apply() {
         for (const node of this.context.getFlatAst()) {
             if (node.kind === ts.SyntaxKind.AnyKeyword) {
-                this.addFailure(node.end - 3, node.end, "Type 'any' is forbidden.".)
+                this.addFinding(node.end - 3, node.end, "Type 'any' is forbidden.".)
             }
         }
     }
@@ -127,9 +127,9 @@ Why iterate an array of thousands of nodes if the whole file doesn't contain a s
             )!;
             if (
                 node.kind === ts.SyntaxKind.AnyKeyword && // makes sure this is not the content of a string, template or something else
-                node.end === match.index + 3 // avoids duplicate failures for 'let foo: /* any */ any;' because the comment is also part of the node
+                node.end === match.index + 3 // avoids duplicate findings for 'let foo: /* any */ any;' because the comment is also part of the node
             ) {
-                this.addFailure(match.index, node.end, "Type 'any' is forbidden.");
+                this.addFinding(match.index, node.end, "Type 'any' is forbidden.");
             }
         }
     }
@@ -158,9 +158,9 @@ export class Rule extends AbstractRule {
             )!;
             if (
                 node.kind === ts.SyntaxKind.AnyKeyword && // makes sure this is not the content of a string, template or something else
-                node.end === match.index + 3 // avoids duplicate failures for 'let foo: /* any */ any;' because the comment is also part of the node
+                node.end === match.index + 3 // avoids duplicate findings for 'let foo: /* any */ any;' because the comment is also part of the node
             ) {
-                this.addFailure(match.index, node.end, "Type 'any' is forbidden.");
+                this.addFinding(match.index, node.end, "Type 'any' is forbidden.");
             }
         }
     }
@@ -169,7 +169,7 @@ export class Rule extends AbstractRule {
 
 ## Adding Fixes
 
-Now that the rule finds all failures it would be nice to provide users the ability to automatically fix these failures.
+Now that the rule finds all findings it would be nice to provide users the ability to automatically fix these findings.
 For academic purposes we add fixes for our `no-any` rule, although there is no safe way to replace `any`. Keep in mind that you should not add fixes that might break at compile or runtime.
 
 Let's pretend replacing `any` with the empty object type `{}` is correct.
@@ -180,12 +180,12 @@ const end = node.end;
 const start = end - 3;
 
 // adding a single replacement as fix
-this.addFailure(start, end, "Type 'any' is forbidden.", Replacement.replace(start, end, '{}'));
+this.addFinding(start, end, "Type 'any' is forbidden.", Replacement.replace(start, end, '{}'));
 
 /* OR */
 
 // adding multiple replacements as fix, either all of them are applied or none, the order doesn't matter
-this.addFailure(start, end, "Type 'any' is forbidden.", [
+this.addFinding(start, end, "Type 'any' is forbidden.", [
     Replacement.delete(start, end),
     Replacement.append(start, '{}'),
 ]);
@@ -193,24 +193,31 @@ this.addFailure(start, end, "Type 'any' is forbidden.", [
 
 Both fixes above are treated the same internally. But there are certain restrictions:
 While overlapping replacements of different fixes are filtered out and applied in a subsequent iteration, replacements of the same fix must not overlap.
+Replacements of the same fix are not considered overlapping if their ranges are touching.
 
 * No `replace` or `delete` of the same character more than once.
-* No `replace` or `append` at the same position more than once.
 * You are allowed to `delete` and `append` at the same position as they get merged internally.
+* `append`ing multiple times at the same position merges the insertions in order of occurrence.
 
-Some examples of invalid fixes:
+Some examples:
 
 ```ts
 [
   Replacement.delete(start, end),
   Replacement.append(start, '{'),
-  Replacement.append(start, '}'), // overlaps with the previous replacement
+  Replacement.append(start, '}'),
 ];
+// same as
+Replacement.replace(start, end, '{}');
+
 
 [
   Replacement.replace(start, end, '{'),
-  Replacement.append(start, '}'), // overlaps with the previous replacement
+  Replacement.append(start, '}'), // order matters, swapping with the previous line gives a different result
 ];
+// same as
+Replacement.replace(start, end, '{}');
+
 
 [
   Replacement.delete(start, end),

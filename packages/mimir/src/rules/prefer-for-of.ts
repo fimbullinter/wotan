@@ -50,7 +50,7 @@ export class Rule extends TypedRule {
         if (!isReadonlyArrayAccess(this.usage.get(indexVariable)!.uses, arrayVariable.getText(this.sourceFile), node, this.sourceFile))
             return;
         if (this.isIterationPossible(arrayVariable))
-            this.addFailure(
+            this.addFinding(
                 node.getStart(this.sourceFile),
                 node.statement.pos,
                 `Prefer a 'for-of' loop over a 'for' loop for this simple iteration.`,
@@ -95,21 +95,21 @@ export class Rule extends TypedRule {
         if (indexType === undefined)
             return false;
         const iteratorFn = type.getProperties().find((p) => p.escapedName === '__@iterator');
-        if (!isPresentAndRequired(iteratorFn))
+        if (!isPresentPublicAndRequired(iteratorFn))
             return false;
         return checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(iteratorFn, node), (iterator) => {
             const next = iterator.getProperty('next');
-            return isPresentAndRequired(next) &&
+            return isPresentPublicAndRequired(next) &&
                 checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(next, node), (iteratorResult) => {
                     const done = iteratorResult.getProperty('done');
                     if (
-                        !isPresentAndRequired(done) ||
+                        !isPresentPublicAndRequired(done) ||
                         !unionTypeParts(this.checker.getTypeOfSymbolAtLocation(done, node))
                             .every((t) => isTypeFlagSet(t, ts.TypeFlags.BooleanLike))
                     )
                         return false;
                     const value = iteratorResult.getProperty('value');
-                    return isPresentAndRequired(value) &&
+                    return isPresentPublicAndRequired(value) &&
                         typesAreEqual(this.checker.getTypeOfSymbolAtLocation(value, node), indexType, this.checker);
                 });
 
@@ -149,8 +149,12 @@ function isOptionalParameter(node: ts.ParameterDeclaration): boolean {
     return isOptionalParameter(parameters[nextIndex]);
 }
 
-function isPresentAndRequired(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
-    return symbol !== undefined && !isSymbolFlagSet(symbol, ts.SymbolFlags.Optional);
+function isPresentPublicAndRequired(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
+    return symbol !== undefined && !isSymbolFlagSet(symbol, ts.SymbolFlags.Optional) &&
+        (
+            symbol.declarations === undefined ||
+            symbol.declarations.every((d) => (ts.getCombinedModifierFlags(d) & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
+        );
 }
 
 function isReadonlyArrayAccess(uses: VariableUse[], arrayVariable: string, statement: ts.ForStatement, sourceFile: ts.SourceFile): boolean {

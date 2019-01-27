@@ -99,3 +99,12 @@ declare namespace ambientNamespace {
         var2,
     };
 }
+
+for (var element of new Array(element)) {
+    element;
+}
+
+for (var element2 of []) {
+         ~~~~~~~~          [error prefer-const: Variable 'element2' is never reassigned. Prefer 'const' instead of 'var'.]
+    element2;
+}

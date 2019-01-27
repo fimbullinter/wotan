@@ -9,9 +9,10 @@ import {
     DirectoryService,
     DeprecationHandler,
     ConfigurationProvider,
-    FailureFilterFactory,
+    FindingFilterFactory,
     LineSwitchParser,
     BuiltinResolver,
+    FileFilterFactory,
 } from '@fimbul/ymir';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
@@ -24,6 +25,7 @@ import { DefaultDeprecationHandler } from '../services/default/deprecation-handl
 import { DefaultConfigurationProvider } from '../services/default/configuration-provider';
 import { DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/default/line-switches';
 import { DefaultBuiltinResolver } from '../services/default/builtin-resolver';
+import { DefaultFileFilterFactory } from '../services/default/file-filter';
 
 export function createDefaultModule() {
     return new ContainerModule((bind, _unbind, isBound) => {
@@ -45,11 +47,13 @@ export function createDefaultModule() {
             bind(DirectoryService).to(NodeDirectoryService);
         if (!isBound(ConfigurationProvider))
             bind(ConfigurationProvider).to(DefaultConfigurationProvider);
-        if (!isBound(FailureFilterFactory))
-            bind(FailureFilterFactory).to(LineSwitchFilterFactory);
+        if (!isBound(FindingFilterFactory))
+            bind(FindingFilterFactory).to(LineSwitchFilterFactory);
         if (!isBound(LineSwitchParser))
             bind(LineSwitchParser).to(DefaultLineSwitchParser);
         if (!isBound(BuiltinResolver))
             bind(BuiltinResolver).to(DefaultBuiltinResolver);
+        if (!isBound(FileFilterFactory))
+            bind(FileFilterFactory).to(DefaultFileFilterFactory);
     });
 }

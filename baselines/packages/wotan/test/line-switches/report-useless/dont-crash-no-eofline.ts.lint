@@ -1,0 +1,2 @@
+/*wotan-disable-next-line*/ debugger; //wotan-disable-line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~                                [error useless-line-switch: Disable switch has no effect. The specified range doesn't exits.]

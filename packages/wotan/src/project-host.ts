@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined, hasParseErrors } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -15,14 +15,14 @@ const additionalExtensions = ['.json'];
 // @internal
 export interface ProcessedFileInfo {
     originalName: string;
-    originalContent: string;
+    originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
 // @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
-    private files = new Set<string>();
+    private files: string[] = [];
     private directoryEntries = new Map<string, ts.FileSystemEntries>();
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
@@ -39,8 +39,23 @@ export class ProjectHost implements ts.CompilerHost {
     public getProcessedFileInfo(fileName: string) {
         return this.processedFiles.get(fileName);
     }
-    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
-        return resolveCachedResult(this.directoryEntries, dir, this.processDirectory);
+    public readDirectory(
+        rootDir: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        depth?: number,
+    ) {
+        return ts.matchFiles(
+            rootDir,
+            extensions,
+            excludes,
+            includes,
+            this.useCaseSensitiveFileNames(),
+            this.cwd,
+            depth,
+            (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+        );
     }
     /**
      * Try to find and load the configuration for a file.
@@ -60,15 +75,15 @@ export class ProjectHost implements ts.CompilerHost {
         const files: string[] = [];
         const directories: string[] = [];
         const result: ts.FileSystemEntries = {files, directories};
-        let entries: string[];
+        let entries;
         try {
             entries = this.fs.readDirectory(dir);
         } catch {
             return result;
         }
         for (const entry of entries) {
-            const fileName = `${dir}/${entry}`;
-            switch (this.fs.getKind(fileName)) {
+            const fileName = `${dir}/${entry.name}`;
+            switch (entry.kind) {
                 case FileKind.File: {
                     if (!hasSupportedExtension(fileName, additionalExtensions)) {
                         const c = this.config || this.tryFindConfig(fileName);
@@ -89,7 +104,7 @@ export class ProjectHost implements ts.CompilerHost {
                         }
                     }
                     files.push(fileName);
-                    this.files.add(fileName);
+                    this.files.push(fileName);
                     break;
                 }
                 case FileKind.Directory:
@@ -116,7 +131,7 @@ export class ProjectHost implements ts.CompilerHost {
     }
 
     public getFileSystemFile(file: string): string | undefined {
-        if (this.files.has(file))
+        if (this.files.includes(file))
             return file;
         const reverse = this.reverseMap.get(file);
         if (reverse !== undefined)
@@ -178,7 +193,10 @@ export class ProjectHost implements ts.CompilerHost {
         const cached = this.directoryEntries.get(dir);
         if (cached !== undefined)
             return cached.directories.map((d) => path.posix.basename(d));
-        return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
+        return mapDefined(
+            this.fs.readDirectory(dir),
+            (entry) => entry.kind === FileKind.Directory ? path.join(dir, entry.name) : undefined,
+        );
     }
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(
@@ -191,15 +209,63 @@ export class ProjectHost implements ts.CompilerHost {
         );
     }
 
+    public createProgram(
+        rootNames: ReadonlyArray<string>,
+        options: ts.CompilerOptions,
+        oldProgram: ts.Program | undefined,
+        projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
+    ) {
+        return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
+    }
+
     public updateSourceFile(
         sourceFile: ts.SourceFile,
         program: ts.Program,
         newContent: string,
-        changeRange: ts.TextChangeRange,
-    ): {sourceFile: ts.SourceFile, program: ts.Program} {
-        sourceFile = ts.updateSourceFile(sourceFile, newContent, changeRange);
+        _changeRange: ts.TextChangeRange,
+    ): {sourceFile: ts.SourceFile, program: ts.Program, error: boolean} {
+        // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
+        const newSourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
+        if (hasParseErrors(newSourceFile)) {
+            // if we ever switch back to using 'ts.updateSourceFile' above,
+            // we need to create a new Program because the old SourceFile it references is now corrupted
+            log("Not using updated content of '%s' because of syntax errors", sourceFile.fileName);
+            return {program, sourceFile, error: true};
+        }
+
+        sourceFile = newSourceFile;
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
-        program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
-        return {sourceFile, program};
+
+        program = this.createProgram(
+            program.getRootFileNames(),
+            program.getCompilerOptions(),
+            program,
+            getReferencesOfProgram(program),
+        );
+        return {sourceFile, program, error: false};
     }
+
+    public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
+        // this is only called for paths that are no longer referenced
+        // it's safe to remove the cache entry completely because it won't be called with updated SourceFiles
+        this.uncacheFile(sourceFile.fileName);
+    }
+
+    public uncacheFile(fileName: string) {
+        this.sourceFileCache.delete(fileName);
+        this.processedFiles.delete(fileName);
+    }
+}
+
+function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectReference> | undefined {
+    const references = program.getProjectReferences();
+    if (references === undefined)
+        return;
+    // for compatibility with TypeScript@<3.1.1
+    if (program.getResolvedProjectReferences === undefined)
+        return mapDefined(
+            <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>references,
+            (ref) => ref && {path: ref.sourceFile.fileName},
+        );
+    return references;
 }

@@ -24,6 +24,17 @@ export function* switchStatements(context: RuleContext) {
     }
 }
 
+export function* tryStatements(context: RuleContext) {
+    const {text} = context.sourceFile;
+    const re = /\btry\s*[{/]/g;
+    let wrappedAst: WrappedAst | undefined;
+    for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
+            yield <ts.TryStatement>node;
+    }
+}
+
 export function isAsyncFunction(node: ts.Node): node is ts.FunctionLikeDeclaration & {body: ts.Block} {
     switch (node.kind) {
         case ts.SyntaxKind.FunctionDeclaration:
@@ -161,10 +172,10 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {argumentExpression} = node;
     if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
         return;
-    yield* propertiesOfType(
-        checker.getApparentType(checker.getTypeAtLocation(node.expression)!),
-        lateBoundPropertyNames(argumentExpression, checker).properties,
-    );
+    const {properties} = lateBoundPropertyNames(argumentExpression, checker);
+    if (properties.length === 0)
+        return;
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), properties);
 }
 
 export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
@@ -208,7 +219,7 @@ export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChec
                 const name = String(key.value);
                 properties.push({
                     name,
-                    symbolName: escapeIdentifier(name),
+                    symbolName: ts.escapeLeadingUnderscores(name),
                 });
             } else {
                 known = false;
@@ -216,10 +227,6 @@ export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChec
         }
     }
     return {known, properties};
-}
-
-export function escapeIdentifier(name: string): ts.__String {
-    return <ts.__String>(name.startsWith('__') ? '_' + name : name);
 }
 
 export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
@@ -243,4 +250,14 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
         default:
             return false;
     }
+}
+
+export function formatPseudoBigInt(v: ts.PseudoBigInt) {
+    return `${v.negative ? '-' : ''}${v.base10Value}n`;
+}
+
+export function unwrapParens(node: ts.Expression) {
+    while (node.kind === ts.SyntaxKind.ParenthesizedExpression)
+        node = (<ts.ParenthesizedExpression>node).expression;
+    return node;
 }

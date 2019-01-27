@@ -14,7 +14,11 @@
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declaration": true
+    "declaration": true,
+    "stripInternal": true,
+    "plugins": [
+      {"name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true}
+    ]
   },
   "include": [
   ]

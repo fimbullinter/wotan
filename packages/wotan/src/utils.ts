@@ -64,12 +64,7 @@ function convertToPrintable(value: any): any {
         value = obj;
     }
     if (Array.isArray(value)) {
-        const result = [];
-        for (const element of value) {
-            const converted = convertToPrintable(element);
-            if (converted !== undefined)
-                result.push(converted);
-        }
+        const result = mapDefined(value, convertToPrintable);
         return result.length === 0 ? undefined : result;
     }
     const keys = Object.keys(value);
@@ -100,7 +95,6 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
         ;
     if (start !== minEnd) {
         const maxStart = end - minEnd + start;
-        // tslint:disable-next-line:ban-comma-operator
         for (let changedEnd = changed.length; maxStart < end && original[end - 1] === changed[changedEnd - 1]; --end, --changedEnd)
             ;
     }
@@ -118,4 +112,63 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
 export function hasSupportedExtension(fileName: string, extensions?: ReadonlyArray<string>) {
     const ext = path.extname(fileName);
     return /^\.[jt]sx?$/.test(ext) || extensions !== undefined && extensions.includes(ext);
+}
+
+export function mapDefined<T, U>(input: Iterable<T>, cb: (item: T) => U | undefined) {
+    const result = [];
+    for (const item of input) {
+        const current = cb(item);
+        if (current !== undefined)
+            result.push(current);
+    }
+    return result;
+}
+
+export function flatMap<T, U>(input: Iterable<T>, cb: (item: T) => Iterable<U>) {
+    const result = [];
+    for (const item of input)
+        result.push(...cb(item));
+    return result;
+}
+
+/**
+ * Adds an item to an array if it's not already included.
+ * @returns true if the item was not present in the array
+ * */
+export function addUnique<T>(arr: T[], item: T & {[K in keyof T]: T[K]}) {
+    if (arr.includes(item))
+        return false;
+    arr.push(item);
+    return true;
+}
+
+export function createParseConfigHost(
+    host: Required<Pick<ts.CompilerHost, 'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists'>>,
+): ts.ParseConfigHost {
+    return {
+        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
+        readDirectory(rootDir, extensions, excludes, includes, depth) {
+            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
+        },
+        fileExists(f) {
+            return host.fileExists(f);
+        },
+        readFile(f) {
+            return host.readFile(f);
+        },
+    };
+}
+
+export function hasParseErrors(sourceFile: ts.SourceFile) {
+    return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
+}
+
+export function invertChangeRange(range: ts.TextChangeRange): ts.TextChangeRange {
+    return {
+        span: {
+            start: range.span.start,
+            length: range.newLength,
+        },
+        newLength: range.span.length,
+    };
 }

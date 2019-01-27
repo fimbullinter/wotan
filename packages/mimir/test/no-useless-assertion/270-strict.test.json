@@ -1,5 +1,0 @@
-{
-  "project": "tsconfig.json",
-  "files": ["global.ts", "non-null.ts", "type-assertion.ts"],
-  "typescriptVersion": "~2.7.0"
-}

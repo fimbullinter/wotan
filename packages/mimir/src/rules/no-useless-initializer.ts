@@ -8,12 +8,13 @@ import {
     getPreviousToken,
     getNextToken,
     getPropertyName,
-    unionTypeParts,
     isReassignmentTarget,
     isBinaryExpression,
     isStrictCompilerOptionEnabled,
+    isInstantiableType,
+    isUnionType,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName, escapeIdentifier } from '../utils';
+import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -71,7 +72,7 @@ export class Rule extends AbstractRule {
             }
             const symbol = checker.getPropertySymbolOfDestructuringAssignment(name);
             if (symbol !== undefined && !symbolMaybeUndefined(checker, symbol, name))
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     errorNode,
                     "Unnecessary default value as this property is never 'undefined'.",
                     Replacement.delete(getChildOfKind(errorNode.parent!, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, errorNode.end),
@@ -91,14 +92,10 @@ export class Rule extends AbstractRule {
             const lateBoundNames = propNames(element, i, checker);
             if (!lateBoundNames.known || lateBoundNames.properties.some(maybeUndefined))
                 continue;
-            const fix = checker.getTypeAtLocation(element.name)!.flags & (ts.TypeFlags.Union | ts.TypeFlags.Any | ts.TypeFlags.Unknown)
-                // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
-                // destructured type. The type of the variable then includes the type of the initializer as well.
-                // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
-                // We try to prevent errors by checking if the resulting type is a union type.
-                ? undefined
-                : Replacement.delete(getChildOfKind(element, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, element.end);
-            this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.", fix);
+            // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
+            // destructured type. The type of the variable then includes the type of the initializer as well.
+            // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
+            this.addFindingAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
         }
 
         function maybeUndefined({symbolName}: LateBoundPropertyName) {
@@ -130,7 +127,7 @@ export class Rule extends AbstractRule {
                 fix.push(removeUndefined);
             message += ' Use an optional parameter instead.';
         }
-        this.addFailure(node.end - 'undefined'.length, node.end, message, fix);
+        this.addFinding(node.end - 'undefined'.length, node.end, message, fix);
     }
 
     private removeUndefinedFromType(type: ts.TypeNode | undefined): Replacement | undefined {
@@ -150,7 +147,7 @@ export class Rule extends AbstractRule {
 function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker) {
     const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
     return staticName !== undefined
-        ? {known: true, properties: [{name: staticName, symbolName: escapeIdentifier(staticName)}]}
+        ? {known: true, properties: [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
         : lateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
 
 }
@@ -163,8 +160,19 @@ function getArrayPropertyName(_: ts.BindingElement, i: number) {
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
     if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.escapedName) ? 0 : ts.SymbolFlags.Transient)))
         return true;
-    return unionTypeParts(checker.getTypeOfSymbolAtLocation(symbol, node))
-        .some((t) => (t.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0);
+    return typeMaybeUndefined(checker, checker.getTypeOfSymbolAtLocation(symbol, node));
+}
+
+function typeMaybeUndefined(checker: ts.TypeChecker, type: ts.Type): boolean {
+    if (isInstantiableType(type)) {
+        const constraint = checker.getBaseConstraintOfType(type);
+        if (constraint === undefined)
+        return true;
+        type = constraint;
+    }
+    if (isUnionType(type))
+        return type.types.some((t) => typeMaybeUndefined(checker, t));
+    return (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0;
 }
 
 function isUndefined(node: ts.Expression) {

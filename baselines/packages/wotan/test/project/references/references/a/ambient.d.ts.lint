@@ -1,0 +1,2 @@
+declare var someGlobal: "a";
+                        ~~~  [error local/quotemark: Prefer single quotes]

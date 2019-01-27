@@ -1,0 +1,4 @@
+import { C } from "../c";
+                  ~~~~~~  [error local/quotemark: Prefer single quotes]
+
+export class D extends C {}

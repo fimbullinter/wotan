@@ -1,0 +1,4 @@
+{
+  "exclude": "bigint.ts",
+  "typescriptVersion": "< 3.2.0"
+}

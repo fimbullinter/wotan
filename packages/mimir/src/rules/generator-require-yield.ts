@@ -46,7 +46,7 @@ export class Rule extends AbstractRule {
     }
 
     private fail({asteriskToken, name}: GeneratorDeclaration) {
-        this.addFailure(
+        this.addFinding(
             asteriskToken.end - 1,
             asteriskToken.end,
             `Generator ${name === undefined ? '' : `'${name.getText(this.sourceFile).replace(/'/g, "\\'")}' `}contains no 'yield'.`,

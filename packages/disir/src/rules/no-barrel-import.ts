@@ -15,7 +15,7 @@ export class Rule extends AbstractRule {
                 resolved = path.dirname(resolved);
             if (!path.relative(resolved, this.sourceFile.fileName).startsWith('..')) {
                 const start = name.getStart(this.sourceFile);
-                this.addFailure(
+                this.addFinding(
                     start,
                     name.end,
                     'Import directly from the module containing the declaration instead of the barrel.',

@@ -3,7 +3,7 @@
 :mag_right: checks `--alwaysStrict` compilerOption when type information is available
 :wrench: fixable
 
-Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
+Disallows redundant `'use strict';` directives.
 
 ## Rationale
 

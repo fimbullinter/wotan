@@ -31,6 +31,6 @@ export class Rule extends TypedRule {
     private checkSymbol(symbol: ts.Symbol | undefined, errorNode: ts.Node, name?: string) {
         if (symbol === undefined || symbol.flags & ts.SymbolFlags.Optional)
             return;
-        this.addFailureAtNode(errorNode, `Only 'delete' optional properties. Property '${name || symbol.name}' is required.`);
+        this.addFindingAtNode(errorNode, `Only 'delete' optional properties. Property '${name || symbol.name}' is required.`);
     }
 }

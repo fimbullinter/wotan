@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { test } from 'ava';
+import test from 'ava';
 import { Container, injectable } from 'inversify';
 import {
     CacheFactory,
@@ -10,10 +10,12 @@ import {
     AbstractRule,
     DeprecationHandler,
     EffectiveConfiguration,
-    Failure,
+    Finding,
     Replacement,
-    FailureFilterFactory,
+    FindingFilterFactory,
     LineSwitchParser,
+    AbstractProcessor,
+    LintAndFixFileResult,
 } from '@fimbul/ymir';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { RuleLoader } from '../src/services/rule-loader';
@@ -21,22 +23,23 @@ import { Linter } from '../src/linter';
 import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
 import { LineSwitchFilterFactory, DefaultLineSwitchParser } from '../src/services/default/line-switches';
+import { calculateChangeRange } from '../src/utils';
 
 class MyTypedRule extends TypedRule {
     public apply() {
-        this.addFailure(0, 0, 'message');
+        this.addFinding(0, 0, 'message');
     }
 }
 class MyDeprecatedRule extends AbstractRule {
     public static deprecated: boolean | string = true;
     public apply() {
-        this.addFailure(0, 0, 'message', []);
+        this.addFinding(0, 0, 'message', []);
     }
 }
 class MyCustomDeprecatedRule extends AbstractRule {
     public static deprecated = 'Use that other rule instead.';
     public apply() {
-        this.addFailure(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
+        this.addFinding(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
     }
 }
 
@@ -46,7 +49,7 @@ test('Linter', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(RuleLoader).toSelf();
     container.bind(DeprecationHandler).to(DefaultDeprecationHandler);
-    container.bind(FailureFilterFactory).to(LineSwitchFilterFactory);
+    container.bind(FindingFilterFactory).to(LineSwitchFilterFactory);
     container.bind(LineSwitchParser).to(DefaultLineSwitchParser);
     container.bind(MessageHandler).toConstantValue({
         log() {
@@ -103,7 +106,7 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 1);
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -122,7 +125,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 2);
     t.is(warnings[1], "Rule 'my/alias' is deprecated.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -143,7 +146,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 3);
     t.is(warnings[2], "Rule 'my/other/alias' is deprecated: Use that other rule instead.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -155,7 +158,7 @@ test('Linter', (t) => {
     t.is(warnings.length, 4);
     t.is(warnings[3], "Could not find core rule 'non-existent'.");
 
-    t.deepEqual<ReadonlyArray<Failure>>(
+    t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(sourceFile, {
             settings: new Map(),
             rules: new Map<string, EffectiveConfiguration.RuleConfig>([
@@ -166,4 +169,155 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 5);
     t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        linter.lintFile(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['my/typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, 'Should emit a warning about missing type information in an unchecked JS file');
+    t.is(warnings[5], "Rule 'my/typed' requires type information.");
+
+    function lintWithProgram(file: ts.SourceFile, options: ts.CompilerOptions, config: EffectiveConfiguration) {
+        return linter.lintFile(file, config, createFakeProgram(file, options));
+    }
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {allowJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked JS file");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', '// @ts-nocheck\nfoo;', ts.ScriptTarget.ESNext), {allowJs: true, checkJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked JS file");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {allowJs: true, checkJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [{
+            ruleName: 'typed',
+            fix: undefined,
+            message: 'message',
+            severity: 'error',
+            start: {position: 0, line: 0, character: 0},
+            end: {position: 0, line: 0, character: 0},
+        }],
+        'Should lint checked JS file with type information',
+    );
+    t.is(warnings.length, 6);
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.js', '// @ts-check\nfoo;', ts.ScriptTarget.ESNext), {allowJs: true}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [{
+            ruleName: 'typed',
+            fix: undefined,
+            message: 'message',
+            severity: 'error',
+            start: {position: 0, line: 0, character: 0},
+            end: {position: 0, line: 0, character: 0},
+        }],
+        'Should lint checked JS file with type information',
+    );
+    t.is(warnings.length, 6);
+
+    class Processor extends AbstractProcessor {
+        public preprocess(): never {
+            throw new Error('should not be called');
+        }
+        public postprocess(findings: ReadonlyArray<Finding>) {
+            return findings;
+        }
+        public updateSource(newSource: string, changeRange: ts.TextChangeRange) {
+            t.deepEqual(changeRange, calculateChangeRange(this.source, newSource));
+            this.source = newSource;
+            return {
+                changeRange,
+                transformed: newSource,
+            };
+        }
+        public getSource() {
+            return this.source;
+        }
+    }
+    const processor = new Processor({
+        settings: new Map(),
+        source: sourceFile.text,
+        sourceFileName: sourceFile.fileName,
+        targetFileName: sourceFile.fileName,
+    });
+    t.deepEqual<LintAndFixFileResult>(
+        linter.lintAndFix(
+            sourceFile,
+            sourceFile.text,
+            {
+                settings: new Map(),
+                rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                    ['rule', {severity: 'warning', rulesDirectories: undefined, options: undefined, rule: 'deprecation-message'}],
+                ]),
+            },
+            () => undefined,
+            undefined,
+            undefined,
+            processor,
+        ),
+        {
+            content: sourceFile.text,
+            fixes: 0,
+            findings: [{
+                ruleName: 'rule',
+                fix: {
+                    replacements: [{start: 0, end: 0, text: '\uFEFF'}],
+                },
+                message: 'message',
+                severity: 'warning',
+                start: {position: 0, line: 0, character: 0},
+                end: {position: 0, line: 0, character: 0},
+            }],
+        },
+    );
+    t.is(processor.getSource(), sourceFile.text, "didn't correctly reset the processor");
 });
+
+function createFakeProgram(sourceFile: ts.SourceFile, options: ts.CompilerOptions) {
+    return ts.createProgram([sourceFile.fileName], {...options, noLib: true, noEmit: true}, {
+        getSourceFile(fileName) {
+            return fileName === sourceFile.fileName ? sourceFile : undefined;
+        },
+        directoryExists() { return false; },
+        fileExists() { return false; },
+        getCanonicalFileName(f) { return f; },
+        getCurrentDirectory: process.cwd,
+        getDirectories() { return []; },
+        getDefaultLibFileName() { return ts.getDefaultLibFileName(options); },
+        getNewLine() { return '\n'; },
+        readFile(): undefined { return; },
+        useCaseSensitiveFileNames() { return true; },
+        writeFile() {},
+    });
+}

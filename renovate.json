@@ -16,22 +16,30 @@
   "timezone": "Europe/Berlin",
   "schedule": [
     "after 10pm",
-    "before 5am"
+    "before 6am"
   ],
   "peerDependencies": {
     "enabled": false
   },
   "lockFileMaintenance": {
     "enabled": true,
-    "automerge": true
+    "automerge": true,
+    "schedule": "before 6am on Monday"
   },
+  "packageRules": [
+    {
+      "packageNames": ["typescript"],
+      "rangeStrategy": "pin",
+      "followTag": "next"
+    }
+  ],
   "node": {
     "enabled": true,
     "supportPolicy": ["current"]
   },
   "docker": {
     "enabled": true,
-    "schedule": "before 8am on Sunday",
+    "schedule": "before 6am on Sunday",
     "packageRules": [
       {
         "groupName": "Node Docker digests",

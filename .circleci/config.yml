@@ -6,20 +6,18 @@ workflows:
       - test:
           requires:
             - build
-      - test@2.7:
-          requires:
-            - build
-      - test@2.8:
-          requires:
-            - build
-      - test@2.9:
-          requires:
-            - build
       - test@3.0:
+          requires:
+            - build
+      - test@3.1:
+          requires:
+            - build
+      - test@3.2:
           requires:
             - build
 
 base: &base
+  working_directory: '~/Project' # to really test case sensitivity
   steps:
     - checkout
     - attach_workspace:
@@ -29,7 +27,7 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -W typescript@$typescriptVersion}
+          yarn ${typescriptVersion:+add -DW typescript@$typescriptVersion}
     - run:
         name: Run Tests
         command: |
@@ -39,8 +37,9 @@ base: &base
 version: 2
 jobs:
   build:
+    working_directory: '~/Project'
     docker:
-      - image: circleci/node:10@sha256:d8ebd2d3a8675e8df68ee1ba82b862c32d6053bd86495b0145e1e54f611782fd
+      - image: circleci/node:10@sha256:5ce09739b7332f583aefcfb5ef45fa46dbe2445ae59e396089e4647b3d2169e3
     steps:
       - checkout
       - restore_cache:
@@ -67,34 +66,29 @@ jobs:
           root: '.'
           paths:
             - "packages/*/index.*"
+            - "packages/wotan/language-service"
             - "packages/*/src"
             - "packages/*/test"
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:10@sha256:d8ebd2d3a8675e8df68ee1ba82b862c32d6053bd86495b0145e1e54f611782fd
-    <<: *base
-  test@2.7:
-    docker:
-      - image: circleci/node:6@sha256:b0a2d550c411eba9d244208cd530dde0bf7982dce669c52bfea6f859d450c149
-    environment:
-      typescriptVersion: 2.7
-    <<: *base
-  test@2.8:
-    docker:
-      - image: circleci/node:8@sha256:d6af4e85fa6198c5c2814101cded8f2cebfe978a4e3c3d667c2a92c47782793b
-    environment:
-      typescriptVersion: 2.8
-    <<: *base
-  test@2.9:
-    docker:
-      - image: circleci/node:10@sha256:d8ebd2d3a8675e8df68ee1ba82b862c32d6053bd86495b0145e1e54f611782fd
-    environment:
-      typescriptVersion: 2.9
+      - image: circleci/node:11
     <<: *base
   test@3.0:
     docker:
-      - image: circleci/node:10@sha256:d8ebd2d3a8675e8df68ee1ba82b862c32d6053bd86495b0145e1e54f611782fd
+      - image: circleci/node:6
     environment:
-      typescriptVersion: 3.0.1-insiders.20180713
+      typescriptVersion: "3.0"
+    <<: *base
+  test@3.1:
+    docker:
+      - image: circleci/node:8@sha256:b0b6b8d233527835f1a4617a73dfc589d022db127f6cb59718e36890cfc2e623
+    environment:
+      typescriptVersion: "3.1"
+    <<: *base
+  test@3.2:
+    docker:
+      - image: circleci/node:10@sha256:5ce09739b7332f583aefcfb5ef45fa46dbe2445ae59e396089e4647b3d2169e3
+    environment:
+      typescriptVersion: "3.2"
     <<: *base

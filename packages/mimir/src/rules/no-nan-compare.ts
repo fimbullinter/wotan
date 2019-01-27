@@ -18,7 +18,7 @@ export class Rule extends AbstractRule {
                 parent = parent.parent!;
             }
             if (parent.kind === ts.SyntaxKind.CaseClause || isBinaryExpression(parent) && isEqualityCheck(parent.operatorToken.kind))
-                this.addFailureAtNode(parent, "Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.");
+                this.addFindingAtNode(parent, "Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.");
         }
     }
 }

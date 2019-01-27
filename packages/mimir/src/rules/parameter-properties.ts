@@ -27,7 +27,7 @@ export enum Mode {
     Consistent,
 }
 
-const FAILURE_STRINGS = {
+const MESSAGES = {
     [Mode.Never]: 'Parameter properties have been disallowed.',
     [Mode.WhenPossible]: 'Use parameter properties when possible.',
     [Mode.Consistent]: {
@@ -66,9 +66,9 @@ export class Rule extends ConfigurableRule<Options> {
         switch (this.options.mode) {
             case Mode.Never:
                 for (const param of construct.parameters.filter(isParameterProperty))
-                    this.addFailureAtNode(
+                    this.addFindingAtNode(
                         param,
-                        FAILURE_STRINGS[Mode.Never],
+                        MESSAGES[Mode.Never],
                         getFixerForDisallowedParameterProp(
                             construct,
                             param,
@@ -85,10 +85,10 @@ export class Rule extends ConfigurableRule<Options> {
 
                 if (!allPropsCanBeParamProps && construct.parameters.some(isParameterProperty)) {
                     for (const param of construct.parameters.filter(isParameterProperty))
-                        this.addFailure(
+                        this.addFinding(
                             param.pos,
                             param.end,
-                            FAILURE_STRINGS[Mode.Consistent].cannotBeParamPropsOnly,
+                            MESSAGES[Mode.Consistent].cannotBeParamPropsOnly,
                             getFixerForDisallowedParameterProp(
                                 construct,
                                 param,
@@ -97,10 +97,10 @@ export class Rule extends ConfigurableRule<Options> {
                         );
                 } else if (allPropsCanBeParamProps && !construct.parameters.every(isParameterProperty)) {
                     for (const param of construct.parameters.filter((p) => !isParameterProperty(p)))
-                        this.addFailure(
+                        this.addFinding(
                             param.pos,
                             param.end,
-                            FAILURE_STRINGS[Mode.Consistent].canBeParamPropsOnly,
+                            MESSAGES[Mode.Consistent].canBeParamPropsOnly,
                             getFixerForLonghandProp(param, construct),
                         );
                 }
@@ -108,9 +108,9 @@ export class Rule extends ConfigurableRule<Options> {
             default:
                 for (const param of construct.parameters)
                     if (!isParameterProperty(param) && canBeParameterProperty(param, construct))
-                        this.addFailureAtNode(
+                        this.addFindingAtNode(
                             param,
-                            FAILURE_STRINGS[Mode.WhenPossible],
+                            MESSAGES[Mode.WhenPossible],
                             getFixerForLonghandProp(param, construct),
                         );
         }

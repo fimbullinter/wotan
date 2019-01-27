@@ -1,0 +1,4 @@
+export type T = string;
+export type T2 = number;
+export let b: T2;
+               ~  [error local/delete: remove just a little bit]
