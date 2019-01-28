@@ -5,10 +5,10 @@ let {} = {};
     ~~       [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
 ({} = {});
  ~~        [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
-({prop: {}} = {prop: {}});
-  ~~~~~~~~                 [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+({prop: {}, v} = {prop: {}, v: {}});
+  ~~~~~~~~                           [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
 ({...{}} = {});
-  ~~~~~         [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
+({a: {}, b: [], ...v} = get<Record<string, any>>());
 
 let [] = [];
     ~~       [error no-useless-destructuring: Array destructuring is not necessary as it contains no elements.]
@@ -24,11 +24,11 @@ let [] = [];
 
 function obj({}: Record<string, string>){}
              ~~                            [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
+function obj2({a: {}, b: [], ...c}: Record<string, string>){}
 function arr([, , , ]: any[]){}
                  ~nil           [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
 
 ({...{v}} = get<Record<string, any>>());
-  ~~~~~~                                 [error no-useless-destructuring: Destructuring object rest is not allowed.]
 
 ({v, prop: [],} = get<any>());
      ~~~~~~~~                  [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
@@ -38,7 +38,6 @@ function arr([, , , ]: any[]){}
   ~~~~~~~~                    [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
 
 ({v, ...{v}} = get<Record<string, any>>());
-     ~~~~~~                                 [error no-useless-destructuring: Destructuring object rest is not allowed.]
 
 [...[v]] = [1];
  ~~~~~~         [error no-useless-destructuring: Array destructuring within array rest is redundant.]

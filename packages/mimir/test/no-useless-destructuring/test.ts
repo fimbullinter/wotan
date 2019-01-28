@@ -3,8 +3,9 @@ declare function get<T>(): T;
 
 let {} = {};
 ({} = {});
-({prop: {}} = {prop: {}});
+({prop: {}, v} = {prop: {}, v: {}});
 ({...{}} = {});
+({a: {}, b: [], ...v} = get<Record<string, any>>());
 
 let [] = [];
 [] = [];
@@ -13,6 +14,7 @@ let [] = [];
 [v, , , [], {}, ] = new Array(10);
 
 function obj({}: Record<string, string>){}
+function obj2({a: {}, b: [], ...c}: Record<string, string>){}
 function arr([, , , ]: any[]){}
 
 ({...{v}} = get<Record<string, any>>());
