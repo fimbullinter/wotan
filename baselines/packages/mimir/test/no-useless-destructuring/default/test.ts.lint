@@ -23,7 +23,6 @@ let [] = [];
             ~~                     [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]
 
 function obj({}: Record<string, string>){}
-             ~~                            [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
 function obj2({a: {}, b: [], ...c}: Record<string, string>){}
 function arr([, , , ]: any[]){}
                  ~nil           [error no-useless-destructuring: Destructuring element is not necessary as it doesn't assign to a variable.]

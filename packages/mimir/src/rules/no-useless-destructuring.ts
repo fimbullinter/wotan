@@ -29,7 +29,7 @@ export class Rule extends AbstractRule {
                 case ts.SyntaxKind.ArrayBindingPattern:
                     this.checkArray(
                         <ts.ArrayBindingPattern>node,
-                        node.parent!.kind !== ts.SyntaxKind.BindingElement,
+                        shouldReportEmptyBindingPattern(<ts.ArrayBindingPattern>node),
                         isBindingElementUsed,
                         simplifyBindingRestElement,
                     );
@@ -37,7 +37,7 @@ export class Rule extends AbstractRule {
                 case ts.SyntaxKind.ObjectBindingPattern:
                     this.checkObject(
                         (<ts.ObjectBindingPattern>node).elements,
-                        node.parent!.kind !== ts.SyntaxKind.BindingElement,
+                        shouldReportEmptyBindingPattern(<ts.ObjectBindingPattern>node),
                         isBindingPropertyUsed,
                         isBindingRestProperty,
                         <ts.ObjectBindingPattern>node,
@@ -161,4 +161,14 @@ function simplifyAssignmentRestElement(node: ts.Expression) {
 
 function isBindingRestProperty(node: ts.BindingElement) {
     return node.dotDotDotToken !== undefined;
+}
+
+function shouldReportEmptyBindingPattern(node: ts.BindingPattern) {
+    switch (node.parent!.kind) {
+        case ts.SyntaxKind.BindingElement:
+        case ts.SyntaxKind.Parameter:
+            return false;
+        default:
+            return true;
+    }
 }
