@@ -1,3 +1,4 @@
 {
-  "project": "tsconfig-loose.json"
+  "project": "tsconfig-loose.json",
+  "files": "*.ts"
 }
