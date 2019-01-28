@@ -122,7 +122,7 @@ function isNonEmptyBindingTarget(node: ts.BindingName): boolean {
 }
 
 function isAssignmentPropertyUsed(node: ts.ObjectLiteralElementLike): boolean {
-    return node.kind !== ts.SyntaxKind.PropertyAssignment || isNonEmptyAssignmentTarget(node.initializer)
+    return node.kind !== ts.SyntaxKind.PropertyAssignment || isNonEmptyAssignmentTarget(node.initializer);
 }
 
 function isNonEmptyAssignmentTarget(node: ts.Expression): boolean {
