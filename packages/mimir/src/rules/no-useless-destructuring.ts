@@ -110,7 +110,7 @@ export class Rule extends AbstractRule {
 }
 
 function isBindingPropertyUsed(node: ts.BindingElement): boolean {
-    return node.propertyName === undefined && node.dotDotDotToken === undefined || isNonEmptyBindingTarget(node.name);
+    return node.dotDotDotToken !== undefined || node.propertyName === undefined  || isNonEmptyBindingTarget(node.name);
 }
 
 function isBindingElementUsed(node: ts.ArrayBindingElement): boolean {
@@ -122,14 +122,7 @@ function isNonEmptyBindingTarget(node: ts.BindingName): boolean {
 }
 
 function isAssignmentPropertyUsed(node: ts.ObjectLiteralElementLike): boolean {
-    switch (node.kind) {
-        case ts.SyntaxKind.PropertyAssignment:
-            return isNonEmptyAssignmentTarget(node.initializer);
-        case ts.SyntaxKind.SpreadAssignment:
-            return isNonEmptyAssignmentTarget(node.expression);
-        default:
-            return true; // other than ShorthandPropertyAssignment there will be an error anyway
-    }
+    return node.kind !== ts.SyntaxKind.PropertyAssignment || isNonEmptyAssignmentTarget(node.initializer)
 }
 
 function isNonEmptyAssignmentTarget(node: ts.Expression): boolean {

@@ -3,12 +3,16 @@ declare function get<T>(): T;
 
 let {} = {};
     ~~       [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
+let {a} = {a: v};
+let {a: b} = {a};
 ({} = {});
  ~~        [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
 ({prop: {}, v} = {prop: {}, v: {}});
   ~~~~~~~~                           [error no-useless-destructuring: Destructuring property is not necessary as it doesn't assign to a variable.]
 ({...{}} = {});
 ({a: {}, b: [], ...v} = get<Record<string, any>>());
+({a: {} = {}} = get<Record<string, any>>());
+     ~~                                      [error no-useless-destructuring: Object destructuring is not necessary as it contains no properties.]
 
 let [] = [];
     ~~       [error no-useless-destructuring: Array destructuring is not necessary as it contains no elements.]

@@ -2,10 +2,13 @@ declare var v: any;
 declare function get<T>(): T;
 
 let {} = {};
+let {a} = {a: v};
+let {a: b} = {a};
 ({} = {});
 ({ v} = {prop: {}, v: {}});
 ({...{}} = {});
 ({a: {}, b: [], ...v} = get<Record<string, any>>());
+({a: {} = {}} = get<Record<string, any>>());
 
 let [] = [];
 [] = [];
