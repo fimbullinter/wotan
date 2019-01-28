@@ -1,4 +1,4 @@
-export {};
+import {literal, emptyLiteral} from './literal';
 
 declare function get<T>(): T;
 
@@ -262,6 +262,32 @@ var v: any;
 ({
     ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
+});
+
+({
+    ...emptyLiteral,
+    a: 1,
+    b: 1,
+});
+
+({
+    a: 1,
+    b: 1,
+    c: 1,
+    ...emptyLiteral,
+});
+
+({
+    ...literal,
+    a: 1,
+    b: 1,
+});
+
+({
+    a: 1,
+    b: 1,
+    c: 1,
+    ...literal,
 });
 
 function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
