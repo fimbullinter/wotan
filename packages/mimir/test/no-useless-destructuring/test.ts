@@ -15,6 +15,7 @@ let [] = [];
 [{}, [, {nested: {}}], (v)] = [{}, [{nested: {}}, {nested: {}}], 1];
 [, , , ...[, [], ...[]]] = new Array(10);
 [v, , , [], {}, ] = new Array(10);
+[{}, , v, , ] = new Array(10);
 
 function obj({}: Record<string, string>){}
 function obj2({a: {}, b: [], ...c}: Record<string, string>){}

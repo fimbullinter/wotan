@@ -97,15 +97,34 @@ export class Rule extends AbstractRule {
                     Replacement.delete(last.pos, restDestructuring.elements.pos),
                     Replacement.delete(restDestructuring.elements.end, last.end),
                 ]);
-        } else {
-            this.addFindingAtNode(
-                last,
-                "Destructuring element is not necessary as it doesn't assign to a variable.",
-                Replacement.delete(last.pos, elements.end),
-            );
+            return;
         }
-        // TODO report all useless trailing elements at once
-        // TODO report empty destructuring in previous elements
+        let i = elements.length - 1;
+        while (true) {
+            if (i === 0 || isUsed(elements[i - 1])) {
+                const diff = elements.length - i;
+                this.addFinding(
+                    elements[i].getStart(this.sourceFile),
+                    elements.end,
+                    diff === 1
+                        ? "Destructuring element is not necessary as it doesn't assign to a variable."
+                        : "Destructuring elements are not necessary as they don't assign to a variable.",
+                    Replacement.delete(elements[i].pos, elements.end),
+                );
+                break;
+            }
+            --i;
+        }
+
+        for (i -= 2; i >= 0; --i) {
+            const element = elements[i];
+            if (element.kind !== ts.SyntaxKind.OmittedExpression && !isUsed(element))
+                this.addFindingAtNode(
+                    element,
+                    "Destructuring element is not necessary as it doesn't assign to a variable.",
+                    Replacement.delete(element.getStart(this.sourceFile), element.end),
+                );
+        }
     }
 }
 
