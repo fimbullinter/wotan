@@ -1,4 +1,4 @@
-import {literal, emptyLiteral} from './literal';
+export {};
 
 declare function get<T>(): T;
 
@@ -294,38 +294,6 @@ var v: any;
 ({
     ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
-});
-
-({
-    ...emptyLiteral,
-    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
-    a: 1,
-    b: 1,
-});
-
-({
-    a: 1,
-    ~     [error no-duplicate-spread-property: Property 'a' is overridden later.]
-    b: 1,
-    ~     [error no-duplicate-spread-property: Property 'b' is overridden later.]
-    c: 1,
-    ...emptyLiteral,
-});
-
-({
-    ...literal,
-    ~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
-    a: 1,
-    b: 1,
-});
-
-({
-    a: 1,
-    ~     [error no-duplicate-spread-property: Property 'a' is overridden later.]
-    b: 1,
-    ~     [error no-duplicate-spread-property: Property 'b' is overridden later.]
-    c: 1,
-    ...literal,
 });
 
 function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
