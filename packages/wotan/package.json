@@ -29,7 +29,7 @@
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
     "@types/debug": "^0.0.31",
-    "@types/diff": "^3.2.2",
+    "@types/diff": "^4.0.0",
     "@types/escape-string-regexp": "^1.0.0",
     "@types/glob": "^7.1.1",
     "@types/is-negated-glob": "^1.0.0",
