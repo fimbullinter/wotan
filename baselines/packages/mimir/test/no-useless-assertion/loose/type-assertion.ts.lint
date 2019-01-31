@@ -188,3 +188,6 @@ export default <number>{prop: 1}.prop;
                ~~~~~~~~                [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
 export = <number>class{static prop: number}.prop;
          ~~~~~~~~                                 [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+fn2<1>(1 as const);
+fn2<''>(<const>'');

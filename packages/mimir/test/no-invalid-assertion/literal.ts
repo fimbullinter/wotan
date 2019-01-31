@@ -29,3 +29,6 @@ function test<T extends 'foo'>(param: T) {
     'foo' as T;
     'bar' as T;
 }
+
+1 as const;
+<const>1;
