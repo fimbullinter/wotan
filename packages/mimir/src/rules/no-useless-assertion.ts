@@ -12,6 +12,7 @@ import {
     getIIFE,
     removeOptionalityFromType,
     isStrictCompilerOptionEnabled,
+    isConstAssertion,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -96,6 +97,8 @@ export class Rule extends TypedRule {
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
+        if (isConstAssertion(node))
+            return;
         let targetType = this.checker.getTypeFromTypeNode(node.type);
         if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))

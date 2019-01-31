@@ -34,3 +34,6 @@ function test<T extends 'foo'>(param: T) {
     'bar' as T;
     ~~~~~~~~~~  [error no-invalid-assertion: Type '"bar"' cannot be converted to type '"foo"'.]
 }
+
+1 as const;
+<const>1;
