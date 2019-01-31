@@ -147,3 +147,5 @@ export = <number>class{static prop: number}.prop;
 
 fn2<1>(1 as const);
 fn2<''>(<const>'');
+
+<const>[<const>1, 2 as const, fn('' as const)];

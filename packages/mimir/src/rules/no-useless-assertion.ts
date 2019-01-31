@@ -13,6 +13,7 @@ import {
     removeOptionalityFromType,
     isStrictCompilerOptionEnabled,
     isConstAssertion,
+    isInConstContext,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -97,8 +98,11 @@ export class Rule extends TypedRule {
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
-        if (isConstAssertion(node))
+        if (isConstAssertion(node)) {
+            if (isInConstContext(node))
+                this.reportUselessTypeAssertion(node, 'This assertion is unnecessary as it is already in a const context.');
             return;
+        }
         let targetType = this.checker.getTypeFromTypeNode(node.type);
         if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
@@ -124,6 +128,10 @@ export class Rule extends TypedRule {
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
+        this.reportUselessTypeAssertion(node, message);
+    }
+
+    private reportUselessTypeAssertion(node: ts.AssertionExpression, message: string) {
         if (node.kind === ts.SyntaxKind.AsExpression) {
             this.addFinding(
                 node.type.pos - 'as'.length,
