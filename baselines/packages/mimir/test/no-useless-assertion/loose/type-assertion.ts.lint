@@ -194,3 +194,6 @@ fn2<''>(<const>'');
 
 <const>{a: 1 as 1, b: true as false};
              ~~~~                     [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+<const>[<const>1, 2 as const, fn('' as const)];
+        ~~~~~~~                                 [error no-useless-assertion: This assertion is unnecessary as it is already in a const context.]
+                    ~~~~~~~~                    [error no-useless-assertion: This assertion is unnecessary as it is already in a const context.]
