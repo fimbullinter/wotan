@@ -55,10 +55,7 @@ class DefaultFileFilter implements FileFilter {
 }
 
 function getOutputsOfProjectReferences(program: ts.Program, host: FileFilterContext['host']) {
-    const references = program.getResolvedProjectReferences === undefined
-        // for compatibility with TypeScript@<3.1.1
-        ? <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
-        : program.getResolvedProjectReferences();
+    const references = program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
     const seen: string[] = [];
@@ -96,8 +93,7 @@ function getOutputFileNamesOfResolvedProjectReferencesRecursive(references: ts.R
 
 /** recurse into every transitive project reference to exclude all of their outputs from linting */
 function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: string[], host: FileFilterContext['host']) {
-    // wotan-disable-next-line no-unstable-api-use
-    const referencePath = ts.resolveProjectReferencePath(host, reference); // for compatibility with TypeScript@<3.1.1
+    const referencePath = ts.resolveProjectReferencePath(reference);
     if (!addUnique(seen, referencePath))
         return [];
     const raw = ts.readConfigFile(referencePath, (file) => host.readFile(file));

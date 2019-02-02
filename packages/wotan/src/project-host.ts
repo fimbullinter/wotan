@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension, mapDefined, hasParseErrors } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined, hasParseErrors, invertChangeRange } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -222,27 +222,27 @@ export class ProjectHost implements ts.CompilerHost {
         sourceFile: ts.SourceFile,
         program: ts.Program,
         newContent: string,
-        _changeRange: ts.TextChangeRange,
+        changeRange: ts.TextChangeRange,
     ): {sourceFile: ts.SourceFile, program: ts.Program, error: boolean} {
-        // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
-        const newSourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
-        if (hasParseErrors(newSourceFile)) {
-            // if we ever switch back to using 'ts.updateSourceFile' above,
-            // we need to create a new Program because the old SourceFile it references is now corrupted
+        let error = false;
+        const oldContent = sourceFile.text;
+        sourceFile = ts.updateSourceFile(sourceFile, newContent, changeRange);
+        if (hasParseErrors(sourceFile)) {
             log("Not using updated content of '%s' because of syntax errors", sourceFile.fileName);
-            return {program, sourceFile, error: true};
+            sourceFile = ts.updateSourceFile(sourceFile, oldContent, invertChangeRange(changeRange));
+            error = true;
+            // we need to create a new Program because the old SourceFile it references is now corrupted
         }
 
-        sourceFile = newSourceFile;
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
 
         program = this.createProgram(
             program.getRootFileNames(),
             program.getCompilerOptions(),
             program,
-            getReferencesOfProgram(program),
+            program.getProjectReferences(),
         );
-        return {sourceFile, program, error: false};
+        return {sourceFile, program, error};
     }
 
     public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
@@ -255,17 +255,4 @@ export class ProjectHost implements ts.CompilerHost {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
     }
-}
-
-function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectReference> | undefined {
-    const references = program.getProjectReferences();
-    if (references === undefined)
-        return;
-    // for compatibility with TypeScript@<3.1.1
-    if (program.getResolvedProjectReferences === undefined)
-        return mapDefined(
-            <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>references,
-            (ref) => ref && {path: ref.sourceFile.fileName},
-        );
-    return references;
 }
