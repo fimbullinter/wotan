@@ -75,11 +75,11 @@ jobs:
             - yarn.lock
   test:
     docker:
-      - image: circleci/node:11
+      - image: circleci/node:11@sha256:7e13c8cac8f617bae02c2057f6c77fd123d04d2d40f1311574421a16c39d9f8f
     <<: *base
   test@3.0:
     docker:
-      - image: circleci/node:6
+      - image: circleci/node:6@sha256:7fc45cf7ce94adfb9263a633b504f41000573d94c794bc3f1d3901ecbe99b143
     environment:
       typescriptVersion: "3.0"
     <<: *base

@@ -49,6 +49,7 @@ LanguageService Plugin for TypeScript. Provides real-time in-editor linting whil
 
 * [Understanding TypeScript's API](https://github.com/fimbullinter/wotan/blob/master/docs/understanding-typescript-api.md)
 * [Writing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/writing-rules.md)
+* [Testing Rules](https://github.com/fimbullinter/wotan/blob/master/docs/testing-rules.md)
 * [Using local Rules](https://github.com/fimbullinter/wotan/blob/master/docs/local-rules.md)
 * [Writing Shareable Configurations](https://github.com/fimbullinter/wotan/blob/master/docs/shareable-config.md)
 * [Using the API](https://github.com/fimbullinter/wotan/blob/master/docs/api.md)
