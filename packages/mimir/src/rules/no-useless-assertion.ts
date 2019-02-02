@@ -104,7 +104,7 @@ export class Rule extends TypedRule {
             return;
         }
         let targetType = this.checker.getTypeFromTypeNode(node.type);
-        if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
+        if ((targetType.flags & ts.TypeFlags.Literal) !== 0 && !isInConstContext(node) || // allow "foo" as "foo" to avoid widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
