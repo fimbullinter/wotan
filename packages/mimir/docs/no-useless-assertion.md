@@ -37,6 +37,8 @@ bar!; // non-null assertion is unnecessary as 'bar' is definitely assigned
 class C {
   'prop'!: number; // definite assignment assertion is unnecessary as TypeScript doesn't check quoted property names
 }
+
+let tuple = [1 as const] as const; // inner 'const' assertion is redundant
 ```
 
 :thumbsup: Examples of correct code
