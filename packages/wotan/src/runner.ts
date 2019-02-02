@@ -317,14 +317,8 @@ export class Runner {
                     configFile,
                 );
             }
-            if (commandLine.errors.length !== 0) {
-                let {errors} = commandLine;
-                // for compatibility with typescript@<3.1.0
-                if (commandLine.projectReferences !== undefined && commandLine.projectReferences.length !== 0)
-                    errors = errors.filter((e) => e.code !== 18002); // 'files' is allowed to be empty if there are project references
-                if (errors.length !== 0)
-                    this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
-            }
+            if (commandLine.errors.length !== 0)
+                this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
             if (commandLine.fileNames.length !== 0) {
                 if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
                     log("Using project '%s'", configFile);
@@ -332,10 +326,7 @@ export class Runner {
                         host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
                     yield program;
                     if (references) {
-                        const resolvedReferences = program.getResolvedProjectReferences === undefined
-                            // for compatibility with typescript@<3.1.1
-                            ? <ReadonlyArray<ts.ResolvedProjectReference | undefined> | undefined>program.getProjectReferences()
-                            : program.getResolvedProjectReferences();
+                        const resolvedReferences = program.getResolvedProjectReferences();
                         if (resolvedReferences !== undefined) {
                             program = undefined; // allow garbage collection
                             yield* this.createPrograms(resolvedReferences, host, seen, true, isFileIncluded);

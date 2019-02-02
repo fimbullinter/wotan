@@ -6,9 +6,6 @@ workflows:
       - test:
           requires:
             - build
-      - test@3.0:
-          requires:
-            - build
       - test@3.1:
           requires:
             - build
@@ -77,21 +74,15 @@ jobs:
     docker:
       - image: circleci/node:11@sha256:7e13c8cac8f617bae02c2057f6c77fd123d04d2d40f1311574421a16c39d9f8f
     <<: *base
-  test@3.0:
-    docker:
-      - image: circleci/node:6@sha256:7fc45cf7ce94adfb9263a633b504f41000573d94c794bc3f1d3901ecbe99b143
-    environment:
-      typescriptVersion: "3.0"
-    <<: *base
   test@3.1:
     docker:
-      - image: circleci/node:8@sha256:7c857f954d0cb36afda0be8cef448813a819575ef2eefb88fc6a2a2bb9ba76e3
+      - image: circleci/node:6@sha256:7fc45cf7ce94adfb9263a633b504f41000573d94c794bc3f1d3901ecbe99b143
     environment:
       typescriptVersion: "3.1"
     <<: *base
   test@3.2:
     docker:
-      - image: circleci/node:10@sha256:8b4e26fc21ccde3c5ab2eb60fb4ec22e3e71aa497e5f1121e3209cdebc5efe6f
+      - image: circleci/node:8@sha256:7c857f954d0cb36afda0be8cef448813a819575ef2eefb88fc6a2a2bb9ba76e3
     environment:
       typescriptVersion: "3.2"
     <<: *base
