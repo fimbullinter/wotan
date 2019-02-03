@@ -78,7 +78,7 @@ The fix output is computed in the same way `wotan lint --fix` works:
 * doesn't fix files with syntax errors
 * tries a certain number of iterations
 * defers overlapping changes to the next iteration
-* rolls back the last set of changes if they caused syntax errors
+* rolls back the last set of fixes and aborts if fixes caused syntax errors
 
 ## Test Configuration
 
@@ -100,13 +100,13 @@ interface TestOptions {
 ```
 
 All paths and glob patterns are relative to the directory containing the test configuration.
-`fix` is implicitly enabled. If you do not with to produce `.fix` baselines for this test, you need to explicitly disable the `fix` option.
+`fix` is implicitly enabled. If you do not want to produce `.fix` baselines for this test, you need to explicitly disable the `fix` option.
 
 Since tests use the same functionality as the normal linter, there are a few things to be aware of:
 
-* If no `files` or `project` is specified, it looks for a `tsconfig.json` file in the directory of the test and in its parent directories afterwards
+* If no `files` or `project` is specified, it looks for a `tsconfig.json` in the current or a parent directory.
 * Specifiying `files` disables the implicit `tsconfig.json` lookup. If you want to test with type information and filter files using `files`, you need to specify `project` as well.
-* If no `config` is specified, it looks for the closes `.wotanrc.yaml`. You should make sure that it finds the correct `.wotanrc.yaml` for that test and not the `.wotanrc.yaml` in the root of your project that is used to lint your source code.
+* If no `config` is specified, it looks for the closest `.wotanrc.yaml`. You should make sure that it finds the correct `.wotanrc.yaml` for that test and not the `.wotanrc.yaml` in the root of your project that is used to lint your source code.
 
 You can have multiple test configurations per folder. That means you can test the same code with different rule configs or different `compilerOptions`.
 
@@ -118,34 +118,34 @@ Let's assume you have a rule `no-any` in `src/rules/` and the compiled output is
 
 1. Start by creating a folder for all tests of that rule: `tests/no-any`.
 1. A test configuration is required. Let's call it `default.test.json`:
-    ```json
-    {
-      "config": ".wotanrc.yaml",
-      "files": ["*.ts", "*.js"]
-    }
-    ```
-1. Add a `.wotanrc.yaml` to configure you rule for that test:
-    ```yaml
-    rulesDirectories:
-      local: ../../dist/rules # relative path to the directory containing the compiled version of your rule
-    rules:
-      local/no-any: error # use any severity you like
-    ```
+   ```json
+   {
+     "config": ".wotanrc.yaml",
+     "files": ["*.ts", "*.js"]
+   }
+   ```
+1. Add a `.wotanrc.yaml` to configure your rule for that test:
+   ```yaml
+   rulesDirectories:
+     local: ../../dist/rules # relative path to the directory containing the compiled version of your rule
+   rules:
+     local/no-any: error # use any severity you like
+   ```
 1. Add files to test. Also add test cases that shouldn't have findings.
-  * `typescript.ts`
+   * `typescript.ts`
       ```ts
       let foo: any; // expecting error
       let any: string; // expecting no error
       ```
-  * `javascript.js`
+   * `javascript.js`
       ```js
       let any; // expecting no error
       ```
 1. Now it's time to generate the baselines. Execute `wotan test -u tests/no-any/default.test.json`.
-  * This creates `baselines/no-any/default/typescript.ts.lint` with one finding and `baselines/no-any/default/javascript.js.lint` with no finding.
-  * If your rule is fixable, it should also generate `baselines/no-any/default/typescript.ts.fix`.
-  * Carefully review the baselines for false-positives.
+   * This creates `baselines/no-any/default/typescript.ts.lint` with one finding and `baselines/no-any/default/javascript.js.lint` with no finding.
+   * If your rule is fixable, it should also generate `baselines/no-any/default/typescript.ts.fix`.
+   * Carefully review the baselines for false-positives.
 1. Let's assume you tweaked your rule but still expect the same output. After compiling you execute `wotan test --exact tests/no-any/default.test.json` to ensure you didn't introduce any unwanted changes.
 1. If you enhance your rule to produce more/less/different output or you update any of your test files, the above command will fail and display the differences.
-  * To accept the new output use the `-u` flag to update the existing baselines.
-  * Carefully review the changes before adding them to your source control.
+   * To accept the new output use the `-u` flag to update the existing baselines.
+   * Carefully review the changes before adding them to your source control.
