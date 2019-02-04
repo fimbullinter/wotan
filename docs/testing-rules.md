@@ -110,6 +110,10 @@ Since tests use the same functionality as the normal linter, there are a few thi
 
 You can have multiple test configurations per folder. That means you can test the same code with different rule configs or different `compilerOptions`.
 
+To test a rule with type information, create a `tsconfig.json` in the directory of that test and reference it in your test configuration's `project` option.
+To run one test with type information and another one without, create two test configurations where one configures `project` and the other lists the `files` explicitly.
+You can have multiple `tsconfig.json` files (with a different name of course) with different `compilerOptions`. They can be used from multiple test configuratons where each test uses a different tsconfig.
+
 If you test your rules with multiple versions of TypeScript (in CI or locally), you probably want to have tests that use new language features or syntax. Older versions of TypeScript don't know about these language features and might cause tests to fail. Therefore you probably want to limit the tests to certain versions of TypeScript. Simply set the `typescriptVersion` config option to a SemVer range. If the current TypeScript version is within the range, the test is executed, otherwise it is skipped.
 
 ## Example Test Setup
