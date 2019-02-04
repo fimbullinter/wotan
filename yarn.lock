@@ -4522,6 +4522,11 @@ ts-transform-const-enum@^0.0.1:
   resolved "https://registry.yarnpkg.com/ts-transform-const-enum/-/ts-transform-const-enum-0.0.1.tgz#eef558d993931967f29dcc776474177e41ad71a3"
   integrity sha512-tsOxCy8XDEcYvG9lE5Yud2YN11F4rnr6taoNyRb0CYeKAa5WwvjY8RToIaTcLNbu7UO7KA1HajhPCeiuYDl0Hw==
 
+ts-transform-readonly-array@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/ts-transform-readonly-array/-/ts-transform-readonly-array-0.0.1.tgz#09b8fc36ccb31829e8c63881bf29b7e5b613c144"
+  integrity sha512-wZXHdhZZjKOc2J+np35wx50o/LXdrj4Dr0mK4WEir9OkXt8iWaYPLZliQUDWY6XTHy12r3AYtzSAc3B/XiCNVg==
+
 tslib@^1.7.1, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.9.3"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.3.tgz#d7e4dd79245d85428c4d7e4822a79917954ca286"
