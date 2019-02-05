@@ -444,7 +444,7 @@
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.31.tgz#bac8d8aab6a823e91deb7f79083b2a35fa638f33"
   integrity sha512-LS1MCPaQKqspg7FvexuhmDbWUhE2yIJ+4AgVIyObfc06/UKZ8REgxGNjZc82wPLWmbeOm7S+gSsLgo75TanG4A==
 
-"@types/diff@^4.0.0", "@types/diff@^4.0.1":
+"@types/diff@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@types/diff/-/diff-4.0.1.tgz#471950ff97e2205ab02404bd7ac960fac074d886"
   integrity sha512-BFob98KGKIqjcJjbmO/g+daJinDOtSUs27e0NTirODSUHYhUUAVXmq/nKIrmRFsOHrOWj5mncvByrzyw1X1PNQ==
@@ -469,7 +469,7 @@
   resolved "https://registry.yarnpkg.com/@types/github-url-to-object/-/github-url-to-object-4.0.0.tgz#cd84d42c86894aa9a827b1bde23a0605c6823ef3"
   integrity sha512-yhfsGEDBJ3FxDR4F2kxEwT/8Fu7KSadPAobR2eUntK1lvq9LJWHxJ9iXRZyDMf8lXaZWJFr82q6KmeIT2OFWGA==
 
-"@types/glob@*", "@types/glob@^7.0.0", "@types/glob@^7.1.1":
+"@types/glob@*", "@types/glob@^7.0.0":
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/@types/glob/-/glob-7.1.1.tgz#aa59a1c6e3fbc421e07ccd31a944c30eba521575"
   integrity sha512-1Bh06cbWJUHMC97acuD6UMG29nMt0Aqz1vF3guLfG+kHHJhy3AyohZFFxYk2f7Q1SQIrNwvncxAE0N/9s70F2w==
