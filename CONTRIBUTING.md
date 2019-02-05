@@ -90,11 +90,13 @@ You need at least Node 6.x and Yarn 1.2.1 or higher.
 
 * `yarn compile` compiles the project.
 * `yarn lint` lints the project with TSLint and the local build of wotan.
+* `yarn check-dependencies` ensures every package is self-contained and doesn't import the wrong modules.
+* `yarn check-package` ensures the public API doesn't change. Add option `-u` to update the baselines.
 * `yarn test` runs all tests. Make sure to compile first. Add option `-u` to update the baselines.
   * `yarn test:unit` runs only unit tests. Add option `-u` to update the unit test baselines.
   * `yarn test:integration` runs the integration tests. Add option `-u` to update the integration test baselines. Add option `--bail` to stop at the first failing test.
-* `yarn test-coverage` runs all of the above test with coverage reporting.
-* `yarn coverage` executes a given command with coverage reporting, e.g. `yarn coverage yarn test:api`.
+* `yarn test-coverage` runs `yarn test` with coverage reporting.
+* `yarn coverage` executes a given command with coverage reporting, e.g. `yarn coverage yarn test:unit`.
 * `yarn verify` compiles, lints and tests the whole project. Basically all of the above.
 
 Updating baselines may be necessary after changing or adding some functionality like new rules or new checks in rules. It's also necessary after editing a test.
