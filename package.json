@@ -15,7 +15,7 @@
     "report-coverage": "codecov --disable=gcov",
     "coverage": "nyc",
     "test-coverage": "nyc --reporter=html --reporter=text-summary yarn test",
-    "verify": "npm-run-all -s clean compile -p check-dependencies lint -s test-coverage"
+    "verify": "npm-run-all -s clean compile -p check-dependencies lint check-package -s test-coverage"
   },
   "repository": {
     "type": "git",
