@@ -7,17 +7,19 @@
     "removeComments": true,
     "importHelpers": true,
     "strict": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "strictFunctionTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "moduleResolution": "node",
-    "inlineSourceMap": false,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "stripInternal": true,
+    "plugins": [
+      {"name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true}
+    ]
   },
-  "include": []
+  "include": [
+  ]
 }

@@ -1,22 +1,20 @@
 import { injectable } from 'inversify';
 import {
     Configuration,
-    CacheManager,
-    CacheIdentifier,
+    CacheFactory,
     Cache,
     ReducedConfiguration,
-    GlobalSettings,
+    Settings,
     DirectoryService,
     ConfigurationProvider,
     EffectiveConfiguration,
-} from '../types';
+    ConfigurationError,
+} from '@fimbul/ymir';
 import * as path from 'path';
-import { ConfigurationError } from '../error';
 import { resolveCachedResult } from '../utils';
 import { Minimatch } from 'minimatch';
 import * as isNegated from 'is-negated-glob';
-
-const configCache = new CacheIdentifier<string, Configuration>('configuration');
+import { CachedFileSystem } from './cached-file-system';
 
 @injectable()
 export class ConfigurationManager {
@@ -24,11 +22,13 @@ export class ConfigurationManager {
     constructor(
         private directories: DirectoryService,
         private configProvider: ConfigurationProvider,
-        cache: CacheManager,
+        private fs: CachedFileSystem,
+        cache: CacheFactory,
     ) {
-        this.configCache = cache.create(configCache);
+        this.configCache = cache.create();
     }
 
+    /** Look up the location of the configuration file for the specified file name. */
     public findPath(file: string): string | undefined {
         file = path.resolve(this.directories.getCurrentDirectory(), file);
         try {
@@ -38,11 +38,27 @@ export class ConfigurationManager {
         }
     }
 
+    /** Load the configuration for the specified file. */
     public find(file: string): Configuration | undefined {
         const config = this.findPath(file);
         return config === undefined ? undefined : this.load(config);
     }
 
+    /** Load the given config from a local file if it exists or from the resolved path otherwise */
+    public loadLocalOrResolved(pathOrName: string, basedir = this.directories.getCurrentDirectory()): Configuration {
+        const absolute = path.resolve(basedir, pathOrName);
+        return this.load(this.fs.isFile(absolute) ? absolute : this.resolve(pathOrName, basedir));
+    }
+
+    /**
+     * Resolve a configuration name to it's absolute path.
+     *
+     * @param name
+     *   - name of a builtin config
+     *   - package name in `node_modules` or a submodule thereof
+     *   - absolute path
+     *   - relative path starting with `./` or `../`
+     */
     public resolve(name: string, basedir: string): string {
         try {
             return this.configProvider.resolve(name, path.resolve(this.directories.getCurrentDirectory(), basedir));
@@ -51,6 +67,10 @@ export class ConfigurationManager {
         }
     }
 
+    /**
+     * Collects all matching configuration options for the given file. Flattens all base configs and matches overrides.
+     * Returns `undefined` if the file is excluded in one of the configuraton files.
+     */
     public reduce(config: Configuration, file: string): ReducedConfiguration | undefined {
         return reduceConfig(
             config,
@@ -59,14 +79,17 @@ export class ConfigurationManager {
         );
     }
 
+    /** Get the processor configuration for a given file. */
     public getProcessor(config: Configuration, fileName: string): string | undefined {
         return findProcessorInConfig(config, path.resolve(this.directories.getCurrentDirectory(), fileName)) || undefined;
     }
 
-    public getSettings(config: Configuration, fileName: string): GlobalSettings {
+    /** Get the settings for a given file. */
+    public getSettings(config: Configuration, fileName: string): Settings {
         return reduceSettings(config, path.resolve(this.directories.getCurrentDirectory(), fileName), new Map());
     }
 
+    /** Load a configuration from a resolved path using the ConfigurationProvider, recursively resolving and loading base configs. */
     public load(fileName: string): Configuration {
         const stack: string[] = [];
         const loadResolved = (file: string): Configuration => {
@@ -122,7 +145,7 @@ function matchesGlobs(file: string, patterns: ReadonlyArray<string>): boolean {
         const local = glob.pattern.startsWith('./');
         if (local)
             glob.pattern = glob.pattern.substr(2);
-        if (new Minimatch(glob.pattern, {matchBase: !local}).match(file))
+        if (new Minimatch(glob.pattern, {matchBase: !local, dot: true}).match(file))
             return !glob.negated;
     }
     return false;

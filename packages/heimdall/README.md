@@ -4,7 +4,7 @@ Wotan module to use TSLint rules and formatters.
 
 [![npm version](https://img.shields.io/npm/v/@fimbul/heimdall.svg)](https://www.npmjs.com/package/@fimbul/heimdall)
 [![npm downloads](https://img.shields.io/npm/dm/@fimbul/heimdall.svg)](https://www.npmjs.com/package/@fimbul/heimdall)
-[![Greenkeeper badge](https://badges.greenkeeper.io/fimbullinter/wotan.svg)](https://greenkeeper.io/)
+[![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovateapp.com/)
 [![CircleCI](https://circleci.com/gh/fimbullinter/wotan/tree/master.svg?style=shield)](https://circleci.com/gh/fimbullinter/wotan/tree/master)
 [![Build status](https://ci.appveyor.com/api/projects/status/a28dpupxvjljibq3/branch/master?svg=true)](https://ci.appveyor.com/project/ajafff/wotan/branch/master)
 [![codecov](https://codecov.io/gh/fimbullinter/wotan/branch/master/graph/badge.svg)](https://codecov.io/gh/fimbullinter/wotan)
@@ -34,6 +34,7 @@ wotan -m @fimbul/heimdall -f code-frame
 
 The `-m @fimbul/heimdall` argument enables a hook that loads TSLint formatters if no Wotan formatter is found.
 That means you cannot use a TSLint formatter when a builtin Wotan formatter with the same name exists.
+Note that findings with severity `suggestion` are reported as `warning` through TSLint formatters.
 
 ## Using TSLint Rules
 
@@ -63,10 +64,10 @@ rules:
 Why should you use Wotan to execute TSLint rules?
 
 * Allows you to reuse existing rules and rules packages without any modification.
-* Enables the use of processors, for example to use files like Vue Single File Components (see `@fimbul/ve`), that are currently not supported by TSLint.
+* Enables the use of processors, to lint for example Vue Single File Components (see [`@fimbul/ve`](https://github.com/fimbullinter/wotan/blob/master/packages/ve/README.md)), that are currently not supported by TSLint.
 * Configuration goodness provided by Wotan:
   * Overrides to change the config by matching glob patterns.
-  * You can use a rule with the same name from different packages. Because you need to specify a prefix for every package, rules won't get overidden by other packages or TSLint core rules.
+  * You can use a rule with the same name from different packages. Because you need to specify a prefix for every package, rules won't get overidden by other packages.
   * Aliases
   * JSON5 support
 * Blazingly fast autofixing, especially when linting the whole project with the `-p` flag.

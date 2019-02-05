@@ -1,0 +1,66 @@
+export {};
+
+declare function get<T>(): T;
+declare let n: never;
+
+n;
+
+get<string>();
+get<number>();
+get<never>();
+~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+
+function test<T extends never>(param: T) {
+    get<T>();
+    ~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    get<typeof param>();
+    ~~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    return param;
+}
+
+test(get<never>());
+~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+
+function returned(fn: () => never) {
+    fn();
+    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    return fn();
+}
+
+function thrown(fn: () => never) {
+    fn();
+    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    throw fn();
+}
+
+function last(fn: () => never) {
+    console.log('foo');
+    if (Boolean())
+        fn();
+        ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    fn();
+    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+}
+
+if (Boolean()) {
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+} else {
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+}
+
+declare let obj: { neverReturns(): never; }
+
+obj.neverReturns;
+obj.neverReturns();
+~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+
+namespace ns {
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+    function fn() {
+        get<never>();
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    }
+}

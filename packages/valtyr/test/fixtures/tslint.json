@@ -1,0 +1,21 @@
+{
+  "rulesDirectory": ".",
+  "defaultSeverity": "warning",
+  "linterOptions": {
+    "exclude": "**/*.excluded.*"
+  },
+  "rules": {
+    "semicolon": false,
+    "quotemark": [true, "double"],
+    "my-rule": {
+      "severity": "error"
+    }
+  },
+  "jsRules": {
+    "my-rule": {
+      "severity": "warning"
+    },
+    "semicolon": [true, "always"],
+    "quotemark": false
+  }
+}

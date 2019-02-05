@@ -1,0 +1,2 @@
+rules:
+  await-only-promise: error

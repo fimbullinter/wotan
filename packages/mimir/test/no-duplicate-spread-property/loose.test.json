@@ -1,0 +1,4 @@
+{
+  "project": "tsconfig-loose.json",
+  "files": "*.ts"
+}

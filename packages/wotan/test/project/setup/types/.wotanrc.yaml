@@ -1,0 +1,2 @@
+# this file is intentionally invalid so that loading the config during project setup while looking for processors fails
+{

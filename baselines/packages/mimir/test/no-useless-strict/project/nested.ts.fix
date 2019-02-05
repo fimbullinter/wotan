@@ -1,0 +1,75 @@
+namespace foo {
+    'use\u0020strict';
+    '\'use strict';
+    '"use strict"';
+    // 'use strict'
+    'use strict';
+    `use strict`;
+    foo;
+    'use strict';
+
+    function fn() {
+    }
+    function fn2() {
+        fn();
+        'use strict';
+    }
+    class Foo {
+        constructor() {
+        }
+        method() {
+            console.log('use strict');
+            if (Boolean())
+                'use strict';
+            else {
+                "use strict";
+            }
+            return {
+                m() {
+                },
+            };
+        }
+    }
+}
+
+class Foo {
+    constructor() {
+    }
+    method() {
+        return {
+            m() {
+            },
+        };
+    }
+}
+
+var C = class {
+    get prop() {
+        return 1;
+    }
+};
+
+const obj = {
+    get prop() {
+        obj;
+        'use strict';
+        return () => {
+            'use strict';
+            return () => {
+            }
+        };
+    },
+
+    m() {
+        return () => {
+            'use strict';
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+            'use strict';
+        }
+    }
+};

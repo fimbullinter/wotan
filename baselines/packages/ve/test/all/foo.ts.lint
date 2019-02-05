@@ -1,0 +1,15 @@
+import {foo} from './jsx';
+(async function() {
+    await 1;
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
+    // JSDoc type annotations only work in JavaScript files
+    /** @type {PromiseLike<string>} */
+    let p = null;
+    let v = null;
+    await p;
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
+    await v;
+    ~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
+    await foo();
+    await Promise.resolve();
+})();

@@ -1,0 +1,24 @@
+export {};
+
+declare function get<T>(): T;
+
+get<1n>() as 1n;
+get<1n>() as 2n;
+~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1n' cannot be converted to type '2n'.]
+get<1n>() as 1n | 2n;
+get<2n>() as -2n;
+~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '2n' cannot be converted to type '-2n'.]
+get<-2n>() as -2n;
+get<1n | 2n>() as 1n;
+get<1n | 2n>() as 2n;
+get<1n | 2n>() as 3n;
+~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1n | 2n' cannot be converted to type '3n'.]
+
+get<1n | 'foo'>() as 1 | 'foo';
+get<1n | 'foo'>() as 2n | 'foo';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1n' cannot be converted to type '2n'.]
+get<bigint | 1n & {foo: 1}>() as 2n;
+get<1n | bigint & {foo: 1}>() as 2n;
+
+get<1n | '1n'>() as 2n | '1n';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-invalid-assertion: Type '1n' cannot be converted to type '2n'.]

@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "outDir": "../out-a",
+    "declarationDir": "../outdir/a"
+  }
+}

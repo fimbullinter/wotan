@@ -1,0 +1,14 @@
+const foo: ';
+             ~nil [error syntaxcheck: Unterminated string literal.]
+let bar: typeof foo;
+let baz: = bar;
+         ~      [error syntaxcheck: Type expected.]
+
+new Map<string, string>;
+                       ~ [error syntaxcheck: '(' expected.]
+
+namespace foo
+
+let obj = {;
+~~~          [error syntaxcheck: '{' expected.]
+           ~ [error syntaxcheck: Property assignment expected.]

@@ -1,9 +1,0 @@
-bar: foo: for (;;) {
-~~~                  [error no-unused-label: Unused label 'bar'.]
-     ~~~             [error no-unused-label: Unused label 'foo'.]
-    let fn = function foo() {
-        while (true)
-            break foo;
-    }
-    continue bar;
-}

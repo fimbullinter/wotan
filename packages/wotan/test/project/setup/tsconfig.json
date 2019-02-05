@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["./types"]
+  },
+  "include": [
+    "test.ts",
+    "types",
+    "non-existent",
+    "../non-existent"
+  ]
+}

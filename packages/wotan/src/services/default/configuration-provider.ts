@@ -4,10 +4,10 @@ import {
     Resolver,
     LoadConfigurationContext,
     Configuration,
-    CacheManager,
-    CacheIdentifier,
+    CacheFactory,
     Cache,
-} from '../../types';
+    BuiltinResolver,
+} from '@fimbul/ymir';
 import { CachedFileSystem } from '../cached-file-system';
 import * as path from 'path';
 import * as json5 from 'json5';
@@ -19,22 +19,22 @@ export interface RawConfiguration {
     aliases?: RawConfiguration.AliasMap;
     rules?: RawConfiguration.RuleMap;
     settings?: RawConfiguration.SettingsMap;
-    extends?: string | string[];
-    overrides?: RawConfiguration.Override[];
+    extends?: string | ReadonlyArray<string>;
+    overrides?: ReadonlyArray<RawConfiguration.Override>;
     rulesDirectories?: RawConfiguration.RulesDirectoryMap;
-    exclude?: string | string[];
+    exclude?: string | ReadonlyArray<string>;
     processor?: string | null | false;
 }
 
 export namespace RawConfiguration {
-    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error';
+    export type RuleSeverity = 'off' | 'warn' | 'warning' | 'error' | 'suggestion' | 'hint';
     export interface RuleConfig {
         severity?: RuleSeverity;
         options?: any;
     }
     export type RuleConfigValue = RuleSeverity | RuleConfig | null;
     export interface Override {
-        files: string | string[];
+        files: string | ReadonlyArray<string>;
         rules?: RuleMap;
         settings?: SettingsMap;
         processor?: string | null | false;
@@ -63,13 +63,11 @@ type WriteableAliasesMap = Map<string, Configuration.Alias>;
 export const CONFIG_EXTENSIONS = ['.yaml', '.yml', '.json5', '.json', '.js'];
 export const CONFIG_FILENAMES = CONFIG_EXTENSIONS.map((ext) => '.wotanrc' + ext);
 
-const cacheId = new CacheIdentifier<string, string | undefined>('configPath');
-
 @injectable()
 export class DefaultConfigurationProvider implements ConfigurationProvider {
     private cache: Cache<string, string | undefined>;
-    constructor(private fs: CachedFileSystem, private resolver: Resolver, cache: CacheManager) {
-        this.cache = cache.create(cacheId);
+    constructor(private fs: CachedFileSystem, private resolver: Resolver, private builtinResolver: BuiltinResolver, cache: CacheFactory) {
+        this.cache = cache.create();
     }
 
     public find(fileToLint: string): string | undefined {
@@ -89,7 +87,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
 
     public resolve(name: string, basedir: string): string {
         if (name.startsWith('wotan:')) {
-            const fileName = path.join(__dirname, `../../../configs/${name.substr('wotan:'.length)}.yaml`);
+            const fileName = this.builtinResolver.resolveConfig(name.substr('wotan:'.length));
             if (!this.fs.isFile(fileName))
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'wotan:recommended'.`);
             return fileName;
@@ -147,10 +145,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
                 return json5.parse(this.fs.readFile(filename));
             case '.yaml':
             case '.yml':
-                return yaml.safeLoad(this.fs.readFile(filename), {
-                    schema: yaml.JSON_SCHEMA,
-                    strict: true,
-                });
+                return yaml.safeLoad(this.fs.readFile(filename))!;
             default:
                 return this.resolver.require(filename, {cache: false});
         }
@@ -178,7 +173,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
         return processor && this.resolver.resolve(
             processor,
             basedir,
-            Object.keys(require.extensions).filter((ext) => ext !== '.json' && ext !== '.node'),
+            undefined,
             module.paths.slice(OFFSET_TO_NODE_MODULES + 2),
         );
     }
@@ -215,7 +210,7 @@ function resolveAliases(
     receiver: WriteableAliasesMap | undefined,
     rulesDirectoryMap: Configuration['rulesDirectories'],
 ) {
-    const mapped: Map<string, RawConfiguration.Alias> = new Map();
+    const mapped = new Map<string, RawConfiguration.Alias>();
     for (const prefix of Object.keys(raw)) {
         const obj = raw[prefix];
         if (!obj)
@@ -301,6 +296,9 @@ function mapRuleSeverity(severity: RawConfiguration.RuleSeverity): Configuration
         case 'warn':
         case 'warning':
             return 'warning';
+        case 'hint':
+        case 'suggestion':
+            return 'suggestion';
         default:
             return 'error';
     }

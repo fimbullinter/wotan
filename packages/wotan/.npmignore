@@ -1,7 +1,4 @@
-/baselines/
 /test/
-/coverage/
-/custom-typings/
 /.*
 *.ts
 !*.d.ts
@@ -11,5 +8,6 @@
 /*.json
 /yarn.lock
 /*.tgz
-/src/rules/*.d.ts
-/src/formatters/*.d.ts
+tsconfig.json
+/src/commands/*.d.ts
+.DS_Store

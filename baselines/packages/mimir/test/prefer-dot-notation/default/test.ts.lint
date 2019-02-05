@@ -1,0 +1,39 @@
+declare let obj: Record<string, any>;
+
+obj.foo;
+obj['bar']['baz'];
+    ~~~~~          [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
+           ~~~~~   [error prefer-dot-notation: Prefer 'obj.baz' over 'obj['baz']'.]
+obj['__foo__'];
+    ~~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.__foo__' over 'obj['__foo__']'.]
+obj[`fooBar`];
+    ~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.fooBar' over 'obj[`fooBar`]'.]
+
+obj[''];
+obj['1'];
+obj['.'];
+obj[','];
+obj[' '];
+obj['foo-bar'];
+obj['foo' + 'bar'];
+obj[`foo${1}`];
+
+1['toString']();
+  ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.0['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1e1['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+.0['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1[''];
+
+for (const key of Object.keys(obj))
+    obj[key];
+
+['foo'];
+
+type T = string[]['length'];
+type V = string['charCodeAt'];

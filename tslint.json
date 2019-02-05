@@ -55,15 +55,11 @@
     ],
     "no-irregular-whitespace": true,
     "no-null-keyword": true,
-    "no-require-imports": true,
     "no-return-await": true,
     "no-shadowed-variable": true,
     "no-sparse-arrays": true,
     "no-string-literal": true,
-    "no-submodule-imports": [
-      true,
-      "parse5/lib"
-    ],
+    "no-submodule-imports": [true, "tsutils"],
     "no-switch-case-fall-through": true,
     "no-this-assignment": true,
     "no-trailing-whitespace": true,
@@ -72,6 +68,7 @@
     "no-unsafe-finally": true,
     "no-unused-expression": true,
     "no-var-keyword": true,
+    "no-var-requires": true,
     "number-literal-format": true,
     "object-literal-shorthand": true,
     "one-line": [true,
@@ -114,7 +111,8 @@
     "switch-final-break": true,
     "trailing-comma": [true, {
       "singleline": "never",
-      "multiline": "always"
+      "multiline": "always",
+      "esSpecCompliant": true
     }],
     "triple-equals": [true, "allow-undefined-check"],
     "typedef-whitespace": [true, {
@@ -171,7 +169,7 @@
       "allow-void-expression"
     ],
     "no-unnecessary-else": true,
-    "no-unnecessary-type-annotation": true,
+    "no-unnecessary-type-annotation": false,
     "no-var-before-return": true,
     "object-shorthand-properties-first": true,
     "parameter-properties": [

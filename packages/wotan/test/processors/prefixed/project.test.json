@@ -1,0 +1,4 @@
+{
+  "project": ".",
+  "files": ["foo.test", "other.test"]
+}

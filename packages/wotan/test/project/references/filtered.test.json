@@ -1,0 +1,6 @@
+{
+  "project": ".",
+  "references": true,
+  "exclude": ["{a,b,d}/index.ts?(x)", "outfile/**"],
+  "fix": false
+}

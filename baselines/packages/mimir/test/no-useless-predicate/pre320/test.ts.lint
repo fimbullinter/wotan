@@ -1,0 +1,359 @@
+export {};
+
+declare function get<T>(): T;
+
+if (typeof (get<Function>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (typeof (get<() => void>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (typeof (get<new() => any>()) === 'function') {}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+if (get<any>()) {}
+if (get<unknown>()) {}
+if (get<never>()) {}
+if ((typeof 1 === 'number')) {}
+     ~~~~~~~~~~~~~~~~~~~~~      [error no-useless-predicate: Expression is always truthy.]
+if ((get<Record<string, Function>>().foo)) {}
+if (!(get<Record<string, Function>>().foo)) {}
+while (typeof get<any>() === 'symbol') {}
+while (typeof get<unknown>() === 'symbol') {}
+while (typeof get<never>() === 'symbol') {}
+while (typeof get<{}>() === 'number') ;
+while (typeof get<{}>() == 'object') ;
+while (typeof get<{}>() == 'undefined') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{a: number} & {b: string}>() === 'object') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<(() => void) & {prop: string}>() === 'function') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'string') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'number') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{length: number} & string>() === 'object') ; // TODO this should probably be considered always falsy
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                            [error no-useless-predicate: Expression is always truthy.]
+while (typeof get<{length: number} & string>() === 'undefined') ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<{toString(): string}>() == 'number') ; // TODO this is actually valid, but needs to check type assignability
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                                          [error no-useless-predicate: Expression is always falsy.]
+while (typeof get<null>() == 'null');
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error no-useless-predicate: Expression is always falsy.]
+do {} while (typeof get<Function>() === 'object');
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error no-useless-predicate: Expression is always falsy.]
+for (; typeof get<object>() === 'object';) ;
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+while ('foo' !== undefined && 'bar' == null) {}
+       ~~~~~~~~~~~~~~~~~~~                      [error no-useless-predicate: Expression is always falsy.]
+                              ~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always falsy.]
+while (get<number>() + get<number>());
+
+true ? 'foo' : 'bar';
+~~~~                  [error no-useless-predicate: Expression is always truthy.]
+1 === undefined ? 'bar' : 'foo';
+~~~~~~~~~~~~~~~                  [error no-useless-predicate: Expression is always falsy.]
+
++0;
+
+declare let v: number;
+if (v) {}
+if (+v) {}
+
+v = 1;
+
+typeof v === get<string>();
+typeof get<number | string>() === 'object';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof get<number | string | Array<any>>() === 'object';
+typeof Math === 'object';
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+typeof undefined === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof undefined == null;
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+'foo' === undefined;
+~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+'bar' === null;
+~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<'foo' | undefined>() == null;
+get<'foo' | null>() == null;
+get<'foo' | undefined>() == undefined;
+get<'foo' | null>() == undefined;
+get<'foo' | undefined>() === null;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<'foo' | null>() === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+get<undefined>() === undefined;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+null === get<null>();
+~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+undefined == get<null>();
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<undefined>() == null;
+~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+!get<1>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!get<0>();
+ ~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!get<number>();
+!!get<boolean>();
+!get<string>();
+!!get<'foo'>();
+  ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!!get<true>();
+  ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!get<{}>();
+!!get<false>()
+  ~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+!get<{foo: 'bar'}>();
+ ~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+for (;;) break;
+while (true) break;
+
+function test<T>(param: T) {
+    param === undefined;
+    typeof param === 'string';
+    typeof param === 'boolean';
+    typeof param === 'object';
+}
+
+function test2<T extends boolean, U extends any>(param?: T, param2?: U) {
+    param === undefined;
+    typeof param === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof param === 'boolean';
+    typeof param === 'object';
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+    param2 === undefined;
+    typeof param2 === 'string';
+    typeof param2 === 'boolean';
+    typeof param2 === 'object';
+}
+
+function test3<T extends Record<'foo', string>, K extends keyof T>(v: T, k: K) {
+    v[k] === undefined;
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    typeof v[k] === 'symbol';
+    !v[k];
+}
+
+function test4<T extends Record<'foo', string>>(v: T, k: 'foo') {
+    v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+    typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    !v[k];
+}
+
+function test5<K extends 'foo'>(v: Record<'foo', string>, k: K) {
+    v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === undefined;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    typeof v[k] === 'string';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+    typeof v[k] === 'symbol';
+    ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    !v[k];
+}
+
+switch (get<boolean>()) {
+    case true:
+    case false:
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case null:
+    ~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+}
+
+switch (typeof get<boolean>()) {
+    case 'string':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'object':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'boolean':
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
+}
+
+switch (typeof get<boolean | string>()) {
+    case 'string':
+    case 'object':
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case undefined:
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case 'boolean':
+}
+
+switch ('string') {
+    case typeof '':
+    ~~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always truthy.]
+    case typeof 1:
+    ~~~~~~~~~~~~~~ [error no-useless-predicate: Expression is always falsy.]
+    case typeof get<{}>():
+    default:
+}
+
+enum E {
+    Foo,
+    Bar,
+    Baz,
+}
+
+const enum CE {
+    Foo,
+    Bar,
+    Baz,
+}
+
+const enum CSE {
+    Foo = '',
+    Bar = 'bar',
+}
+
+const enum E2 {
+    Bar = 1,
+    Baz = 2,
+}
+
+!E.Foo;
+ ~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!E.Bar;
+ ~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!E.Baz;
+ ~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!CE.Foo;
+ ~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!CE.Bar;
+ ~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!CE.Baz;
+ ~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!CSE.Foo;
+ ~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!CSE.Bar;
+ ~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+!get<E.Foo | CE.Foo | CSE.Foo>();
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!get<E.Foo | CE.Foo | CSE.Bar>();
+!get<E.Bar | CE.Bar | CSE.Bar>();
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!get<E2>();
+ ~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+const TypeOfString = 'string';
+
+typeof 1 === TypeOfString;
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+const enum TypeOf {
+    String = 'string',
+    Number = 'number',
+}
+
+typeof 1 === TypeOf.Number;
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+typeof 1 === TypeOf.String;
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+
+typeof true === get<TypeOf>();
+
+declare let arr: Array<true>;
+typeof arr[0] === 'boolean';
+typeof arr[0] === 'undefined';
+typeof arr[0] === 'number';
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!arr[0];
+arr[0] === undefined;
+!arr.length;
+!arr['length'];
+!arr[Symbol.iterator];
+ ~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+declare let tuple: [Date];
+typeof tuple[0] === 'object';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+typeof tuple[0] === 'undefined';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+typeof tuple[0] === 'number';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!tuple[0];
+ ~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+tuple[0] === undefined;
+~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+!tuple.length;
+ ~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!tuple['length'];
+ ~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+declare let indexer: { [s: string]: true; foo: true; bar: true };
+!indexer.foo;
+ ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer.bar;
+ ~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer.baz;
+!indexer[get<'foo'>()];
+ ~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer[get<'foo' | 'bar'>()];
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+!indexer[get<'foo' | 'baz'>()];
+!indexer[get<string>()];
+
+'foo' in get<{}>();
+'foo' in get<{foo?: string}>();
+'foo' in get<{foo: string | undefined}>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'foo' in get<{[x: string]: string}>();
+'foo' in get<{foo: string} | {foo?: number}>();
+'foo' in get<{foo: string} | Record<string, string>>();
+
+get<'foo' | 'bar'>() in get<{foo: string}>();
+get<'foo' | 'bar'>() in get<{foo: string, bar: number}>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<string>() in get<{foo: string}>();
+get<string>() in get<{[x: string]: string}>();
+
+0 in get<[unknown]>();
+~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<0 | 'length'>() in get<[unknown]>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+0 in (get<Record<string, [unknown]>>().foo);
+
+Symbol.iterator in [];
+~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+if ('length' in []) {}
+    ~~~~~~~~~~~~~~     [error no-useless-predicate: Expression is always truthy.]
+
+'a' === 'a';
+~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'a' !== 'a';
+~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+0 == 0;
+~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+true === true;
+~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+false === false;
+~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<null>() === get<null>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+get<undefined>() === get<undefined>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+'a' === get<string>();
+get<'a' | 'b'>() === 'a';
+get<'a' | 'b'>() === get<'a' | 'b'>();
+get<Record<string, 'a'>>().foo === 'a';
+get<any>() === get<any>();
+
+type Brand<T> = T & {__brand: never};
+get<Brand<'a'>>() === get<Brand<'a'>>();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]

@@ -1,6 +1,0 @@
-import {foo as fn} from './other';
-        ~~~                        [error local/foo: 'foo' is not allowed.]
-foo: bar: fn();
-~~~             [error no-unused-label: Unused label 'foo'.]
-     ~~~        [error no-unused-label: Unused label 'bar'.]
-          ~~~~  [error deprecation: CallSignature '(): void' is deprecated: foo ]

@@ -1,0 +1,8 @@
+export function doStuff() {
+    return 'foo';
+}
+
+export async function doOtherStuff() {
+    await doStuff();
+    ~~~~~~~~~~~~~~~  [error await-only-promise: Unnecessary 'await' of a non-Promise value.]
+}

@@ -1,0 +1,32 @@
+switch (get<any>()) {
+    case 1:
+    case 1n:
+    case ~-2n:
+         ~~~~  [error no-duplicate-case: Duplicate 'case 1n'.]
+    case -1n:
+    case ~0n:
+         ~~~  [error no-duplicate-case: Duplicate 'case -1n'.]
+    case true:
+    case false:
+    case !0n:
+         ~~~  [error no-duplicate-case: Duplicate 'case true'.]
+    case !-1n:
+         ~~~~  [error no-duplicate-case: Duplicate 'case false'.]
+    case +1n:
+         ~~~  [error no-duplicate-case: Duplicate 'case 1n'.]
+    case +-1n:
+         ~~~~  [error no-duplicate-case: Duplicate 'case -1n'.]
+    case '1n':
+    case 99n:
+    case ~-100n:
+         ~~~~~~  [error no-duplicate-case: Duplicate 'case 99n'.]
+    case -100n:
+    case ~99n:
+         ~~~~  [error no-duplicate-case: Duplicate 'case -100n'.]
+    case 0n:
+    case ~-1n:
+         ~~~~  [error no-duplicate-case: Duplicate 'case 0n'.]
+    case get<1n>():
+    case -get<1n>():
+    case -get<0n>():
+}

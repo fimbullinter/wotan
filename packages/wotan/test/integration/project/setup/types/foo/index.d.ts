@@ -1,2 +1,0 @@
-/** @deprecated */
-declare let foo = 1;

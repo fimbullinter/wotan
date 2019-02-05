@@ -3,7 +3,7 @@ rulesDirectories:
 rules:
   custom/foo: error
   custom/bar: warning
-  deprecation: warning
+  no-unstable-api-use: warning
 settings:
   foo: true
   bar: something

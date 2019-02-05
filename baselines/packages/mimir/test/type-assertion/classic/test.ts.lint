@@ -1,0 +1,92 @@
+declare let foo: any;
+declare let bar: any;
+declare let baz: any;
+type T = any;
+
+<T>foo;
+foo as T;
+    ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T['prop']>foo;
+foo as T['prop'];
+    ~~~~~~~~~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
++<T>foo;
++(foo as T);
+      ~~~~   [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+typeof <T>foo;
+typeof (foo as T);
+            ~~~~   [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>typeof foo;
+typeof foo as T;
+           ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+void <T>foo;
+void (foo as T);
+          ~~~~   [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>void foo;
+void foo as T;
+         ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>foo && bar;
+foo as T && bar;
+    ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>foo & bar;
+(foo as T) & bar;
+     ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+foo & <T>bar;
+foo & bar as T;
+          ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+1 as number ** 2;
+  ~~~~~~~~~       [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+(<number>1) ** 2;
+
+1 ** 2 + 1 as number;
+           ~~~~~~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+<number>(1 ** 2 + 1);
+
+foo & <T>bar | baz;
+foo & (bar as T) | baz;
+           ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>+foo & bar;
+(+foo as T) & bar;
+      ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+() => <T>{foo}.foo;
+() => ({foo}.foo) as T;
+                  ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+() => <T>{foo}.foo & bar;
+() => ({foo}.foo as T) & bar;
+                 ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+<T>() => foo;
+
+async function* test() {
+    <T> await foo;
+    await foo as T;
+              ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+    await <T>foo;
+    await (foo as T);
+               ~~~~   [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+    <T>(yield foo);
+    (yield foo) as T;
+                ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+
+    yield <T>foo;
+    yield foo as T;
+              ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+}
+
+/**<T>foo*/<T>foo;
+foo /*as*/ as 'as';
+           ~~~~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]

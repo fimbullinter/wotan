@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true
+  },
+  "files": [
+    "types.ts"
+  ]
+}

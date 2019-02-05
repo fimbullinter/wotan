@@ -1,0 +1,36 @@
+declare let num: number;
+declare function get<T>(): T;
+
+"isNaN()";
+
+Number.isNaN(1);
+// isNaN
+Number.isNaN(num);
+Number.isNaN // isNaN()
+    (1);
+Number.isNaN/* comment */(1);
+Number.isNaN(1 + 1);
+!Number.isNaN(get<1 | 2>());
+
+Object.assign(isNaN /* comment */);
+
+isNaN();
+isNaN(get<any>());
+
+Number.isFinite(1);
+Number.isFinite(1);
+isFinite(get<any>());
+
+foo.isFinite(1);
+
+function generic<T extends number, U extends 1 | 2, V extends T | U, W>(p1: T, p2: U, p3: V, p4: W) {
+    Number.isNaN(p1);
+    Number.isNaN(p2);
+    Number.isNaN(p3);
+    isNaN(p4);
+
+    Number.isFinite(p1);
+    Number.isFinite(p2);
+    Number.isFinite(p3);
+    isFinite(p4);
+}

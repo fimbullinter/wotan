@@ -1,0 +1,5 @@
+{
+  "project": ".",
+  "files": ["a.ts", "b.ts"],
+  "fix": true
+}

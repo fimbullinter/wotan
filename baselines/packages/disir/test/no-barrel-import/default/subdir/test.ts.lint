@@ -1,0 +1,8 @@
+import {foo} from '.';
+                  ~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+import {bar} from './index';
+                  ~~~~~~~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+import {baz} from '..';
+                  ~~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]
+import {bas} from '../index';
+                  ~~~~~~~~~~  [error local/no-barrel-import: Import directly from the module containing the declaration instead of the barrel.]

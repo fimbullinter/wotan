@@ -1,0 +1,4 @@
+{
+  "files": ["test.ts", "dont-crash*.ts"],
+  "fix": false
+}

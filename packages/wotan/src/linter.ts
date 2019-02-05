@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import {
-    Failure,
+    Finding,
     EffectiveConfiguration,
     LintAndFixFileResult,
     Replacement,
@@ -11,14 +11,15 @@ import {
     AbstractProcessor,
     DeprecationHandler,
     DeprecationTarget,
-} from './types';
+    FindingFilterFactory,
+    FindingFilter,
+} from '@fimbul/ymir';
 import { applyFixes } from './fix';
-import { LineSwitchService, DisableMap } from './services/line-switches';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
-import { calculateChangeRange } from './utils';
-import { ConvertedAst, convertAst } from 'tsutils';
+import { calculateChangeRange, invertChangeRange } from './utils';
+import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
 
@@ -27,8 +28,16 @@ export interface UpdateFileResult {
     program?: ts.Program;
 }
 
-export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult;
-export type PostprocessCallback = (failures: Failure[]) => Failure[];
+export interface LinterOptions {
+    reportUselessDirectives?: Severity;
+}
+
+/**
+ * Creates a new SourceFile and optionally a Program from the updated source.
+ *
+ * @returns the new `SourceFile` and `Program` on success or `undefined` to roll back the latest set of changes.
+ */
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult | undefined;
 
 @injectable()
 export class Linter {
@@ -36,11 +45,16 @@ export class Linter {
         private ruleLoader: RuleLoader,
         private logger: MessageHandler,
         private deprecationHandler: DeprecationHandler,
-        private lineSwitches: LineSwitchService,
+        private filterFactory: FindingFilterFactory,
     ) {}
 
-    public lintFile(file: ts.SourceFile, config: EffectiveConfiguration, program?: ts.Program): Failure[] {
-        return this.getFailures(file, config, program, undefined);
+    public lintFile(
+        file: ts.SourceFile,
+        config: EffectiveConfiguration,
+        program?: ts.Program,
+        options: LinterOptions = {},
+    ): ReadonlyArray<Finding> {
+        return this.getFindings(file, config, program, undefined, options);
     }
 
     public lintAndFix(
@@ -51,13 +65,14 @@ export class Linter {
         iterations: number = 10,
         program?: ts.Program,
         processor?: AbstractProcessor,
+        options: LinterOptions = {},
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let failures = this.getFailures(file, config, program, processor);
+        let findings = this.getFindings(file, config, program, processor, options);
         for (let i = 0; i < iterations; ++i) {
-            if (failures.length === 0)
+            if (findings.length === 0)
                 break;
-            const fixes = failures.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
+            const fixes = findings.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
             if (fixes.length === 0) {
                 log('No fixes');
                 break;
@@ -65,46 +80,71 @@ export class Linter {
             log('Trying to apply %d fixes in %d. iteration', fixes.length, i + 1);
             const fixed = applyFixes(content, fixes);
             log('Applied %d fixes', fixed.fixed);
-            totalFixes += fixed.fixed;
-            content = fixed.result;
             let newSource: string;
             let fixedRange: ts.TextChangeRange;
             if (processor !== undefined) {
-                const {transformed, changeRange} = processor.updateSource(content, fixed.range);
+                const {transformed, changeRange} = processor.updateSource(fixed.result, fixed.range);
                 fixedRange = changeRange !== undefined ? changeRange : calculateChangeRange(file.text, transformed);
                 newSource = transformed;
             } else {
-                newSource = content;
+                newSource = fixed.result;
                 fixedRange = fixed.range;
             }
-            ({program, file} = updateFile(newSource, fixedRange));
-            failures = this.getFailures(file, config, program, processor);
+            const updateResult = updateFile(newSource, fixedRange);
+            if (updateResult === undefined) {
+                log('Rolling back latest fixes and abort linting');
+                if (processor !== undefined) // reset processor state
+                    processor.updateSource(content, invertChangeRange(fixed.range));
+                break;
+            }
+            ({program, file} = updateResult);
+            content = fixed.result;
+            totalFixes += fixed.fixed;
+            findings = this.getFindings(file, config, program, processor, options);
         }
         return {
             content,
-            failures,
+            findings,
             fixes: totalFixes,
         };
     }
 
     // @internal
-    public getFailures(
+    public getFindings(
         sourceFile: ts.SourceFile,
         config: EffectiveConfiguration,
         program: ts.Program | undefined,
         processor: AbstractProcessor | undefined,
+        options: LinterOptions,
     ) {
+        let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
-        const rules = this.prepareRules(config, sourceFile, program);
+        if (program !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
+            const directive = getCheckJsDirective(sourceFile.text);
+            if (directive === undefined ? !isCompilerOptionEnabled(program.getCompilerOptions(), 'checkJs') : !directive.enabled) {
+                log('Not using type information for this unchecked JS file');
+                program = undefined;
+                suppressMissingTypeInfoWarning = true;
+            }
+        }
+        const rules = this.prepareRules(config, sourceFile, program, suppressMissingTypeInfoWarning);
+        let findings;
         if (rules.length === 0) {
             log('No active rules');
-            return processor === undefined ? [] : processor.postprocess([]);
+            if (options.reportUselessDirectives !== undefined) {
+                findings = this.filterFactory
+                    .create({sourceFile, getWrappedAst() { return convertAst(sourceFile).wrapped; }, ruleNames: []})
+                    .reportUseless(options.reportUselessDirectives);
+                log('Found %d useless directives', findings.length);
+            } else {
+                findings = [];
+            }
         }
-        const failures = this.applyRules(sourceFile, program, rules, config.settings);
-        return processor === undefined ? failures : processor.postprocess(failures);
+        findings = this.applyRules(sourceFile, program, rules, config.settings, options);
+        return processor === undefined ? findings : processor.postprocess(findings);
     }
 
-    private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined) {
+    private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined, noWarn: boolean) {
         const rules: PreparedRule[] = [];
         for (const [ruleName, {options, severity, rulesDirectories, rule}] of config.rules) {
             if (severity === 'off')
@@ -119,11 +159,15 @@ export class Linter {
                     typeof ctor.deprecated === 'string' ? ctor.deprecated : undefined,
                 );
             if (program === undefined && ctor.requiresTypeInformation) {
-                this.logger.warn(`Rule '${ruleName}' requires type information.`);
+                if (noWarn) {
+                    log('Rule %s requires type information', ruleName);
+                } else {
+                    this.logger.warn(`Rule '${ruleName}' requires type information.`);
+                }
                 continue;
             }
-            if (ctor.supports !== undefined && !ctor.supports(sourceFile, options, config.settings)) {
-                log(`Rule %s does not support this file`, ruleName);
+            if (ctor.supports !== undefined && !ctor.supports(sourceFile, {program, options, settings: config.settings})) {
+                log('Rule %s does not support this file', ruleName);
                 continue;
             }
             rules.push({ruleName, options, severity, ctor});
@@ -131,43 +175,26 @@ export class Linter {
         return rules;
     }
 
-    private applyRules(sourceFile: ts.SourceFile, program: ts.Program | undefined, rules: PreparedRule[], settings: Map<string, any>) {
-        const result: Failure[] = [];
-        let disables: DisableMap | undefined;
+    private applyRules(
+        sourceFile: ts.SourceFile,
+        program: ts.Program | undefined,
+        rules: PreparedRule[],
+        settings: Map<string, any>,
+        options: LinterOptions,
+    ) {
+        const result: Finding[] = [];
+        let findingFilter: FindingFilter | undefined;
         let ruleName: string;
         let severity: Severity;
         let ctor: RuleConstructor;
         let convertedAst: ConvertedAst | undefined;
 
-        const isDisabled = (range: ts.TextRange): boolean => {
-            if (disables === undefined)
-                disables = this.lineSwitches.getDisabledRanges(sourceFile, rules.map((r) => r.ruleName), getWrappedAst);
-            return this.lineSwitches.isDisabled(disables, ruleName, range);
+        const getFindingFilter = () => {
+            return findingFilter ||
+                (findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)}));
         };
-
-        const context: RuleContext = {
-            addFailure,
-            isDisabled,
-            getFlatAst,
-            getWrappedAst,
-            program,
-            sourceFile,
-            settings,
-            options: undefined,
-        };
-
-        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
-            log('Executing rule %s', ruleName);
-            new ctor(context).apply();
-        }
-
-        log('Found %d failures', result.length);
-        return result;
-
-        function addFailure(pos: number, end: number, message: string, fix?: Replacement | Replacement[]) {
-            if (isDisabled({pos, end}))
-                return;
-            result.push({
+        const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
+            const finding: Finding = {
                 ruleName,
                 severity,
                 message,
@@ -186,8 +213,34 @@ export class Linter {
                         : fix.length === 0
                             ? undefined
                             : {replacements: fix},
-            });
+            };
+            if (getFindingFilter().filter(finding))
+                result.push(finding);
+        };
+
+        const context: RuleContext = {
+            addFinding,
+            getFlatAst,
+            getWrappedAst,
+            program,
+            sourceFile,
+            settings,
+            options: undefined,
+        };
+
+        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
+            log('Executing rule %s', ruleName);
+            new ctor(context).apply();
         }
+
+        log('Found %d findings', result.length);
+        if (options.reportUselessDirectives !== undefined) {
+            const useless = getFindingFilter().reportUseless(options.reportUselessDirectives);
+            log('Found %d useless directives', useless.length);
+            result.push(...useless);
+        }
+        return result;
+
         function getFlatAst() {
             return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
         }

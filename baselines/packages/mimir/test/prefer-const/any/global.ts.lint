@@ -1,0 +1,13 @@
+let foo = 1;
+var bar = 2;
+{
+    let baz = 3;
+        ~~~      [error prefer-const: Variable 'baz' is never reassigned. Prefer 'const' instead of 'let'.]
+    var bas = 4;
+}
+function test() {
+    let foobar = 5;
+        ~~~~~~      [error prefer-const: Variable 'foobar' is never reassigned. Prefer 'const' instead of 'let'.]
+    var foobaz = 6;
+        ~~~~~~      [error prefer-const: Variable 'foobaz' is never reassigned. Prefer 'const' instead of 'var'.]
+}

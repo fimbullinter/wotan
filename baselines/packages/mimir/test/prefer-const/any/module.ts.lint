@@ -1,0 +1,113 @@
+import imported from 'foo';
+let imported = 0;
+    ~~~~~~~~      [error prefer-const: Variable 'imported' is never reassigned. Prefer 'const' instead of 'let'.]
+
+export let exported = 0;
+let exported2 = 0;
+export {
+    exported2,
+};
+
+try {
+    throw 'foo';
+} catch (e) {}
+
+var ns = {}, notMerged = '';
+             ~~~~~~~~~       [error prefer-const: Variable 'notMerged' is never reassigned. Prefer 'const' instead of 'var'.]
+namespace ns {}
+
+let ns2 = {};
+    ~~~       [error prefer-const: Variable 'ns2' is never reassigned. Prefer 'const' instead of 'let'.]
+namespace ns2 {}
+          ~~~    [error prefer-const: Variable 'ns2' is never reassigned. Prefer 'const' instead of 'let'.]
+
+var a;
+
+var foo = 0;
+    ~~~      [error prefer-const: Variable 'foo' is never reassigned. Prefer 'const' instead of 'var'.]
+foo;
+{
+    foo;
+    foo === 0;
+    let local: typeof foo = 0;
+        ~~~~~                  [error prefer-const: Variable 'local' is never reassigned. Prefer 'const' instead of 'let'.]
+}
+
+bar;
+var bar = 0;
+
+useBaz();
+var baz = 0;
+function useBaz() {
+    let local: typeof foo = baz;
+        ~~~~~                    [error prefer-const: Variable 'local' is never reassigned. Prefer 'const' instead of 'let'.]
+}
+
+{
+    var bas = 0;
+}
+bas;
+
+{
+    var nested = 0;
+}
+{
+    nested;
+}
+
+typeof foobar;
+var foobar = 0;
+
+var {[v1]: v2, v1} = {v1: 0};
+           ~~                 [error prefer-const: Variable 'v2' is never reassigned. Prefer 'const' instead of 'var'.]
+var [v3] = [v3];
+var {foo: {} = v4, v4} = {v4: v2}, v5 = 0;
+                                   ~~      [error prefer-const: Variable 'v5' is never reassigned. Prefer 'const' instead of 'var'.]
+
+function test(a: string, {length}: any[]) {
+    var a = '', d = 0, {p1 = p1, foo: [{p3, p4, p5, ...p6} = p3, ...p2] = [p2, p5] } = {p4} as any;
+                ~                                                                                   [error prefer-const: Variable 'd' is never reassigned. Prefer 'const' instead of 'var'.]
+                                                       ~~                                           [error prefer-const: Variable 'p6' is never reassigned. Prefer 'const' instead of 'var'.]
+    var b = 0, c = 0;
+               ~      [error prefer-const: Variable 'c' is never reassigned. Prefer 'const' instead of 'var'.]
+    var b: number;
+}
+
+for (let len = 10, i = 0; i < len; ++i);
+for (let len = 10, i = 0; i < len;);
+         ~~~                         [error prefer-const: Variable 'len' is never reassigned. Prefer 'const' instead of 'let'.]
+                   ~                 [error prefer-const: Variable 'i' is never reassigned. Prefer 'const' instead of 'let'.]
+for (let [key, value] of new Map()) {
+               ~~~~~                  [error prefer-const: Variable 'value' is never reassigned. Prefer 'const' instead of 'let'.]
+    key = null!;
+}
+for (let key in {}) {}
+         ~~~           [error prefer-const: Variable 'key' is never reassigned. Prefer 'const' instead of 'let'.]
+for (var arr of arr) {}
+
+let uninitialized: number | undefined;
+
+const alreadyConst = 0;
+
+declare let ambient: string;
+
+declare global {
+    let globalVar: number;
+}
+
+declare namespace ambientNamespace {
+    let var1: string;
+    let var2: number;
+    export {
+        var2,
+    };
+}
+
+for (var element of new Array(element)) {
+    element;
+}
+
+for (var element2 of []) {
+         ~~~~~~~~          [error prefer-const: Variable 'element2' is never reassigned. Prefer 'const' instead of 'var'.]
+    element2;
+}

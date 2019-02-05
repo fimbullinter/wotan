@@ -1,0 +1,12 @@
+// makes sure JSON files are correctly resolved, but excluded from linting
+import data = require('./data.json');
+
+<boolean>data.foo;
+~~~~~~~~~          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+~~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+<string>data.bar;
+~~~~~~~~          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+~~~~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]
+<any>data.baz;
+~~~~~          [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+~~~~~~~~~~~~~~ [error no-unused-expression: This expression is unused. Did you mean to assign a value or call a function?]

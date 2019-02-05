@@ -1,4 +1,4 @@
-import { AbstractRule, Replacement } from '@fimbul/wotan';
+import { AbstractRule, Replacement } from '@fimbul/ymir';
 import { findImports, ImportKind } from 'tsutils';
 import * as ts from 'typescript';
 import * as path from 'path';
@@ -14,7 +14,7 @@ export class Rule extends AbstractRule {
             const importedPackage = getPackageName(path.resolve(dirname, name.text));
             if (importedPackage !== currentPackage) {
                 const start = name.getStart(this.sourceFile);
-                this.addFailure(
+                this.addFinding(
                     start,
                     name.end,
                     `Import directly from '@fimbul/${importedPackage}'.`,

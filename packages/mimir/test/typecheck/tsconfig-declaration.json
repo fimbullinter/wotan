@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "declaration": true,
+    "allowUnreachableCode": false
+  }
+}

@@ -1,8 +1,21 @@
-import { AbstractRule, RuleContext, AbstractFormatter, FileSummary, RuleConstructor, FormatterConstructor } from '@fimbul/wotan';
+import {
+    AbstractRule,
+    RuleContext,
+    AbstractFormatter,
+    FileSummary,
+    RuleConstructor,
+    FormatterConstructor,
+    isTypescriptFile,
+    Replacement,
+} from '@fimbul/ymir';
 import * as TSLint from 'tslint';
 import * as ts from 'typescript';
+import getCaller = require('get-caller-file');
+import * as path from 'path';
+import { convertAst } from 'tsutils';
 
-export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): RuleConstructor { // tslint:disable-line:naming-convention
+// tslint:disable-next-line:naming-convention
+export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = inferName(Rule)): RuleConstructor {
     return class extends AbstractRule {
         public static requiresTypeInformation =
             !!(Rule.metadata && Rule.metadata.requiresTypeInfo) ||
@@ -12,11 +25,9 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             ? Rule.metadata.deprecationMessage || true // empty deprecation message is coerced to true
             : false;
 
-        public static supports(sourceFile: ts.SourceFile) {
-            if (Rule.metadata && Rule.metadata.typescriptOnly)
-                return /\.tsx?$/.test(sourceFile.fileName);
-            return true;
-        }
+        public static supports = Rule.metadata && Rule.metadata.typescriptOnly
+            ? isTypescriptFile
+            : undefined;
 
         private delegate: TSLint.IRule;
 
@@ -39,15 +50,27 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string): Rule
             } else {
                 result = this.delegate.apply(this.sourceFile);
             }
-            for (const failure of result)
-                this.addFailure(
+            const {fileName} = this.sourceFile;
+            for (const failure of result) {
+                if (failure.getFileName() !== fileName)
+                    throw new Error(`Adding findings for a different SourceFile is not supported. Expected '${
+                        fileName}' but received '${failure.getFileName()}' from rule '${this.delegate.getOptions().ruleName}'.`);
+                this.addFinding(
                     failure.getStartPosition().getPosition(),
                     failure.getEndPosition().getPosition(),
                     failure.getFailure(),
                     arrayify(failure.getFix()).map((r) => ({start: r.start, end: r.end, text: r.text})),
                 );
+            }
         }
     };
+}
+
+function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-line:naming-convention
+    if (Rule.metadata !== undefined && Rule.metadata.ruleName)
+        return Rule.metadata.ruleName;
+    const caller = getCaller(3);
+    return path.basename(caller, path.extname(caller));
 }
 
 export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): FormatterConstructor { // tslint:disable-line:naming-convention
@@ -65,18 +88,18 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
             let sourceFile: ts.SourceFile | undefined;
             for (let i = 0; i < summary.fixes; ++i)
                 this.fixed.push(new TSLint.RuleFailure(getSourceFile(), 0, 0, '', '', TSLint.Replacement.appendText(0, '')));
-            if (summary.failures.length === 0)
+            if (summary.findings.length === 0)
                 return;
             this.failures.push(
-                ...summary.failures.map((f) => {
+                ...summary.findings.map((f) => {
                     const failure = new TSLint.RuleFailure(
                         getSourceFile(),
                         f.start.position,
                         f.end.position,
                         f.message,
                         f.ruleName,
-                        f.fix && f.fix.replacements.map((r) => new TSLint.Replacement(r.start, r.end - r.start, r.text)));
-                    failure.setRuleSeverity(f.severity);
+                        f.fix && f.fix.replacements.map(convertToTslintReplacement));
+                    failure.setRuleSeverity(f.severity === 'suggestion' ? 'warning' : f.severity);
                     return failure;
                 }),
             );
@@ -89,12 +112,82 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
         }
 
         public flush() {
-            return this.delegate.format(this.failures, this.fixed);
+            return this.delegate.format(this.failures, this.fixed).trim();
         }
     };
 }
 
-function arrayify<T>(maybeArr: T | T[] | undefined): T[] {
+// tslint:disable-next-line:naming-convention
+export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T>): TSLint.RuleConstructor {
+    const metadata: TSLint.IRuleMetadata = {
+        ruleName: 'who-cares',
+        typescriptOnly: false,
+        description: '',
+        options: undefined,
+        optionsDescription: '',
+        type: 'functionality',
+        deprecationMessage: !Rule.deprecated ? undefined : Rule.deprecated === true ? '' : Rule.deprecated,
+    };
+
+    function apply(options: TSLint.IOptions, sourceFile: ts.SourceFile, program?: ts.Program): TSLint.RuleFailure[] {
+        const args = options.ruleArguments.length < 2 ? options.ruleArguments[0] : options.ruleArguments;
+        const failures: TSLint.RuleFailure[] = [];
+        if (Rule.supports !== undefined && !Rule.supports(sourceFile, {program, options: args, settings: new Map()}))
+            return failures;
+        const context: RuleContext = {
+            sourceFile,
+            program,
+            options: args,
+            settings: new Map(),
+            getFlatAst() {
+                return convertAst(sourceFile).flat;
+            },
+            getWrappedAst() {
+                return convertAst(sourceFile).wrapped;
+            },
+            addFinding(start, end, message, fix) {
+                failures.push(
+                    new TSLint.RuleFailure(
+                        sourceFile,
+                        start,
+                        end,
+                        message,
+                        options.ruleName,
+                        fix && arrayify(fix).map(convertToTslintReplacement),
+                    ),
+                );
+            },
+        };
+        const rule = new Rule(<T>context);
+        rule.apply();
+        return failures;
+    }
+
+    if (Rule.requiresTypeInformation)
+        return class extends TSLint.Rules.TypedRule {
+            public static metadata = metadata;
+
+            public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program) {
+                return apply(this.getOptions(), sourceFile, program);
+            }
+        };
+    return class extends TSLint.Rules.OptionallyTypedRule {
+        public static metadata = metadata;
+
+        public apply(sourceFile: ts.SourceFile) {
+            return apply(this.getOptions(), sourceFile);
+        }
+        public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program) {
+            return apply(this.getOptions(), sourceFile, program);
+        }
+    };
+}
+
+function convertToTslintReplacement(r: Replacement) {
+    return new TSLint.Replacement(r.start, r.end - r.start, r.text);
+}
+
+function arrayify<T>(maybeArr: T | ReadonlyArray<T> | undefined): ReadonlyArray<T> {
     return Array.isArray(maybeArr)
         ? maybeArr
         : maybeArr === undefined

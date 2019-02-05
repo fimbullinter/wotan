@@ -1,0 +1,97 @@
+namespace foo {
+    'use\u0020strict';
+    '\'use strict';
+    '"use strict"';
+    // 'use strict'
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    'use strict';
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    "use strict";
+    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    `use strict`;
+    foo;
+    'use strict';
+
+    function fn() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    }
+    function fn2() {
+        fn();
+        'use strict';
+    }
+    class Foo {
+        constructor() {
+            "use strict";
+            ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+        }
+        method() {
+            console.log('use strict');
+            if (Boolean())
+                'use strict';
+            else {
+                "use strict";
+            }
+            return {
+                m() {
+                    'use strict';
+                    ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+                },
+            };
+        }
+    }
+}
+
+class Foo {
+    constructor() {
+        "use strict";
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+    }
+    method() {
+        return {
+            m() {
+                'use strict';
+                ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+            },
+        };
+    }
+}
+
+var C = class {
+    get prop() {
+        'use strict';
+        ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+        return 1;
+    }
+};
+
+const obj = {
+    get prop() {
+        obj;
+        'use strict';
+        return () => {
+            'use strict';
+            ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+            return () => {
+                "use strict";
+                ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+            }
+        };
+    },
+
+    m() {
+        return () => {
+            'use strict';
+            ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+        }
+    },
+
+    p: function() {
+        'use\u0020strict';
+        return () => {
+            'use strict';
+            ~~~~~~~~~~~~~ [error no-useless-strict: Redundant 'use strict': due to the compilerOption 'alwaysStrict' this code is in strict mode.]
+        }
+    }
+};

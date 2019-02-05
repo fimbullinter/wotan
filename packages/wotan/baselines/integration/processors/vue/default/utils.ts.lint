@@ -1,8 +1,0 @@
-export function doStuff() {
-    return 'foo';
-}
-
-export async function doOtherStuff() {
-    await doStuff();
-    ~~~~~~~~~~~~~~~  [error await-promise: Unnecessary 'await' of a non-Promise value.]
-}

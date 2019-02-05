@@ -1,0 +1,75 @@
+declare var index: {[key: string]: string};
+declare var nullableIndex: {[key: string]: string | undefined};
+
+/* delete */ delete index.foo;
+delete index['bar'];
+delete nullableIndex.foo;
+delete nullableIndex['bar'];
+delete index.delete;
+
+declare var obj: {
+    a?: string;
+    b: string | undefined;
+    c: any;
+    d: unknown;
+};
+
+delete obj.a;
+delete obj['a'];
+delete obj.b;
+~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+delete obj['b'];
+~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+delete obj.c;
+~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'c' is required.]
+delete obj.d;
+~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'd' is required.]
+delete obj[];
+
+const keyA = 'a';
+delete obj[keyA];
+const keyB = 'b';
+delete obj[keyB];
+~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+const keyBC = Boolean() ? 'b' : 'c';
+delete obj[keyBC];
+~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'c' is required.]
+const keyAB = Boolean() ? 'a' : 'b';
+delete obj[keyAB];
+~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+
+delete obj[obj.c];
+delete obj[obj.c.d];
+
+declare var any: any;
+delete any.foo;
+
+declare var optional: Partial<typeof obj>;
+
+delete optional.a;
+delete optional.b;
+delete optional.c;
+delete optional.d;
+
+delete [].length;
+~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'length' is required.]
+delete [][Symbol.iterator];
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'Symbol.iterator' is required.]
+
+declare var myArrayLike: {
+    0: string;
+    '1': string;
+    [index: number]: string;
+    [Symbol.iterator]?(): Iterator<number>;
+};
+delete myArrayLike[0];
+~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '0' is required.]
+delete myArrayLike['0'];
+~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '0' is required.]
+delete myArrayLike[1];
+~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '1' is required.]
+delete myArrayLike['1'];
+~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '1' is required.]
+delete myArrayLike[2];
+delete myArrayLike[Symbol.iterator];

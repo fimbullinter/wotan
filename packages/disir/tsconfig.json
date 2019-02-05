@@ -7,5 +7,6 @@
     "src"
   ],
   "exclude": [
+    "src/**/*.d.ts"
   ]
 }

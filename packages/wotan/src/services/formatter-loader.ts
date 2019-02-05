@@ -1,6 +1,5 @@
 import { injectable } from 'inversify';
-import { FormatterLoaderHost, FormatterConstructor, DirectoryService } from '../types';
-import { ConfigurationError } from '../error';
+import { FormatterLoaderHost, FormatterConstructor, DirectoryService, ConfigurationError } from '@fimbul/ymir';
 
 @injectable()
 export class FormatterLoader {
@@ -12,7 +11,7 @@ export class FormatterLoader {
         if (formatter === undefined)
             formatter = this.host.loadCustomFormatter(name, this.directories.getCurrentDirectory());
         if (formatter === undefined)
-            throw new ConfigurationError(`Could not find formatter '${name}' relative to '${this.directories.getCurrentDirectory()}'.`);
+            throw new ConfigurationError(`Cannot find formatter '${name}' relative to '${this.directories.getCurrentDirectory()}'.`);
         return formatter;
     }
 }

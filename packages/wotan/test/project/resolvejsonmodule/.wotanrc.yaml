@@ -1,0 +1,3 @@
+rules:
+  no-unused-expression: error
+  no-useless-assertion: error

@@ -1,0 +1,153 @@
+declare let x: Promise<string>;
+function notAsync() {
+    return;
+    return x;
+    try {
+        return x;
+    } catch {
+        return x;
+    } finally {
+        return x;
+    }
+}
+async function test() {
+    return x;
+    try {
+        return;
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        function nestedFn() {
+            return x;
+        }
+        return await x;
+        return (x);
+        ~~~~~~      [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return (
+            await x
+        );
+        return {
+            fn() {
+                return x;
+            },
+            get x() {
+                return x;
+            },
+            async asyncFn() {
+                return x;
+            },
+        };
+        return await x || x;
+        ~~~~~~               [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return x || await x;
+        ~~~~~~               [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return (x || await x);
+        ~~~~~~                 [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return x && await x;
+        return Boolean() ? x : x;
+        ~~~~~~                    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return(Boolean() ? await x : x);
+        ~~~~~~                           [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        return Boolean() ? x : await x;
+        ~~~~~~                          [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        {
+            for (;;) {
+                return x;
+                ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+            }
+        }
+        return (async () => {
+        ~~~~~~                [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+            try {
+                return x;
+                ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+            } catch {
+                return x;
+            }
+        })();
+    } catch {
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+    } finally {
+        return x;
+    }
+    try {
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+    } finally {
+        return x;
+    }
+    try {
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } catch {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } finally {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+        return x;
+        ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+    } catch {
+        return x;
+        try {
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        } catch {
+            return x;
+        }
+        return x;
+    }
+    function nested() {
+        try {
+            return x;
+        } catch {
+            return x;
+        }
+    }
+    return {
+        get foo() {
+            try {
+                return x;
+            } catch {
+                return x;
+            }
+        }
+    }
+}
+
+try {
+    return x;
+} catch {
+}
+
+async function testStatements() {
+    try {
+        label: if (Boolean())
+            return x;
+            ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        switch (Boolean()) {
+            case true:
+                if (Boolean()) {
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+                } else {
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+                }
+            default:
+                while (true)
+                    return x;
+                    ~~~~~~    [error try-catch-return-await: Missing 'await' of Promise returned inside try-catch.]
+        }
+    } catch (e) {}
+}

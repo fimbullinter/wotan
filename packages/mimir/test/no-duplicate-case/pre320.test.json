@@ -1,0 +1,4 @@
+{
+  "files": "test.ts",
+  "typescriptVersion": "< 3.2.0"
+}

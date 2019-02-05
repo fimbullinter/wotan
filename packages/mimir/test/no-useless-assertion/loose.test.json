@@ -1,0 +1,4 @@
+{
+  "project": "tsconfig-loose.json",
+  "files": ["global.ts", "non-null.ts", "type-assertion.ts"]
+}

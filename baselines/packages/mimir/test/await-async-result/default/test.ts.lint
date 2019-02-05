@@ -1,0 +1,80 @@
+// adapted from https://github.com/Microsoft/TypeScript/pull/15195
+
+async function isAsync(): Promise<any>;
+async function isAsync() {
+    return 10;
+}
+
+async function async() {
+    isAsync();
+    ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+}
+
+function notAsync() {
+    return 10;
+}
+
+declare function returnsPromise(): Promise<number>;
+declare function returnsThenable(): {then(cb: (onfulfilled: (v: number) => void) => void): void};
+
+class Foo {
+    async isAsync(): Promise<any>;
+    async isAsync() {
+        return 10;
+    }
+
+    /* async */
+    public async anotherAsync() {
+        isAsync();
+        ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+        if (Boolean())
+            this.isAsync();
+            ~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    }
+
+    notAsync() {
+        return 10;
+    }
+}
+
+export async function test() {
+    isAsync();
+    ~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    notAsync();
+    returnsPromise();
+    ~~~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    returnsThenable();
+    ~~~~~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    let foo = new Foo();
+    foo.isAsync();
+    ~~~~~~~~~~~~~~ [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]
+    foo.notAsync();
+
+    await isAsync();
+    await notAsync();
+    await returnsPromise();
+    await returnsThenable();
+    await foo.isAsync();
+    await foo.notAsync();
+
+    let v = isAsync();
+    v = returnsPromise();
+    v;
+
+    function nested () {
+        isAsync();
+        notAsync();
+    }
+}
+
+isAsync();
+notAsync();
+returnsPromise();
+returnsThenable();
+let foo = new Foo();
+foo.isAsync();
+foo.notAsync();
+
+async () => isAsync();
+async () => { isAsync(); };
+              ~~~~~~~~~~    [error await-async-result: Return value of async function call was discarded. Did you mean to 'await' its result?]

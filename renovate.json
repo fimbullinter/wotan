@@ -1,0 +1,53 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommitsDisabled",
+    ":preserveSemverRanges",
+    ":prNotPending",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimit10",
+    ":automergeMinor",
+    ":automergeDigest",
+    ":automergeBranchPush",
+    ":automergeRequireAllStatusChecks",
+    "group:definitelyTyped",
+    "group:linters"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "after 10pm",
+    "before 6am"
+  ],
+  "peerDependencies": {
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": "before 6am on Monday"
+  },
+  "packageRules": [
+    {
+      "packageNames": ["typescript"],
+      "rangeStrategy": "pin",
+      "followTag": "next"
+    }
+  ],
+  "node": {
+    "enabled": true,
+    "supportPolicy": ["current"]
+  },
+  "docker": {
+    "enabled": true,
+    "schedule": "before 6am on Sunday",
+    "packageRules": [
+      {
+        "groupName": "Node Docker digests",
+        "packageNames": [
+          "circleci/node",
+          "node"
+        ]
+      }
+    ]
+  }
+}

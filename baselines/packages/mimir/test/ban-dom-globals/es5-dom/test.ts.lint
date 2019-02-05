@@ -1,0 +1,59 @@
+name;
+~~~~  [error ban-dom-globals: Referencing global 'name' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+window.name;
+new Event('click');
+event instanceof Event;
+~~~~~                   [error ban-dom-globals: Referencing global 'event' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+let e: typeof event;
+              ~~~~~  [error ban-dom-globals: Referencing global 'event' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+
+alert(confirm(prompt('foo?') || ''));
+URL.createObjectURL(null);
+
+clearTimeout(setTimeout(() => {}));
+clearImmediate(setImmediate(() => {}));
+clearInterval(setInterval(() => {}));
+cancelAnimationFrame(requestAnimationFrame(() => {}));
+
+document.location;
+location;
+~~~~~~~~  [error ban-dom-globals: Referencing global 'location' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+window.location;
+navigator.geolocation;
+btoa(atob(''));
+console.log('foo');
+fetch('foo');
+
+sessionStorage;
+localStorage;
+indexedDB;
+
+function test() {
+    let event: Event = null!;
+    event;
+    function onclick() {}
+    onclick();
+}
+
+open('');
+~~~~      [error ban-dom-globals: Referencing global 'open' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+addEventListener('click', () => {});
+~~~~~~~~~~~~~~~~                     [error ban-dom-globals: Referencing global 'addEventListener' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+window.addEventListener('click', () => {});
+
+eval(';');
+
+type t = Window;
+let v: t;
+
+foobar;
+
+for (let i = 0; i < 10; ++i);
+
+{
+    class c {};
+    c;
+    const {target} = event!;
+                     ~~~~~   [error ban-dom-globals: Referencing global 'event' is not allowed. Did you mean to use a local variable or parameter with a similar name?]
+    target;
+}

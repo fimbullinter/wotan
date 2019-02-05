@@ -1,0 +1,4 @@
+{
+  "files": "*.test",
+  "config": ".wotanrc-exclude.yaml"
+}

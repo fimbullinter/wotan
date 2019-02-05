@@ -1,0 +1,48 @@
+export {};
+
+declare namespace JSX {
+    interface ElementClass {
+        render: any;
+    }
+}
+
+/** @deprecated */
+function FooComponent(props: {foo: string}): false;
+function FooComponent(props: {bar: string}): false;
+function FooComponent() {
+    return false;
+}
+
+class BarComponent {
+    render() {
+        return false;
+    }
+}
+
+/** @deprecated */
+class BazComponent extends BarComponent {}
+
+class BasComponent {
+    /** @deprecated */
+    constructor(props?: any) {}
+
+    public render() {
+        return false;
+    }
+}
+
+declare var FizzComponent: {
+    /** @deprecated */
+    new(props: any): {render(): any};
+}
+
+let foo = <FooComponent foo="a"/>;
+          ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'FooComponent(props: { foo: string; }): false' is deprecated.]
+let foo2 = <FooComponent bar="1"></FooComponent>;
+let bar = <BarComponent></BarComponent>;
+let baz = <BazComponent></BazComponent>;
+           ~~~~~~~~~~~~                  [error no-unstable-api-use: Class 'BazComponent' is deprecated.]
+let bas = <BasComponent bar=""></BasComponent>;
+          ~~~~~~~~~~~~~~~~~~~~~                 [error no-unstable-api-use: CostructSignature 'new BasComponent(props?: any): BasComponent' is deprecated.]
+let fizz = <FizzComponent></FizzComponent>;
+           ~~~~~~~~~~~~~~~                  [error no-unstable-api-use: CostructSignature 'new FizzComponent(props: any): { render(): any; }' is deprecated.]

@@ -1,0 +1,4 @@
+namespace foo {
+    console.log("a:", a);
+                ~~~~      [error local/quotemark: Prefer single quotes]
+}

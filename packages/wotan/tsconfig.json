@@ -1,18 +1,13 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "declaration": true,
-    "stripInternal": true,
     "rootDir": "."
   },
   "include": [
     "src",
-    "custom-typings",
-    "test/conformance"
+    "test/*.spec.ts"
   ],
   "exclude": [
-    "index.*",
-    "src/**/*.d.ts",
-    "test/conformance/**/*.d.ts"
+    "src/**/*.d.ts"
   ]
 }

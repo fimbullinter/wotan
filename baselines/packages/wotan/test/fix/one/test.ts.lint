@@ -1,0 +1,2 @@
+abcdefg; // this comment should stay intact
+~                                           [error local/delete: remove this character]

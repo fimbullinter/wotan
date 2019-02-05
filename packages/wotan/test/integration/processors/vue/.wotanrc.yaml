@@ -1,5 +1,0 @@
-rules:
-  await-promise: error
-overrides:
-  - files: "*.vue"
-    processor: ./vue.js

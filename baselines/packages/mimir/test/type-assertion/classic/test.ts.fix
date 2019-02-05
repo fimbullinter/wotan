@@ -1,0 +1,71 @@
+declare let foo: any;
+declare let bar: any;
+declare let baz: any;
+type T = any;
+
+<T>foo;
+<T>foo;
+
+<T['prop']>foo;
+<T['prop']>foo;
+
++<T>foo;
++(<T>foo);
+
+typeof <T>foo;
+typeof (<T>foo);
+
+<T>typeof foo;
+<T>typeof foo;
+
+void <T>foo;
+void (<T>foo);
+
+<T>void foo;
+<T>void foo;
+
+<T>foo && bar;
+<T>foo && bar;
+
+<T>foo & bar;
+(<T>foo) & bar;
+
+foo & <T>bar;
+foo & <T>bar;
+
+(<number>1) ** 2;
+(<number>1) ** 2;
+
+<number>(1 ** 2 + 1);
+<number>(1 ** 2 + 1);
+
+foo & <T>bar | baz;
+foo & (<T>bar) | baz;
+
+<T>+foo & bar;
+(<T>+foo) & bar;
+
+() => <T>{foo}.foo;
+() => <T>({foo}.foo);
+
+() => <T>{foo}.foo & bar;
+() => (<T>{foo}.foo) & bar;
+
+<T>() => foo;
+
+async function* test() {
+    <T> await foo;
+    <T>await foo;
+
+    await <T>foo;
+    await (<T>foo);
+
+    <T>(yield foo);
+    <T>(yield foo);
+
+    yield <T>foo;
+    yield <T>foo;
+}
+
+/**<T>foo*/<T>foo;
+<'as'>foo;

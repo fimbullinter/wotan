@@ -1,0 +1,2 @@
+rules:
+  no-unstable-api-use: error

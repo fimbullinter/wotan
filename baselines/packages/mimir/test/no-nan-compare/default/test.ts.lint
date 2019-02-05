@@ -1,0 +1,52 @@
+declare let foo: number;
+declare let NaNa: number;
+declare let aNaN: number;
+declare let obj: {NaN: number, Number: any};
+
+foo = NaN;
+foo += NaN;
+
+foo == NaN;
+~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+foo!==NaN;
+~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+NaN != foo;
+~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+NaN===foo;
+~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+
+Number.NaN == foo;
+~~~~~~~~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+foo != Number.NaN;
+~~~~~~~~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+
+NaNa === foo;
+aNaN === foo;
+foo === NaNa;
+foo === aNaN;
+
+NaN === NaN;
+~~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+~~~~~~~~~~~  [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+
+foo === obj.NaN;
+
+`${foo}` === "NaN";
+
+/** this is NaN */
+NaN;
+Number.NaN;
+
+isNaN(foo);
+
+switch (foo) {
+    case 1:
+    case obj.NaN:
+    case obj.Number.NaN:
+    case NaN:
+    ~~~~~~~~~ [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+    case Number.NaN:
+    ~~~~~~~~~~~~~~~~ [error no-nan-compare: Comparing with 'NaN' always yields 'false'. Consider using 'isNaN' instead.]
+    case NaN.valueOf():
+    case 2:
+}

@@ -1,63 +1,80 @@
-import { AbstractProcessor, GlobalSettings, ProcessorUpdateResult, Failure, Replacement } from '@fimbul/wotan';
+import {
+    AbstractProcessor,
+    ProcessorUpdateResult,
+    Finding,
+    Replacement,
+    ProcessorSuffixContext,
+    ProcessorContext,
+    FindingPosition,
+} from '@fimbul/ymir';
 import * as path from 'path';
-import * as parse5 from 'parse5/lib';
+import * as SAXParser from 'parse5-sax-parser';
 import * as ts from 'typescript';
 import * as voidElements from 'void-elements';
 
 export class Processor extends AbstractProcessor {
-    public static getSuffixForFile(name: string, _settings: GlobalSettings, readFile: () => string) {
-        if (path.extname(name) !== '.vue')
+    public static getSuffixForFile(context: ProcessorSuffixContext) {
+        if (path.extname(context.fileName) !== '.vue')
             return '';
         let suffix = '';
-        const parser = new parse5.SAXParser();
+        const parser = new SAXParser();
         let depth = 0;
-        parser.on('startTag', (tagName, attr, selfClosing) => {
-            if (selfClosing || voidElements[tagName])
+        parser.on('startTag', (startTag) => {
+            if (startTag.selfClosing || voidElements[startTag.tagName])
                 return;
             ++depth;
-            if (depth === 1 && tagName === 'script') {
-                const lang = attr.find(isLangAttr);
+            if (depth === 1 && startTag.tagName === 'script') {
+                const lang = startTag.attrs.find((attr) => attr.name === 'lang');
                 suffix = lang === undefined ? '.js' : `.${lang.value}`;
             }
         });
         parser.on('endTag', () => {
             --depth;
         });
-        parser.write(readFile());
+        parser.write(context.readFile());
         parser.end();
         return suffix;
     }
 
-    private range = this.initRange();
+    private range = {
+        start: 0,
+        end: Infinity,
+        line: 0,
+        firstLineOffset: 0,
+    };
 
-    private initRange() {
-        const range = {
-            start: 0,
-            end: Infinity,
-            line: 0,
-        };
+    constructor(context: ProcessorContext) {
+        super(context);
         if (path.extname(this.sourceFileName) === '.vue') {
-            const parser = new parse5.SAXParser({locationInfo: true});
+            const parser = new SAXParser({sourceCodeLocationInfo: true});
             let depth = 0;
-            parser.on('startTag', (tagName, _attr, selfClosing, location) => {
-                if (selfClosing || voidElements[tagName])
+            parser.on('startTag', (startTag) => {
+                if (startTag.selfClosing || voidElements[startTag.tagName])
                     return;
                 ++depth;
-                if (depth === 1 && tagName === 'script')
-                    range.start = location!.endOffset;
+                if (depth === 1 && startTag.tagName === 'script')
+                    this.range.start = startTag.sourceCodeLocation!.endOffset;
             });
-            parser.on('endTag', (tagName, location) => {
+            parser.on('endTag', (endTag) => {
                 --depth;
-                if (depth === 0 && tagName === 'script')
-                    range.end = location!.startOffset;
+                if (depth === 0 && endTag.tagName === 'script')
+                    this.range.end = endTag.sourceCodeLocation!.startOffset;
             });
             parser.write(this.source);
             parser.end();
-            const match = this.source.substring(0, range.start).match(/(\r?\n)/g);
+            const lineBreakAfterStart = /^\r?\n/.exec(this.source.substr(this.range.start));
+            if (lineBreakAfterStart !== null) {
+                this.range.start += lineBreakAfterStart[0].length;
+            } else {
+                let lineBreakBeforeStart = this.source.lastIndexOf('\n', this.range.start);
+                if (lineBreakBeforeStart === -1)
+                    lineBreakBeforeStart = 0;
+                this.range.firstLineOffset = this.range.start - lineBreakBeforeStart;
+            }
+            const match = this.source.substring(0, this.range.start).match(/(\r?\n)/g);
             if (match !== null)
-                range.line = match.length;
+                this.range.line = match.length;
         }
-        return range;
     }
 
     public preprocess() {
@@ -80,28 +97,29 @@ export class Processor extends AbstractProcessor {
         };
     }
 
-    public postprocess(failures: Failure[]): Failure[] {
-        return failures.map(this.mapFailure, this);
+    public postprocess(findings: Finding[]): Finding[] {
+        return findings.map(this.mapFinding, this);
     }
 
-    private mapFailure(f: Failure): Failure {
+    private mapFinding(f: Finding): Finding {
         return {
             ...f,
-            start: {
-                character: f.start.character, // TODO handle first line different if these is no line break after <script>
-                line: f.start.line + this.range.line,
-                position: f.start.position + this.range.start,
-            },
-            end: {
-                character: f.end.character,
-                line: f.end.line + this.range.line,
-                position: f.end.position + this.range.start,
-            },
+            start: this.adjustPosition(f.start),
+            end: this.adjustPosition(f.end),
             fix: f.fix === undefined
                 ? undefined
                 : {
                     replacements: f.fix.replacements.map(this.mapReplacement, this),
                 },
+        };
+    }
+
+    private adjustPosition(pos: FindingPosition): FindingPosition {
+        return {
+            // special handling for first line if there is no line break after opening tag
+            character: pos.line === 0 ? pos.character + this.range.firstLineOffset : pos.character,
+            line: pos.line + this.range.line,
+            position: pos.position + this.range.start,
         };
     }
 
@@ -112,8 +130,4 @@ export class Processor extends AbstractProcessor {
             text: r.text,
         };
     }
-}
-
-function isLangAttr(attr: parse5.AST.Default.Attribute) {
-    return attr.name === 'lang';
 }

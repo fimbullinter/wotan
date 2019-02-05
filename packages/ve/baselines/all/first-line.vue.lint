@@ -1,4 +1,0 @@
-<script lang="ts">
-(async () => await 1)();
-             ~~~~~~~     [error await-promise: Unnecessary 'await' of a non-Promise value.]
-</script>

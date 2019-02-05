@@ -1,5 +1,0 @@
-{
-  "config": "my-config",
-  "files": ["{j,t}stest.{j,t}s"],
-  "fix": false
-}

@@ -2,10 +2,6 @@
 environment:
   nodejs_version: ""
 
-cache:
-  - node_modules
-  - "%LOCALAPPDATA%\\Yarn"
-
 install:
   - ps: Install-Product node $env:nodejs_version
   - yarn
@@ -15,5 +11,5 @@ build: off
 test_script:
   - yarn compile
   - yarn lint
-  - yarn coverage yarn test
+  - yarn coverage node_modules/.bin/run-p test:integration "test:unit -s -c 2"
   - yarn report-coverage

@@ -1,13 +1,10 @@
-/baselines/
 /test/
-/coverage/
-/custom-typings/
 /.*
-/src/**/*.ts
-!/src/**/*.d.ts
+*.ts
 /*.yml
 /*.yaml
 /*.md
 /*.json
 /yarn.lock
 /*.tgz
+.DS_Store

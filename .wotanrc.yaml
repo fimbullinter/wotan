@@ -2,7 +2,22 @@
 extends:
   - wotan:latest
   - "@fimbul/disir"
+rules:
+  no-useless-predicate: off # TODO enable ASAP
+  no-useless-assertion: off # TODO enable ASAP
+  type-assertion:
+    options:
+      style: classic
+  parameter-properties:
+    options:
+      mode: when-possible
 overrides:
   - files: "packages/*/test/**"
     rules:
-      deprecation: off
+      no-unstable-api-use: off
+      no-inferred-empty-object: off
+  - files: "packages/**"
+    rules:
+      disir/import-package: error
+      disir/no-barrel-import: error
+      disir/no-import-self: error

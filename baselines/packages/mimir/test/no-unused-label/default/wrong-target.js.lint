@@ -1,0 +1,19 @@
+bar: for (;;) {
+~~~             [error no-unused-label: Unused label 'bar'.]
+    break;
+    bar: switch (true) {
+        case true:
+            break bar;
+        default:
+            continue bar;
+    }
+}
+
+foo: for(;;)
+~~~          [error no-unused-label: Unused label 'foo'.]
+    foo: while(true)
+        break foo;
+break foo;
+
+baz: break bas;
+~~~             [error no-unused-label: Unused label 'baz'.]
