@@ -4,7 +4,6 @@ import * as yaml from 'js-yaml';
 import * as ts from 'typescript';
 import * as path from 'path';
 
-// @internal
 /**
  * Number of .. until the containing node_modules.
  * __dirname -> src

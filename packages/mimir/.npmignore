@@ -2,6 +2,7 @@
 /.*
 *.ts
 !*.d.ts
+/src/*.d.ts
 /*.yml
 /*.md
 /*.json

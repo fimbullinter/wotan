@@ -3,43 +3,43 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import * as fs from 'fs';
 import * as diff from 'diff';
+import * as rimraf from 'rimraf';
 import chalk from 'chalk';
+import { getPackages } from './util';
 
-if (process.argv.length < 3) {
-    console.log('Usage: node scripts/api-guard <package> [-u]');
-    process.exit(1);
+const update = process.argv[2] === '-u';
+
+for (const pkg of getPackages().publicPackages.keys()) {
+    const packageDir = path.join('packages', pkg);
+    const baselineDir = path.join('baselines', packageDir, 'api');
+    if (update)
+        rimraf.sync(baselineDir);
+    checkPackage(packageDir, baselineDir, update ? writeFile : compareFile);
+
 }
 
-const p = 'packages/' + process.argv[2];
-const update = process.argv[3] === '-u';
-const list = packlist.sync({path: p});
+function checkPackage(packageDir: string, baselineDir: string, callback: (content: string, filename: string) => void) {
+    const list = packlist.sync({path: packageDir});
+    callback(list.join('\n'), path.join(baselineDir, 'packlist.txt'));
 
-const baselineDir = path.join(p, 'baselines/package');
+    for (const file of list)
+        if (file.endsWith('.d.ts'))
+            callback(fs.readFileSync(path.join(packageDir, file), 'utf8'), path.join(baselineDir, file));
+}
 
-compare(list.join('\n'), path.join(baselineDir, 'packlist.txt'));
+function writeFile(content: string, fileName: string) {
+    mkdirp.sync(path.dirname(fileName));
+    fs.writeFileSync(fileName, content);
+}
 
-// TODO compare generated declaration files, compile a dummy project to find missing symbols, detect unnecessary declaration files
-// for (const file of list)
-//     if (file.endsWith('.d.ts'))
-//         compare(fs.readFileSync(path.join(p, file), 'utf8'), path.join(baselineDir, file));
-
-function compare(actual: string, fileName: string) {
+function compareFile(actual: string, fileName: string) {
     let expected = '';
     try {
         expected = fs.readFileSync(fileName, 'utf8');
     } catch {
-        if (update) {
-            mkdirp.sync(path.dirname(fileName));
-            fs.writeFileSync(fileName, actual);
-            return;
-        }
     }
     if (expected === actual)
         return;
-    if (update) {
-        fs.writeFileSync(fileName, actual);
-        return;
-    }
     const output = [
         chalk.underline(fileName),
         chalk.red('Expected'),

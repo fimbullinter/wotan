@@ -1,6 +1,7 @@
 /test/
 /.*
 *.ts
+!*.d.ts
 /*.yml
 /*.yaml
 /*.md

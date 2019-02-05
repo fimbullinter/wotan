@@ -5,7 +5,6 @@ import debug = require('debug');
 
 const log = debug('wotan:cli');
 
-// @internal
 export async function run(argv: string[]) {
     if (argv.length === 1 && /^(')?-(?:v|-version)\1$/.test(argv[0]))
         return console.log(require('../package.json').version);
@@ -19,7 +18,6 @@ export async function run(argv: string[]) {
         process.exitCode = 1;
     }
 }
-// @internal
 export function loadConfig(dir: string) {
     const fileName = path.join(dir, '.fimbullinter.yaml');
     return new Promise<GlobalOptions>((resolve) => {
