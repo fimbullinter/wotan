@@ -224,3 +224,8 @@ Replacement.replace(start, end, '{}');
   Replacement.replace(start, end, '{}'), // deletes twice ... why would you even want to do that?
 ];
 ```
+
+## Testing
+
+Before we throw our rule at our and other people's code, we should make sure it works as intended and doesn't destroy the code it's intended to make better.
+Head over to [Testing Rules](testing-rules.md) to learn how to properly test your rules.
