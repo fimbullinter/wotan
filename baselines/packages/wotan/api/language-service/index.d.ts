@@ -10,13 +10,10 @@ export declare class LanguageServiceInterceptor implements PartialLanguageServic
     protected languageService: ts.LanguageService;
     protected require: (id: string) => {};
     protected log: (message: string) => void;
-    private findingsForFile;
     getExternalFiles?: () => string[];
     constructor(config: Record<string, unknown>, project: import('typescript/lib/tsserverlibrary').server.Project, serverHost: import('typescript/lib/tsserverlibrary').server.ServerHost, languageService: ts.LanguageService, require: (id: string) => {}, log: (message: string) => void);
     updateConfig(config: Record<string, unknown>): void;
     getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[];
-    private getFindings;
-    private loadPluginModule;
     getSupportedCodeFixes(fixes: string[]): string[];
     dispose(): void;
 }

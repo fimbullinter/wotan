@@ -1,10 +1,6 @@
 import { Configuration, CacheFactory, ReducedConfiguration, Settings, DirectoryService, ConfigurationProvider } from '@fimbul/ymir';
 import { CachedFileSystem } from './cached-file-system';
 export declare class ConfigurationManager {
-    private directories;
-    private configProvider;
-    private fs;
-    private configCache;
     constructor(directories: DirectoryService, configProvider: ConfigurationProvider, fs: CachedFileSystem, cache: CacheFactory);
     findPath(file: string): string | undefined;
     find(file: string): Configuration | undefined;

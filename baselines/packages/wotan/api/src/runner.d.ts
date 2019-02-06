@@ -15,20 +15,8 @@ export interface LintOptions {
     reportUselessDirectives: Severity | boolean | undefined;
 }
 export declare class Runner {
-    private fs;
-    private configManager;
-    private linter;
-    private processorLoader;
-    private directories;
-    private logger;
-    private filterFactory;
     constructor(fs: CachedFileSystem, configManager: ConfigurationManager, linter: Linter, processorLoader: ProcessorLoader, directories: DirectoryService, logger: MessageHandler, filterFactory: FileFilterFactory);
     lintCollection(options: LintOptions): LintResult;
-    private lintProject;
-    private lintFiles;
-    private getFilesAndProgram;
-    private checkConfigDirectory;
-    private createPrograms;
 }
 declare module 'typescript' {
     function matchFiles(path: string, extensions: ReadonlyArray<string>, excludes: ReadonlyArray<string> | undefined, includes: ReadonlyArray<string>, useCaseSensitiveFileNames: boolean, currentDirectory: string, depth: number | undefined, getFileSystemEntries: (path: string) => ts.FileSystemEntries): string[];

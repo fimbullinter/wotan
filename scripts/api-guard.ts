@@ -24,7 +24,11 @@ function checkPackage(packageDir: string, baselineDir: string, callback: (conten
 
     for (const file of list)
         if (file.endsWith('.d.ts'))
-            callback(fs.readFileSync(path.join(packageDir, file), 'utf8'), path.join(baselineDir, file));
+            callback(stripPrivateMembers(fs.readFileSync(path.join(packageDir, file), 'utf8')), path.join(baselineDir, file));
+}
+
+function stripPrivateMembers(source: string) {
+    return source.replace(/^ +private \w+;\n/mg, '');
 }
 
 function writeFile(content: string, fileName: string) {

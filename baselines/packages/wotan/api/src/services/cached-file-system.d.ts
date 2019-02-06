@@ -10,15 +10,10 @@ export interface DirectoryEntryWithKind {
     kind: FileKind;
 }
 export declare class CachedFileSystem {
-    private fs;
-    private fileKindCache;
-    private realpathCache;
-    private direntCache;
     constructor(fs: FileSystem, cache: CacheFactory);
     isFile(file: string): boolean;
     isDirectory(dir: string): boolean;
     getKind(file: string): FileKind;
-    private doGetKind;
     readDirectory(dir: string): {
         kind: FileKind;
         name: string;
@@ -28,6 +23,4 @@ export declare class CachedFileSystem {
     writeFile(file: string, content: string): void;
     remove(file: string): void;
     createDirectory(dir: string): void;
-    private doCreateDirectory;
-    private updateCache;
 }

@@ -8,6 +8,4 @@ export interface Options {
 export declare class Rule extends ConfigurableRule<Options> {
     parseOptions(input: Partial<Options> | {} | null | undefined): Options;
     apply(): void;
-    private checkNode;
-    private isUsed;
 }

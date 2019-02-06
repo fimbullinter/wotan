@@ -12,5 +12,4 @@ export declare class Rule extends ConfigurableRule<Options> {
         mode: string;
     } | null | undefined): Options;
     apply(): void;
-    private checkConstructorParameters;
 }

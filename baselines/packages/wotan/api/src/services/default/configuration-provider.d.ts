@@ -45,17 +45,10 @@ export declare namespace RawConfiguration {
 export declare const CONFIG_EXTENSIONS: string[];
 export declare const CONFIG_FILENAMES: string[];
 export declare class DefaultConfigurationProvider implements ConfigurationProvider {
-    private fs;
-    private resolver;
-    private builtinResolver;
-    private cache;
     constructor(fs: CachedFileSystem, resolver: Resolver, builtinResolver: BuiltinResolver, cache: CacheFactory);
     find(fileToLint: string): string | undefined;
-    private findConfigForDirectory;
     resolve(name: string, basedir: string): string;
     load(filename: string, context: LoadConfigurationContext): Configuration;
     parse(raw: RawConfiguration, filename: string, context: LoadConfigurationContext): Configuration;
     read(filename: string): RawConfiguration;
-    private mapOverride;
-    private mapProcessor;
 }
