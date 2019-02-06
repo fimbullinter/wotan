@@ -6,6 +6,7 @@ script:
   - yarn compile
   - yarn lint
   - yarn check-dependencies
+  - yarn check-package
   - yarn test
 deploy:
   - provider: script

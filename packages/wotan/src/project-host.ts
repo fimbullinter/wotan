@@ -12,14 +12,12 @@ const log = debug('wotan:projectHost');
 
 const additionalExtensions = ['.json'];
 
-// @internal
 export interface ProcessedFileInfo {
     originalName: string;
     originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
-// @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
     private files: string[] = [];

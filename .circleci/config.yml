@@ -60,6 +60,9 @@ jobs:
           name: Dependency check
           command: yarn check-dependencies
       - run:
+          name: Public API guard
+          command: yarn check-package
+      - run:
           name: Lint
           command: yarn lint
       - persist_to_workspace:
