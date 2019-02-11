@@ -84,7 +84,7 @@ Due to technical limitations you need to choose the workspace version to correct
 
 Other editors might work the same as VS Code.
 
-To work around this limitation there will be an editor plugin that automatically loads this LanguageService plugin. Stay tuned.
+To work around this limitation there is an editor plugin that automatically loads this LanguageService plugin: https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin
 
 ## Limitations
 
