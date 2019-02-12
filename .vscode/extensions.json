@@ -3,7 +3,7 @@
 	// for the documentation about the extensions.json format
 	"recommendations": [
     "EditorConfig.editorconfig",
-    "eg2.tslint",
+    "ms-vscode.vscode-typescript-tslint-plugin",
     "bierner.markdown-preview-github-styles",
     "fimbullinter.vscode-plugin"
 	]
