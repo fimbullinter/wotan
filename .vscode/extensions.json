@@ -4,6 +4,7 @@
 	"recommendations": [
     "EditorConfig.editorconfig",
     "ms-vscode.vscode-typescript-tslint-plugin",
-    "bierner.markdown-preview-github-styles"
+    "bierner.markdown-preview-github-styles",
+    "fimbullinter.vscode-plugin"
 	]
 }
