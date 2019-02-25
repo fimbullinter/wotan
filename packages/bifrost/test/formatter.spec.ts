@@ -1,5 +1,6 @@
 import test from 'ava';
 import * as TSLint from 'tslint';
+import {Formatter as CheckstyleFormatter} from 'tslint/lib/formatters/checkstyleFormatter'; // tslint:disable-line:no-submodule-imports
 import { wrapTslintFormatter } from '../src';
 import { Replacement } from '@fimbul/ymir';
 
@@ -12,6 +13,14 @@ Fixed 1 error(s) in /baz.ts
 ERROR: /bar.ts:1:1 - message
 WARNING: /bar.ts:1:1 - hint
 WARNING: /baz.ts:1:1 - a`);
+    testFormatter(CheckstyleFormatter, '<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3">'
+        + '<file name="/foo.ts"></file>'
+        + '<file name="/bar.ts">'
+            + '<error line="1" column="1" severity="error" message="message" source="failure.tslint.foo" />'
+            + '<error line="1" column="1" severity="warning" message="hint" source="failure.tslint.bar" />'
+        + '</file>'
+        + '<file name="/baz.ts"><error line="1" column="1" severity="warning" message="a" source="failure.tslint.rule" /></file>'
+        + '</checkstyle>');
     function testFormatter(ctor: TSLint.FormatterConstructor, expected: string) {
         const formatter = wrapTslintFormatter(ctor);
         const f = new formatter();
