@@ -6,7 +6,7 @@ export const literal = {a: 1, b: 1};
 
 ({
     ...emptyLiteral,
-    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     a: 1,
     b: 1,
 });
@@ -22,7 +22,7 @@ export const literal = {a: 1, b: 1};
 
 ({
     ...literal,
-    ~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     a: 1,
     b: 1,
 });

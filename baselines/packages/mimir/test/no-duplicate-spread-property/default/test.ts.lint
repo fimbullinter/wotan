@@ -14,7 +14,7 @@ const foo = 'foo';
     x: 1,
     ~     [error no-duplicate-spread-property: Property 'x' is overridden later.]
     ...{x: 2, y: 2},
-    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     y: 1,
     ...{x: 3},
 });
@@ -47,7 +47,7 @@ const foo = 'foo';
     [get<'foo'>()]: 1,
     ~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '[get<'foo'>()]' is overridden later.]
     ...{[get<'foo'>()]: 2},
-    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     ...{[foo]: 3},
 });
 
@@ -105,7 +105,7 @@ const foo = 'foo';
 
 ({
     ...get<WithMethods>(),
-    ~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo() {},
     bar: () => {},
     baz: get<() => void>(),
@@ -113,7 +113,7 @@ const foo = 'foo';
 
 ({
     ...get<{foo: number, bar: number, baz: number}>(),
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo() {},
     bar: () => {},
     baz: get<() => void>(),
@@ -256,7 +256,7 @@ var v: any;
         get foo() { return 1 },
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     },
-~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     get foo() { return 2; },
     set foo(v: number) {},
 });
@@ -279,7 +279,7 @@ var v: any;
 
 ({
     ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo: 1,
     bar: 1,
     baz: 1,
