@@ -1,6 +1,7 @@
 export {};
 
 declare function get<T>(): T;
+declare function take<T>(p: T): void;
 
 declare class WithMethods {
     foo(): void;
@@ -296,6 +297,18 @@ var v: any;
     bar: 1,
 });
 
+take<{a: string}>({...get<{a: string, b: string}>(), a: ''});
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~           [error no-duplicate-spread-property: All spreadable properties of this object that are relevant for the target type are overridden later.]
+take<Record<string, string>>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
+take<{a: string, b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
+take<{a: string}>({...get<{c: string, b: string}>(), a: ''});
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~           [error no-duplicate-spread-property: Object doesn't contribute spreadable properties relevant for the target type.]
+take<{a: string}>({...get<Record<string, string>>(), a: ''});
+
 function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
     ({foo: 1, ...t, ...u, ...v});
     ({valueOf: null, toString: null, ...w}); // make sure we don't use the apparent type
@@ -316,6 +329,11 @@ function test2<T extends Record<'foo', number>, U extends T, V extends T & Recor
     ({foo: 1, bar: 1, ...v});
       ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
               ~~~             [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+
+    take<T>({...get<{bar: string}>(), ...u});
+             ~~~~~~~~~~~~~~~~~~~~~~~          [error no-duplicate-spread-property: Object doesn't contribute spreadable properties relevant for the target type.]
+    take<T>({...get<{foo: number, bar: string}>(), ...u});
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [error no-duplicate-spread-property: All spreadable properties of this object that are relevant for the target type are overridden later.]
 }
 
 function test3<T>(t: T) {

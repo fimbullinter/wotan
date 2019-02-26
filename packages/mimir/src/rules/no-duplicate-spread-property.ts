@@ -139,9 +139,7 @@ function getContextualProperties(type: ts.Type): PropertyInfo {
         return type.types.map(getContextualProperties).reduce(intersectPropertyInfo);
     if (type.flags & ts.TypeFlags.Instantiable) {
         const constraint = type.getConstraint();
-        if (constraint === undefined)
-            return emptyPropertyInfo;
-        return {...getContextualProperties(constraint), known: false};
+        return constraint === undefined ? emptyPropertyInfo : getContextualProperties(constraint);
     }
     if (!isObjectType(type))
         return emptyPropertyInfo;
