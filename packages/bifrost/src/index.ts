@@ -75,6 +75,7 @@ function inferName(Rule: TSLint.RuleConstructor): string { // tslint:disable-lin
 
 export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): FormatterConstructor { // tslint:disable-line:naming-convention
     return class extends AbstractFormatter {
+        private fileNames: string[] = [];
         private failures: TSLint.RuleFailure[] = [];
         private fixed: TSLint.RuleFailure[] = [];
         private delegate: TSLint.IFormatter;
@@ -85,6 +86,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
         }
 
         public format(fileName: string, summary: FileSummary): undefined {
+            this.fileNames.push(fileName);
             let sourceFile: ts.SourceFile | undefined;
             for (let i = 0; i < summary.fixes; ++i)
                 this.fixed.push(new TSLint.RuleFailure(getSourceFile(), 0, 0, '', '', TSLint.Replacement.appendText(0, '')));
@@ -112,7 +114,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
         }
 
         public flush() {
-            return this.delegate.format(this.failures, this.fixed).trim();
+            return this.delegate.format(this.failures, this.fixed, this.fileNames).trim();
         }
     };
 }
