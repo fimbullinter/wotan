@@ -358,3 +358,31 @@ unified2();
 const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
 unified3('2');
 unified3();
+
+declare const unified4: {(): void; (param?: string): string} | (<T>(param?: T) => T);
+unified4('1');
+unified4();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+declare const unified5: (<T>(a?: T) => T) | {(): void; (param?: string): string};
+unified5('1');
+unified5();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+declare const unified6: (<T = string>(a?: T) => T) | {(): void; (param?: string): string};
+unified6('1');
+unified6();
+
+declare function overloaded<T>(): void;
+declare function overloaded<T, U>(param: T): void;
+declare function overloaded<T, U, V, W = string>(a: T, b: T): void;
+declare function overloaded(a: string, b: string, c: string): void;
+
+overloaded();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded(1);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded(1, 2);
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded('', '', '');

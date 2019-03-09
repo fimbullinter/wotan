@@ -27,10 +27,11 @@ export class Rule extends TypedRule {
     }
 
     /**
-     * This function is necessry because higher order function type inference creates Signatures whose declaration has no type parameters.
+     * This function is necessary because higher order function type inference creates Signatures whose declaration has no type parameters.
      * @see https://github.com/Microsoft/TypeScript/issues/30296
      *
      * To work around this, we look for a single call signature on the called expression and use its type parameters instead.
+     * As a bonus this also works for unified signatures from union types.
      */
     private getTypeParametersOfCallSignature(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
         let expr: ts.Expression;
@@ -44,12 +45,11 @@ export class Rule extends TypedRule {
             default:
                 expr = node.tagName;
         }
-        const type = this.checker.getTypeAtLocation(expr);
-        const signatures = type.getCallSignatures();
-        if (signatures.length !== 1)
-            return [];
-        const signature = signatures[0];
-        if (signature.typeParameters === undefined)
+        const signature = this.checker
+            .getTypeAtLocation(expr)
+            .getCallSignatures()
+            .find((s): s is ts.Signature & {typeParameters: {}} => s.typeParameters !== undefined);
+        if (signature === undefined)
             return [];
         return signature.typeParameters.map(this.mapTypeParameter, this);
     }

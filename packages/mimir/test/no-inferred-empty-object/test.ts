@@ -305,3 +305,25 @@ unified2();
 const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
 unified3('2');
 unified3();
+
+declare const unified4: {(): void; (param?: string): string} | (<T>(param?: T) => T);
+unified4('1');
+unified4();
+
+declare const unified5: (<T>(a?: T) => T) | {(): void; (param?: string): string};
+unified5('1');
+unified5();
+
+declare const unified6: (<T = string>(a?: T) => T) | {(): void; (param?: string): string};
+unified6('1');
+unified6();
+
+declare function overloaded<T>(): void;
+declare function overloaded<T, U>(param: T): void;
+declare function overloaded<T, U, V, W = string>(a: T, b: T): void;
+declare function overloaded(a: string, b: string, c: string): void;
+
+overloaded();
+overloaded(1);
+overloaded(1, 2);
+overloaded('', '', '');
