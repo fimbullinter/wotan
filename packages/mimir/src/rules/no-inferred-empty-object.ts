@@ -21,15 +21,55 @@ export class Rule extends TypedRule {
                 ) &&
                 (<ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression>node).typeArguments === undefined
             ) {
-                this.checkCallExpression(<ts.JsxOpeningLikeElement>node);
+                this.checkCallExpression(<ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression>node);
             }
         }
+    }
+
+    /**
+     * This function is necessry because higher order function type inference creates Signatures whose declaration has no type parameters.
+     * @see https://github.com/Microsoft/TypeScript/issues/30296
+     *
+     * To work around this, we look for a single call signature on the called expression and use its type parameters instead.
+     */
+    private getTypeParametersOfCallSignature(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
+        let expr: ts.Expression;
+        switch (node.kind) {
+            case ts.SyntaxKind.CallExpression:
+                expr = node.expression;
+                break;
+            case ts.SyntaxKind.TaggedTemplateExpression:
+                expr = node.tag;
+                break;
+            default:
+                expr = node.tagName;
+        }
+        const type = this.checker.getTypeAtLocation(expr);
+        const signatures = type.getCallSignatures();
+        if (signatures.length !== 1)
+            return [];
+        const signature = signatures[0];
+        if (signature.typeParameters === undefined)
+            return [];
+        return signature.typeParameters.map(this.mapTypeParameter, this);
+    }
+
+    private mapTypeParameter(type: ts.TypeParameter): TypeParameter {
+        // fall back to NodeBuilder for renamed TypeParameters, they have no declaration and therefore we cannot directly access the default
+        return type.symbol.declarations === undefined
+            ? mapTypeParameterDeclaration(this.checker.typeParameterToDeclaration(type, undefined, ts.NodeBuilderFlags.IgnoreErrors)!)
+            : {
+                name: type.symbol.name,
+                hasDefault: (<ts.TypeParameterDeclaration>type.symbol.declarations[0]).default !== undefined,
+            };
     }
 
     private checkCallExpression(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
         const signature = this.checker.getResolvedSignature(node)!;
         if (signature.declaration !== undefined) {
-            const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
+            let typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration).map(mapTypeParameterDeclaration);
+            if (typeParameters.length === 0)
+                typeParameters = this.getTypeParametersOfCallSignature(node);
             if (typeParameters.length !== 0)
                 return this.checkInferredTypeParameters(signature, typeParameters, node);
         }
@@ -41,7 +81,7 @@ export class Rule extends TypedRule {
             // There is an explicitly declared construct signature
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
             if (typeParameters.length !== 0) // only check the signature if it declares type parameters
-                return this.checkInferredTypeParameters(signature, typeParameters, node);
+                return this.checkInferredTypeParameters(signature, typeParameters.map(mapTypeParameterDeclaration), node);
             if (signature.declaration.kind !== ts.SyntaxKind.Constructor)
                 return; // don't look for type parameters on non-class parents
         }
@@ -51,41 +91,57 @@ export class Rule extends TypedRule {
         if (symbol === undefined || symbol.declarations === undefined)
             return;
         // collect all TypeParameters and their defaults from all merged declarations
-        const typeParameterResult = [];
+        const mergedTypeParameters: TypeParameter[] = [];
         for (const declaration of <ts.DeclarationWithTypeParameters[]>symbol.declarations) {
             const typeParameters = ts.getEffectiveTypeParameterDeclarations(declaration);
-            for (let i = 0; i < typeParameters.length; ++i)
-                if (typeParameterResult[i] === undefined || typeParameters[i].default !== undefined)
-                    typeParameterResult[i] = typeParameters[i];
+            for (let i = 0; i < typeParameters.length; ++i) {
+                if (mergedTypeParameters.length === i)
+                    mergedTypeParameters.push({name: typeParameters[i].name.text, hasDefault: false});
+                if (typeParameters[i].default !== undefined)
+                    mergedTypeParameters[i].hasDefault = true;
+            }
         }
-        if (typeParameterResult.length !== 0)
-            return this.checkInferredTypeParameters(signature, typeParameterResult, node);
+        if (mergedTypeParameters.length !== 0)
+            return this.checkInferredTypeParameters(signature, mergedTypeParameters, node);
     }
 
     private checkInferredTypeParameters(
         signature: ts.Signature,
-        typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>,
+        typeParameters: readonly TypeParameter[],
         node: ts.Expression,
     ) {
+        if (typeParameters.every((t) => t.hasDefault))
+            return; // nothing to do here if every type parameter as a default
+
         const typeArguments = (<ts.ExpressionWithTypeArguments><any>this.checker.signatureToSignatureDeclaration(
             signature,
             ts.SyntaxKind.CallExpression,
             undefined,
             ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature | ts.NodeBuilderFlags.IgnoreErrors,
-        )).typeArguments!;
+        )).typeArguments;
+
+        // this only happens when higher order function type inference returns a signature with ununstantiated type parameters
+        if (typeArguments === undefined)
+            return;
 
         for (let i = 0; i < typeParameters.length; ++i) {
+            if (typeParameters[i].hasDefault)
+                continue;
             const typeArgument = typeArguments[i];
             if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
-                this.handleEmptyTypeParameter(typeParameters[i], node);
+                this.addFindingAtNode(
+                    node,
+                    `TypeParameter '${typeParameters[i].name}' is inferred as '{}'. Consider adding type arguments to the call.`,
+                );
         }
     }
+}
 
-    private handleEmptyTypeParameter(typeParameter: ts.TypeParameterDeclaration, node: ts.Node) {
-        if (typeParameter.default === undefined)
-            this.addFindingAtNode(
-                node,
-                `TypeParameter '${typeParameter.name.text}' is inferred as '{}'. Consider adding type arguments to the call.`,
-            );
-    }
+interface TypeParameter {
+    name: string;
+    hasDefault: boolean;
+}
+
+function mapTypeParameterDeclaration(node: ts.TypeParameterDeclaration): TypeParameter {
+    return {name: node.name.text, hasDefault: node.default !== undefined};
 }

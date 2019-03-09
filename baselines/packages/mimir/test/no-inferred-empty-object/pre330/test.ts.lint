@@ -243,15 +243,12 @@ new C2<string>();
 
 // avoid false positives while parsing type arguments
 withOneDefault(<T>(param: T) => param);
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault({key: {}, anotherKey: {nested: {}}});
 withOneDefault(fn);
-~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
 withOneDefault((() => 1) as {<T>(param: T): T});
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 /**
  * @template T
@@ -306,7 +303,6 @@ list();
 const listBox = pipe(list, box);
 listBox(1);
 listBox();
-~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 const list2Box = pipe(list2, box);
 list2Box(1);
@@ -315,34 +311,34 @@ list2Box();
 declare function pipe2<A, B, C, D>(ab: (a: A) => B, cd: (c: C) => D): (a?: [A, C] | [A]) => [B, D];
 
 const listList = pipe2(list, list);
+                 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listList([1, '2']);
 listList([1]);
-~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
 listList();
-~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
-~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
 
 const list2List = pipe2(list, list2);
+                  ~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                  ~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 list2List([1, '2']);
 list2List([1]);
 list2List();
-~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 function pipe3<A, B, C, D>(ab: (a?: A) => B, cd: (c?: C) => D) {
     return (a?: A, c?: C) => [ab(a), cd(c)] as const;
 }
 
 const listList2 = pipe3(list, list);
+                  ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                  ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listList2(1, '2');
 listList2(1);
-~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
 listList2();
-~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
-~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
 
 declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B) => C): (...args: A) => C;
 
 const listNone = pipe4(list);
+                 ~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listNone(1);
 
 const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
@@ -353,7 +349,6 @@ unified();
 const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
 unified2('2');
 unified2();
-~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
 unified3('2');
