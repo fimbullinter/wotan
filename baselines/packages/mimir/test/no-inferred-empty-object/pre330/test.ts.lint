@@ -271,6 +271,9 @@ new Promise<object>((resolve, reject) => {
 
 declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
 declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+declare function tag(parts: TemplateStringsArray): string;
+
+tag``;
 
 myTagFn``;
 ~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
@@ -379,3 +382,6 @@ overloaded(1, 2);
 ~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 ~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 overloaded('', '', '');
+
+declare let untyped: Function;
+untyped();

@@ -235,6 +235,9 @@ new Promise<object>((resolve, reject) => {
 
 declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
 declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+declare function tag(parts: TemplateStringsArray): string;
+
+tag``;
 
 myTagFn``;
 myTagFn`${''}`;
@@ -327,3 +330,6 @@ overloaded();
 overloaded(1);
 overloaded(1, 2);
 overloaded('', '', '');
+
+declare let untyped: Function;
+untyped();
