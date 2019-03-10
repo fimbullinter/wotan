@@ -243,12 +243,15 @@ new C2<string>();
 
 // avoid false positives while parsing type arguments
 withOneDefault(<T>(param: T) => param);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault({key: {}, anotherKey: {nested: {}}});
 withOneDefault(fn);
+~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
 withOneDefault((() => 1) as {<T>(param: T): T});
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 /**
  * @template T
@@ -271,6 +274,9 @@ new Promise<object>((resolve, reject) => {
 
 declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
 declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+declare function tag(parts: TemplateStringsArray): string;
+
+tag``;
 
 myTagFn``;
 ~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
@@ -290,3 +296,99 @@ interface SomeConstructor<T> {
 }
 declare const Ctor: SomeConstructor<any>;
 new Ctor(''); // don't crash here
+
+declare function pipe<A extends any[], B, C>(ab: (...args: A) => B, bc: (b: B) => C): (...args: A) => C;
+
+declare function list<T>(a?: T): T[];
+declare function list2<T = string>(a?: T): T[];
+declare function box<V>(x: V): { value: V };
+
+list();
+~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+const listBox = pipe(list, box);
+listBox(1);
+listBox();
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+const list2Box = pipe(list2, box);
+list2Box(1);
+list2Box();
+
+declare function pipe2<A, B, C, D>(ab: (a: A) => B, cd: (c: C) => D): (a?: [A, C] | [A]) => [B, D];
+
+const listList = pipe2(list, list);
+listList([1, '2']);
+listList([1]);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
+listList();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
+
+const list2List = pipe2(list, list2);
+list2List([1, '2']);
+list2List([1]);
+list2List();
+~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+function pipe3<A, B, C, D>(ab: (a?: A) => B, cd: (c?: C) => D) {
+    return (a?: A, c?: C) => [ab(a), cd(c)] as const;
+}
+
+const listList2 = pipe3(list, list);
+listList2(1, '2');
+listList2(1);
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
+listList2();
+~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T1' is inferred as '{}'. Consider adding type arguments to the call.]
+
+declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B) => C): (...args: A) => C;
+
+const listNone = pipe4(list);
+listNone(1);
+
+const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
+unified('1');
+unified();
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
+unified2('2');
+unified2();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
+unified3('2');
+unified3();
+
+declare const unified4: {(): void; (param?: string): string} | (<T>(param?: T) => T);
+unified4('1');
+unified4();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+declare const unified5: (<T>(a?: T) => T) | {(): void; (param?: string): string};
+unified5('1');
+unified5();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+
+declare const unified6: (<T = string>(a?: T) => T) | {(): void; (param?: string): string};
+unified6('1');
+unified6();
+
+declare function overloaded<T>(): void;
+declare function overloaded<T, U>(param: T): void;
+declare function overloaded<T, U, V, W = string>(a: T, b: T): void;
+declare function overloaded(a: string, b: string, c: string): void;
+
+overloaded();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded(1);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded(1, 2);
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+overloaded('', '', '');
+
+declare let untyped: Function;
+untyped();

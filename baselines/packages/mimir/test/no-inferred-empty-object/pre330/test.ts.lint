@@ -15,25 +15,39 @@ import {fn as jsFn, arrayFn, multiParam, weirdMultiParam, nonGenericJs, JsClass,
 nonGenericJs();
 
 jsFn();
+~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 jsFn(1);
 jsFn<number>();
 jsFn<number>(1);
 
 arrayFn();
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 arrayFn(null as any);
+~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 arrayFn([]);
 arrayFn([1]);
 arrayFn([{}]);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 arrayFn<number>();
 
 multiParam();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 multiParam(1);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 multiParam(1, '2');
+~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 multiParam(1, '2', true);
 
 weirdMultiParam();
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 
 functionTyped();
+~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 functionTyped(1);
 functionTyped<number>();
 functionTyped<number>(1);
@@ -42,11 +56,13 @@ notGeneric();
 notGeneric(1);
 
 new JsClass();
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new JsClass(1);
 new JsClass<number>();
 new JsClass<number>(1);
 
 new RealJsClass();
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new RealJsClass(1);
 new RealJsClass<number>();
 new RealJsClass<number>(1);
@@ -54,13 +70,18 @@ new RealJsClass<number>(1);
 declare function fn<T, U>(one?: T, two?: U): void;
 
 fn();
+~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(1);
+~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(1, '2');
 fn<number, string>();
 fn<number, string>(1);
 fn<number, string>(1, '2');
 fn({}, '2'); // there's not reliable way to tell if the empty object type is really intended like in this case
+~~~~~~~~~~~                                                                                                    [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(1, {});
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
 type LongLiteral = 'somereallyreallyreallyreallyreallyreallyreallyreallyreallylongliteraltypethathopefullycausestruncation';
 declare function get(): {
@@ -73,17 +94,23 @@ declare function get(): {
     yetAnotherReallyReallyReallyReallyLongNameThatHelpsWithTruncation: LongLiteral;
 };
 fn(get());
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
 fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
 declare function inferParameter<T>(param?: Array<T>): void;
 
 inferParameter();
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 inferParameter([]);
 inferParameter([{}]);
+~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 inferParameter([null as any]);
 inferParameter(null as any);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 declare function withDefault<T = number, U = T>(one?: T, two?: U): void;
 
@@ -121,6 +148,7 @@ withDefaultDefault<number, string>(1, '2');
 declare function withOneDefault<T, U = T>(one?: T, two?: U): void;
 
 withOneDefault();
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault({} as object);
 withOneDefault([{}]);
 withOneDefault(1);
@@ -141,6 +169,7 @@ declare class Wrapper<T> {
 }
 
 new Wrapper();
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new Wrapper<number>();
 let wrapped: Wrapper<number> = new Wrapper();
 
@@ -149,6 +178,7 @@ interface WrapConstructor {
 }
 declare const Wrap: WrapConstructor;
 new Wrap();
+~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new Wrap(1);
 new Wrap<number>();
 new Wrap<number>(1);
@@ -160,6 +190,7 @@ class MyWrap<T> {
 }
 
 new MyWrap();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new MyWrap<number>()
 new MyWrap(1);
 
@@ -167,16 +198,19 @@ class MyOtherWrap<T> {
     constructor() {}
 }
 new MyOtherWrap();
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new MyOtherWrap<number>();
 
 function getWrapper() {
     return Wrapper;
 }
 new (getWrapper())();
+~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new (getWrapper())<number>();
 
 declare function getWrapConstructor(): WrapConstructor;
 new (getWrapConstructor())();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new (getWrapConstructor())(1);
 new (getWrapConstructor())<number>();
 new (getWrapConstructor())<number>(1);
@@ -185,6 +219,7 @@ function getWrapConstructorInferred() {
     return Wrap;
 }
 new (getWrapConstructorInferred())();
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new (getWrapConstructorInferred())(1);
 new (getWrapConstructorInferred())<number>();
 new (getWrapConstructorInferred())<number>(1);
@@ -203,6 +238,7 @@ interface C2<T> {}
 interface C2<T, U> {}
 
 new C2();
+~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 new C2<string>();
 
 // avoid false positives while parsing type arguments
@@ -240,13 +276,16 @@ declare function tag(parts: TemplateStringsArray): string;
 tag``;
 
 myTagFn``;
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myTagFn`${''}`;
 myTagFn`${1}`;
 myTagFn`${1}${''}`;
 myTagFn<string | number>`${1}${''}`;
 
 myOtherTag``;
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myOtherTag`${''}`;
+~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 myOtherTag<string>``;
 
 interface SomeConstructor<T> {
@@ -262,6 +301,7 @@ declare function list2<T = string>(a?: T): T[];
 declare function box<V>(x: V): { value: V };
 
 list();
+~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 const listBox = pipe(list, box);
 listBox(1);
@@ -274,11 +314,15 @@ list2Box();
 declare function pipe2<A, B, C, D>(ab: (a: A) => B, cd: (c: C) => D): (a?: [A, C] | [A]) => [B, D];
 
 const listList = pipe2(list, list);
+                 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                 ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listList([1, '2']);
 listList([1]);
 listList();
 
 const list2List = pipe2(list, list2);
+                  ~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                  ~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 list2List([1, '2']);
 list2List([1]);
 list2List();
@@ -288,6 +332,8 @@ function pipe3<A, B, C, D>(ab: (a?: A) => B, cd: (c?: C) => D) {
 }
 
 const listList2 = pipe3(list, list);
+                  ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'A' is inferred as '{}'. Consider adding type arguments to the call.]
+                  ~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listList2(1, '2');
 listList2(1);
 listList2();
@@ -295,11 +341,13 @@ listList2();
 declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B) => C): (...args: A) => C;
 
 const listNone = pipe4(list);
+                 ~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listNone(1);
 
 const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
 unified('1');
 unified();
+~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
 unified2('2');
@@ -327,8 +375,12 @@ declare function overloaded<T, U, V, W = string>(a: T, b: T): void;
 declare function overloaded(a: string, b: string, c: string): void;
 
 overloaded();
+~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 overloaded(1);
+~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 overloaded(1, 2);
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 overloaded('', '', '');
 
 declare let untyped: Function;
