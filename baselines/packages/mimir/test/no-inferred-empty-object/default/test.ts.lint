@@ -243,15 +243,12 @@ new C2<string>();
 
 // avoid false positives while parsing type arguments
 withOneDefault(<T>(param: T) => param);
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault({key: {}, anotherKey: {nested: {}}});
 withOneDefault(fn);
-~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 withOneDefault(new Wrapper<{}>());
 withOneDefault({key: new Wrapper<{}>()});
 withOneDefault({'{}, {}': [{}]});
 withOneDefault((() => 1) as {<T>(param: T): T});
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
 /**
  * @template T
@@ -346,6 +343,7 @@ listList2();
 declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B) => C): (...args: A) => C;
 
 const listNone = pipe4(list);
+                 ~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listNone(1);
 
 const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
