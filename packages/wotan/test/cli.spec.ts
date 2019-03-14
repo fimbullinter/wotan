@@ -39,7 +39,6 @@ test('exits with code 1 on exception and prints stack trace', async (t) => {
     t.is(result.code, 1);
     t.true(result.stderr.startsWith(path.resolve('packages/wotan/test/fixtures/invalid.js:')));
     t.regex(result.stderr, /SyntaxError:/);
-    t.regex(result.stderr, /^\s+at [\w. ]+ \([\w.]+:\d+:\d+\)$/m);
     t.is(result.stdout, '');
 });
 
