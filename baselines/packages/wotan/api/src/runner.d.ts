@@ -19,7 +19,7 @@ export declare class Runner {
     lintCollection(options: LintOptions): LintResult;
 }
 declare module 'typescript' {
-    function matchFiles(path: string, extensions: ReadonlyArray<string>, excludes: ReadonlyArray<string> | undefined, includes: ReadonlyArray<string>, useCaseSensitiveFileNames: boolean, currentDirectory: string, depth: number | undefined, getFileSystemEntries: (path: string) => ts.FileSystemEntries): string[];
+    function matchFiles(path: string, extensions: ReadonlyArray<string>, excludes: ReadonlyArray<string> | undefined, includes: ReadonlyArray<string>, useCaseSensitiveFileNames: boolean, currentDirectory: string, depth: number | undefined, getFileSystemEntries: (path: string) => ts.FileSystemEntries, realpath: (path: string) => string): string[];
     interface FileSystemEntries {
         readonly files: ReadonlyArray<string>;
         readonly directories: ReadonlyArray<string>;
