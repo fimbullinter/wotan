@@ -53,6 +53,7 @@ export class ProjectHost implements ts.CompilerHost {
             this.cwd,
             depth,
             (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+            (f) => this.safeRealpath(f),
         );
     }
     /**
@@ -184,6 +185,14 @@ export class ProjectHost implements ts.CompilerHost {
         return '\n';
     }
     public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
+    private safeRealpath(f: string) {
+        if (this.realpath !== undefined) {
+            try {
+                return this.realpath(f);
+            } catch {}
+        }
+        return f;
+    }
     public getCurrentDirectory() {
         return this.cwd;
     }

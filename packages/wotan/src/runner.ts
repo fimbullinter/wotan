@@ -412,6 +412,7 @@ declare module 'typescript' {
         currentDirectory: string,
         depth: number | undefined,
         getFileSystemEntries: (path: string) => ts.FileSystemEntries,
+        realpath: (path: string) => string,
     ): string[];
 
     interface FileSystemEntries {
