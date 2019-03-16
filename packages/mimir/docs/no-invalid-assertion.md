@@ -19,6 +19,8 @@ It can also be the result of overly clever code that's hard to understand and ma
 let v = false as true && someFunction('foo');
 ```
 
+As of TypeScript 3.4.0 the recommended way to disable widening is using `as const`.
+
 ## Examples
 
 :thumbsdown: Examples of incorrect code
