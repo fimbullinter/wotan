@@ -45,13 +45,13 @@ export class Rule extends TypedRule {
             default:
                 expr = node.tagName;
         }
-        const signature = this.checker
-            .getTypeAtLocation(expr)
-            .getCallSignatures()
-            .find((s): s is ts.Signature & {typeParameters: {}} => s.typeParameters !== undefined);
-        if (signature === undefined)
+        const signatures = this.checker.getTypeAtLocation(expr).getCallSignatures();
+        // abort if not all signatures have type parameters:
+        //   higher order function type inference only works for a single call signature
+        //   call signature unification puts type parameters on every resulting signature
+        if (signatures.length === 0 || signatures.some((s) => s.typeParameters === undefined))
             return [];
-        return signature.typeParameters.map(this.mapTypeParameter, this);
+        return signatures[0].typeParameters!.map(this.mapTypeParameter, this);
     }
 
     private mapTypeParameter(type: ts.TypeParameter): TypeParameter {
@@ -118,11 +118,7 @@ export class Rule extends TypedRule {
             ts.SyntaxKind.CallExpression,
             undefined,
             ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature | ts.NodeBuilderFlags.IgnoreErrors,
-        )).typeArguments;
-
-        // this only happens when higher order function type inference returns a signature with ununstantiated type parameters
-        if (typeArguments === undefined)
-            return;
+        )).typeArguments!;
 
         for (let i = 0; i < typeParameters.length; ++i) {
             if (typeParameters[i].hasDefault)
