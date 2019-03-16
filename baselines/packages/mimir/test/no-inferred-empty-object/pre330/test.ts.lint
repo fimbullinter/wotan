@@ -383,5 +383,22 @@ overloaded(1, 2);
 ~~~~~~~~~~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
 overloaded('', '', '');
 
+function f<T extends typeof overloaded, U extends typeof unified5, V extends typeof unified6>(t: T, u: U, v: V) {
+    t();
+    ~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+    t(1);
+    ~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+    t(1, 2);
+    ~~~~~~~  [error no-inferred-empty-object: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+    ~~~~~~~  [error no-inferred-empty-object: TypeParameter 'V' is inferred as '{}'. Consider adding type arguments to the call.]
+    t('', '', '');
+
+    u('1');
+    u();
+
+    v('1');
+    v();
+}
+
 declare let untyped: Function;
 untyped();

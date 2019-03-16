@@ -331,5 +331,18 @@ overloaded(1);
 overloaded(1, 2);
 overloaded('', '', '');
 
+function f<T extends typeof overloaded, U extends typeof unified5, V extends typeof unified6>(t: T, u: U, v: V) {
+    t();
+    t(1);
+    t(1, 2);
+    t('', '', '');
+
+    u('1');
+    u();
+
+    v('1');
+    v();
+}
+
 declare let untyped: Function;
 untyped();
