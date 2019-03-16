@@ -1,5 +1,27 @@
 # Change Log
 
+## v0.20.0
+
+:tada: Since the last release we published an [official extension for VSCode](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.0 is no longer officially supported
+
+**Features:**
+
+* `bifrost`: pass names of all linted files to TSLint formatters
+* new rule: `no-useless-destructuring`
+* `no-useless-assertion`: detect redundant `as const` assertions
+* `no-useless-assertion`: stricter checks of literal type assertions in const context (`{ prop: 1 as 1 } as const`)
+* `no-inferred-empty-object`: correctly handle higher order function type inference (type parameter propagation) and unions of call signatures
+
+**Bugfixes:**
+
+* `wotan`: fixed a crash caused by changes to TypeScript's internal API
+* `no-useless-predicate`: fixes false positive with `typeof {} === 'object'`
+* `no-useless-assertion`: don't treat `as const` like `as any`
+
 ## v0.19.0
 
 **Features:**
