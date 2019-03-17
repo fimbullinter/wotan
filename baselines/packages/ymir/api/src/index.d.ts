@@ -63,20 +63,16 @@ export interface RuleContext {
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
-export declare abstract class RuleContext {
-}
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
 }
-export declare abstract class TypedRuleContext {
-}
 export declare type Settings = ReadonlyMap<string, {} | null | undefined>;
-export declare function isTypescriptFile(sourceFile: ts.SourceFile): boolean;
+export declare function predicate(check: RuleSupportsPredicate): (target: typeof AbstractRule) => void;
 export declare function typescriptOnly(target: typeof AbstractRule): void;
 export declare function excludeDeclarationFiles(target: typeof AbstractRule): void;
 export declare function requireLibraryFile(fileName: string): (target: typeof TypedRule) => void;
 export declare function requiresCompilerOption(option: BooleanCompilerOptions): (target: typeof TypedRule) => void;
-export declare type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
+export declare type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean | string;
 export declare abstract class AbstractRule {
     readonly context: RuleContext;
     static readonly requiresTypeInformation: boolean;
