@@ -29,6 +29,7 @@ rules:
   no-useless-declare: error
   no-useless-destructuring: error
   no-useless-initializer: error
+  no-useless-jsdoc: error
   no-useless-jump-label: error
   no-useless-predicate: error
   no-useless-strict: error
