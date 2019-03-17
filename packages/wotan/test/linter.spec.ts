@@ -183,7 +183,8 @@ test('Linter', (t) => {
     t.is(warnings[5], "Rule 'my/typed' requires type information.");
 
     function lintWithProgram(file: ts.SourceFile, options: ts.CompilerOptions, config: EffectiveConfiguration) {
-        return linter.lintFile(file, config, createFakeProgram(file, options));
+        const program = createFakeProgram(file, options);
+        return linter.lintFile(file, config, () => program);
     }
 
     t.deepEqual<ReadonlyArray<Finding>>(
