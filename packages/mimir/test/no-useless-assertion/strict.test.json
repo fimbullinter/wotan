@@ -1,5 +1,4 @@
 {
   "project": "tsconfig.json",
-  "files": ["global.ts", "non-null.ts", "type-assertion.ts"],
-  "typescriptVersion": "^2.8.0 || >= 3.1.0"
+  "files": ["global.ts", "non-null.ts", "type-assertion.ts", "jsdoc.js"]
 }
