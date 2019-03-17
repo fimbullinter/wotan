@@ -2,6 +2,8 @@ language: node_js
 node_js:
   - '11'
 cache: yarn
+git:
+  depth: false
 script:
   - yarn compile
   - yarn lint
