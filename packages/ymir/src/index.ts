@@ -98,36 +98,42 @@ export interface RuleContext {
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
-export abstract class RuleContext {}
 
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
 }
-export abstract class TypedRuleContext {}
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
-function combinePredicates(existing: RuleSupportsPredicate | undefined, predicate: RuleSupportsPredicate): RuleSupportsPredicate {
-    if (existing === undefined)
-        return predicate;
-    return (sourceFile, context) => predicate(sourceFile, context) && existing(sourceFile, context);
+export function predicate(check: RuleSupportsPredicate) {
+    return (target: typeof AbstractRule) => {
+        target.supports = combinePredicates(target.supports, check);
+    };
 }
 
-export function isTypescriptFile(sourceFile: ts.SourceFile) {
-    return /\.tsx?$/.test(sourceFile.fileName);
+function combinePredicates(existing: RuleSupportsPredicate | undefined, additonal: RuleSupportsPredicate): RuleSupportsPredicate {
+    if (existing === undefined)
+        return additonal;
+    return (sourceFile, context) => {
+        const result = additonal(sourceFile, context);
+        return result !== true ? result : existing(sourceFile, context);
+    };
 }
 
 export function typescriptOnly(target: typeof AbstractRule) {
-    target.supports = combinePredicates(target.supports, isTypescriptFile);
+    target.supports = combinePredicates(target.supports, (sourceFile) => /\.tsx?$/.test(sourceFile.fileName) || 'TypeScript only');
 }
 
 export function excludeDeclarationFiles(target: typeof AbstractRule) {
-    target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
+    target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile || 'excludes declaration files');
 }
 
 export function requireLibraryFile(fileName: string) {
     return (target: typeof TypedRule) => {
-        target.supports = combinePredicates(target.supports, (_, context) => programContainsLibraryFile(context.program!, fileName));
+        target.supports = combinePredicates(
+            target.supports,
+            (_, context) => programContainsLibraryFile(context.program!, fileName) || `requires library file '${fileName}'`,
+        );
     };
 }
 
@@ -140,12 +146,13 @@ export function requiresCompilerOption(option: BooleanCompilerOptions) {
     return (target: typeof TypedRule) => {
         target.supports = combinePredicates(
             target.supports,
-            (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option),
+            (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option) || `requires compilerOption '${option}'`,
         );
     };
 }
 
-export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
+/** @returns `true`, `false` or a reason */
+export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean | string;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;

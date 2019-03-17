@@ -1,4 +1,4 @@
-import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement } from '@fimbul/ymir';
+import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement, predicate } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isAsExpression, isTypeAssertion, isBinaryExpression } from 'tsutils';
 import { expressionNeedsParensWhenReplacingNode } from '../utils';
@@ -9,11 +9,8 @@ export interface Options {
 
 @typescriptOnly
 @excludeDeclarationFiles
+@predicate((sourceFile) => sourceFile.languageVariant === ts.LanguageVariant.Standard || 'excludes JSX files')
 export class Rule extends ConfigurableRule<Options> {
-    public static supports(sourceFile: ts.SourceFile) {
-        return sourceFile.languageVariant === ts.LanguageVariant.Standard;
-    }
-
     public parseOptions(options: Partial<Options> | null | undefined): Options {
         return {
             style: options && options.style === 'classic' ? 'classic' : 'as',

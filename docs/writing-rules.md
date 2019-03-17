@@ -69,15 +69,22 @@ Now we avoid computing the start position of the node. But that's only relavant 
 
 ### Prevent the rule from executing on certain files
 
-Let's try to optimize further: Since type annotations can only occur in `*.ts` and `*.tsx` files, we don't need to execute the rule in any other files.
+Let's try to optimize further: Since type annotations can only occur in `*.ts` and `*.tsx` files, we don't need to instantiate and execute the rule for any other files.
 
-To disable the rule based on the linted file, you can implement the static `supports` method.
+To disable the rule based on the linted file, you can implement the static `supports` method or use the `@predicate` decorator to register an additional predicate.
 
 ```ts
 export class Rule extends AbstractRule {
     public static supports(sourceFile: ts.SourceFile) {
         return /\.tsx?$/.test(sourceFile.fileName); // only apply this rule for *.ts and *.tsx files
     }
+```
+
+or
+
+```ts
+@predicate((sourceFile) => /\.tsx?$/.test(sourceFile.fileName))
+export class Rule extends AbstractRule {
 ```
 
 The same functionality is already available as decorator `@typescriptOnly`, so you could just write:
