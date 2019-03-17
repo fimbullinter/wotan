@@ -13,7 +13,7 @@ export class Rule extends AbstractRule {
                     !endsControlFlow(clauses[i - 1])) {
                     const kind = clauses[i].kind === ts.SyntaxKind.CaseClause ? 'case' : 'default';
                     const start = clauses[i].getStart(this.sourceFile);
-                    this.addFailure(start, start + kind.length, `Missing 'break' before '${kind}'.`);
+                    this.addFinding(start, start + kind.length, `Missing 'break' before '${kind}'.`);
                 }
             }
         }

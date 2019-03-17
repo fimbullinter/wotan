@@ -2,6 +2,7 @@
 /.*
 *.ts
 !*.d.ts
+/src/*.d.ts
 /*.yml
 /*.md
 /*.json
@@ -9,3 +10,4 @@
 /*.tgz
 tsconfig.json
 .DS_Store
+/docs

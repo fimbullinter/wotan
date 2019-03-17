@@ -14,7 +14,6 @@
       "outputCapture": "std",
       "sourceMaps": true,
       "skipFiles": [
-        "<node_internals>/**/*.js",
         "**/node_modules/tslib/**/*.js"
       ]
     },
@@ -28,7 +27,6 @@
       ],
       "outputCapture": "std",
       "skipFiles": [
-        "<node_internals>/**/*.js",
         "**/node_modules/tslib/**/*.js"
       ]
     },
@@ -41,7 +39,6 @@
         "${fileDirname}/${fileBasenameNoExtension}.js"
       ],
       "skipFiles": [
-        "<node_internals>/**/*.js",
         "**/node_modules/tslib/**/*.js"
       ]
     }

@@ -1,6 +1,8 @@
 export {};
 
 let initialized!: boolean = true;
+let any!: any;
+       ~       [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
 
 let foo!: number;
        ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
@@ -18,6 +20,8 @@ const key = 'prop';
 const key2 = 'prop2'
 abstract class Foo {
     initialized!: boolean = true;
+    any!: any;
+       ~       [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     foo!: number;
        ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     bar!: number | undefined;

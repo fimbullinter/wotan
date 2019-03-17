@@ -1,6 +1,6 @@
 import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, unionTypeParts, isClassLikeDeclaration, getPropertyName } from 'tsutils';
+import { isReassignmentTarget, isObjectType, isClassLikeDeclaration, getPropertyName, isIntersectionType, isUnionType } from 'tsutils';
 import { lateBoundPropertyNames } from '../utils';
 
 interface PropertyInfo {
@@ -41,9 +41,9 @@ export class Rule extends TypedRule {
             const isAccessor = property.kind === ts.SyntaxKind.GetAccessor || property.kind === ts.SyntaxKind.SetAccessor;
             if (info.known && info.names.every((name) => isAccessor ? propertiesSeen.get(name) === false : propertiesSeen.has(name))) {
                 if (property.kind === ts.SyntaxKind.SpreadAssignment) {
-                    this.addFailureAtNode(property, 'All properties of this object are overridden later.');
+                    this.addFindingAtNode(property, 'All properties of this object are overridden later.');
                 } else {
-                    this.addFailureAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
+                    this.addFindingAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
                     if (isAccessor)
                         continue; // avoid overriding the isAccessor state
                 }
@@ -87,17 +87,25 @@ export class Rule extends TypedRule {
     }
 
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
-        const type = this.checker.getTypeAtLocation(node)!;
-        return unionTypeParts(type).map(getPropertyInfoFromType).reduce(combinePropertyInfo);
+        return getPropertyInfoFromType(this.checker.getTypeAtLocation(node)!);
     }
 }
 
 function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
+    if (isUnionType(type))
+        return type.types.map(getPropertyInfoFromType).reduce(unionPropertyInfo);
+    if (isIntersectionType(type))
+        return type.types.map(getPropertyInfoFromType).reduce(intersectPropertyInfo);
+    if (type.flags & ts.TypeFlags.Instantiable) {
+        const constraint = type.getConstraint();
+        if (constraint === undefined)
+            return emptyPropertyInfo;
+        return {...getPropertyInfoFromType(constraint), known: false};
+    }
     if (!isObjectType(type))
         return emptyPropertyInfo;
     const result: PropertyInfo = {
-        known: (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0 ||
-            type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
+        known: type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
         names: [],
         assignedNames: [],
     };
@@ -118,10 +126,18 @@ function isSpreadableProperty(prop: ts.Symbol): boolean | undefined {
     return true;
 }
 
-function combinePropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
+function unionPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
     return {
         known: a.known && b.known,
         names: [...a.names, ...b.names],
         assignedNames: a.assignedNames.filter((name) => b.assignedNames.includes(name)),
+    };
+}
+
+function intersectPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
+    return {
+        known: a.known && b.known,
+        names: [...a.names, ...b.names],
+        assignedNames: [...a.assignedNames, ...b.assignedNames],
     };
 }

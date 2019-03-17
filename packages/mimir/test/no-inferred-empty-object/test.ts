@@ -235,6 +235,9 @@ new Promise<object>((resolve, reject) => {
 
 declare function myTagFn<T>(parts: TemplateStringsArray, ...values: T[]): string;
 declare function myOtherTag<T>(parts: TemplateStringsArray): T;
+declare function tag(parts: TemplateStringsArray): string;
+
+tag``;
 
 myTagFn``;
 myTagFn`${''}`;
@@ -245,3 +248,101 @@ myTagFn<string | number>`${1}${''}`;
 myOtherTag``;
 myOtherTag`${''}`;
 myOtherTag<string>``;
+
+interface SomeConstructor<T> {
+    new(arg: T): unknown;
+}
+declare const Ctor: SomeConstructor<any>;
+new Ctor(''); // don't crash here
+
+declare function pipe<A extends any[], B, C>(ab: (...args: A) => B, bc: (b: B) => C): (...args: A) => C;
+
+declare function list<T>(a?: T): T[];
+declare function list2<T = string>(a?: T): T[];
+declare function box<V>(x: V): { value: V };
+
+list();
+
+const listBox = pipe(list, box);
+listBox(1);
+listBox();
+
+const list2Box = pipe(list2, box);
+list2Box(1);
+list2Box();
+
+declare function pipe2<A, B, C, D>(ab: (a: A) => B, cd: (c: C) => D): (a?: [A, C] | [A]) => [B, D];
+
+const listList = pipe2(list, list);
+listList([1, '2']);
+listList([1]);
+listList();
+
+const list2List = pipe2(list, list2);
+list2List([1, '2']);
+list2List([1]);
+list2List();
+
+function pipe3<A, B, C, D>(ab: (a?: A) => B, cd: (c?: C) => D) {
+    return (a?: A, c?: C) => [ab(a), cd(c)] as const;
+}
+
+const listList2 = pipe3(list, list);
+listList2(1, '2');
+listList2(1);
+listList2();
+
+declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B) => C): (...args: A) => C;
+
+const listNone = pipe4(list);
+listNone(1);
+
+const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
+unified('1');
+unified();
+
+const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
+unified2('2');
+unified2();
+
+const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
+unified3('2');
+unified3();
+
+declare const unified4: {(): void; (param?: string): string} | (<T>(param?: T) => T);
+unified4('1');
+unified4();
+
+declare const unified5: (<T>(a?: T) => T) | {(): void; (param?: string): string};
+unified5('1');
+unified5();
+
+declare const unified6: (<T = string>(a?: T) => T) | {(): void; (param?: string): string};
+unified6('1');
+unified6();
+
+declare function overloaded<T>(): void;
+declare function overloaded<T, U>(param: T): void;
+declare function overloaded<T, U, V, W = string>(a: T, b: T): void;
+declare function overloaded(a: string, b: string, c: string): void;
+
+overloaded();
+overloaded(1);
+overloaded(1, 2);
+overloaded('', '', '');
+
+function f<T extends typeof overloaded, U extends typeof unified5, V extends typeof unified6>(t: T, u: U, v: V) {
+    t();
+    t(1);
+    t(1, 2);
+    t('', '', '');
+
+    u('1');
+    u();
+
+    v('1');
+    v();
+}
+
+declare let untyped: Function;
+untyped();

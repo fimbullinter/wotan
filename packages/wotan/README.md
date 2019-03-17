@@ -39,13 +39,18 @@ wotan --fix # lint the whole project and fix all fixable errors
 wotan -p tsconfig.json -r # lint the specified project and all projects in its 'references'
 ```
 
+## Editor Integration
+
+For instructions how to integrate the linter into your editor, see the [documentation of the `@fimbul/mithotyn` package](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md).
+For Visual Studio Code you can install the [official extension](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).
+
 ## Available Rules
 
 For a list of available rules, see the [documentation of the `@fimbul/mimir` package](https://github.com/fimbullinter/wotan/blob/master/packages/mimir/README.md#rules).
 
 ## Configuration
 
-Wotan is configured with a YAML, JSON5 or JSON file named `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closes parent folder is used to lint each file.
+Wotan is configured with a YAML, JSON5 or JSON file named `.wotanrc.yaml`, `.wotanrc.json5` or `.wotanrc.json`. By default the configuration file from the closest parent folder is used to lint each file.
 
 You can use different configurations for different directories. Consider the following setup:
 
@@ -68,6 +73,8 @@ extends: wotan:recommended # use all recommended rules
 }
 ```
 
+Note: this describes the default configuration file name and content. Plugin modules are able to override this behavior to read files with different name or content.
+
 ### Overrides
 
 If you are more into having a single place for configuration, here's an alternative solution for the example above. The `.wotanrc.yaml` could look like this:
@@ -88,14 +95,17 @@ overrides:
 
 Overrides are processed in order and applied in order. The latter one overrides all prior overrides.
 
-Note that in the example above `*.spec.ts` matches in all directories. Normally patterns are matched relative to the configuration file they are specified in. Patterns without any slash are treated special. These will only be matched against the basename of every file in every directory.
+Note that in the example above `*.spec.ts` matches in all directories. Normally patterns are matched relative to the configuration file they are specified in. Patterns without any slash are treated special. They will only be matched against the basename of every file in every directory.
 If you want to limit the pattern to the current directory, you can prefix it with `./` resulting in `./*.spec.ts`.
+
+`*` also matches the leading do if present, so you don't need a second glob pattern for dotfiles. That means `*.spec.ts` matches `.some.spec.ts` as well as `some.spec.ts`.
 
 ### Configuring Rules
 
-Rules can have one of 3 different severities: `error`, `warning` (or `warn`) and `off`.
-`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified
-`warning` is only reported.
+Rules can have one of 4 different severities: `error`, `warning` (or `warn`), `suggestion` (or `hint`) and `off`.
+`error` is reported and causes the process to end with an exit code of 2. This is the default if not specified.
+`warning` is reported but doesn't cause a non-zero exit code.
+`suggestion` treated like `warning` but displayed differently.
 `off` turns the rule off, of course.
 
 Configurable rules get their options through an object. The content of the `"options"` property varies based on the rule.
@@ -125,23 +135,30 @@ Just use `wotan show <filename>` to display the configuration file and the exact
 ## Enable or disable rules with comments
 
 Sometimes you need to enable or disable a specific rule or all rules for a section of a file. This can be done using comments. It doesn't matter if you use `//` or `/* */`. Multiple rule names are separated by comma.
+It's not possible to enable a rule with a comment if that rule is not already enabled in the configuration for that file. That means comments can only enable rules that were previously disabled by a comment.
 
 * `// wotan-disable` disables all rules from the start of the comment until the end of the file (or until it is enabled again)
 * `// wotan-enable` enables all rules from the start of the comment until the end of the file. Enable comments have the same mechanics as disable comments.
 * `// wotan-disable-line` disables all rules in the current line (also works with enable)
 * `// wotan-disable-next-line` disables all rules in the next line (also works with enable)
+* `// wotan-disable-next-line bar, local/baz` disables the rules `bar` and `local/baz` in the next line
 * `// wotan-enable-line foo` enables the rule `foo` in the current line
 * `// wotan-enable-next-line bar, local/baz` enables the rules `bar` and `local/baz` in the next line
+
+This is the default behavior which can be overridden by plugin modules.
+
+To detect unused or redundant comments you can use the `--report-useless-directives` CLI option.
 
 ## CLI Options
 
 * `-c --config <name>` specifies the configuration to use for all files instead of looking for configuration files in parent directories. This can either be a file name, the name of a node module containing a shareable config, or the name of a builtin config like `wotan:recommended`
 * `-e --exclude <glob>` excludes all files that match the given glob pattern from linting. This option can be used multiple times to specify multiple patterns. For example `-e '**/*.js' -e '**/*.d.ts'`. It is recommended to wrap the glob patterns in single quotes to prevent the shell from expanding them.
-* `--fix [true|false|number]` automatically fixes all fixable failures in your code and writes the result back to disk. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Given a number it will at most use the specified number of iterations for fixing before returning the result.
+* `--fix [true|false|number]` automatically fixes all fixable findings in your code and writes the result back to disk. Given a number it will at most use the specified number of iterations for fixing before returning the result. There are some precautions to prevent overlapping fixes from destroying you code. You should however commit your changes before using this feature. Files containing syntax errors are never fixed. If applying fixes would cause syntax errors, the fixes will not be applied.
 * `-f --formatter <name>` the name or path of a formatter. This can either be a file name, the name of a node module contianing a formatter, or the name of a builtin formatter. Currently available builtin formatters are `json` and `stylish` (default).
 * `-m --module <name>` specifies one or more packages with DI modules to load before starting the actual linter. These modules can be used to override the default behavior.
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information. This option can be used multiple times to specify multiple projects to lint.
 * `-r --references [true|false]` enables project references. Starting from the project specified with `-p --project` or the `tsconfig.json` in the current directory it will recursively follow all `"references"` and lint those projects.
+* `--report-useless-directives [true|false|error|warning|suggestion]` reports `// wotan-disable` and `// wotan-enable` comments that are redundant (i.e. rules are already disabled) or unused (there are no findings for the specified rules). Useless directives are reported as lint findings with the specified severity (`true` is converted to `error`). Those findings cannot be disabled by a disable comment. The findings are fixable which allow autofixing when used with the `--fix` option.
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
 Note that all file paths are relative to the current working directory. Therefore `**/*.ts` doesn't match `../foo.ts`.
@@ -200,6 +217,34 @@ wotan save -c '' # clear 'config' option and update .fimbullinter.yaml
 ```
 
 Note that `.fimbullinter.yaml` can also be used to store configuration for plugin modules. See the documentation of the plugins you use if this applies to you. In that case you need to edit the file manually. Using `wotan save` will not alter third party configuration.
+
+## Linting with Type Information
+
+When linting a project (`--project` CLI option) rules are able to use type information using TypeScript's API. Some rules report more findings with type information, some other rules require type information for each of their checks.
+If a rule cannot work properly without type information, you will see a warning like `Rule 'foo' requires type information.`
+
+### Special Handling of JavaScript Files
+
+TypeScript can analyze and check JavaScript files. However, it only does this if you explicitly ask for it using `"allowJs": true, "checkJs": true` in your `tsconfig.json` or by adding a `// @ts-check` comment on top of your JS files.
+A `// @ts-nocheck` comment excludes a file from type checking.
+More information is available in the official [TypeScript Handbook: Type Checking JavaScript Files](https://www.typescriptlang.org/docs/handbook/type-checking-javascript-files.html).
+
+Wotan respects these flags, too. That means it will not provide type information to rules executed on unchecked JS files.
+This ensures you won't get surprising lint findings caused by funky type inference in those files.
+You will still get reports for purely syntactic findings, i.e. rules that don't require type information.
+
+### Excluded Files
+
+If type information is available Wotan excludes all files you haven't written yourself. The following files are always excluded so you cannot explicitly include them:
+
+* any files of dependencies in `node_modules` (unless imported using a relative path, e.g. `./node_modules/foo/index`)
+* declaration files from `@types` (or `typeRoots` declared in your `tsconfig.json`)
+* declaration files included by TypeScript, e.g. `lib.es5.d.ts`
+* declaration files of project references (`references` in `tsconfig.json`)
+
+This is the default behavior which can be overridden by plugin modules.
+
+If you lint individual files without type information using the file's path or a glob pattern, you are responsible for excluding all files you don't want to lint.
 
 ## Diagnosing Misbehavior
 

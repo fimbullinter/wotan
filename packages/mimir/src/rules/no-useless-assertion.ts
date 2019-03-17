@@ -12,6 +12,8 @@ import {
     getIIFE,
     removeOptionalityFromType,
     isStrictCompilerOptionEnabled,
+    isConstAssertion,
+    isInConstContext,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -49,9 +51,9 @@ export class Rule extends TypedRule {
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined && (
                 !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node.name)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
-            this.addFailure(
+            this.addFinding(
                 node.exclamationToken.end - 1,
                 node.exclamationToken.end,
                 FAIL_DEFINITE_ASSIGNMENT,
@@ -66,9 +68,9 @@ export class Rule extends TypedRule {
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
                 !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictPropertyInitialization') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node)!, true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
-            this.addFailure(
+            this.addFinding(
                 node.exclamationToken.end - 1,
                 node.exclamationToken.end,
                 FAIL_DEFINITE_ASSIGNMENT,
@@ -79,7 +81,7 @@ export class Rule extends TypedRule {
     private checkNonNullAssertion(node: ts.NonNullExpression) {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
-            const originalType = this.checker.getTypeAtLocation(node.expression)!;
+            const originalType = this.checker.getTypeAtLocation(node.expression);
             const flags = getNullableFlags(this.checker.getBaseConstraintOfType(originalType) || originalType);
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
@@ -92,15 +94,20 @@ export class Rule extends TypedRule {
                 return;
             }
         }
-        this.addFailure(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
+        this.addFinding(node.end - 1, node.end, message, Replacement.delete(node.expression.end, node.end));
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
+        if (isConstAssertion(node)) {
+            if (isInConstContext(node))
+                this.reportUselessTypeAssertion(node, 'This assertion is unnecessary as it is already in a const context.');
+            return;
+        }
         let targetType = this.checker.getTypeFromTypeNode(node.type);
-        if (targetType.flags & ts.TypeFlags.Literal || // allow "foo" as "foo" to avoid unnecessary widening
+        if ((targetType.flags & ts.TypeFlags.Literal) !== 0 && !isInConstContext(node) || // allow "foo" as "foo" to avoid widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
-        let sourceType = this.checker.getTypeAtLocation(node.expression)!;
+        let sourceType = this.checker.getTypeAtLocation(node.expression);
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
@@ -121,8 +128,12 @@ export class Rule extends TypedRule {
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
+        this.reportUselessTypeAssertion(node, message);
+    }
+
+    private reportUselessTypeAssertion(node: ts.AssertionExpression, message: string) {
         if (node.kind === ts.SyntaxKind.AsExpression) {
-            this.addFailure(
+            this.addFinding(
                 node.type.pos - 'as'.length,
                 node.end,
                 message,
@@ -136,7 +147,7 @@ export class Rule extends TypedRule {
                     Replacement.append(start, '('),
                     Replacement.append(node.end, ')'),
                 );
-            this.addFailure(start, node.expression.pos, message, fix);
+            this.addFinding(start, node.expression.pos, message, fix);
         }
     }
 

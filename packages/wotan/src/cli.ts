@@ -5,7 +5,6 @@ import debug = require('debug');
 
 const log = debug('wotan:cli');
 
-// @internal
 export async function run(argv: string[]) {
     if (argv.length === 1 && /^(')?-(?:v|-version)\1$/.test(argv[0]))
         return console.log(require('../package.json').version);
@@ -19,18 +18,17 @@ export async function run(argv: string[]) {
         process.exitCode = 1;
     }
 }
-// @internal
 export function loadConfig(dir: string) {
     const fileName = path.join(dir, '.fimbullinter.yaml');
     return new Promise<GlobalOptions>((resolve) => {
         return fs.readFile(fileName, {encoding: 'utf8'}, (err, content) => {
-            if (err) { // wotan-disable-line no-useless-predicate
+            if (err) {
                 log("Not using '%s': %s", fileName, err.code);
                 return resolve({});
             }
-            return import('js-yaml').then((yaml) => {
+            import('js-yaml').then((yaml) => {
                 try {
-                    resolve(<GlobalOptions | undefined>yaml.safeLoad(content, {schema: yaml.JSON_SCHEMA, strict: true}) || {});
+                    resolve(<GlobalOptions | undefined>yaml.safeLoad(content) || {});
                     log("Using global options from '%s'", fileName);
                 } catch (e) {
                     log("Not using '%s': %s", fileName, e && e.message);

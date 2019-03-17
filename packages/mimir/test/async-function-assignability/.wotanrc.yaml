@@ -1,0 +1,2 @@
+rules:
+  async-function-assignability: error

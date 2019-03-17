@@ -1,0 +1,38 @@
+export const emptyLiteral = {};
+emptyLiteral.a = 1;
+Object.defineProperty(emptyLiteral, 'b', {value: 1});
+
+export const literal = {a: 1, b: 1};
+
+({
+    ...emptyLiteral,
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    a: 1,
+    b: 1,
+});
+
+({
+    a: 1,
+    ~     [error no-duplicate-spread-property: Property 'a' is overridden later.]
+    b: 1,
+    ~     [error no-duplicate-spread-property: Property 'b' is overridden later.]
+    c: 1,
+    ...emptyLiteral,
+});
+
+({
+    ...literal,
+    ~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    a: 1,
+    b: 1,
+});
+
+({
+    a: 1,
+    ~     [error no-duplicate-spread-property: Property 'a' is overridden later.]
+    b: 1,
+    ~     [error no-duplicate-spread-property: Property 'b' is overridden later.]
+    c: 1,
+    ...literal,
+});
+

@@ -11,7 +11,7 @@ import {
     isValidJsxIdentifier,
 } from 'tsutils';
 
-const FAILURE_STRING = 'Using the spread operator here is not necessary.';
+const MESSAGE = 'Using the spread operator here is not necessary.';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -42,19 +42,19 @@ export class Rule extends AbstractRule {
     private checkSpreadElement(node: ts.SpreadElement) {
         if (!isArrayLiteralExpression(node.expression) || node.expression.elements.some(isOmittedExpression) && !isReassignmentTarget(node))
             return;
-        this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(node, node.expression.elements));
+        this.addFindingAtNode(node, MESSAGE, removeUselessSpread(node, node.expression.elements));
     }
 
     private checkSpreadAssignment(node: ts.SpreadAssignment) {
         if (!isObjectLiteralExpression(node.expression))
             return;
-        this.addFailureAtNode(node, FAILURE_STRING, removeUselessSpread(node, node.expression.properties));
+        this.addFindingAtNode(node, MESSAGE, removeUselessSpread(node, node.expression.properties));
     }
 
     private checkJsxSpreadAttribute(node: ts.JsxSpreadAttribute) {
         if (!isObjectLiteralExpression(node.expression) || !canConvertObjectSpreadToJsx(node.expression))
             return;
-        this.addFailureAtNode(node, FAILURE_STRING, removeUselessJsxSpreadAttribute(node, node.expression.properties));
+        this.addFindingAtNode(node, MESSAGE, removeUselessJsxSpreadAttribute(node, node.expression.properties));
     }
 }
 

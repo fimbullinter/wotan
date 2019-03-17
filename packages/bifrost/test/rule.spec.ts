@@ -86,7 +86,7 @@ test('applies TSLint rules correctly', (t) => {
     }
     let ruleCtor = wrapTslintRule(TestRule, 'foo-bar');
     const context: RuleContext = {
-        addFailure(start, end, message, replacements): any {
+        addFinding(start, end, message, replacements): any {
             t.is(start, 0);
             t.is(end, 5);
             t.is(message, 'some message');
@@ -164,11 +164,11 @@ test('applies TSLint rules correctly', (t) => {
     }
     t.throws(
         () => new (wrapTslintRule(WrongFileFailureRule, 'wrong-file'))(context).apply(),
-        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'wrong-file'.",
+        "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'wrong-file'.",
     );
     t.throws(
         () => new (wrapTslintRule(WrongFileFailureRule))(context).apply(),
-        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'rule.spec'.",
+        "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'rule.spec'.",
     );
 
     class AnotherWrongFileFailureRule extends TSLint.Rules.AbstractRule {
@@ -192,7 +192,7 @@ test('applies TSLint rules correctly', (t) => {
     }
     t.throws(
         () => new (wrapTslintRule(AnotherWrongFileFailureRule))(context).apply(),
-        "Adding failures for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'some-name'.",
+        "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'some-name'.",
     );
 });
 
@@ -235,7 +235,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
             t.is(this.context.options, 'foo');
             if (this.context.program !== undefined)
                 t.is(this.context.program, <any>'bar');
-            this.addFailure(0, 0, 'test message');
+            this.addFinding(0, 0, 'test message');
         }
     }
     let wrapped = wrapRuleForTslint(TypeScriptOnlyRule);
@@ -271,7 +271,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
             t.deepEqual(this.context.getFlatAst(), convertAst(tsSourceFile).flat);
             t.deepEqual(this.context.getWrappedAst(), convertAst(tsSourceFile).wrapped);
             t.deepEqual(this.context.options, ['foo', 'bar']);
-            this.addFailure(0, 0, 'message', Replacement.replace(0, 1, 'x'));
+            this.addFinding(0, 0, 'message', Replacement.replace(0, 1, 'x'));
         }
     }
     wrapped = wrapRuleForTslint(MyTypedRule);

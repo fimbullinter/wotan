@@ -11,6 +11,6 @@ export class Rule extends TypedRule {
 
     private addDiagnostic(diagnostic: ts.Diagnostic) {
         const start = diagnostic.start!;
-        this.addFailure(start, start + diagnostic.length!, ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+        this.addFinding(start, start + diagnostic.length!, ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
     }
 }

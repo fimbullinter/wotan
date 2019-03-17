@@ -24,6 +24,17 @@ export function* switchStatements(context: RuleContext) {
     }
 }
 
+export function* tryStatements(context: RuleContext) {
+    const {text} = context.sourceFile;
+    const re = /\btry\s*[{/]/g;
+    let wrappedAst: WrappedAst | undefined;
+    for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
+            yield <ts.TryStatement>node;
+    }
+}
+
 export function isAsyncFunction(node: ts.Node): node is ts.FunctionLikeDeclaration & {body: ts.Block} {
     switch (node.kind) {
         case ts.SyntaxKind.FunctionDeclaration:
@@ -239,4 +250,14 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
         default:
             return false;
     }
+}
+
+export function formatPseudoBigInt(v: ts.PseudoBigInt) {
+    return `${v.negative ? '-' : ''}${v.base10Value}n`;
+}
+
+export function unwrapParens(node: ts.Expression) {
+    while (node.kind === ts.SyntaxKind.ParenthesizedExpression)
+        node = (<ts.ParenthesizedExpression>node).expression;
+    return node;
 }

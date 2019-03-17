@@ -4,7 +4,6 @@ import * as yaml from 'js-yaml';
 import * as ts from 'typescript';
 import * as path from 'path';
 
-// @internal
 /**
  * Number of .. until the containing node_modules.
  * __dirname -> src
@@ -95,7 +94,6 @@ export function calculateChangeRange(original: string, changed: string): ts.Text
         ;
     if (start !== minEnd) {
         const maxStart = end - minEnd + start;
-        // tslint:disable-next-line:ban-comma-operator
         for (let changedEnd = changed.length; maxStart < end && original[end - 1] === changed[changedEnd - 1]; --end, --changedEnd)
             ;
     }
@@ -125,6 +123,13 @@ export function mapDefined<T, U>(input: Iterable<T>, cb: (item: T) => U | undefi
     return result;
 }
 
+export function flatMap<T, U>(input: Iterable<T>, cb: (item: T) => Iterable<U>) {
+    const result = [];
+    for (const item of input)
+        result.push(...cb(item));
+    return result;
+}
+
 /**
  * Adds an item to an array if it's not already included.
  * @returns true if the item was not present in the array
@@ -134,4 +139,35 @@ export function addUnique<T>(arr: T[], item: T & {[K in keyof T]: T[K]}) {
         return false;
     arr.push(item);
     return true;
+}
+
+export function createParseConfigHost(
+    host: Required<Pick<ts.CompilerHost, 'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists'>>,
+): ts.ParseConfigHost {
+    return {
+        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
+        readDirectory(rootDir, extensions, excludes, includes, depth) {
+            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
+        },
+        fileExists(f) {
+            return host.fileExists(f);
+        },
+        readFile(f) {
+            return host.readFile(f);
+        },
+    };
+}
+
+export function hasParseErrors(sourceFile: ts.SourceFile) {
+    return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
+}
+
+export function invertChangeRange(range: ts.TextChangeRange): ts.TextChangeRange {
+    return {
+        span: {
+            start: range.span.start,
+            length: range.newLength,
+        },
+        newLength: range.span.length,
+    };
 }

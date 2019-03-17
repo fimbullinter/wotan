@@ -58,7 +58,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
     }
 
     public resolve(name: string, basedir: string) {
-        const extensions = Object.keys(require.extensions).filter((e) => e !== '.node');
+        const extensions = [...this.resolver.getDefaultExtensions(), '.json'];
         if (name.startsWith('tslint:')) {
             try {
                 if (this.tslintConfigDir === undefined)
@@ -88,12 +88,12 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         const overrides: Configuration.Override[] = [];
         if (raw.rules.size !== 0)
             overrides.push({
-                files: ['*', '.*', '!*.js?(x)'],
+                files: ['*', '!*.js?(x)'],
                 rules: new Map(Array.from(raw.rules, mapRules)),
             });
         if (raw.jsRules.size !== 0)
             overrides.push({
-                files: ['*.js?(x)', '.*.js?(x)'],
+                files: ['*.js?(x)'],
                 rules: new Map(Array.from(raw.jsRules, mapRules)),
             });
         return {

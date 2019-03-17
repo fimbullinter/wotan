@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension, mapDefined } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined, hasParseErrors, invertChangeRange } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -12,14 +12,12 @@ const log = debug('wotan:projectHost');
 
 const additionalExtensions = ['.json'];
 
-// @internal
 export interface ProcessedFileInfo {
     originalName: string;
     originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
-// @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
     private files: string[] = [];
@@ -55,6 +53,7 @@ export class ProjectHost implements ts.CompilerHost {
             this.cwd,
             depth,
             (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+            (f) => this.safeRealpath(f),
         );
     }
     /**
@@ -186,6 +185,14 @@ export class ProjectHost implements ts.CompilerHost {
         return '\n';
     }
     public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
+    private safeRealpath(f: string) {
+        if (this.realpath !== undefined) {
+            try {
+                return this.realpath(f);
+            } catch {}
+        }
+        return f;
+    }
     public getCurrentDirectory() {
         return this.cwd;
     }
@@ -215,34 +222,34 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
-        return projectReferences === undefined
-            ? ts.createProgram(rootNames, options, this, oldProgram) // for compatibility with TypeScript@<3.0.0
-            : ts.createProgram({
-                rootNames,
-                options,
-                oldProgram,
-                projectReferences,
-                host: this,
-            });
+        return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
     }
 
     public updateSourceFile(
         sourceFile: ts.SourceFile,
         program: ts.Program,
         newContent: string,
-        _changeRange: ts.TextChangeRange,
-    ): {sourceFile: ts.SourceFile, program: ts.Program} {
-        // this doesn't use 'ts.updateSourceFile' for compatibility with TypeScript@<3.1.0
-        sourceFile = ts.createSourceFile(sourceFile.fileName, newContent, sourceFile.languageVersion, true);
+        changeRange: ts.TextChangeRange,
+    ): {sourceFile: ts.SourceFile, program: ts.Program, error: boolean} {
+        let error = false;
+        const oldContent = sourceFile.text;
+        sourceFile = ts.updateSourceFile(sourceFile, newContent, changeRange);
+        if (hasParseErrors(sourceFile)) {
+            log("Not using updated content of '%s' because of syntax errors", sourceFile.fileName);
+            sourceFile = ts.updateSourceFile(sourceFile, oldContent, invertChangeRange(changeRange));
+            error = true;
+            // we need to create a new Program because the old SourceFile it references is now corrupted
+        }
+
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
 
         program = this.createProgram(
             program.getRootFileNames(),
             program.getCompilerOptions(),
             program,
-            getReferencesOfProgram(program),
+            program.getProjectReferences(),
         );
-        return {sourceFile, program};
+        return {sourceFile, program, error};
     }
 
     public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
@@ -255,18 +262,4 @@ export class ProjectHost implements ts.CompilerHost {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
     }
-}
-
-function getReferencesOfProgram(program: ts.Program): ReadonlyArray<ts.ProjectReference> | undefined {
-    // for compatibility with TypeScript@<3.0.0
-    const references = program.getProjectReferences && program.getProjectReferences();
-    if (references === undefined)
-        return;
-    // for compatibility with TypeScript@<3.1.1
-    if (program.getResolvedProjectReferences === undefined)
-        return mapDefined(
-            <ReadonlyArray<ts.ResolvedProjectReference | undefined>><{}>references,
-            (ref) => ref && {path: ref.sourceFile.fileName},
-        );
-    return references;
 }

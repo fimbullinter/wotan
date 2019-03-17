@@ -20,9 +20,6 @@ export class Rule extends TypedRule {
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        // for compatibility with typescript@<2.9.0
-        if (node.argumentExpression === undefined || node.argumentExpression.pos === node.argumentExpression.end)
-            return;
         const {properties} = lateBoundPropertyNames(node.argumentExpression, this.checker);
         if (properties.length === 0)
             return;
@@ -35,7 +32,7 @@ export class Rule extends TypedRule {
         const flags = getModifierFlagsOfSymbol(symbol);
 
         if (hasConflictingAccessModifiers(flags, symbol))
-            return this.addFailureAtNode(
+            return this.addFindingAtNode(
                 errorNode,
                 `Property '${name}' has conflicting declarations and is inaccessible in type '${this.checker.typeToString(lhsType)}'.`,
             );
@@ -46,7 +43,7 @@ export class Rule extends TypedRule {
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
             if (enclosingClass !== undefined)
-                return this.addFailureAtNode(
+                return this.addFindingAtNode(
                     errorNode,
                     `Abstract property '${name}' in class '${
                         this.printClass(enclosingClass)
@@ -55,7 +52,7 @@ export class Rule extends TypedRule {
         }
         if (lhs !== undefined && lhs.kind === ts.SyntaxKind.SuperKeyword) {
             if (hasNonMethodDeclaration(symbol))
-                return this.addFailureAtNode(
+                return this.addFindingAtNode(
                     errorNode,
                     "Only public and protected methods of the base class are accessible via the 'super' keyword.",
                 );
@@ -63,7 +60,7 @@ export class Rule extends TypedRule {
                 flags & ts.ModifierFlags.Abstract &&
                 symbol.declarations!.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.AbstractKeyword))
             )
-                return this.addFailureAtNode(
+                return this.addFindingAtNode(
                     errorNode,
                     `Abstract method '${name}' in class '${
                         this.printClass(<ts.ClassLikeDeclaration>symbol.declarations![0].parent)
@@ -87,7 +84,7 @@ export class Rule extends TypedRule {
                     return this.failVisibility(errorNode, name, this.checker.typeToString(lhsType), false);
             }
             if ((flags & ts.ModifierFlags.Static) === 0 && !hasBase(lhsType, enclosingClass, isIdentical))
-                return this.addFailureAtNode(
+                return this.addFindingAtNode(
                     errorNode,
                     `Property '${name}' is protected and only accessible through an instance of class '${
                         this.checker.typeToString(enclosingClass)
@@ -113,7 +110,7 @@ export class Rule extends TypedRule {
     }
 
     private failVisibility(node: ts.Node, property: string, typeString: string, isPrivate: boolean) {
-        this.addFailureAtNode(
+        this.addFindingAtNode(
             node,
             `Property '${property}' is ${isPrivate ? 'private' : 'protected'} and only accessible within class '${typeString}'${
                 isPrivate ? '' : ' and its subclasses'

@@ -1,6 +1,7 @@
 export {};
 
 let initialized!: boolean = true;
+let any: any;
 
 let foo!: number;
 foo;
@@ -14,6 +15,7 @@ const key = 'prop';
 const key2 = 'prop2'
 abstract class Foo {
     initialized!: boolean = true;
+    any: any;
     foo!: number;
     bar: number | undefined;
     abstract baz!: number;

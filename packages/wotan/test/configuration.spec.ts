@@ -12,6 +12,7 @@ import {
     LoadConfigurationContext,
     ConfigurationError,
     BuiltinResolver,
+    DirectoryService,
 } from '@fimbul/ymir';
 import { Container, injectable } from 'inversify';
 import { CachedFileSystem } from '../src/services/cached-file-system';
@@ -26,6 +27,7 @@ import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { DefaultBuiltinResolver } from '../src/services/default/builtin-resolver';
+import { NodeDirectoryService } from '../src/services/default/directory-service';
 
 // tslint:disable:no-null-keyword
 
@@ -48,36 +50,36 @@ test('ConfigurationManager', (t) => {
     const cm = container.get(ConfigurationManager);
     t.throws(
         () => cm.find('foo.ts'),
-        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': undefined`,
+        { instanceOf: ConfigurationError, message: `Error finding configuration for '${path.resolve('foo.ts')}': undefined` },
     );
     configProvider.find = () => {
         throw new Error();
     };
     t.throws(
         () => cm.find('foo.ts'),
-        (e) => e instanceof ConfigurationError && e.message === `Error finding configuration for '${path.resolve('foo.ts')}': `,
+        { instanceOf: ConfigurationError, message: `Error finding configuration for '${path.resolve('foo.ts')}': ` },
     );
     t.throws(
         () => cm.resolve('config.yaml', 'dir'),
-        (e) => e instanceof ConfigurationError && e.message === 'null',
+        { instanceOf: ConfigurationError, message: 'null' },
     );
     configProvider.resolve = () => {
         throw 'foo';
     };
     t.throws(
         () => cm.resolve('config.yaml', 'dir'),
-        (e) => e instanceof ConfigurationError && e.message === 'undefined',
+        { instanceOf: ConfigurationError, message: 'undefined' },
     );
     t.throws(
         () => cm.load('config.yaml'),
-        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: undefined`,
+        { instanceOf: ConfigurationError, message: `Error loading ${path.resolve('config.yaml')}: undefined` },
     );
     configProvider.load = () => {
         throw new Error('foo');
     };
     t.throws(
         () => cm.load('config.yaml'),
-        (e) => e instanceof ConfigurationError && e.message === `Error loading ${path.resolve('config.yaml')}: foo`,
+        { instanceOf: ConfigurationError, message: `Error loading ${path.resolve('config.yaml')}: foo` },
     );
 
     configProvider.find = (f) => {
@@ -103,9 +105,11 @@ test('ConfigurationManager', (t) => {
     };
     t.throws(
         () => cm.load('subdir/config.yaml'),
-        (e) => e instanceof ConfigurationError &&
-            e.message === `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
+        {
+            instanceOf: ConfigurationError,
+            message: `Error loading ${path.resolve('./subdir/config.yaml')} => ${path.resolve('./subdir/dir/base.json')} => ${
                 path.resolve('./subdir/config.yaml')}: Circular configuration dependency.`,
+        },
     );
 
     const loaded: string[] = [];
@@ -246,6 +250,7 @@ test('DefaultConfigurationProvider.find', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
     container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
 
     const cwd = path.join(path.parse(process.cwd()).root, 'some/project/directory');
 
@@ -344,6 +349,7 @@ test('DefaultConfigurationProvider.resolve', (t) => {
     container.bind(Resolver).to(NodeResolver);
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const builtinResolver: BuiltinResolver = {
         resolveConfig(name) { return path.join(__dirname, '../../mimir', name + '.yaml'); },
         resolveFormatter() { throw new Error(); },
@@ -367,6 +373,9 @@ test('DefaultConfigurationProvider.read', (t) => {
 
     const empty = {};
     const resolver: Resolver = {
+        getDefaultExtensions() {
+            return [];
+        },
         resolve() {
             return '';
         },
@@ -428,6 +437,7 @@ test('ConfigurationProvider.parse', (t) => {
     container.bind(FileSystem).to(NodeFileSystem);
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(BuiltinResolver).to(DefaultBuiltinResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
 
     const cp = container.resolve(DefaultConfigurationProvider);
     const mockContext: LoadConfigurationContext = {
@@ -577,6 +587,24 @@ test('ConfigurationProvider.parse', (t) => {
                 ['b', {rulesDirectories: undefined, rule: 'b'}],
                 ['c', {rulesDirectories: undefined, rule: 'c', severity: 'warning'}],
                 ['d', {rulesDirectories: undefined, rule: 'd', options: 1}],
+            ]),
+            settings: undefined,
+            aliases: undefined,
+            overrides: undefined,
+            rulesDirectories: undefined,
+            processor: undefined,
+            exclude: undefined,
+            filename: 'c.yaml',
+        },
+    );
+
+    t.deepEqual(
+        cp.parse({rules: {a: 'hint', b: {severity: 'suggestion'}}}, 'c.yaml', mockContext),
+        {
+            extends: [],
+            rules: new Map<string, Configuration.RuleConfig>([
+                ['a', {rulesDirectories: undefined, rule: 'a', severity: 'suggestion'}],
+                ['b', {rulesDirectories: undefined, rule: 'b', severity: 'suggestion'}],
             ]),
             settings: undefined,
             aliases: undefined,

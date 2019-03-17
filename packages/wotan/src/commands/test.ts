@@ -1,5 +1,5 @@
 import { injectable, ContainerModule } from 'inversify';
-import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Failure } from '@fimbul/ymir';
+import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Finding } from '@fimbul/ymir';
 import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
 import { createBaseline } from '../baseline';
@@ -163,7 +163,7 @@ class TestCommandRunner extends AbstractCommandRunner {
         for (const [fileName, summary] of lintResult) {
             if (!host.checkResult(fileName, BaselineKind.Lint, summary))
                 return false;
-            containsFixes = containsFixes || summary.failures.some(isFixable);
+            containsFixes = containsFixes || summary.findings.some(isFixable);
         }
 
         if (config.fix || config.fix === undefined) {
@@ -202,8 +202,8 @@ function getNormalizedTypescriptVersion() {
     return new SemVer(`${v.major}.${v.minor}.${v.patch}`);
 }
 
-function isFixable(failure: Failure): boolean {
-    return failure.fix !== undefined;
+function isFixable(finding: Finding): boolean {
+    return finding.fix !== undefined;
 }
 
 function createBaselineDiff(actual: string, expected: string) {

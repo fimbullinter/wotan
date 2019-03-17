@@ -1,6 +1,7 @@
 import { excludeDeclarationFiles, typescriptOnly, TypedRule } from '@fimbul/ymir';
-import { unionTypeParts, isIntersectionType } from 'tsutils';
+import { unionTypeParts, isIntersectionType, isConstAssertion } from 'tsutils';
 import * as ts from 'typescript';
+import { formatPseudoBigInt } from '../utils';
 
 @excludeDeclarationFiles
 @typescriptOnly
@@ -16,6 +17,8 @@ export class Rule extends TypedRule {
     }
 
     private checkAssertion(node: ts.AssertionExpression) {
+        if (isConstAssertion(node))
+            return;
         let assertedType = this.checker.getTypeFromTypeNode(node.type);
         assertedType = this.checker.getBaseConstraintOfType(assertedType) || assertedType;
         const assertedLiterals = getLiteralsByType(assertedType);
@@ -27,7 +30,7 @@ export class Rule extends TypedRule {
             return;
         match(originalTypeParts, assertedLiterals);
         if (!isEmpty(assertedLiterals))
-            this.addFailureAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedLiterals)}'.`);
+            this.addFindingAtNode(node, `Type '${format(originalTypeParts)}' cannot be converted to type '${format(assertedLiterals)}'.`);
     }
 }
 
@@ -37,6 +40,8 @@ function format(literals: LiteralInfo) {
         result.push(`"${Array.from(literals.string).join('" | "')}"`);
     if (literals.number !== undefined)
         result.push(Array.from(literals.number).join(' | '));
+    if (literals.bigint !== undefined)
+        result.push(Array.from(literals.bigint).join(' | '));
     if (literals.boolean !== undefined)
         result.push(`${literals.boolean}`);
     return result.join(' | ');
@@ -47,6 +52,8 @@ function match(a: LiteralInfo, b: LiteralInfo) {
         a.string = b.string = undefined;
     if (a.number === undefined || b.number === undefined || intersects(a.number, b.number))
         a.number = b.number = undefined;
+    if (a.bigint === undefined || b.bigint === undefined || intersects(a.bigint, b.bigint))
+        a.bigint = b.bigint = undefined;
     if (a.boolean === undefined || b.boolean === undefined || a.boolean === b.boolean)
         a.boolean = b.boolean = undefined;
 }
@@ -59,12 +66,16 @@ function intersects<T>(arr: Iterable<T>, other: Set<T>): boolean {
 }
 
 function isEmpty(literals: LiteralInfo) {
-    return literals.string === undefined && literals.number === undefined && literals.boolean === undefined;
+    return literals.string === undefined &&
+        literals.number === undefined &&
+        literals.bigint === undefined &&
+        literals.boolean === undefined;
 }
 
 interface LiteralInfo {
     string: Set<string> | undefined;
     number: Set<number> | undefined;
+    bigint: Set<string> | undefined;
     boolean: boolean | undefined;
 }
 
@@ -72,6 +83,7 @@ function getLiteralsByType(type: ts.Type) {
     const result: LiteralInfo = {
         string: undefined,
         number: undefined,
+        bigint: undefined,
         boolean: undefined,
     };
     // typically literal types are swallowed by their corresponding widened type if they occur in the same union
@@ -80,6 +92,7 @@ function getLiteralsByType(type: ts.Type) {
     // we also need to remember not to store any new literal types of that kind
     let seenString = false;
     let seenNumber = false;
+    let seenBigint = false;
     let seenBoolean = false;
     for (const t of typeParts(type)) {
         if (t.flags & ts.TypeFlags.StringLiteral) {
@@ -88,6 +101,9 @@ function getLiteralsByType(type: ts.Type) {
         } else if (t.flags & ts.TypeFlags.NumberLiteral) {
             if (!seenNumber)
                 result.number = append(result.number, (<ts.NumberLiteralType>t).value);
+        } else if (t.flags & ts.TypeFlags.BigIntLiteral) {
+            if (!seenBigint)
+                result.bigint = append(result.bigint, formatPseudoBigInt((<ts.BigIntLiteralType>t).value));
         } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
             if (!seenBoolean) {
                 const current = (<{intrinsicName: string}><{}>t).intrinsicName === 'true';
@@ -104,6 +120,9 @@ function getLiteralsByType(type: ts.Type) {
         } else if (t.flags & ts.TypeFlags.Number) {
             result.number = undefined;
             seenNumber = true;
+        } else if (t.flags & ts.TypeFlags.BigInt) {
+            result.bigint = undefined;
+            seenBigint = true;
         }
     }
     return result;

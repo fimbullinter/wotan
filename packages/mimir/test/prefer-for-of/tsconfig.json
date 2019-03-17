@@ -2,7 +2,8 @@
   "compilerOptions": {
     "strict": true,
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "types": []
   },
   "files": [
     "types.ts"

@@ -1,5 +1,108 @@
 # Change Log
 
+## v0.20.0
+
+:tada: Since the last release we published an [official extension for VSCode](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.0 is no longer officially supported
+
+**Features:**
+
+* `bifrost`: pass names of all linted files to TSLint formatters
+* new rule: `no-useless-destructuring`
+* `no-useless-assertion`: detect redundant `as const` assertions
+* `no-useless-assertion`: stricter checks of literal type assertions in const context (`{ prop: 1 as 1 } as const`)
+* `no-inferred-empty-object`: correctly handle higher order function type inference (type parameter propagation) and unions of call signatures
+
+**Bugfixes:**
+
+* `wotan`: fixed a crash caused by changes to TypeScript's internal API
+* `no-useless-predicate`: fixes false positive with `typeof {} === 'object'`
+* `no-useless-assertion`: don't treat `as const` like `as any`
+
+## v0.19.0
+
+**Features:**
+
+* new rule: `no-useless-try-catch`
+* `no-useless-predicate`: detect comparing a literal type with itself
+* `no-useless-predicate`: detect redundant uses of `key in obj` where `key` is known to always be present in `obj`
+
+**Bugfixes:**
+
+* `no-useless-predicate`: treat property access on index signatures as potentially `undefined`
+* `no-useless-predicate`: don't report expressions as "always truthy" without `strictNullChecks`
+* `no-useless-predicate`: avoid nested finding by reporting only the innermost finding
+
+## v0.18.0
+
+:warning: **Breaking Changes:**
+
+* configuration: patterns (`exclude` and `overrides[].files`) match dotfiles, e.g. `*.spec.ts` now matches `.foo.spec.ts`.
+* disable comments: handling of nested ranges changed. `//wotan-enable-line` in a line disabled by `//wotan-disable-next-line` is ignored
+* API: completely refactored `FileFilterFactory`, `FileFilter`, `LineSwitchFilterFactory`, `LineSwitchParser` and `DefaultLineSwitchParser`
+
+**Features:**
+
+* unchecked JS files (`//@ts-nocheck` or `checkJs: false`) are never linted with type information
+* added `report-useless-directives` CLI option to report unused and redundant enable and disable comments
+
+**Bugfixes:**
+
+* `wotan`: added missing exports to the public API
+* patterns in configuration files match dotfiles (see breaking changes)
+
+## v0.17.0
+
+:tada: This release introduces a plugin for TypeScript's LanguageService. This enables in-editor linting while you type. See the [docs](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md) for more details.
+
+:warning: **Breaking Changes:**
+
+* TypeScript 2.8 and 2.9 is no longer supported
+* API:
+  * `Failure` was renamed to `Finding` throughout the codebase
+  * `Resolver` adds a new required method `getDefaultExtensions`
+  * `Resolver#resolve` makes parameters `basedir` and `extensions` optional
+  * `Runner` requires a new service `FileFilterFactory`
+  * added severity `suggestion`
+
+**Features:**
+
+* new package `@fimbul/mithotyn` provides in-editor linting through a TypeScript LanguageService Plugin
+* new severity: `suggestion`
+* `--fix` can no longer introduce syntax errors
+* `async-function-assignability`: checks methods and properties with computed names
+* `async-function-assignability`: checks method overloads individually
+* new service abstraction `FileFilterFactory` and `FileFilter` allow customizing which files are linted
+* `@fimbul/ve` no longer includes the line break after the opening tag in the linted code
+* `@fimbul/ve` correctly adjusts the column of findings in the first line if there is no line break after the opening tag
+* `prefer-number-methods`: fixed finding location
+
+**Bugfixes:**
+
+* declaration files no longer contain `const enum`
+* core services no longer rely on the existence of `require`
+* YAML configuration can now contain YAML-specific types
+
+## v0.16.0
+
+**Features:**
+
+* new rule: `async-function-assignability`
+* handle `BigInt` types and literals
+* `no-duplicate-case`: correctly handles BigInt and (bitwise) negation thereof
+* `no-invalid-assertion`: adds an additional check for asserting BigInts
+* `no-useless-predicage`: allows comparing `typeof v === "bigint"`
+* `no-duplicate-spread-property`: handle spreading of type variables introduced in typescript@3.2
+
+**Bugfixes:**
+
+* `no-duplicate-case`: only use type information if `strictNullChecks` is enabled to avoid false positives
+* CLI normalizes `..` and `.` in glob patterns and file names
+* `no-duplicate-spread-property`: works with intersection types
+
 ## v0.15.0
 
 **Features:**

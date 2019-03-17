@@ -1,0 +1,78 @@
+if (Boolean())
+    try {} finally {}
+    ~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+for (; Boolean();)
+    try {} finally {
+    ~~~~~~~~~~~~~~~~
+        console.log('a');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+        console.log('b');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    }
+~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+while (Boolean())
+    try {
+    ~~~~~
+        console.log('a');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+        console.log('b');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    } catch (e) {
+~~~~~~~~~~~~~~~~~
+        throw e;
+~~~~~~~~~~~~~~~~
+    }
+~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'catch' clause only rethrows the error.]
+
+do
+    try {} finally {}
+    ~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+while (Boolean());
+
+if (Boolean())
+    try {} finally {console.log('a');}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+if (Boolean())
+    try {} finally {class C {}}
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+if (Boolean()) {
+    try {} finally {
+    ~~~~~~~~~~~~~~~~
+        console.log('a');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+        console.log('b');
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    }
+~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+}
+
+let foo = 1;
+if (Boolean()) {
+    console.log(foo);
+    try {} finally {
+    ~~~~~~~~~~~~~~~~
+        const foo = 1;
+~~~~~~~~~~~~~~~~~~~~~~
+        console.log(foo);
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    }
+~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+}
+
+if (Boolean()) {
+    try {
+    ~~~~~
+        const foo = 1; // TODO doesn't shadow a variable in the outer scope
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        console.log(foo);
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    } finally {}
+~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'finally' block is empty.]
+}
+
+label: try {} catch {}
+       ~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]

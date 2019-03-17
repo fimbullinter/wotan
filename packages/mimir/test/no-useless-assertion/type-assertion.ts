@@ -144,3 +144,9 @@ declare let myObj: A.MyClass;
 export default <number>class{static prop: number}.prop;
 export default <number>{prop: 1}.prop;
 export = <number>class{static prop: number}.prop;
+
+fn2<1>(1 as const);
+fn2<''>(<const>'');
+
+<const>{a: 1 as 1, b: true as false};
+<const>[<const>1, 2 as const, fn('' as const)];

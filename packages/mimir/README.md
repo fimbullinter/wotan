@@ -26,6 +26,7 @@ This library contains all core rules, formatters and configuration presets of th
 
 Rule | Description | Difference to TSLint rule / Why you should use it
 ---- | ---- | ----
+[`async-function-assignability`](docs/async-function-assignability.md) | :mag: Diallows assinging a `Promise`-returning function to a `void`-returning type. | No such rule in TSLint.
 [`await-async-result`](docs/await-async-result.md) | :mag: Warns about not using the result of a call to an async function inside async functions. | TSLint's `no-floating-promises` requires you to specify a list of Promise names, it checks outside of async functions and only requires you to register the `onrejected` callback.
 [`await-only-promise`](docs/await-only-promise.md) | :mag: :wrench: Finds uses of `await` on non-Promise values. Also checks `for await` loops. | Works for all `PromiseLike` and `Thenable` types out of the box without any configuration.
 [`ban-dom-globals`](docs/ban-dom-globals.md) | :mag: Disallows uses of global variables like `name` or `event`. Using these variables is most likely not intended. | There's an open PR to add a similar rule to TSLint.
@@ -52,11 +53,13 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-unused-label`](docs/no-unused-label.md) | :wrench: Disallows labels that are never used. | TSLint only has `label-position` which doesn't check for unused labels.
 [`no-useless-assertion`](docs/no-useless-assertion.md) | :mag: :wrench: Disallows type assertions that don't change the type or are not necessary in the first place. | TSLint's `no-unnecessary-type-assertion` does not detect assertions needed to silence the compiler warning `Variable ... is used before being assigned.` The Wotan builtin rule also checks whether the assertion is necessary at all or the receiver accepts the original type.
 [`no-useless-declare`](docs/no-useless-declare.md) | :wrench: Disallows the `declare` keyword on statements without runtime value, e.g. `declare type T = any;`. | TSLint has no such rule.
+[`no-useless-destructuring`](docs/no-useless-destructuring.md) | Detects array and object destructuring that doesn't assign to a variable. | TSLint has no such rule.
 [`no-useless-initializer`](docs/no-useless-initializer.md) | :mag_right: :wrench: Disallows unnecessary initialization with `undefined` and useless destructuring defaults. | TSLint's rule `no-unnecessary-initializer` doesn't fix all parameter initializers and gives false positives for destructuring.
 [`no-useless-jump-label`](docs/no-useless-jump-label.md) | :wrench: Disallows `continue label;` and `break label;` where the label is not necessary. | There's no similar TSLint rule.
-`no-useless-predicate` | Detects redundant conditions that are either always true or always false. *requires type information* | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
+[`no-useless-predicate`](docs/no-useless-predicate.md) | :mag: Detects redundant conditions that are either always true or always false. | Combination of TSLint's `strict-type-predicates`, `typeof-compare` and parts of `strict-boolean-expressions`.
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
 [`no-useless-strict`](docs/no-useless-strict.md) | :mag_right: :wrench: Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
+[`no-useless-try-catch`](docs/no-useless-try-catch.md) | :wrench: Detects `try` statements or parts thereof that can be removed. | There's no similar TSLint rule.
 [`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 [`prefer-const`](docs/prefer-const.md) | :wrench: :nut_and_bolt: Enforces the use of `const` for variables that are never reassigned. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used before being declared which results in a compiler or runtime error after fixing.
 [`prefer-dot-notation`](docs/prefer-dot-notation.md) | :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
@@ -68,7 +71,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 [`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
 [`try-catch-return-await`](docs/try-catch-return-await.md) | :mag: :wrench: Enforces the use of `return await foo;` inside `try-catch` in async functions where `foo` is a `Promise`-like value. | TSLint has no similar rule.
-]`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
+[`type-assertion`](docs/type-assertion.md) | :wrench: :nut_and_bolt: :x: Enforces a single type assertion style: "classic" `<T>obj` or "as" `obj as T`. | TSLint has only `no-angle-bracket-type-assertion` which always enforces `as` and forgets to add parens when autofixing some cases.
 [`typecheck`](docs/typecheck.md) | :mag: :x: TypeScript's compile errors as lint errors. | Like the deprecated `tslint --type-check` but formatted and can be disabled like any other rule.
 
 ## Formatters

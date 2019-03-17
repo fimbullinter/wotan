@@ -1,5 +1,5 @@
 import {Linter} from '@fimbul/wotan';
-import {Failure} from '@fimbul/wotan';
+import {Finding} from '@fimbul/wotan';
 import {AbstractRule} from '@fimbul/wotan';
 import {Rule} from '../../src/rules/import-package';
 import foo from 'packages/something/foo';

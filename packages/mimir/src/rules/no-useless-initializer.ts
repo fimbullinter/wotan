@@ -72,7 +72,7 @@ export class Rule extends AbstractRule {
             }
             const symbol = checker.getPropertySymbolOfDestructuringAssignment(name);
             if (symbol !== undefined && !symbolMaybeUndefined(checker, symbol, name))
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     errorNode,
                     "Unnecessary default value as this property is never 'undefined'.",
                     Replacement.delete(getChildOfKind(errorNode.parent!, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, errorNode.end),
@@ -95,7 +95,7 @@ export class Rule extends AbstractRule {
             // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
             // destructured type. The type of the variable then includes the type of the initializer as well.
             // Removing the initializer might also remove its type from the union type causing type errors elsewhere.
-            this.addFailureAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
+            this.addFindingAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
         }
 
         function maybeUndefined({symbolName}: LateBoundPropertyName) {
@@ -127,7 +127,7 @@ export class Rule extends AbstractRule {
                 fix.push(removeUndefined);
             message += ' Use an optional parameter instead.';
         }
-        this.addFailure(node.end - 'undefined'.length, node.end, message, fix);
+        this.addFinding(node.end - 'undefined'.length, node.end, message, fix);
     }
 
     private removeUndefinedFromType(type: ts.TypeNode | undefined): Replacement | undefined {

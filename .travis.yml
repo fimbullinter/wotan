@@ -1,11 +1,14 @@
 language: node_js
 node_js:
-  - '10'
+  - '11'
 cache: yarn
+git:
+  depth: false
 script:
   - yarn compile
   - yarn lint
   - yarn check-dependencies
+  - yarn check-package
   - yarn test
 deploy:
   - provider: script

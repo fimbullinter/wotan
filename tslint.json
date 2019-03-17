@@ -59,7 +59,7 @@
     "no-shadowed-variable": true,
     "no-sparse-arrays": true,
     "no-string-literal": true,
-    "no-submodule-imports": true,
+    "no-submodule-imports": [true, "tsutils"],
     "no-switch-case-fall-through": true,
     "no-this-assignment": true,
     "no-trailing-whitespace": true,
@@ -111,7 +111,8 @@
     "switch-final-break": true,
     "trailing-comma": [true, {
       "singleline": "never",
-      "multiline": "always"
+      "multiline": "always",
+      "esSpecCompliant": true
     }],
     "triple-equals": [true, "allow-undefined-check"],
     "typedef-whitespace": [true, {
