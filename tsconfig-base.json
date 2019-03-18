@@ -16,7 +16,6 @@
     "emitDecoratorMetadata": true,
     "declaration": true,
     "stripInternal": true,
-    "incremental": true,
     "plugins": [
       {"name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true}
     ]
