@@ -161,11 +161,13 @@ export abstract class AbstractRule {
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
-    public readonly program: ts.Program | undefined;
+
+    public get program() {
+        return this.context.program;
+    }
 
     constructor(public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
-        this.program = context.program;
     }
 
     public abstract apply(): void;
