@@ -33,7 +33,6 @@ yarn-error.log*
 /scripts/*.js
 /scripts/*.js.map
 /scripts/*.d.ts
-*.tsbuildinfo
 # these are written as js file
 !/scripts/last-travis-nightly.js
 
