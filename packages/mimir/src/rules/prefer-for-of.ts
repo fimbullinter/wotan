@@ -65,7 +65,7 @@ export class Rule extends TypedRule {
     }
 
     private isIterationProtocolAvailable(): boolean {
-        return this.sourceFile.languageVersion >= ts.ScriptTarget.ES2015 || this.program.getCompilerOptions().downlevelIteration === true;
+        return this.sourceFile.languageVersion >= ts.ScriptTarget.ES2015 || this.context.compilerOptions.downlevelIteration === true;
     }
 
     private isArrayLike(type: ts.Type): boolean {
@@ -87,7 +87,7 @@ export class Rule extends TypedRule {
     private isDeclaredInDefaultLib(node: ts.Node): boolean {
         // we assume it's the global array type if it comes from any lib.xxx.d.ts file
         return path.normalize(path.dirname(node.getSourceFile().fileName))
-            === path.dirname(ts.getDefaultLibFilePath(this.program.getCompilerOptions()));
+            === path.dirname(ts.getDefaultLibFilePath(this.context.compilerOptions));
     }
 
     private isIterable(type: ts.Type, node: ts.Expression): boolean {

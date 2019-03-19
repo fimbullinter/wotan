@@ -1,4 +1,4 @@
-import { Linter, LinterOptions } from './linter';
+import { Linter, LinterOptions, ProgramFactory } from './linter';
 import {
     LintResult,
     FileSummary,
@@ -89,14 +89,19 @@ export class Runner {
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
             let invalidatedProgram = false;
-            function getProgram() {
-                if (invalidatedProgram) {
-                    log('updating invalidated program');
-                    program = processorHost.updateProgram(program);
-                    invalidatedProgram = false;
-                }
-                return program;
-            }
+            const factory: ProgramFactory = {
+                getCompilerOptions() {
+                    return program.getCompilerOptions();
+                },
+                getProgram() {
+                    if (invalidatedProgram) {
+                        log('updating invalidated program');
+                        program = processorHost.updateProgram(program);
+                        invalidatedProgram = false;
+                    }
+                    return program;
+                },
+            };
             for (const file of files) {
                 if (options.config === undefined)
                     config = this.configManager.find(file);
@@ -128,7 +133,7 @@ export class Runner {
                             return hasErrors ? undefined : sourceFile;
                         },
                         fix === true ? undefined : fix,
-                        getProgram,
+                        factory,
                         mapped === undefined ? undefined : mapped.processor,
                         linterOptions,
                     );
@@ -137,7 +142,7 @@ export class Runner {
                         findings: this.linter.getFindings(
                             sourceFile,
                             effectiveConfig,
-                            getProgram,
+                            factory,
                             mapped === undefined ? undefined : mapped.processor,
                             linterOptions,
                         ),

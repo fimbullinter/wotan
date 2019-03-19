@@ -48,9 +48,9 @@ export class Rule extends AbstractRule {
     }
 
     private checkObjectDestructuring(node: ts.ObjectLiteralExpression) {
-        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
+        if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return;
-        const checker = this.program.getTypeChecker();
+        const checker = this.program!.getTypeChecker();
         for (const property of node.properties) {
             let name: ts.Identifier;
             let errorNode: ts.Expression;
@@ -81,9 +81,9 @@ export class Rule extends AbstractRule {
     }
 
     private checkBindingPattern(node: ts.BindingPattern, propNames: typeof getObjectPropertyName) {
-        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
+        if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return;
-        const checker = this.program.getTypeChecker();
+        const checker = this.program!.getTypeChecker();
         let type: ts.Type | undefined;
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];

@@ -83,17 +83,15 @@ export interface RuleConstructor<T extends RuleContext = RuleContext> {
     new(context: T): AbstractRule;
 }
 
-export interface RuleSupportsContext {
+export interface RulePredicateContext {
     readonly program?: ts.Program;
+    readonly compilerOptions?: ts.CompilerOptions;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
 }
 
-export interface RuleContext {
-    readonly program?: ts.Program;
+export interface RuleContext extends RulePredicateContext {
     readonly sourceFile: ts.SourceFile;
-    readonly settings: Settings;
-    readonly options: {} | null | undefined;
     addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
@@ -101,6 +99,7 @@ export interface RuleContext {
 
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
+    readonly compilerOptions: ts.CompilerOptions;
 }
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
@@ -146,13 +145,13 @@ export function requiresCompilerOption(option: BooleanCompilerOptions) {
     return (target: typeof TypedRule) => {
         target.supports = combinePredicates(
             target.supports,
-            (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option) || `requires compilerOption '${option}'`,
+            (_, context) => isCompilerOptionEnabled(context.compilerOptions!, option) || `requires compilerOption '${option}'`,
         );
     };
 }
 
 /** @returns `true`, `false` or a reason */
-export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean | string;
+export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
