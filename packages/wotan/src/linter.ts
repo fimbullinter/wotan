@@ -27,8 +27,11 @@ export interface LinterOptions {
     reportUselessDirectives?: Severity;
 }
 
+/** This factory is used to lazily create or update the Program only when necessary. */
 export interface ProgramFactory {
+    /** Get the CompilerOptions used to create the Program. */
     getCompilerOptions(): ts.CompilerOptions;
+    /** Returns the Program after  creating or updating it if necessary. */
     getProgram(): ts.Program;
 }
 

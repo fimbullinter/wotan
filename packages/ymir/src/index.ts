@@ -79,7 +79,7 @@ export type Severity = 'error' | 'warning' | 'suggestion';
 export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?: RuleSupportsPredicate;
+    supports?: RulePredicate;
     new(context: T): AbstractRule;
 }
 
@@ -104,13 +104,13 @@ export interface TypedRuleContext extends RuleContext {
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
-export function predicate(check: RuleSupportsPredicate) {
+export function predicate(check: RulePredicate) {
     return (target: typeof AbstractRule) => {
         target.supports = combinePredicates(target.supports, check);
     };
 }
 
-function combinePredicates(existing: RuleSupportsPredicate | undefined, additonal: RuleSupportsPredicate): RuleSupportsPredicate {
+function combinePredicates(existing: RulePredicate | undefined, additonal: RulePredicate): RulePredicate {
     if (existing === undefined)
         return additonal;
     return (sourceFile, context) => {
@@ -151,12 +151,12 @@ export function requiresCompilerOption(option: BooleanCompilerOptions) {
 }
 
 /** @returns `true`, `false` or a reason */
-export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
+export type RulePredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
-    public static supports?: RuleSupportsPredicate = undefined;
+    public static supports?: RulePredicate = undefined;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
