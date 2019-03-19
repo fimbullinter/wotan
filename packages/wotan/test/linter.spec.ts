@@ -16,6 +16,7 @@ import {
     LineSwitchParser,
     AbstractProcessor,
     LintAndFixFileResult,
+    predicate,
 } from '@fimbul/ymir';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { RuleLoader } from '../src/services/rule-loader';
@@ -40,6 +41,12 @@ class MyCustomDeprecatedRule extends AbstractRule {
     public static deprecated = 'Use that other rule instead.';
     public apply() {
         this.addFinding(0, 0, 'message', [Replacement.append(0, '\uFEFF')]);
+    }
+}
+@predicate((_, {program, compilerOptions}) => program !== undefined && compilerOptions !== undefined)
+class ProgramAccessRule extends TypedRule {
+    public apply() {
+        this.addFinding(0, 0, `${this.program.getCompilerOptions() === this.context.compilerOptions}`);
     }
 }
 
@@ -72,6 +79,8 @@ test('Linter', (t) => {
                     return MyDeprecatedRule;
                 case 'deprecation-message':
                     return MyCustomDeprecatedRule;
+                case 'program-access':
+                    return <RuleConstructor>ProgramAccessRule;
             }
             return;
         }
@@ -169,6 +178,46 @@ test('Linter', (t) => {
     );
     t.is(warnings.length, 5);
     t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+
+    {
+        const program = createFakeProgram(sourceFile, {});
+        let getCompilerOptionsCalled = false;
+        let getProgramCalled = false;
+        t.deepEqual<ReadonlyArray<Finding>>(
+            linter.lintFile(
+                sourceFile,
+                {
+                    settings: new Map(),
+                    rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                        ['rule-name', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'program-access'}],
+                    ]),
+                },
+                {
+                    getCompilerOptions() {
+                        if (getCompilerOptionsCalled)
+                            t.fail("should not call 'getCompilerOptions' multiple times");
+                        getCompilerOptionsCalled = true;
+                        return program.getCompilerOptions();
+                    },
+                    getProgram() {
+                        if (getProgramCalled)
+                            t.fail("should not call 'getProgram' multiple times");
+                        getProgramCalled = true;
+                        return program;
+                    },
+                },
+            ),
+            [{
+                ruleName: 'rule-name',
+                fix: undefined,
+                message: 'true',
+                severity: 'error',
+                start: {position: 0, line: 0, character: 0},
+                end: {position: 0, line: 0, character: 0},
+            }],
+        );
+        t.is(warnings.length, 5);
+    }
 
     t.deepEqual<ReadonlyArray<Finding>>(
         linter.lintFile(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {
