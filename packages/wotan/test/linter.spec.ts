@@ -194,18 +194,38 @@ test('Linter', (t) => {
                 },
                 {
                     getCompilerOptions() {
-                        if (getCompilerOptionsCalled)
-                            t.fail("should not call 'getCompilerOptions' multiple times");
+                        t.is(getCompilerOptionsCalled, false, 'should not be called multiple times');
                         getCompilerOptionsCalled = true;
                         return program.getCompilerOptions();
                     },
                     getProgram() {
-                        if (getProgramCalled)
-                            t.fail("should not call 'getProgram' multiple times");
+                        t.is(getProgramCalled, false, 'should not be called multiple times');
                         getProgramCalled = true;
                         return program;
                     },
                 },
+            ),
+            [{
+                ruleName: 'rule-name',
+                fix: undefined,
+                message: 'true',
+                severity: 'error',
+                start: {position: 0, line: 0, character: 0},
+                end: {position: 0, line: 0, character: 0},
+            }],
+        );
+        t.is(warnings.length, 5);
+
+        t.deepEqual<ReadonlyArray<Finding>>(
+            linter.lintFile(
+                sourceFile,
+                {
+                    settings: new Map(),
+                    rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                        ['rule-name', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'program-access'}],
+                    ]),
+                },
+                program,
             ),
             [{
                 ruleName: 'rule-name',

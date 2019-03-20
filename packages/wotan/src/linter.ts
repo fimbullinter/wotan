@@ -31,7 +31,7 @@ export interface LinterOptions {
 export interface ProgramFactory {
     /** Get the CompilerOptions used to create the Program. */
     getCompilerOptions(): ts.CompilerOptions;
-    /** Returns the Program after  creating or updating it if necessary. */
+    /** This method is called to retrieve the Program on the first use. It should create or update the Program if necessary. */
     getProgram(): ts.Program;
 }
 
