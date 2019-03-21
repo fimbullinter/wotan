@@ -42,7 +42,7 @@ export function wrapTslintRule(Rule: TSLint.RuleConstructor, name: string = infe
             if (!this.delegate.isEnabled())
                 return;
             let result: TSLint.RuleFailure[];
-            if (this.program !== undefined && TSLint.isTypedRule(this.delegate)) {
+            if (TSLint.isTypedRule(this.delegate) && this.program !== undefined) {
                 result = this.delegate.applyWithProgram(this.sourceFile, this.program);
             } else {
                 result = this.delegate.apply(this.sourceFile);
@@ -132,11 +132,10 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
     function apply(options: TSLint.IOptions, sourceFile: ts.SourceFile, program?: ts.Program): TSLint.RuleFailure[] {
         const args = options.ruleArguments.length < 2 ? options.ruleArguments[0] : options.ruleArguments;
         const failures: TSLint.RuleFailure[] = [];
-        if (Rule.supports !== undefined && Rule.supports(sourceFile, {program, options: args, settings: new Map()}) !== true)
-            return failures;
         const context: RuleContext = {
             sourceFile,
             program,
+            compilerOptions: program && program.getCompilerOptions(),
             options: args,
             settings: new Map(),
             getFlatAst() {
@@ -158,8 +157,8 @@ export function wrapRuleForTslint<T extends RuleContext>(Rule: RuleConstructor<T
                 );
             },
         };
-        const rule = new Rule(<T>context);
-        rule.apply();
+        if (Rule.supports === undefined || Rule.supports(sourceFile, context) === true)
+            new Rule(<T>context).apply();
         return failures;
     }
 

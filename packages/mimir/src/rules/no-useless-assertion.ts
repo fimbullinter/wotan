@@ -25,7 +25,7 @@ const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no eff
 @excludeDeclarationFiles
 @typescriptOnly
 export class Rule extends TypedRule {
-    private strictNullChecks = isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks');
+    private strictNullChecks = isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks');
 
     public apply(): void {
         for (const node of this.context.getFlatAst()) {
@@ -50,7 +50,7 @@ export class Rule extends TypedRule {
         // compiler already emits an error for definite assignment assertions on ambient or initialized variables
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined && (
-                !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks') ||
+                !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks') ||
                 getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFinding(
@@ -67,7 +67,7 @@ export class Rule extends TypedRule {
             node.initializer === undefined &&
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
                 node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
-                !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictPropertyInitialization') ||
+                !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictPropertyInitialization') ||
                 getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFinding(

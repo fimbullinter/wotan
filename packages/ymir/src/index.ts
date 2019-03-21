@@ -79,21 +79,19 @@ export type Severity = 'error' | 'warning' | 'suggestion';
 export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?: RuleSupportsPredicate;
+    supports?: RulePredicate;
     new(context: T): AbstractRule;
 }
 
-export interface RuleSupportsContext {
+export interface RulePredicateContext {
     readonly program?: ts.Program;
+    readonly compilerOptions?: ts.CompilerOptions;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
 }
 
-export interface RuleContext {
-    readonly program?: ts.Program;
+export interface RuleContext extends RulePredicateContext {
     readonly sourceFile: ts.SourceFile;
-    readonly settings: Settings;
-    readonly options: {} | null | undefined;
     addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
@@ -101,17 +99,18 @@ export interface RuleContext {
 
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
+    readonly compilerOptions: ts.CompilerOptions;
 }
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
-export function predicate(check: RuleSupportsPredicate) {
+export function predicate(check: RulePredicate) {
     return (target: typeof AbstractRule) => {
         target.supports = combinePredicates(target.supports, check);
     };
 }
 
-function combinePredicates(existing: RuleSupportsPredicate | undefined, additonal: RuleSupportsPredicate): RuleSupportsPredicate {
+function combinePredicates(existing: RulePredicate | undefined, additonal: RulePredicate): RulePredicate {
     if (existing === undefined)
         return additonal;
     return (sourceFile, context) => {
@@ -146,26 +145,28 @@ export function requiresCompilerOption(option: BooleanCompilerOptions) {
     return (target: typeof TypedRule) => {
         target.supports = combinePredicates(
             target.supports,
-            (_, context) => isCompilerOptionEnabled(context.program!.getCompilerOptions(), option) || `requires compilerOption '${option}'`,
+            (_, context) => isCompilerOptionEnabled(context.compilerOptions!, option) || `requires compilerOption '${option}'`,
         );
     };
 }
 
 /** @returns `true`, `false` or a reason */
-export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean | string;
+export type RulePredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
-    public static supports?: RuleSupportsPredicate = undefined;
+    public static supports?: RulePredicate = undefined;
     public static validateConfig?(config: any): string[] | string | undefined;
 
     public readonly sourceFile: ts.SourceFile;
-    public readonly program: ts.Program | undefined;
+
+    public get program() {
+        return this.context.program;
+    }
 
     constructor(public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
-        this.program = context.program;
     }
 
     public abstract apply(): void;

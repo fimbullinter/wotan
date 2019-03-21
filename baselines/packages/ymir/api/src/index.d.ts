@@ -46,38 +46,37 @@ export declare type Severity = 'error' | 'warning' | 'suggestion';
 export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?: RuleSupportsPredicate;
+    supports?: RulePredicate;
     new (context: T): AbstractRule;
 }
-export interface RuleSupportsContext {
+export interface RulePredicateContext {
     readonly program?: ts.Program;
+    readonly compilerOptions?: ts.CompilerOptions;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
 }
-export interface RuleContext {
-    readonly program?: ts.Program;
+export interface RuleContext extends RulePredicateContext {
     readonly sourceFile: ts.SourceFile;
-    readonly settings: Settings;
-    readonly options: {} | null | undefined;
     addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
+    readonly compilerOptions: ts.CompilerOptions;
 }
 export declare type Settings = ReadonlyMap<string, {} | null | undefined>;
-export declare function predicate(check: RuleSupportsPredicate): (target: typeof AbstractRule) => void;
+export declare function predicate(check: RulePredicate): (target: typeof AbstractRule) => void;
 export declare function typescriptOnly(target: typeof AbstractRule): void;
 export declare function excludeDeclarationFiles(target: typeof AbstractRule): void;
 export declare function requireLibraryFile(fileName: string): (target: typeof TypedRule) => void;
 export declare function requiresCompilerOption(option: BooleanCompilerOptions): (target: typeof TypedRule) => void;
-export declare type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean | string;
+export declare type RulePredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 export declare abstract class AbstractRule {
     readonly context: RuleContext;
     static readonly requiresTypeInformation: boolean;
     static deprecated: boolean | string;
-    static supports?: RuleSupportsPredicate;
+    static supports?: RulePredicate;
     static validateConfig?(config: any): string[] | string | undefined;
     readonly sourceFile: ts.SourceFile;
     readonly program: ts.Program | undefined;

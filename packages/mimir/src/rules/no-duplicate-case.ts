@@ -74,9 +74,9 @@ export class Rule extends AbstractRule {
         if (node.kind === ts.SyntaxKind.FalseKeyword)
             return [formatPrimitive(prefixFn(false))];
 
-        if (this.program === undefined || !isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks'))
+        if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return [];
-        const checker = this.program.getTypeChecker();
+        const checker = this.program!.getTypeChecker();
         let type = checker.getTypeAtLocation(node);
         type = checker.getBaseConstraintOfType(type) || type;
         const result = new Set<string>();

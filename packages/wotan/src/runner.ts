@@ -1,4 +1,4 @@
-import { Linter, LinterOptions } from './linter';
+import { Linter, LinterOptions, ProgramFactory } from './linter';
 import {
     LintResult,
     FileSummary,
@@ -13,7 +13,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost, hasParseErrors } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost, hasParseErrors, invertChangeRange } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -88,6 +88,20 @@ export class Runner {
         for (let {files, program} of
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
+            let invalidatedProgram = false;
+            const factory: ProgramFactory = {
+                getCompilerOptions() {
+                    return program.getCompilerOptions();
+                },
+                getProgram() {
+                    if (invalidatedProgram) {
+                        log('updating invalidated program');
+                        program = processorHost.updateProgram(program);
+                        invalidatedProgram = false;
+                    }
+                    return program;
+                },
+            };
             for (const file of files) {
                 if (options.config === undefined)
                     config = this.configManager.find(file);
@@ -106,12 +120,20 @@ export class Runner {
                         originalContent,
                         effectiveConfig,
                         (content, range) => {
-                            let error;
-                            ({sourceFile, program, error} = processorHost.updateSourceFile(sourceFile, program, content, range));
-                            return error ? undefined : {program, file: sourceFile};
+                            invalidatedProgram = true;
+                            const oldContent = sourceFile.text;
+                            sourceFile = ts.updateSourceFile(sourceFile, content, range);
+                            const hasErrors = hasParseErrors(sourceFile);
+                            if (hasErrors) {
+                                log("Autofixing caused syntax errors in '%s', rolling back", sourceFile.fileName);
+                                sourceFile = ts.updateSourceFile(sourceFile, oldContent, invertChangeRange(range));
+                            }
+                            // either way we need to store the new SourceFile as the old one is now corrupted
+                            processorHost.updateSourceFile(sourceFile);
+                            return hasErrors ? undefined : sourceFile;
                         },
                         fix === true ? undefined : fix,
-                        program,
+                        factory,
                         mapped === undefined ? undefined : mapped.processor,
                         linterOptions,
                     );
@@ -120,7 +142,7 @@ export class Runner {
                         findings: this.linter.getFindings(
                             sourceFile,
                             effectiveConfig,
-                            program,
+                            factory,
                             mapped === undefined ? undefined : mapped.processor,
                             linterOptions,
                         ),
@@ -189,7 +211,7 @@ export class Runner {
                             // Note: 'sourceFile' shouldn't be used after this as it contains invalid code
                             return;
                         }
-                        return {file: sourceFile};
+                        return sourceFile;
                     },
                     fix === true ? undefined : fix,
                     undefined,

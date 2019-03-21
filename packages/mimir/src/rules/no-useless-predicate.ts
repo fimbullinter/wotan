@@ -78,7 +78,7 @@ const predicates: Record<string, TypePredicate> = {
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
-    private strictNullChecks = isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'strictNullChecks');
+    private strictNullChecks = isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks');
 
     public apply() {
         for (const node of this.context.getFlatAst()) {

@@ -13,11 +13,12 @@ const enum Reason {
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    private strictFile = this.program !== undefined && isStrictCompilerOptionEnabled(this.program.getCompilerOptions(), 'alwaysStrict')
-        ? Reason.Option
-        : ts.isExternalModule(this.sourceFile)
-            ? Reason.Module
-            : undefined;
+    private strictFile =
+        this.context.compilerOptions !== undefined && isStrictCompilerOptionEnabled(this.context.compilerOptions, 'alwaysStrict')
+            ? Reason.Option
+            : ts.isExternalModule(this.sourceFile)
+                ? Reason.Module
+                : undefined;
 
     public apply() {
         const re = /(['"])use strict\1/g;

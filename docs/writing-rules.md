@@ -232,6 +232,13 @@ Replacement.replace(start, end, '{}');
 ];
 ```
 
+## More Performance Advice
+
+After fixes are applied, the `Program` needs to be updated before type information is available and up to date for the next rule.
+To avoid unnecessary updates to the `Program` Wotan tries to defer that task for as long as possible. This is done by making `AbstractRule#program`, `TypedRule#checker` and `RuleContext#program` get accessors that update the program on first use.
+Therefore try to avoid accessing these properties if there are other conditions you could check first.
+That's why `RuleContext` has a member `compilerOptions` that contains the `CompilerOptions` currently in use. Using this property doesn't cause an update of the `Program`. It's a cheaper way to check if type information would be availabe or which compiler options are enabled.
+
 ## Testing
 
 Before we throw our rule at our and other people's code, we should make sure it works as intended and doesn't destroy the code it's intended to make better.

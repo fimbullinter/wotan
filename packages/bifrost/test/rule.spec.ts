@@ -2,7 +2,7 @@ import test from 'ava';
 import * as TSLint from 'tslint';
 import { wrapTslintRule, wrapRuleForTslint } from '../src';
 import * as ts from 'typescript';
-import { RuleContext, Replacement, AbstractRule, TypedRule, typescriptOnly } from '@fimbul/ymir';
+import { RuleContext, Replacement, AbstractRule, TypedRule, typescriptOnly, predicate } from '@fimbul/ymir';
 import { convertAst } from 'tsutils';
 
 test('correctly wraps TSLint rule', (t) => {
@@ -234,7 +234,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
         public apply() {
             t.is(this.context.options, 'foo');
             if (this.context.program !== undefined)
-                t.is(this.context.program, <any>'bar');
+                t.is(this.context.program, <any>'');
             this.addFinding(0, 0, 'test message');
         }
     }
@@ -248,7 +248,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
         [],
     );
     t.deepEqual(
-        rule.applyWithProgram(jsSourceFile, <any>'bar'),
+        rule.applyWithProgram(jsSourceFile, <any>''),
         [],
     );
     const tsSourceFile = ts.createSourceFile('foo.ts', ';', ts.ScriptTarget.ESNext);
@@ -257,7 +257,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
         [new TSLint.RuleFailure(tsSourceFile, 0, 0, 'test message', 'some-name')],
     );
     t.deepEqual(
-        rule.applyWithProgram(tsSourceFile, <any>'bar'),
+        rule.applyWithProgram(tsSourceFile, <any>''),
         [new TSLint.RuleFailure(tsSourceFile, 0, 0, 'test message', 'some-name')],
     );
 
@@ -266,8 +266,10 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
         [],
     );
 
+    @predicate((_, {program, compilerOptions}) => program!.getCompilerOptions() === compilerOptions)
     class MyTypedRule extends TypedRule {
         public apply() {
+            t.is(this.program.getCompilerOptions(), this.context.compilerOptions);
             t.deepEqual(this.context.getFlatAst(), convertAst(tsSourceFile).flat);
             t.deepEqual(this.context.getWrappedAst(), convertAst(tsSourceFile).wrapped);
             t.deepEqual(this.context.options, ['foo', 'bar']);
@@ -279,7 +281,7 @@ test('correctly applies rule when wrapped for TSLint', (t) => {
         {ruleArguments: ['foo', 'bar'], disabledIntervals: [], ruleName: 'some-other-name', ruleSeverity: 'error'},
     );
     t.deepEqual(
-        rule.applyWithProgram(tsSourceFile, <any>'bar'),
+        rule.applyWithProgram(tsSourceFile, <any>{getCompilerOptions() { return this; }}),
         [new TSLint.RuleFailure(tsSourceFile, 0, 0, 'message', 'some-other-name', [TSLint.Replacement.replaceFromTo(0, 1, 'x')])],
     );
 });

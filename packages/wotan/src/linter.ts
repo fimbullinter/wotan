@@ -23,21 +23,55 @@ import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective 
 
 const log = debug('wotan:linter');
 
-export interface UpdateFileResult {
-    file: ts.SourceFile;
-    program?: ts.Program;
-}
-
 export interface LinterOptions {
     reportUselessDirectives?: Severity;
 }
 
+/** This factory is used to lazily create or update the Program only when necessary. */
+export interface ProgramFactory {
+    /** Get the CompilerOptions used to create the Program. */
+    getCompilerOptions(): ts.CompilerOptions;
+    /** This method is called to retrieve the Program on the first use. It should create or update the Program if necessary. */
+    getProgram(): ts.Program;
+}
+
+class StaticProgramFactory implements ProgramFactory {
+    constructor(private program: ts.Program) {}
+
+    public getCompilerOptions() {
+        return this.program.getCompilerOptions();
+    }
+
+    public getProgram() {
+        return this.program;
+    }
+}
+
+class CachedProgramFactory implements ProgramFactory {
+    private program: ts.Program | undefined = undefined;
+    private options: ts.CompilerOptions | undefined = undefined;
+
+    constructor(private factory: ProgramFactory) {}
+
+    public getCompilerOptions() {
+        return this.options || (this.options = this.factory.getCompilerOptions());
+    }
+
+    public getProgram() {
+        if (this.program === undefined) {
+            this.program = this.factory.getProgram();
+            this.options = this.program.getCompilerOptions();
+        }
+        return this.program;
+    }
+}
+
 /**
- * Creates a new SourceFile and optionally a Program from the updated source.
+ * Creates a new SourceFile from the updated source.
  *
- * @returns the new `SourceFile` and `Program` on success or `undefined` to roll back the latest set of changes.
+ * @returns the new `SourceFile` on success or `undefined` to roll back the latest set of changes.
  */
-export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => UpdateFileResult | undefined;
+export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) => ts.SourceFile | undefined;
 
 @injectable()
 export class Linter {
@@ -51,10 +85,18 @@ export class Linter {
     public lintFile(
         file: ts.SourceFile,
         config: EffectiveConfiguration,
-        program?: ts.Program,
+        programOrFactory?: ProgramFactory | ts.Program,
         options: LinterOptions = {},
     ): ReadonlyArray<Finding> {
-        return this.getFindings(file, config, program, undefined, options);
+        return this.getFindings(
+            file,
+            config,
+            programOrFactory !== undefined && 'getTypeChecker' in programOrFactory
+                ? new StaticProgramFactory(programOrFactory)
+                : programOrFactory,
+            undefined,
+            options,
+        );
     }
 
     public lintAndFix(
@@ -63,12 +105,12 @@ export class Linter {
         config: EffectiveConfiguration,
         updateFile: UpdateFileCallback,
         iterations: number = 10,
-        program?: ts.Program,
+        programFactory?: ProgramFactory,
         processor?: AbstractProcessor,
         options: LinterOptions = {},
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let findings = this.getFindings(file, config, program, processor, options);
+        let findings = this.getFindings(file, config, programFactory, processor, options);
         for (let i = 0; i < iterations; ++i) {
             if (findings.length === 0)
                 break;
@@ -97,10 +139,10 @@ export class Linter {
                     processor.updateSource(content, invertChangeRange(fixed.range));
                 break;
             }
-            ({program, file} = updateResult);
+            file = updateResult;
             content = fixed.result;
             totalFixes += fixed.fixed;
-            findings = this.getFindings(file, config, program, processor, options);
+            findings = this.getFindings(file, config, programFactory, processor, options);
         }
         return {
             content,
@@ -113,21 +155,25 @@ export class Linter {
     public getFindings(
         sourceFile: ts.SourceFile,
         config: EffectiveConfiguration,
-        program: ts.Program | undefined,
+        programFactory: ProgramFactory | undefined,
         processor: AbstractProcessor | undefined,
         options: LinterOptions,
     ) {
+        if (programFactory !== undefined)
+            // make sure that all rules get the same Program and CompilerOptions for this run
+            programFactory = new CachedProgramFactory(programFactory);
+
         let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
-        if (program !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
+        if (programFactory !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
             const directive = getCheckJsDirective(sourceFile.text);
-            if (directive === undefined ? !isCompilerOptionEnabled(program.getCompilerOptions(), 'checkJs') : !directive.enabled) {
+            if (directive === undefined ? !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs') : !directive.enabled) {
                 log('Not using type information for this unchecked JS file');
-                program = undefined;
+                programFactory = undefined;
                 suppressMissingTypeInfoWarning = true;
             }
         }
-        const rules = this.prepareRules(config, sourceFile, program, suppressMissingTypeInfoWarning);
+        const rules = this.prepareRules(config, sourceFile, programFactory, suppressMissingTypeInfoWarning);
         let findings;
         if (rules.length === 0) {
             log('No active rules');
@@ -140,11 +186,16 @@ export class Linter {
                 findings = [];
             }
         }
-        findings = this.applyRules(sourceFile, program, rules, config.settings, options);
+        findings = this.applyRules(sourceFile, programFactory, rules, config.settings, options);
         return processor === undefined ? findings : processor.postprocess(findings);
     }
 
-    private prepareRules(config: EffectiveConfiguration, sourceFile: ts.SourceFile, program: ts.Program | undefined, noWarn: boolean) {
+    private prepareRules(
+        config: EffectiveConfiguration,
+        sourceFile: ts.SourceFile,
+        programFactory: ProgramFactory | undefined,
+        noWarn: boolean,
+    ) {
         const rules: PreparedRule[] = [];
         for (const [ruleName, {options, severity, rulesDirectories, rule}] of config.rules) {
             if (severity === 'off')
@@ -158,7 +209,7 @@ export class Linter {
                     ruleName,
                     typeof ctor.deprecated === 'string' ? ctor.deprecated : undefined,
                 );
-            if (program === undefined && ctor.requiresTypeInformation) {
+            if (programFactory === undefined && ctor.requiresTypeInformation) {
                 if (noWarn) {
                     log('Rule %s requires type information', ruleName);
                 } else {
@@ -167,7 +218,12 @@ export class Linter {
                 continue;
             }
             if (ctor.supports !== undefined) {
-                const supports = ctor.supports(sourceFile, {program, options, settings: config.settings});
+                const supports = ctor.supports(sourceFile, {
+                    get program() { return programFactory && programFactory.getProgram(); },
+                    get compilerOptions() { return programFactory && programFactory.getCompilerOptions(); },
+                    options,
+                    settings: config.settings,
+                });
                 if (supports !== true) {
                     if (!supports) {
                         log(`Rule %s does not support this file`, ruleName);
@@ -184,7 +240,7 @@ export class Linter {
 
     private applyRules(
         sourceFile: ts.SourceFile,
-        program: ts.Program | undefined,
+        programFactory: ProgramFactory | undefined,
         rules: PreparedRule[],
         settings: Map<string, any>,
         options: LinterOptions,
@@ -225,17 +281,18 @@ export class Linter {
                 result.push(finding);
         };
 
-        const context: RuleContext = {
+        const context: { -readonly [K in keyof RuleContext]: RuleContext[K] } = {
             addFinding,
             getFlatAst,
             getWrappedAst,
-            program,
+            get program() { return programFactory && programFactory.getProgram(); },
+            get compilerOptions() { return programFactory && programFactory.getCompilerOptions(); },
             sourceFile,
             settings,
             options: undefined,
         };
 
-        for ({ruleName, severity, ctor, options: (<any>context).options} of rules) {
+        for ({ruleName, severity, ctor, options: context.options} of rules) {
             log('Executing rule %s', ruleName);
             new ctor(context).apply();
         }
