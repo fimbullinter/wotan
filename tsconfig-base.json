@@ -4,7 +4,6 @@
     "lib": ["es2016"],
     "module": "commonjs",
     "sourceMap": true,
-    "removeComments": true,
     "importHelpers": true,
     "strict": true,
     "noUnusedLocals": true,

@@ -35,6 +35,7 @@ export interface Finding {
     readonly fix: Fix | undefined;
 }
 export declare const Finding: {
+    /** Compare two Findings. Intended to be used in `Array.prototype.sort`. */
     compare(a: Finding, b: Finding): number;
 };
 export interface FindingPosition {
@@ -71,6 +72,7 @@ export declare function typescriptOnly(target: typeof AbstractRule): void;
 export declare function excludeDeclarationFiles(target: typeof AbstractRule): void;
 export declare function requireLibraryFile(fileName: string): (target: typeof TypedRule) => void;
 export declare function requiresCompilerOption(option: BooleanCompilerOptions): (target: typeof TypedRule) => void;
+/** @returns `true`, `false` or a reason */
 export declare type RulePredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 export declare abstract class AbstractRule {
     readonly context: RuleContext;
@@ -94,6 +96,7 @@ export declare abstract class TypedRule extends AbstractRule {
     static readonly requiresTypeInformation = true;
     readonly context: TypedRuleContext;
     readonly program: ts.Program;
+    /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
     readonly checker: ts.TypeChecker;
     constructor(context: TypedRuleContext);
 }
@@ -166,6 +169,10 @@ export declare abstract class ConfigurationProvider {
 }
 export interface LoadConfigurationContext {
     readonly stack: ReadonlyArray<string>;
+    /**
+     * Resolves the given name relative to the current configuration file and returns the parsed Configuration.
+     * This function detects cycles and caches already loaded configurations.
+     */
     load(name: string): Configuration;
 }
 export declare enum Format {
@@ -193,6 +200,10 @@ export interface ProcessorUpdateResult {
     changeRange?: ts.TextChangeRange;
 }
 export declare abstract class AbstractProcessor {
+    /**
+     * Returns a new primary extension that is appended to the file name, e.g. '.ts'.
+     * If the file should not get a new extension, just return an empty string.
+     */
     static getSuffixForFile(_context: ProcessorSuffixContext): string;
     protected source: string;
     protected sourceFileName: string;
@@ -220,14 +231,25 @@ export declare enum DeprecationTarget {
     Processor = "processor",
     Formatter = "formatter"
 }
+/**
+ * Low level file system access. All methods are supposed to throw an error on failure.
+ */
 export interface FileSystem {
+    /** Normalizes the path to enable reliable caching in consuming services. */
     normalizePath(path: string): string;
+    /** Reads the given file. Tries to infer and convert encoding. */
     readFile(file: string): string;
+    /** Reads directory entries. Returns only the basenames optionally with file type information. */
     readDirectory(dir: string): Array<string | Dirent>;
+    /** Gets the status of a file or directory. */
     stat(path: string): Stats;
+    /** Gets the realpath of a given file or directory. */
     realpath?(path: string): string;
+    /** Writes content to the file, overwriting the existing content. Creates the file if necessary. */
     writeFile(file: string, content: string): void;
+    /** Deletes a given file. Is not supposed to delete or clear a directory. */
     deleteFile(path: string): void;
+    /** Creates a single directory and fails on error. Is not supposed to create multiple directories. */
     createDirectory(dir: string): void;
 }
 export declare abstract class FileSystem {
@@ -253,6 +275,7 @@ export interface FormatterLoaderHost {
 export declare abstract class FormatterLoaderHost {
 }
 export interface CacheFactory {
+    /** Creates a new cache instance. */
     create<K extends object, V = any>(weak: true): Cache<K, V>;
     create<K = any, V = any>(weak?: false): Cache<K, V>;
 }
@@ -298,7 +321,12 @@ export interface FindingFilterContext {
     getWrappedAst(): WrappedAst;
 }
 export interface FindingFilter {
+    /** @returns `true` if the finding should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(finding: Finding): boolean;
+    /**
+     * @returns Findings to report redundant or unused filter directives.
+     * This is called after calling `filter` for all findings in the file.
+     */
     reportUseless(severity: Severity): ReadonlyArray<Finding>;
 }
 export interface LineSwitchParser {
@@ -332,5 +360,6 @@ export interface FileFilterFactory {
 export declare abstract class FileFilterFactory {
 }
 export interface FileFilter {
+    /** @returns `true` if the file should be linted, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(file: ts.SourceFile): boolean;
 }
