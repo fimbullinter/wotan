@@ -6,6 +6,7 @@ import * as diff from 'diff';
 import * as rimraf from 'rimraf';
 import chalk from 'chalk';
 import { getPackages } from './util';
+import * as ts from 'typescript';
 
 const update = process.argv[2] === '-u';
 
@@ -28,7 +29,44 @@ function checkPackage(packageDir: string, baselineDir: string, callback: (conten
 }
 
 function stripPrivateMembers(source: string) {
-    return source.replace(/^ +private \w+;\n/mg, '');
+    const re = /^ +private \w+;\n/mg;
+    let lastPos = 0;
+    let result = '';
+    let useAst = false;
+    for (let match = re.exec(source); match !== null; match = re.exec(source)) {
+        if (source.substr(match.index - 3, 3) === '*/\n') {
+            // to correctly remove the JSDoc comment we need to parse the source
+            useAst = true;
+            continue;
+        }
+        result += source.substring(lastPos, match.index);
+        lastPos = re.lastIndex;
+    }
+    result += source.substr(lastPos);
+    if (useAst) {
+        source = result;
+        result = '';
+        lastPos = 0;
+        ts.createSourceFile('a.d.ts', source, ts.ScriptTarget.ESNext).statements.forEach(function visitStatement(statement: ts.Statement) {
+            if (ts.isModuleDeclaration(statement) && statement.body !== undefined) {
+                if (statement.body.kind === ts.SyntaxKind.ModuleDeclaration) {
+                    visitStatement(statement.body);
+                } else {
+                    (<ts.ModuleBlock>statement.body).statements.forEach(visitStatement);
+                }
+            }
+            if (ts.isClassDeclaration(statement)) {
+                for (const member of statement.members) {
+                    if (ts.getCombinedModifierFlags(member) & ts.ModifierFlags.Private) {
+                        result += source.substring(lastPos, member.pos);
+                        lastPos = member.end;
+                    }
+                }
+            }
+        });
+        result += source.substr(lastPos);
+    }
+    return result;
 }
 
 function writeFile(content: string, fileName: string) {
