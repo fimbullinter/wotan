@@ -1,0 +1,25 @@
+export {};
+
+function takeString(/** @type {string} */param) {}
+function takeStringOrUndefined(/** @type {string} */param = '') {}
+
+let s = '';
+let su = Boolean() ? s : undefined;
+
+s = (s);
+s = /** foo */(s);
+s = /** @type {string} */s;
+s = /** @type {string} */(s);
+        ~~~~~~~~~~~~~~        [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+s = /** @type {string} */ /** @type {number} */(s);
+        ~~~~~~~~~~~~~~                              [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+s = /** foobar */ /** @type {string} */ // foo
+                      ~~~~~~~~~~~~~~           [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    (s);
+s = /** @type {string} */(su);
+
+takeString(/** @type {string} */(su))
+takeStringOrUndefined(/** @type {string} */(su));
+                          ~~~~~~~~~~~~~~          [error no-useless-assertion: This assertion is unnecessary as the receiver accepts the original type of the expression.]
+
+let literal = /** @type {1} */(1);

@@ -1,4 +1,4 @@
-import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
+import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { expressionNeedsParensWhenReplacingNode, typesAreEqual } from '../utils';
 import {
@@ -23,11 +23,16 @@ const FAIL_MESSAGE = "This assertion is unnecesary as it doesn't change the type
 const FAIL_DEFINITE_ASSIGNMENT = 'This assertion is unnecessary as it has no effect on this declaration.';
 
 @excludeDeclarationFiles
-@typescriptOnly
 export class Rule extends TypedRule {
     private strictNullChecks = isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks');
 
     public apply(): void {
+        if (/\.tsx?$/.test(this.sourceFile.fileName))
+            return this.checkTsFile();
+        return this.checkJsFile();
+    }
+
+    private checkTsFile() {
         for (const node of this.context.getFlatAst()) {
             switch (node.kind) {
                 case ts.SyntaxKind.NonNullExpression:
@@ -42,6 +47,22 @@ export class Rule extends TypedRule {
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
                     this.checkDefiniteAssignmentAssertionProperty(<ts.PropertyDeclaration>node);
+            }
+        }
+    }
+
+    private checkJsFile() {
+        for (const node of this.context.getFlatAst()) {
+            if (node.kind === ts.SyntaxKind.ParenthesizedExpression) {
+                const typeTags = <readonly ts.JSDocTypeTag[]>ts.getAllJSDocTagsOfKind(node, ts.SyntaxKind.JSDocTypeTag);
+                if (typeTags.length === 0)
+                    continue;
+                const tag = typeTags[0];
+                const message =
+                    this.checkAssertedType((<ts.ParenthesizedExpression>node).expression, tag.typeExpression!.type, <ts.Expression>node);
+                if (message === undefined)
+                    continue;
+                this.addFinding(tag.pos, tag.end, message); // TODO autofix is a bit more complicated here
             }
         }
     }
@@ -98,16 +119,41 @@ export class Rule extends TypedRule {
     }
 
     private checkTypeAssertion(node: ts.AssertionExpression) {
+        let message;
         if (isConstAssertion(node)) {
-            if (isInConstContext(node))
-                this.reportUselessTypeAssertion(node, 'This assertion is unnecessary as it is already in a const context.');
-            return;
+            if (!isInConstContext(node))
+                return;
+            message = 'This assertion is unnecessary as it is already in a const context.';
+        } else {
+            message = this.checkAssertedType(node.expression, node.type, node);
+            if (message === undefined)
+                return;
         }
-        let targetType = this.checker.getTypeFromTypeNode(node.type);
+        if (node.kind === ts.SyntaxKind.AsExpression) {
+            this.addFinding(
+                node.type.pos - 'as'.length,
+                node.end,
+                message,
+                Replacement.delete(node.expression.end, node.end),
+            );
+        } else {
+            const start = node.getStart(this.sourceFile);
+            const fix = [Replacement.delete(start, node.expression.getStart(this.sourceFile))];
+            if (expressionNeedsParensWhenReplacingNode(node.expression, node))
+                fix.push(
+                    Replacement.append(start, '('),
+                    Replacement.append(node.end, ')'),
+                );
+            this.addFinding(start, node.expression.pos, message, fix);
+        }
+    }
+
+    private checkAssertedType(expression: ts.Expression, type: ts.TypeNode, node: ts.Expression): string | undefined {
+        let targetType = this.checker.getTypeFromTypeNode(type);
         if ((targetType.flags & ts.TypeFlags.Literal) !== 0 && !isInConstContext(node) || // allow "foo" as "foo" to avoid widening
             isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
             return;
-        let sourceType = this.checker.getTypeAtLocation(node.expression);
+        let sourceType = this.checker.getTypeAtLocation(expression);
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
             targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
             sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
@@ -128,27 +174,7 @@ export class Rule extends TypedRule {
                 return;
             message = 'This assertion is unnecessary as the receiver accepts the original type of the expression.';
         }
-        this.reportUselessTypeAssertion(node, message);
-    }
-
-    private reportUselessTypeAssertion(node: ts.AssertionExpression, message: string) {
-        if (node.kind === ts.SyntaxKind.AsExpression) {
-            this.addFinding(
-                node.type.pos - 'as'.length,
-                node.end,
-                message,
-                Replacement.delete(node.expression.end, node.end),
-            );
-        } else {
-            const start = node.getStart(this.sourceFile);
-            const fix = [Replacement.delete(start, node.expression.getStart(this.sourceFile))];
-            if (expressionNeedsParensWhenReplacingNode(node.expression, node))
-                fix.push(
-                    Replacement.append(start, '('),
-                    Replacement.append(node.end, ')'),
-                );
-            this.addFinding(start, node.expression.pos, message, fix);
-        }
+        return message;
     }
 
     /** Returns the contextual type if it is a position that does not contribute to control flow analysis. */

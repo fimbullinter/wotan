@@ -41,6 +41,15 @@ class C {
 let tuple = [1 as const] as const; // inner 'const' assertion is redundant
 ```
 
+This rule also checks JSDoc type assertions in JavaScript files:
+
+```js
+// @ts-check
+
+let str = '';
+console.log(/** @type {string} */(str)); // 'str' is already of type 'string'
+```
+
 :thumbsup: Examples of correct code
 
 ```ts
