@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { FileFilterFactory, FileFilterContext, FileFilter } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { unixifyPath, mapDefined, addUnique, createParseConfigHost } from '../../utils';
+import { unixifyPath, mapDefined, addUnique } from '../../utils';
 import * as path from 'path';
 
 @injectable()
@@ -49,31 +49,23 @@ class DefaultFileFilter implements FileFilter {
 
     private isOutputOfReferencedProject(fileName: string) {
         if (this.outputsOfReferencedProjects === undefined)
-            this.outputsOfReferencedProjects = getOutputsOfProjectReferences(this.program, this.host);
+            this.outputsOfReferencedProjects = getOutputsOfProjectReferences(this.program);
         return this.outputsOfReferencedProjects.includes(fileName);
     }
 }
 
-function getOutputsOfProjectReferences(program: ts.Program, host: FileFilterContext['host']) {
+function getOutputsOfProjectReferences(program: ts.Program) {
     const references = program.getResolvedProjectReferences();
     if (references === undefined)
         return [];
     const seen: string[] = [];
     const result = [];
-    const moreReferences = [];
     for (const ref of references) {
         if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
             continue;
         result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
-        if ('references' in ref) {
-            result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
-        } else if (ref.commandLine.projectReferences !== undefined) {
-            // for compatibility with typescript@<3.2.0
-            moreReferences.push(...ref.commandLine.projectReferences);
-        }
+        result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
     }
-    for (const ref of moreReferences)
-        result.push(...getOutputFileNamesOfProjectReferenceRecursive(ref, seen, host));
     return result;
 }
 
@@ -88,29 +80,6 @@ function getOutputFileNamesOfResolvedProjectReferencesRecursive(references: ts.R
         result.push(...getOutputFileNamesOfProjectReference(path.dirname(ref.sourceFile.fileName), ref.commandLine));
         result.push(...getOutputFileNamesOfResolvedProjectReferencesRecursive(ref.references, seen));
     }
-    return result;
-}
-
-/** recurse into every transitive project reference to exclude all of their outputs from linting */
-function getOutputFileNamesOfProjectReferenceRecursive(reference: ts.ProjectReference, seen: string[], host: FileFilterContext['host']) {
-    const referencePath = ts.resolveProjectReferencePath(reference);
-    if (!addUnique(seen, referencePath))
-        return [];
-    const raw = ts.readConfigFile(referencePath, (file) => host.readFile(file));
-    if (raw.config === undefined)
-        return [];
-    const projectDirectory = path.dirname(referencePath);
-    const commandLine = ts.parseJsonConfigFileContent(
-        raw.config,
-        createParseConfigHost(host),
-        projectDirectory,
-        undefined,
-        referencePath,
-    );
-    const result = getOutputFileNamesOfProjectReference(projectDirectory, commandLine);
-    if (commandLine.projectReferences !== undefined)
-        for (const ref of commandLine.projectReferences)
-            result.push(...getOutputFileNamesOfProjectReferenceRecursive(ref, seen, host));
     return result;
 }
 

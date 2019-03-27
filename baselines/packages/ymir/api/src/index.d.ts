@@ -352,7 +352,7 @@ export interface RawLineSwitchRule {
 }
 export interface FileFilterContext {
     program: ts.Program;
-    host: Required<Pick<ts.CompilerHost, 'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists' | 'directoryExists'>>;
+    host: Required<Pick<ts.CompilerHost, 'directoryExists'>>;
 }
 export interface FileFilterFactory {
     create(context: FileFilterContext): FileFilter;
