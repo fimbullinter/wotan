@@ -324,7 +324,7 @@ export class Runner {
             if (configFile === undefined)
                 continue;
             const configFilePath = typeof configFile === 'string' ? configFile : configFile.sourceFile.fileName;
-            if (configFile === undefined || !addUnique(seen, configFilePath))
+            if (!addUnique(seen, configFilePath))
                 continue;
 
             let commandLine: ts.ParsedCommandLine;
