@@ -1,4 +1,3 @@
 {
-  "files": "*.ts",
-  "typescriptVersion": ">= 3.2.0"
+  "files": "*.ts"
 }

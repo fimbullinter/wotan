@@ -1,5 +1,4 @@
 {
   "project": "tsconfig.json",
-  "files": "definite-assignment.ts",
-  "typescriptVersion": ">= 2.7.0"
+  "files": "definite-assignment.ts"
 }
