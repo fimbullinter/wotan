@@ -321,7 +321,10 @@ export class Runner {
         isFileIncluded: (fileName: string) => boolean,
     ): Iterable<ts.Program> {
         for (const configFile of projects) {
-            if (configFile === undefined || !addUnique(seen, typeof configFile === 'string' ? configFile : configFile.sourceFile.fileName))
+            if (configFile === undefined)
+                continue;
+            const configFilePath = typeof configFile === 'string' ? configFile : configFile.sourceFile.fileName;
+            if (!addUnique(seen, configFilePath))
                 continue;
 
             let commandLine: ts.ParsedCommandLine;
@@ -343,7 +346,7 @@ export class Runner {
                 this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
             if (commandLine.fileNames.length !== 0) {
                 if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
-                    log("Using project '%s'", configFile);
+                    log("Using project '%s'", configFilePath);
                     let program: ts.Program | undefined =
                         host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
                     yield program;
@@ -356,7 +359,7 @@ export class Runner {
                     }
                     continue;
                 }
-                log("Project '%s' contains no file to lint", configFile);
+                log("Project '%s' contains no file to lint", configFilePath);
             }
             if (references) {
                 if (typeof configFile !== 'string') {
