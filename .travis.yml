@@ -5,7 +5,7 @@ cache: yarn
 git:
   depth: false
 script:
-  - yarn compile --incremental false
+  - yarn compile
   - yarn lint
   - yarn check-dependencies
   - yarn check-package
