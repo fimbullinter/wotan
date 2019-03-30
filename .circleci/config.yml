@@ -55,7 +55,7 @@ jobs:
             - node_modules
       - run:
           name: Compile
-          command: yarn compile
+          command: yarn compile --incremental false
       - run:
           name: Dependency check
           command: yarn check-dependencies
