@@ -9,7 +9,7 @@ install:
 build: off
 
 test_script:
-  - yarn compile
+  - yarn compile --incremental false
   - yarn lint
   - yarn coverage node_modules/.bin/run-p test:integration "test:unit -s -c 2"
   - yarn report-coverage
