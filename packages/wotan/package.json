@@ -35,7 +35,7 @@
     "@types/json5": "0.0.30",
     "@types/minimatch": "^3.0.1",
     "@types/resolve": "^0.0.8",
-    "@types/semver": "^5.4.0",
+    "@types/semver": "^6.0.0",
     "escape-string-regexp": "^1.0.5",
     "rimraf": "^2.6.2"
   },
