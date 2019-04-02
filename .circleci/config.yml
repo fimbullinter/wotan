@@ -93,5 +93,5 @@ jobs:
     docker:
       - image: circleci/node:10@sha256:ef4a171c626de8ff53a1388ae561a4d5a1ac370aa10964abb379038ab89e1ce3
     environment:
-      typescriptVersion: "3.4.0-rc"
+      typescriptVersion: "3.4"
     <<: *base
