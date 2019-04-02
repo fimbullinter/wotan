@@ -46,7 +46,7 @@ function formatComparators(comparators: readonly semver.Comparator[]): string {
         if (low.major + 1 === high.major && high.minor === 0 && high.patch === 0)
             return '^' + low.version;
     }
-    return comparators.map((c) => `${c.operator}${c.semver.version}`).join(' ');
+    return comparators.map((c) =>  c.value).join(' ');
 }
 
 function operatorToTestFunction(operator: string): (comparatorVersion: semver.SemVer, currentVersion: semver.SemVer) => boolean {
