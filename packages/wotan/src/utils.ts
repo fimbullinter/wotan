@@ -171,3 +171,57 @@ export function invertChangeRange(range: ts.TextChangeRange): ts.TextChangeRange
         newLength: range.span.length,
     };
 }
+
+export function iterateProjectReferences(references: ts.ResolvedProjectReference['references']) {
+    return iterateProjectReferencesWorker(references, []);
+}
+
+function* iterateProjectReferencesWorker(
+    references: ts.ResolvedProjectReference['references'],
+    seen: string[],
+): IterableIterator<ts.ResolvedProjectReference> {
+    if (references === undefined)
+        return;
+    for (const ref of references) {
+        if (ref === undefined || !addUnique(seen, ref.sourceFile.fileName))
+            continue;
+        yield ref;
+        yield* iterateProjectReferencesWorker(ref.references, seen);
+    }
+}
+
+export function getOutputFileNamesOfProjectReference(ref: ts.ResolvedProjectReference) {
+    const options = ref.commandLine.options;
+    const outFile = options.outFile || options.out;
+    if (outFile)
+        return [getOutFileDeclarationName(outFile)];
+    const projectDirectory = path.dirname(ref.sourceFile.fileName);
+    return mapDefined(ref.commandLine.fileNames, (fileName) => getDeclarationOutputName(fileName, options, projectDirectory));
+}
+
+// TODO remove once https://github.com/Microsoft/TypeScript/issues/26410 is resolved
+function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions, projectDirectory: string) {
+    const extension = path.extname(fileName);
+    switch (extension) {
+        case '.tsx':
+            break;
+        case '.ts':
+            if (path.extname(fileName.slice(0, -extension.length)) !== '.d')
+                break;
+            // falls through: .d.ts files produce no output
+        default:
+            return;
+    }
+    fileName = fileName.slice(0, -extension.length) + '.d.ts';
+    return unixifyPath(
+        path.resolve(
+            options.declarationDir || options.outDir || projectDirectory,
+            path.relative(options.rootDir || projectDirectory, fileName),
+        ),
+    );
+}
+
+function getOutFileDeclarationName(outFile: string) {
+    // outFile ignores declarationDir
+    return outFile.slice(0, -path.extname(outFile).length) + '.d.ts';
+}
