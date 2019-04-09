@@ -82,6 +82,7 @@ fn({}, '2'); // there's not reliable way to tell if the empty object type is rea
 ~~~~~~~~~~~                                                                                                    [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 fn(1, {});
 ~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+fn({foo: 1}, {bar: 2});
 
 type LongLiteral = 'somereallyreallyreallyreallyreallyreallyreallyreallyreallylongliteraltypethathopefullycausestruncation';
 declare function get(): {
