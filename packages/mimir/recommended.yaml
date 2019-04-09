@@ -12,7 +12,6 @@ rules:
   no-duplicate-case: error
   no-duplicate-spread-property: error
   no-fallthrough: error
-  no-uninferred-type-parameter: error
   no-invalid-assertion: error
   no-restricted-property-access: error
   no-return-await: error
@@ -20,6 +19,7 @@ rules:
   no-nan-compare: error
   no-octal-escape: error
   no-unassigned-variable: error
+  no-uninferred-type-parameter: error
   no-unreachable-code: error
   no-unsafe-finally: error
   no-unstable-api-use: error
