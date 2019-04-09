@@ -46,9 +46,6 @@ src/rules/no-duplicate-spread-property.js.map
 src/rules/no-fallthrough.d.ts
 src/rules/no-fallthrough.js
 src/rules/no-fallthrough.js.map
-src/rules/no-inferred-empty-object.d.ts
-src/rules/no-inferred-empty-object.js
-src/rules/no-inferred-empty-object.js.map
 src/rules/no-invalid-assertion.d.ts
 src/rules/no-invalid-assertion.js
 src/rules/no-invalid-assertion.js.map
@@ -70,6 +67,9 @@ src/rules/no-return-await.js.map
 src/rules/no-unassigned-variable.d.ts
 src/rules/no-unassigned-variable.js
 src/rules/no-unassigned-variable.js.map
+src/rules/no-uninferred-type-parameter.d.ts
+src/rules/no-uninferred-type-parameter.js
+src/rules/no-uninferred-type-parameter.js.map
 src/rules/no-unreachable-code.d.ts
 src/rules/no-unreachable-code.js
 src/rules/no-unreachable-code.js.map

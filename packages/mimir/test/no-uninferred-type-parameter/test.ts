@@ -76,6 +76,8 @@ fn(get());
 
 fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
 fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
+fn(Boolean() ? 1 as unknown : undefined, Boolean() ? 1 as unknown : null);
+fn(Boolean() ? 1 as unknown : null, Boolean() ? 1 as unknown : undefined);
 
 declare function inferParameter<T>(param?: Array<T>): void;
 

@@ -20,9 +20,9 @@ function SFC<T>(props: Record<string, T>) {
 }
 
 let foo = <SFC></SFC>;
-          ~~~~~        [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+          ~~~~~        [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <SFC/>;
-      ~~~~~~  [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+      ~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <SFC<string>/>;
 foo = <SFC<string>></SFC>;
 foo = <SFC<string> prop="1"></SFC>;
@@ -42,7 +42,7 @@ class MyComponent<T> {
 }
 
 foo = <MyComponentConstructor></MyComponentConstructor>;
-      ~~~~~~~~~~~~~~~~~~~~~~~~                           [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+      ~~~~~~~~~~~~~~~~~~~~~~~~                           [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <MyComponentConstructor<string>></MyComponentConstructor>;
 foo = <MyComponentConstructor prop="1"></MyComponentConstructor>;
 foo = <MyComponent></MyComponent>;
@@ -57,6 +57,6 @@ function MyFactoryComponent<T>(props: Record<string, T>) {
 }
 
 foo = <MyFactoryComponent></MyFactoryComponent>;
-      ~~~~~~~~~~~~~~~~~~~~                       [error no-inferred-empty-object: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+      ~~~~~~~~~~~~~~~~~~~~                       [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 foo = <MyFactoryComponent prop="1"></MyFactoryComponent>;
 foo = <MyFactoryComponent<string>></MyFactoryComponent>;

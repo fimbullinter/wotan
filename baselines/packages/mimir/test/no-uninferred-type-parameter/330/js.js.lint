@@ -40,13 +40,18 @@ export function multiParam(a, b, c) {}
 export function weirdMultiParam(a, b, c) {}
 
 fn();
+~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as 'any'. Consider adding type arguments to the call.]
 fn(1);
 fn({});
 arrayFn();
+~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as 'any'. Consider adding type arguments to the call.]
 arrayFn([]);
 arrayFn([1]);
 arrayFn([{}]);
 multiParam();
+~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as 'any'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as 'any'. Consider adding type arguments to the call.]
+~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'V' is inferred as 'any'. Consider adding type arguments to the call.]
 
 /**
  * @template T

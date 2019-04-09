@@ -12,7 +12,7 @@ rules:
   no-duplicate-case: error
   no-duplicate-spread-property: error
   no-fallthrough: error
-  no-inferred-empty-object: error
+  no-uninferred-type-parameter: error
   no-invalid-assertion: error
   no-restricted-property-access: error
   no-return-await: error
