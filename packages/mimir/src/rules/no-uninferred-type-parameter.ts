@@ -1,10 +1,32 @@
-import { TypedRule, excludeDeclarationFiles, typescriptOnly } from '@fimbul/ymir';
+import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { isTypeLiteralNode } from 'tsutils';
 
+const emptyObjectFallback = /^3\.[234]$/.test(ts.versionMajorMinor);
+
+const emptyObjectType: CheckType = {
+    display: '{}',
+    predicate(type) {
+        return isTypeLiteralNode(type) && type.members.length === 0;
+    },
+};
+const unknownType: CheckType = {
+    display: 'unknown',
+    predicate(type) {
+        return type.kind === ts.SyntaxKind.UnknownKeyword;
+    },
+};
+const anyType: CheckType = {
+    display: 'any',
+    predicate(type) {
+        return type.kind === ts.SyntaxKind.AnyKeyword;
+    },
+};
+
 @excludeDeclarationFiles
-@typescriptOnly // in .js files TypeParameters default to `any`
 export class Rule extends TypedRule {
+    private checkType = !/\.tsx?$/.test(this.sourceFile.fileName) ? anyType : emptyObjectFallback ? emptyObjectType : unknownType;
+
     public apply() {
         for (const node of this.context.getFlatAst()) {
             if (node.kind === ts.SyntaxKind.CallExpression) {
@@ -120,17 +142,24 @@ export class Rule extends TypedRule {
             ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature | ts.NodeBuilderFlags.IgnoreErrors,
         )).typeArguments!;
 
-        for (let i = 0; i < typeParameters.length; ++i) {
-            if (typeParameters[i].hasDefault)
-                continue;
-            const typeArgument = typeArguments[i];
-            if (isTypeLiteralNode(typeArgument) && typeArgument.members.length === 0)
-                this.addFindingAtNode(
-                    node,
-                    `TypeParameter '${typeParameters[i].name}' is inferred as '{}'. Consider adding type arguments to the call.`,
-                );
-        }
+        for (let i = 0; i < typeParameters.length; ++i)
+            if (!typeParameters[i].hasDefault)
+                this.checkTypeArgument(typeArguments[i], typeParameters[i].name, node);
     }
+
+    private checkTypeArgument(typeArgument: ts.TypeNode, name: string, errorNode: ts.Expression) {
+        if (this.checkType.predicate(typeArgument))
+            this.addFindingAtNode(
+                errorNode,
+                `TypeParameter '${name}' is inferred as '${this.checkType.display}'. Consider adding type arguments to the call.`,
+            );
+    }
+
+}
+
+interface CheckType {
+    display: string;
+    predicate: (type: ts.TypeNode) => boolean;
 }
 
 interface TypeParameter {

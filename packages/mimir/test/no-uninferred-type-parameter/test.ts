@@ -61,6 +61,7 @@ fn<number, string>(1);
 fn<number, string>(1, '2');
 fn({}, '2'); // there's not reliable way to tell if the empty object type is really intended like in this case
 fn(1, {});
+fn({foo: 1}, {bar: 2});
 
 type LongLiteral = 'somereallyreallyreallyreallyreallyreallyreallyreallyreallylongliteraltypethathopefullycausestruncation';
 declare function get(): {
@@ -76,6 +77,8 @@ fn(get());
 
 fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
 fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
+fn(Boolean() ? 1 as unknown : undefined, Boolean() ? 1 as unknown : null);
+fn(Boolean() ? 1 as unknown : null, Boolean() ? 1 as unknown : undefined);
 
 declare function inferParameter<T>(param?: Array<T>): void;
 

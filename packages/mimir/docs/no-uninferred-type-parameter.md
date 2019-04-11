@@ -1,4 +1,4 @@
-# no-inferred-empty-object
+# no-uninferred-type-parameter
 
 :mag: requires type information
 
