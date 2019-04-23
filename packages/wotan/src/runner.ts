@@ -347,16 +347,17 @@ export class Runner {
             if (commandLine.fileNames.length !== 0) {
                 if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
                     log("Using project '%s'", configFilePath);
-                    let program: ts.Program | undefined =
-                        host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
-                    yield program;
-                    if (references) {
-                        const resolvedReferences = program.getResolvedProjectReferences();
-                        if (resolvedReferences !== undefined) {
-                            program = undefined; // allow garbage collection
-                            yield* this.createPrograms(resolvedReferences, host, seen, true, isFileIncluded);
-                        }
+                    let resolvedReferences: ts.ResolvedProjectReference['references'];
+                    {
+                        // this is in a nested block to allow garbage collection while recursing
+                        const program =
+                            host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
+                        yield program;
+                        if (references)
+                            resolvedReferences = program.getResolvedProjectReferences();
                     }
+                    if (resolvedReferences !== undefined)
+                        yield* this.createPrograms(resolvedReferences, host, seen, true, isFileIncluded);
                     continue;
                 }
                 log("Project '%s' contains no file to lint", configFilePath);
