@@ -426,5 +426,5 @@ test('ProcessorLoader', (t) => {
     r = () => ({});
     t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
     r = require;
-    t.throws(() => loader.loadProcessor('./fooBarBaz'), "Cannot find module './fooBarBaz'");
+    t.throws(() => loader.loadProcessor('./fooBarBaz'), /^Cannot find module '\.\/fooBarBaz'$/m);
 });
