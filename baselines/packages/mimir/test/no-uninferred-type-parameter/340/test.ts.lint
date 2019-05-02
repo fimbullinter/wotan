@@ -1,5 +1,6 @@
 export {};
 
+declare var bool: boolean;
 type EmptyObject = {};
 
 nonExistent();
@@ -97,12 +98,12 @@ declare function get(): {
 fn(get());
 ~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
 
-fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
-fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
-fn(Boolean() ? 1 as unknown : undefined, Boolean() ? 1 as unknown : null);
-fn(Boolean() ? 1 as unknown : null, Boolean() ? 1 as unknown : undefined);
+fn(bool ? 1 as {} : undefined, bool ? 1 as {} : null);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
+fn(bool ? 1 as {} : null, bool ? 1 as {} : undefined);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as '{}'. Consider adding type arguments to the call.]
+fn(bool ? 1 as unknown : undefined, bool ? 1 as unknown : null);
+fn(bool ? 1 as unknown : null, bool ? 1 as unknown : undefined);
 
 declare function inferParameter<T>(param?: Array<T>): void;
 
@@ -349,17 +350,17 @@ const listNone = pipe4(list);
                  ~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'C' is inferred as '{}'. Consider adding type arguments to the call.]
 listNone(1);
 
-const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
+const unified = bool ? <T>(param?: T) => param : () => undefined;
 unified('1');
 unified();
 ~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
-const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
+const unified2 = bool ? (a?: string) => undefined : <T>(param?: T) => param;
 unified2('2');
 unified2();
 ~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as '{}'. Consider adding type arguments to the call.]
 
-const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
+const unified3 = bool ? (a?: string) => undefined : <T = string>(param?: T) => param;
 unified3('2');
 unified3();
 

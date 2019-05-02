@@ -1,5 +1,6 @@
 export {};
 
+declare var bool: boolean;
 type EmptyObject = {};
 
 nonExistent();
@@ -75,10 +76,10 @@ declare function get(): {
 };
 fn(get());
 
-fn(Boolean() ? 1 as {} : undefined, Boolean() ? 1 as {} : null);
-fn(Boolean() ? 1 as {} : null, Boolean() ? 1 as {} : undefined);
-fn(Boolean() ? 1 as unknown : undefined, Boolean() ? 1 as unknown : null);
-fn(Boolean() ? 1 as unknown : null, Boolean() ? 1 as unknown : undefined);
+fn(bool ? 1 as {} : undefined, bool ? 1 as {} : null);
+fn(bool ? 1 as {} : null, bool ? 1 as {} : undefined);
+fn(bool ? 1 as unknown : undefined, bool ? 1 as unknown : null);
+fn(bool ? 1 as unknown : null, bool ? 1 as unknown : undefined);
 
 declare function inferParameter<T>(param?: Array<T>): void;
 
@@ -300,15 +301,15 @@ declare function pipe4<A extends any[], B, C>(ab: (...args: A) => B, bc?: (b: B)
 const listNone = pipe4(list);
 listNone(1);
 
-const unified = Boolean() ? <T>(param?: T) => param : () => undefined;
+const unified = bool ? <T>(param?: T) => param : () => undefined;
 unified('1');
 unified();
 
-const unified2 = Boolean() ? (a?: string) => undefined : <T>(param?: T) => param;
+const unified2 = bool ? (a?: string) => undefined : <T>(param?: T) => param;
 unified2('2');
 unified2();
 
-const unified3 = Boolean() ? (a?: string) => undefined : <T = string>(param?: T) => param;
+const unified3 = bool ? (a?: string) => undefined : <T = string>(param?: T) => param;
 unified3('2');
 unified3();
 
