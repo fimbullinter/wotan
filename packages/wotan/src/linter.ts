@@ -18,7 +18,7 @@ import { applyFixes } from './fix';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
-import { calculateChangeRange, invertChangeRange } from './utils';
+import { calculateChangeRange, invertChangeRange, mapDefined } from './utils';
 import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
@@ -108,13 +108,14 @@ export class Linter {
         programFactory?: ProgramFactory,
         processor?: AbstractProcessor,
         options: LinterOptions = {},
+        /** Initial set of findings from a cache. If provided, the initial linting is skipped and these findings are used for fixing. */
+        findings = this.getFindings(file, config, programFactory, processor, options),
     ): LintAndFixFileResult {
         let totalFixes = 0;
-        let findings = this.getFindings(file, config, programFactory, processor, options);
         for (let i = 0; i < iterations; ++i) {
             if (findings.length === 0)
                 break;
-            const fixes = findings.map((f) => f.fix).filter(<T>(f: T | undefined): f is T => f !== undefined);
+            const fixes = mapDefined(findings, (f) => f.fix);
             if (fixes.length === 0) {
                 log('No fixes');
                 break;

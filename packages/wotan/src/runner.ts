@@ -22,6 +22,8 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import { normalizeGlob } from 'normalize-glob';
+import { ProgramStateFactory } from './program-state';
+import { StatePersistence } from './state-persistence';
 
 const log = debug('wotan:runner');
 
@@ -34,6 +36,7 @@ export interface LintOptions {
     fix: boolean | number;
     extensions: ReadonlyArray<string> | undefined;
     reportUselessDirectives: Severity | boolean | undefined;
+    cache: boolean;
 }
 
 interface NormalizedOptions extends Pick<LintOptions, Exclude<keyof LintOptions, 'files'>> {
@@ -55,6 +58,8 @@ export class Runner {
         private directories: DirectoryService,
         private logger: MessageHandler,
         private filterFactory: FileFilterFactory,
+        private programStateFactory: ProgramStateFactory,
+        private statePersistence: StatePersistence,
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
@@ -85,10 +90,13 @@ export class Runner {
             this.configManager,
             this.processorLoader,
         );
-        for (let {files, program} of
+        for (let {files, program, configFilePath: tsconfigPath} of
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
+            const oldState = options.cache ? this.statePersistence.loadState(tsconfigPath) : undefined;
+            const programState = options.cache ? this.programStateFactory.create(program, processorHost) : undefined;
             let invalidatedProgram = false;
+            let updatedFiles: string[] = [];
             const factory: ProgramFactory = {
                 getCompilerOptions() {
                     return program.getCompilerOptions();
@@ -110,6 +118,11 @@ export class Runner {
                 const effectiveConfig = config && this.configManager.reduce(config, originalName);
                 if (effectiveConfig === undefined)
                     continue;
+                if (programState !== undefined && updatedFiles.length !== 0) {
+                    // TODO this is not correct as Program still contains the old SourceFile
+                    programState.update(program, updatedFiles);
+                    updatedFiles = [];
+                }
                 let sourceFile = program.getSourceFile(file)!;
                 const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
                 let summary: FileSummary;
@@ -120,13 +133,14 @@ export class Runner {
                         originalContent,
                         effectiveConfig,
                         (content, range) => {
-                            invalidatedProgram = true;
                             const oldContent = sourceFile.text;
                             sourceFile = ts.updateSourceFile(sourceFile, content, range);
                             const hasErrors = hasParseErrors(sourceFile);
                             if (hasErrors) {
                                 log("Autofixing caused syntax errors in '%s', rolling back", sourceFile.fileName);
                                 sourceFile = ts.updateSourceFile(sourceFile, oldContent, invertChangeRange(range));
+                            } else {
+                                updatedFiles.push(sourceFile.fileName);
                             }
                             // either way we need to store the new SourceFile as the old one is now corrupted
                             processorHost.updateSourceFile(sourceFile);
@@ -136,22 +150,29 @@ export class Runner {
                         factory,
                         mapped === undefined ? undefined : mapped.processor,
                         linterOptions,
+                        // pass cached results so we can apply fixes from cache
+                        programState && programState.getUpToDateResult(file, effectiveConfig, oldState),
                     );
                 } else {
                     summary = {
-                        findings: this.linter.getFindings(
-                            sourceFile,
-                            effectiveConfig,
-                            factory,
-                            mapped === undefined ? undefined : mapped.processor,
-                            linterOptions,
-                        ),
+                        findings: programState && programState.getUpToDateResult(file, effectiveConfig, oldState) ||
+                            this.linter.getFindings(
+                                sourceFile,
+                                effectiveConfig,
+                                factory,
+                                mapped === undefined ? undefined : mapped.processor,
+                                linterOptions,
+                            ),
                         fixes: 0,
                         content: originalContent,
                     };
                 }
+                if (programState !== undefined)
+                    programState.setFileResult(file, effectiveConfig, summary.findings);
                 yield [originalName, summary];
             }
+            if (programState !== undefined)
+                this.statePersistence.saveState(tsconfigPath, programState.aggregate(oldState));
         }
     }
 
@@ -241,7 +262,7 @@ export class Runner {
         exclude: ReadonlyArray<string>,
         host: ProjectHost,
         references: boolean,
-    ): Iterable<{files: Iterable<string>, program: ts.Program}> {
+    ): Iterable<{files: Iterable<string>, program: ts.Program, configFilePath: string}> {
         const cwd = unixifyPath(this.directories.getCurrentDirectory());
         if (projects.length !== 0) {
             projects = projects.map((configFile) => this.checkConfigDirectory(unixifyPath(path.resolve(cwd, configFile))));
@@ -265,7 +286,7 @@ export class Runner {
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
         let filesOfPreviousProject: string[] | undefined;
-        for (const program of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
+        for (const {program, configFilePath} of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
             const ownFiles = [];
             const files: string[] = [];
             const fileFilter = this.filterFactory.create({program, host});
@@ -289,7 +310,7 @@ export class Runner {
             filesOfPreviousProject = ownFiles;
 
             if (files.length !== 0)
-                yield {files, program};
+                yield {files, program, configFilePath};
         }
         ensurePatternsMatch(nonMagicGlobs, ex, allMatchedFiles, projectsSeen);
 
@@ -319,7 +340,7 @@ export class Runner {
         seen: string[],
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
-    ): Iterable<ts.Program> {
+    ): Iterable<{program: ts.Program, configFilePath: string}> {
         for (const configFile of projects) {
             if (configFile === undefined)
                 continue;
@@ -352,7 +373,7 @@ export class Runner {
                         // this is in a nested block to allow garbage collection while recursing
                         const program =
                             host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
-                        yield program;
+                        yield {program, configFilePath};
                         if (references)
                             resolvedReferences = program.getResolvedProjectReferences();
                     }
