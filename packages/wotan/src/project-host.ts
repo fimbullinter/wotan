@@ -234,7 +234,7 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
-        return ts.createProgram({rootNames, oldProgram, projectReferences, options: {...options, noEnit: true}, host: this});
+        return ts.createProgram({rootNames, oldProgram, projectReferences, options: {...options, noEmit: true}, host: this});
     }
 
     public updateSourceFile(sourceFile: ts.SourceFile) {
