@@ -25,6 +25,16 @@ export class ProjectHost implements ts.CompilerHost {
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
     private fileContent = new Map<string, string>();
+    private tsconfigCache = new Map<string, ts.ExtendedConfigCacheEntry>();
+    private commandLineCache = new Map<string, ts.ParsedCommandLine>();
+
+    private parseConfigHost: ts.ParseConfigHost = {
+        useCaseSensitiveFileNames: this.useCaseSensitiveFileNames(),
+        readDirectory:
+            (rootDir, extensions, excludes, includes, depth) => this.readDirectory(rootDir, extensions, excludes, includes, depth),
+        fileExists: (f) => this.fileExists(f),
+        readFile: (f) => this.readFile(f),
+    };
 
     constructor(
         public cwd: string,
@@ -205,6 +215,8 @@ export class ProjectHost implements ts.CompilerHost {
             (entry) => entry.kind === FileKind.Directory ? path.join(dir, entry.name) : undefined,
         );
     }
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget.JSON): ts.JsonSourceFile | undefined;
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget): ts.SourceFile | undefined;
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(
             this.sourceFileCache,
@@ -222,7 +234,7 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
-        return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
+        return ts.createProgram({rootNames, oldProgram, projectReferences, options: {...options, noEnit: true}, host: this});
     }
 
     public updateSourceFile(sourceFile: ts.SourceFile) {
@@ -247,5 +259,41 @@ export class ProjectHost implements ts.CompilerHost {
     public uncacheFile(fileName: string) {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
+    }
+
+    public getParsedCommandLine(fileName: string) {
+        return resolveCachedResult(this.commandLineCache, fileName, this.parseConfigFile);
+    }
+
+    @bind
+    private parseConfigFile(fileName: string) {
+        const cached = this.tsconfigCache.get(fileName);
+        if (cached)
+            return cached.extendedConfig &&
+                ts.parseJsonConfigFileContent(
+                    cached.extendedConfig.raw,
+                    this.parseConfigHost,
+                    path.dirname(fileName),
+                    undefined,
+                    fileName,
+                    undefined,
+                    undefined,
+                    <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
+                );
+        const sourceFile = this.getSourceFile(fileName, ts.ScriptTarget.JSON);
+        if (sourceFile === undefined)
+            return;
+        const parsed = ts.parseJsonSourceFileConfigFileContent(
+            sourceFile,
+            this.parseConfigHost,
+            path.dirname(fileName),
+            undefined,
+            fileName,
+            undefined,
+            undefined,
+            <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
+        );
+        this.tsconfigCache.set(fileName, {extendedResult: sourceFile, extendedConfig: <ts.ParsedTsconfig>parsed});
+        return parsed;
     }
 }

@@ -13,7 +13,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost, hasParseErrors, invertChangeRange } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -327,20 +327,13 @@ export class Runner {
             if (!addUnique(seen, configFilePath))
                 continue;
 
-            let commandLine: ts.ParsedCommandLine;
+            let commandLine;
             if (typeof configFile !== 'string') {
                 ({commandLine} = configFile);
             } else {
-                const sourceFile = host.getSourceFile(configFile, ts.ScriptTarget.JSON);
-                if (sourceFile === undefined)
+                commandLine = host.getParsedCommandLine(configFile);
+                if (commandLine === undefined)
                     continue;
-                commandLine = ts.parseJsonSourceFileConfigFileContent(
-                    <ts.TsConfigSourceFile>sourceFile,
-                    createParseConfigHost(host),
-                    path.dirname(configFile),
-                    {noEmit: true},
-                    configFile,
-                );
             }
             if (commandLine.errors.length !== 0)
                 this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
