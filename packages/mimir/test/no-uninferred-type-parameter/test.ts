@@ -357,3 +357,6 @@ const List = toConstructor(list);
 new List(1);
 new List();
 new List<number>();
+
+const List2 = toConstructor(list2);
+new List2();
