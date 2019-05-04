@@ -267,23 +267,12 @@ export class ProjectHost implements ts.CompilerHost {
 
     @bind
     private parseConfigFile(fileName: string) {
-        const cached = this.tsconfigCache.get(fileName);
-        if (cached)
-            return cached.extendedConfig &&
-                ts.parseJsonConfigFileContent(
-                    cached.extendedConfig.raw,
-                    this.parseConfigHost,
-                    path.dirname(fileName),
-                    undefined,
-                    fileName,
-                    undefined,
-                    undefined,
-                    <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
-                );
+        // Note to future self: it's highly unlikely that a tsconfig of a project reference is used as base config for another tsconfig.
+        // Therefore it doesn't make such sense to read or write the tsconfigCache here.
         const sourceFile = this.getSourceFile(fileName, ts.ScriptTarget.JSON);
         if (sourceFile === undefined)
             return;
-        const parsed = ts.parseJsonSourceFileConfigFileContent(
+        return ts.parseJsonSourceFileConfigFileContent(
             sourceFile,
             this.parseConfigHost,
             path.dirname(fileName),
@@ -293,7 +282,5 @@ export class ProjectHost implements ts.CompilerHost {
             undefined,
             <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
         );
-        this.tsconfigCache.set(fileName, {extendedResult: sourceFile, extendedConfig: <ts.ParsedTsconfig>parsed});
-        return parsed;
     }
 }
