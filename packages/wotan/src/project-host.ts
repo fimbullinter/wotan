@@ -26,6 +26,10 @@ export class ProjectHost implements ts.CompilerHost {
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
     private fileContent = new Map<string, string>();
 
+    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
+    private moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName);
+    private compilerOptions: ts.CompilerOptions = {};
+
     constructor(
         public cwd: string,
         public config: Configuration | undefined,
@@ -180,9 +184,8 @@ export class ProjectHost implements ts.CompilerHost {
         return ts.sys.useCaseSensitiveFileNames;
     }
     public getDefaultLibFileName = ts.getDefaultLibFilePath;
-    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
     public getNewLine() {
-        return '\n';
+        return this.compilerOptions.newLine === ts.NewLineKind.CarriageReturnLineFeed ? '\r\n' : '\n';
     }
     public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
     private safeRealpath(f: string) {
@@ -222,6 +225,8 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
+        this.compilerOptions = options;
+        this.moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName, options);
         return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
     }
 
@@ -230,12 +235,13 @@ export class ProjectHost implements ts.CompilerHost {
     }
 
     public updateProgram(program: ts.Program) {
-        return this.createProgram(
-            program.getRootFileNames(),
-            program.getCompilerOptions(),
-            program,
-            program.getProjectReferences(),
-        );
+        return ts.createProgram({
+            rootNames: program.getRootFileNames(),
+            options: program.getCompilerOptions(),
+            oldProgram: program,
+            projectReferences: program.getProjectReferences(),
+            host: this,
+        });
     }
 
     public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
@@ -247,5 +253,12 @@ export class ProjectHost implements ts.CompilerHost {
     public uncacheFile(fileName: string) {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
+    }
+
+    public resolveModuleNames(names: string[], file: string, _?: unknown, reference?: ts.ResolvedProjectReference) {
+        const seen = new Map<string, ts.ResolvedModuleFull | undefined>();
+        const resolve = (name: string) =>
+            ts.resolveModuleName(name, file, this.compilerOptions, this, this.moduleResolutionCache, reference).resolvedModule;
+        return names.map((name) => resolveCachedResult(seen, name, resolve));
     }
 }
