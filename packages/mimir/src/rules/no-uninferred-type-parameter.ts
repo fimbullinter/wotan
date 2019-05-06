@@ -55,10 +55,11 @@ export class Rule extends TypedRule {
      * To work around this, we look for a single call signature on the called expression and use its type parameters instead.
      * As a bonus this also works for unified signatures from union types.
      */
-    private getTypeParametersOfCallSignature(node: ts.CallExpression | ts.JsxOpeningLikeElement | ts.TaggedTemplateExpression) {
+    private getTypeParametersOfCallSignature(node: Exclude<ts.CallLikeExpression, ts.Decorator>) {
         let expr: ts.Expression;
         switch (node.kind) {
             case ts.SyntaxKind.CallExpression:
+            case ts.SyntaxKind.NewExpression:
                 expr = node.expression;
                 break;
             case ts.SyntaxKind.TaggedTemplateExpression:
@@ -67,7 +68,10 @@ export class Rule extends TypedRule {
             default:
                 expr = node.tagName;
         }
-        const signatures = this.checker.getTypeAtLocation(expr).getCallSignatures();
+        const signatures = this.checker.getSignaturesOfType(
+            this.checker.getTypeAtLocation(expr),
+            node.kind === ts.SyntaxKind.NewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call,
+        );
         // abort if not all signatures have type parameters:
         //   higher order function type inference only works for a single call signature
         //   call signature unification puts type parameters on every resulting signature
@@ -101,9 +105,11 @@ export class Rule extends TypedRule {
         const signature = this.checker.getResolvedSignature(node)!;
         if (signature.declaration !== undefined) {
             // There is an explicitly declared construct signature
-            const typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration);
+            let typeParameters = ts.getEffectiveTypeParameterDeclarations(signature.declaration).map(mapTypeParameterDeclaration);
+            if (typeParameters.length === 0)
+                typeParameters = this.getTypeParametersOfCallSignature(node);
             if (typeParameters.length !== 0) // only check the signature if it declares type parameters
-                return this.checkInferredTypeParameters(signature, typeParameters.map(mapTypeParameterDeclaration), node);
+                return this.checkInferredTypeParameters(signature, typeParameters, node);
             if (signature.declaration.kind !== ts.SyntaxKind.Constructor)
                 return; // don't look for type parameters on non-class parents
         }
