@@ -22,6 +22,7 @@ rules:
   no-uninferred-type-parameter: error
   no-unreachable-code: error
   no-unsafe-finally: error
+  no-unsafe-property-override: error
   no-unstable-api-use: error
   no-unused-expression: error
   no-unused-label: error

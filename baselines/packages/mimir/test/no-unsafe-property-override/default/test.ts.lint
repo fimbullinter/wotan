@@ -1,0 +1,17 @@
+class Base {
+    get prop() { return 1; }
+    get prop2() { return 1; }
+    get prop3() { return 1; }
+    get prop4() { return 1; }
+}
+const prop4 = 'prop4';
+class Derived extends Base {
+    prop = 1;
+    ~~~~      [error no-unsafe-property-override: Overriding readonly property 'prop' might fail at runtime.]
+    'prop2' = 1;
+    ~~~~~~~      [error no-unsafe-property-override: Overriding readonly property ''prop2'' might fail at runtime.]
+    'prop3' = 1;
+    ~~~~~~~      [error no-unsafe-property-override: Overriding readonly property ''prop3'' might fail at runtime.]
+    [prop4] = 1;
+    ~~~~~~~      [error no-unsafe-property-override: Overriding readonly property '[prop4]' might fail at runtime.]
+}
