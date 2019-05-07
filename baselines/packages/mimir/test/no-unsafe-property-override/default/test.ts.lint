@@ -3,6 +3,10 @@ class Base {
     get prop2() { return 1; }
     get prop3() { return 1; }
     get prop4() { return 1; }
+    get prop5() { return 1; }
+    set prop5(_) {}
+    get [name]() { return 1; }
+    get [Symbol.toStringTag]() {return 'A'};
 }
 const prop4 = 'prop4';
 class Derived extends Base {
@@ -14,4 +18,49 @@ class Derived extends Base {
     ~~~~~~~      [error no-unsafe-property-override: Overriding readonly property ''prop3'' might fail at runtime.]
     [prop4] = 1;
     ~~~~~~~      [error no-unsafe-property-override: Overriding readonly property '[prop4]' might fail at runtime.]
+    prop5 = 1;
+    [name] = 1;
+    [Symbol.toStringTag] = 'B';
+    ~~~~~~~~~~~~~~~~~~~~        [error no-unsafe-property-override: Overriding readonly property '[Symbol.toStringTag]' might fail at runtime.]
+}
+
+class Derived2 extends ((): new () => Readonly<Record<'foo', number>> => undefined!)() {
+    foo = 1;
+    ~~~      [error no-unsafe-property-override: Overriding readonly property 'foo' might fail at runtime.]
+}
+
+class Derived3 extends ((): new () => {readonly [K in 'bar']: number} => undefined!)() {
+    bar = 1;
+    ~~~      [error no-unsafe-property-override: Overriding readonly property 'bar' might fail at runtime.]
+}
+
+type Mutable<T> = {-readonly [K in keyof T]: T[K]};
+
+class Derived4 extends ((): new () => Mutable<Readonly<Record<'baz', number>>> => undefined!)() {
+    baz = 1;
+}
+
+class Derived5 extends ((): new () => Pick<Readonly<Record<'bas', number>>, 'bas'> => undefined!)() {
+    bas = 1;
+    ~~~      [error no-unsafe-property-override: Overriding readonly property 'bas' might fail at runtime.]
+}
+
+class Derived6 extends ((): new () => Partial<Readonly<Record<'foo', number>>> & Pick<Readonly<{bar: number} & {baz: number}>, 'baz'> => undefined!)() {
+    foo = 1;
+    ~~~      [error no-unsafe-property-override: Overriding readonly property 'foo' might fail at runtime.]
+    bar = 1;
+    baz = 1;
+    ~~~      [error no-unsafe-property-override: Overriding readonly property 'baz' might fail at runtime.]
+}
+
+const obj = {const: 1 + 1} as const;
+
+class Derived7 extends ((): new() => typeof obj => undefined!)() {
+    const = 1;
+    ~~~~~      [error no-unsafe-property-override: Overriding readonly property 'const' might fail at runtime.]
+}
+
+class Derived8 extends ((): new() => readonly [number, string] => undefined!)() {
+    0 = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property '0' might fail at runtime.]
 }
