@@ -410,3 +410,14 @@ function f<T extends typeof overloaded, U extends typeof unified5, V extends typ
 
 declare let untyped: Function;
 untyped();
+
+declare function toConstructor<P extends unknown[], R>(fn: (...params: P) => R): new (...params: P) => R;
+
+const List = toConstructor(list);
+new List(1);
+new List();
+~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as 'unknown'. Consider adding type arguments to the call.]
+new List<number>();
+
+const List2 = toConstructor(list2);
+new List2();
