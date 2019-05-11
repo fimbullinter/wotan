@@ -25,6 +25,16 @@ export class ProjectHost implements ts.CompilerHost {
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
     private fileContent = new Map<string, string>();
+    private tsconfigCache = new Map<string, ts.ExtendedConfigCacheEntry>();
+    private commandLineCache = new Map<string, ts.ParsedCommandLine>();
+
+    private parseConfigHost: ts.ParseConfigHost = {
+        useCaseSensitiveFileNames: this.useCaseSensitiveFileNames(),
+        readDirectory:
+            (rootDir, extensions, excludes, includes, depth) => this.readDirectory(rootDir, extensions, excludes, includes, depth),
+        fileExists: (f) => this.fileExists(f),
+        readFile: (f) => this.readFile(f),
+    };
 
     public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
     private moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName);
@@ -208,6 +218,8 @@ export class ProjectHost implements ts.CompilerHost {
             (entry) => entry.kind === FileKind.Directory ? path.join(dir, entry.name) : undefined,
         );
     }
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget.JSON): ts.JsonSourceFile | undefined;
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget): ts.SourceFile | undefined;
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(
             this.sourceFileCache,
@@ -225,6 +237,7 @@ export class ProjectHost implements ts.CompilerHost {
         oldProgram: ts.Program | undefined,
         projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
     ) {
+        options = {...options, suppressOutputPathCheck: true};
         this.compilerOptions = options;
         this.moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName, options);
         return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
@@ -253,6 +266,29 @@ export class ProjectHost implements ts.CompilerHost {
     public uncacheFile(fileName: string) {
         this.sourceFileCache.delete(fileName);
         this.processedFiles.delete(fileName);
+    }
+
+    public getParsedCommandLine(fileName: string) {
+        return resolveCachedResult(this.commandLineCache, fileName, this.parseConfigFile);
+    }
+
+    @bind
+    private parseConfigFile(fileName: string) {
+        // Note to future self: it's highly unlikely that a tsconfig of a project reference is used as base config for another tsconfig.
+        // Therefore it doesn't make such sense to read or write the tsconfigCache here.
+        const sourceFile = this.getSourceFile(fileName, ts.ScriptTarget.JSON);
+        if (sourceFile === undefined)
+            return;
+        return ts.parseJsonSourceFileConfigFileContent(
+            sourceFile,
+            this.parseConfigHost,
+            path.dirname(fileName),
+            undefined,
+            fileName,
+            undefined,
+            undefined,
+            <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
+        );
     }
 
     public resolveModuleNames(names: string[], file: string, _?: unknown, reference?: ts.ResolvedProjectReference) {
