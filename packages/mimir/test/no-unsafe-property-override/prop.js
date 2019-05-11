@@ -1,4 +1,4 @@
-export const jsObj = {};
+export let jsObj = {};
 Object.defineProperty(jsObj, 'a', {value: 1, writable: false});
 Object.defineProperty(jsObj, 'b', {get() { return 1; }});
 Object.defineProperty(jsObj, 'c', {get() { return 1; }, set(_) {}});

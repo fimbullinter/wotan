@@ -17,6 +17,7 @@ import {
     isIntersectionType,
     isCallExpression,
     isShorthandPropertyAssignment,
+    isVariableDeclaration,
 } from 'tsutils';
 import * as ts from 'typescript';
 import { getPropertyOfType } from '../utils';
@@ -67,14 +68,12 @@ function containsReadonlyPropertyDeclaration(declarations: ReadonlyArray<ts.Decl
     for (const node of declarations)
         if (
             ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Readonly ||
-            isCallExpression(node) && isReadonlyAssignmentDeclaration(node, checker)
+            isVariableDeclaration(node) && node.parent!.flags & ts.NodeFlags.Const ||
+            isCallExpression(node) && isReadonlyAssignmentDeclaration(node, checker) ||
+            (isPropertyAssignment(node) || isShorthandPropertyAssignment(node)) && isInConstContext(node.parent!)
         )
             return true;
     return false;
-}
-
-function isPropertyFromConstContext(declaration: ts.Declaration) {
-    return (isPropertyAssignment(declaration) || isShorthandPropertyAssignment(declaration)) && isInConstContext(declaration.parent!);
 }
 
 function isReadonlyPropertyUnion(type: ts.Type, name: ts.__String, checker: ts.TypeChecker) {
@@ -97,20 +96,21 @@ function isReadonlyPropertyIntersection(type: ts.Type, name: ts.__String, checke
         const prop = getPropertyOfType(t, name);
         if (prop === undefined)
             continue;
-        if (!isSymbolFlagSet(prop, ts.SymbolFlags.Transient)) {
-            if (prop.declarations !== undefined && containsReadonlyPropertyDeclaration(prop.declarations, checker))
+        if (isSymbolFlagSet(prop, ts.SymbolFlags.Transient)) {
+            if (/^(?:[1-9]\d*|0)$/.test(<string>name) && isElementOfReadonlyTuple(t, name))
                 return true;
-        } else if (/^(?:[1-9]\d*|0)$/.test(<string>name) && isElementOfReadonlyTuple(t, name)) {
-            return true;
-        } else {
             switch (isReadonlyPropertyFromMappedType(t, name, checker)) {
                 case true:
                     return true;
-                case undefined:
-                    if (prop.declarations !== undefined && prop.declarations.some(isPropertyFromConstContext))
-                        return true;
+                case false:
+                    continue;
             }
         }
+        // members of namespace import
+        if (isSymbolFlagSet(prop, ts.SymbolFlags.ValueModule))
+            return true;
+        if (prop.declarations !== undefined && containsReadonlyPropertyDeclaration(prop.declarations, checker))
+            return true;
     }
     return false;
 }
@@ -159,7 +159,7 @@ function isElementOfReadonlyTuple(type: ts.Type, name: ts.__String): boolean {
 
 function isReadonlyPropertyFromMappedType(type: ts.Type, name: ts.__String, checker: ts.TypeChecker): boolean | undefined {
     if (!isObjectType(type) || !isObjectFlagSet(type, ts.ObjectFlags.Mapped))
-        return undefined;
+        return;
     const declaration = <ts.MappedTypeNode>type.symbol!.declarations![0];
     if (declaration.readonlyToken !== undefined)
         return declaration.readonlyToken.kind !== ts.SyntaxKind.MinusToken;

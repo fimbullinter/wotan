@@ -1,4 +1,5 @@
 import {jsObj} from './prop';
+import * as namespace from './prop';
 
 class Base {
     get prop() { return 1; }
@@ -75,4 +76,16 @@ class TsClass extends ((): new() => typeof jsObj => undefined!)() {
     d = 1;
     e = 1;
     f = 1;
+}
+
+class Derived10 extends ((): new () => typeof namespace => undefined!)() {
+    jsObj: any;
+}
+
+namespace namespace2 {
+    export const v: number = 1;
+}
+
+class Derived10_1 extends ((): new () => typeof namespace2 => undefined!)() {
+    v = 1;
 }

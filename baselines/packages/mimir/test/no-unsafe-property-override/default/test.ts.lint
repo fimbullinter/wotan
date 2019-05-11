@@ -1,4 +1,5 @@
 import {jsObj} from './prop';
+import * as namespace from './prop';
 
 class Base {
     get prop() { return 1; }
@@ -92,4 +93,18 @@ class TsClass extends ((): new() => typeof jsObj => undefined!)() {
     e = 1;
     f = 1;
     ~      [error no-unsafe-property-override: Overriding readonly property 'f' might fail at runtime.]
+}
+
+class Derived10 extends ((): new () => typeof namespace => undefined!)() {
+    jsObj: any;
+    ~~~~~       [error no-unsafe-property-override: Overriding readonly property 'jsObj' might fail at runtime.]
+}
+
+namespace namespace2 {
+    export const v: number = 1;
+}
+
+class Derived10_1 extends ((): new () => typeof namespace2 => undefined!)() {
+    v = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property 'v' might fail at runtime.]
 }
