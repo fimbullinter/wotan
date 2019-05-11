@@ -10,7 +10,8 @@
     ".js"
   ],
   "reporter": [
-    "lcov"
+    "lcov",
+    "text-summary"
   ],
   "sourceMap": true,
   "all": true,
