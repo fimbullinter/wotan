@@ -11,5 +11,5 @@ build: off
 test_script:
   - yarn compile --incremental false
   - yarn lint
-  - yarn coverage node_modules/.bin/run-p test:integration "test:unit -s -c 2"
+  - node_modules/.bin/nyc node_modules/.bin/run-p test:integration "test:unit -s -c 2"
   - yarn report-coverage
