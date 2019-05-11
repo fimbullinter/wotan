@@ -34,6 +34,9 @@ type Mutable<T> = {-readonly [K in keyof T]: T[K]};
 class Derived4 extends ((): new () => Mutable<Readonly<Record<'baz', number>>> => undefined!)() {
     baz = 1;
 }
+class Derived4_1 extends ((): new () => Mutable<{readonly baz: number}> => undefined!)() {
+    baz = 1;
+}
 
 class Derived5 extends ((): new () => Pick<Readonly<Record<'bas', number>>, 'bas'> => undefined!)() {
     bas = 1;
@@ -50,9 +53,19 @@ const obj = {const: 1 + 1} as const;
 class Derived7 extends ((): new() => typeof obj => undefined!)() {
     const = 1;
 }
+class Derived7_1 extends ((): new() => Mutable<typeof obj> => undefined!)() {
+    const = 1;
+}
 
 class Derived8 extends ((): new() => readonly [number, string] => undefined!)() {
     0 = 1;
+}
+class Derived8_1 extends ((): new() => Pick<readonly [number, number], 1> => undefined!)() {
+    1 = 1;
+}
+
+class Derived9 extends ((): new () => Pick<{readonly [K: string]: number} | {prop: number}, 'prop'> => undefined!)() {
+    prop = 1;
 }
 
 class TsClass extends ((): new() => typeof jsObj => undefined!)() {

@@ -3,7 +3,6 @@ import {
     WrappedAst,
     getWrappedNodeAtPosition,
     isPropertyDeclaration,
-    isUnionOrIntersectionType,
     isInConstContext,
     isObjectFlagSet,
     isObjectType,
@@ -13,6 +12,11 @@ import {
     isIdentifier,
     isEntityNameExpression,
     isPropertyAssignment,
+    unionTypeParts,
+    isSymbolFlagSet,
+    isIntersectionType,
+    isCallExpression,
+    isShorthandPropertyAssignment,
 } from 'tsutils';
 import * as ts from 'typescript';
 import { getPropertyOfType } from '../utils';
@@ -56,27 +60,56 @@ export class Rule extends TypedRule {
 function isReadonlySymbol(symbol: ts.Symbol, parentType: ts.Type, checker: ts.TypeChecker) {
     if (symbol.flags & ts.SymbolFlags.GetAccessor)
         return (symbol.flags & ts.SymbolFlags.SetAccessor) === 0;
-    return symbol.declarations !== undefined && containsReadonlyPropertyDeclaration(symbol.declarations, checker) ||
-        (symbol.flags & ts.SymbolFlags.Transient) !== 0 && (
-            /^(?:[1-9]\d*|0)$/.test(symbol.name) && distributeCheck(parentType, symbol.escapedName, isElementOfReadonlyTuple) ||
-            distributeCheck(parentType, symbol.escapedName, isReadonlyPropertyFromMappedType)
-        );
-        // TODO readonly index signature
+    return isReadonlyPropertyUnion(parentType, symbol.escapedName, checker);
 }
 
 function containsReadonlyPropertyDeclaration(declarations: ReadonlyArray<ts.Declaration>, checker: ts.TypeChecker) {
-    for (const node of declarations) {
-        if (ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Readonly)
+    for (const node of declarations)
+        if (
+            ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Readonly ||
+            isCallExpression(node) && isReadonlyAssignmentDeclaration(node, checker)
+        )
             return true;
-        switch (node.kind) {
-            case ts.SyntaxKind.PropertyAssignment:
-            case ts.SyntaxKind.ShorthandPropertyAssignment:
-                if (isInConstContext(<ts.ObjectLiteralExpression>node.parent))
+    return false;
+}
+
+function isPropertyFromConstContext(declaration: ts.Declaration) {
+    return (isPropertyAssignment(declaration) || isShorthandPropertyAssignment(declaration)) && isInConstContext(declaration.parent!);
+}
+
+function isReadonlyPropertyUnion(type: ts.Type, name: ts.__String, checker: ts.TypeChecker) {
+    for (const t of unionTypeParts(type)) {
+        if (getPropertyOfType(t, name) === undefined) {
+            // property is not present in this part of the union -> check for readonly index signature
+            const index = (String(+name) === name ? checker.getIndexInfoOfType(t, ts.IndexKind.Number) : undefined) ||
+                checker.getIndexInfoOfType(t, ts.IndexKind.String);
+            if (index !== undefined && index.isReadonly)
+                return true;
+        } else if (isReadonlyPropertyIntersection(t, name, checker)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function isReadonlyPropertyIntersection(type: ts.Type, name: ts.__String, checker: ts.TypeChecker) {
+    for (const t of isIntersectionType(type) ? type.types : [type]) { // TODO intersectionTypeParts
+        const prop = getPropertyOfType(t, name);
+        if (prop === undefined)
+            continue;
+        if (!isSymbolFlagSet(prop, ts.SymbolFlags.Transient)) {
+            if (prop.declarations !== undefined && containsReadonlyPropertyDeclaration(prop.declarations, checker))
+                return true;
+        } else if (/^(?:[1-9]\d*|0)$/.test(<string>name) && isElementOfReadonlyTuple(t, name)) {
+            return true;
+        } else {
+            switch (isReadonlyPropertyFromMappedType(t, name, checker)) {
+                case true:
                     return true;
-                break;
-            case ts.SyntaxKind.CallExpression:
-                if (isReadonlyAssignmentDeclaration(<ts.CallExpression>node, checker))
-                    return true;
+                case undefined:
+                    if (prop.declarations !== undefined && prop.declarations.some(isPropertyFromConstContext))
+                        return true;
+            }
         }
     }
     return false;
@@ -95,7 +128,7 @@ function isReadonlyAssignmentDeclaration(node: ts.CallExpression, checker: ts.Ty
         ? checker.getTypeAtLocation(writableProp.valueDeclaration.initializer)
         : checker.getTypeOfSymbolAtLocation(writableProp, node.arguments[2]);
     return (writableType.flags & ts.TypeFlags.BooleanLiteral) !== 0 &&
-        (<{intrinsicName: string}><{}>writableType).intrinsicName === 'false';
+        (<{intrinsicName: string}><{}>writableType).intrinsicName === 'false'; // move to tsutils
 
 }
 
@@ -120,26 +153,15 @@ function isNumericOrStringLikeLiteral(node: ts.Expression) {
     }
 }
 
-function distributeCheck(type: ts.Type, name: ts.__String, cb: (type: ts.Type, name: ts.__String) => boolean) {
-    if (isUnionOrIntersectionType(type)) {
-        for (const t of type.types)
-            if (distributeCheck(t, name, cb))
-                return true;
-        return false;
-    }
-
-    return cb(type, name);
-}
-
 function isElementOfReadonlyTuple(type: ts.Type, name: ts.__String): boolean {
     return isTypeReference(type) && isTupleType(type.target) && type.target.readonly && getPropertyOfType(type.target, name) !== undefined;
 }
 
-function isReadonlyPropertyFromMappedType(type: ts.Type, name: ts.__String): boolean {
+function isReadonlyPropertyFromMappedType(type: ts.Type, name: ts.__String, checker: ts.TypeChecker): boolean | undefined {
     if (!isObjectType(type) || !isObjectFlagSet(type, ts.ObjectFlags.Mapped))
-        return false;
+        return undefined;
     const declaration = <ts.MappedTypeNode>type.symbol!.declarations![0];
     if (declaration.readonlyToken !== undefined)
         return declaration.readonlyToken.kind !== ts.SyntaxKind.MinusToken;
-    return distributeCheck((<{modifiersType: ts.Type}><unknown>type).modifiersType, name, isReadonlyPropertyFromMappedType);
+    return isReadonlyPropertyUnion((<{modifiersType: ts.Type}><unknown>type).modifiersType, name, checker);
 }

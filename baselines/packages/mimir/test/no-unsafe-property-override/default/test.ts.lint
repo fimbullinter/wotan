@@ -1,3 +1,5 @@
+import {jsObj} from './prop';
+
 class Base {
     get prop() { return 1; }
     get prop2() { return 1; }
@@ -39,6 +41,9 @@ type Mutable<T> = {-readonly [K in keyof T]: T[K]};
 class Derived4 extends ((): new () => Mutable<Readonly<Record<'baz', number>>> => undefined!)() {
     baz = 1;
 }
+class Derived4_1 extends ((): new () => Mutable<{readonly baz: number}> => undefined!)() {
+    baz = 1;
+}
 
 class Derived5 extends ((): new () => Pick<Readonly<Record<'bas', number>>, 'bas'> => undefined!)() {
     bas = 1;
@@ -59,8 +64,32 @@ class Derived7 extends ((): new() => typeof obj => undefined!)() {
     const = 1;
     ~~~~~      [error no-unsafe-property-override: Overriding readonly property 'const' might fail at runtime.]
 }
+class Derived7_1 extends ((): new() => Mutable<typeof obj> => undefined!)() {
+    const = 1;
+}
 
 class Derived8 extends ((): new() => readonly [number, string] => undefined!)() {
     0 = 1;
     ~      [error no-unsafe-property-override: Overriding readonly property '0' might fail at runtime.]
+}
+class Derived8_1 extends ((): new() => Pick<readonly [number, number], 1> => undefined!)() {
+    1 = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property '1' might fail at runtime.]
+}
+
+class Derived9 extends ((): new () => Pick<{readonly [K: string]: number} | {prop: number}, 'prop'> => undefined!)() {
+    prop = 1;
+    ~~~~      [error no-unsafe-property-override: Overriding readonly property 'prop' might fail at runtime.]
+}
+
+class TsClass extends ((): new() => typeof jsObj => undefined!)() {
+    a = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property 'a' might fail at runtime.]
+    b = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property 'b' might fail at runtime.]
+    c = 1;
+    d = 1;
+    e = 1;
+    f = 1;
+    ~      [error no-unsafe-property-override: Overriding readonly property 'f' might fail at runtime.]
 }
