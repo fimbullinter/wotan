@@ -31,7 +31,7 @@ base: &base
     - run:
         name: Run Tests
         command: |
-          yarn coverage yarn test
+          yarn test-coverage
           yarn report-coverage
 
 version: 2
