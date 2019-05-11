@@ -13,8 +13,7 @@
     "test:integration": "wotan test 'packages/*/test/**/{,*.}test.json' --exact",
     "test": "run-p \"test:* {@}\" --",
     "report-coverage": "codecov --disable=gcov",
-    "coverage": "nyc",
-    "test-coverage": "nyc --reporter=html --reporter=text-summary yarn test",
+    "test-coverage": "nyc --reporter=html --reporter=text-summary run-s test",
     "verify": "npm-run-all -s clean compile -p check-dependencies lint check-package -s test-coverage"
   },
   "repository": {

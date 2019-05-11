@@ -1,17 +1,16 @@
 {
   "include": [
-    "packages/*/src/**/*.js",
-    "packages/*/index.js"
+    "packages/*/src/**",
+    "packages/*/index.ts"
   ],
   "exclude": [
-    "packages/wotan/src/di/*.module.js"
+    "packages/wotan/src/di/**"
   ],
   "extension": [
-    ".js"
+    ".ts"
   ],
   "reporter": [
-    "lcov",
-    "text-summary"
+    "lcov"
   ],
   "sourceMap": true,
   "all": true,
