@@ -1,6 +1,7 @@
 export {};
 
 declare function get<T>(): T;
+declare function take<T>(p: T): void;
 
 declare class WithMethods {
     foo(): void;
@@ -14,7 +15,7 @@ const foo = 'foo';
     x: 1,
     ~     [error no-duplicate-spread-property: Property 'x' is overridden later.]
     ...{x: 2, y: 2},
-    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     y: 1,
     ...{x: 3},
 });
@@ -47,7 +48,7 @@ const foo = 'foo';
     [get<'foo'>()]: 1,
     ~~~~~~~~~~~~~~     [error no-duplicate-spread-property: Property '[get<'foo'>()]' is overridden later.]
     ...{[get<'foo'>()]: 2},
-    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     ...{[foo]: 3},
 });
 
@@ -105,7 +106,7 @@ const foo = 'foo';
 
 ({
     ...get<WithMethods>(),
-    ~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo() {},
     bar: () => {},
     baz: get<() => void>(),
@@ -113,7 +114,7 @@ const foo = 'foo';
 
 ({
     ...get<{foo: number, bar: number, baz: number}>(),
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo() {},
     bar: () => {},
     baz: get<() => void>(),
@@ -256,7 +257,7 @@ var v: any;
         get foo() { return 1 },
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     },
-~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     get foo() { return 2; },
     set foo(v: number) {},
 });
@@ -279,7 +280,7 @@ var v: any;
 
 ({
     ...get<{bar: number} & Record<'foo' | 'baz', number>>(),
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All properties of this object are overridden later.]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
     foo: 1,
     bar: 1,
     baz: 1,
@@ -295,6 +296,18 @@ var v: any;
     ...get<{bar: number} & Record<string, number>>(),
     bar: 1,
 });
+
+take<{a: string}>({...get<{a: string, b: string}>(), a: ''});
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~           [error no-duplicate-spread-property: All spreadable properties of this object that are relevant for the target type are overridden later.]
+take<Record<string, string>>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
+take<{a: string, b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                  [error no-duplicate-spread-property: All spreadable properties of this object are overridden later.]
+take<{a: string}>({...get<{c: string, b: string}>(), a: ''});
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~           [error no-duplicate-spread-property: Object doesn't contribute spreadable properties relevant for the target type.]
+take<{a: string}>({...get<Record<string, string>>(), a: ''});
 
 function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
     ({foo: 1, ...t, ...u, ...v});
@@ -316,6 +329,11 @@ function test2<T extends Record<'foo', number>, U extends T, V extends T & Recor
     ({foo: 1, bar: 1, ...v});
       ~~~                     [error no-duplicate-spread-property: Property 'foo' is overridden later.]
               ~~~             [error no-duplicate-spread-property: Property 'bar' is overridden later.]
+
+    take<T>({...get<{bar: string}>(), ...u});
+             ~~~~~~~~~~~~~~~~~~~~~~~          [error no-duplicate-spread-property: Object doesn't contribute spreadable properties relevant for the target type.]
+    take<T>({...get<{foo: number, bar: string}>(), ...u});
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~          [error no-duplicate-spread-property: All spreadable properties of this object that are relevant for the target type are overridden later.]
 }
 
 function test3<T>(t: T) {

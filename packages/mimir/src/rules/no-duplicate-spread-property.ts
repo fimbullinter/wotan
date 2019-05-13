@@ -1,18 +1,28 @@
 import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, isClassLikeDeclaration, getPropertyName, isIntersectionType, isUnionType } from 'tsutils';
+import {
+    isReassignmentTarget,
+    isObjectType,
+    isClassLikeDeclaration,
+    getPropertyName,
+    isIntersectionType,
+    isUnionType,
+    isUnionOrIntersectionType,
+} from 'tsutils';
 import { lateBoundPropertyNames } from '../utils';
 
 interface PropertyInfo {
     known: boolean;
     names: ts.__String[];
     assignedNames: ts.__String[];
+    contextFiltered: boolean;
 }
 
 const emptyPropertyInfo: PropertyInfo = {
     known: false,
     names: [],
     assignedNames: [],
+    contextFiltered: false,
 };
 
 @excludeDeclarationFiles
@@ -39,13 +49,27 @@ export class Rule extends TypedRule {
             const property = properties[i];
             const info = this.getPropertyInfo(property);
             const isAccessor = property.kind === ts.SyntaxKind.GetAccessor || property.kind === ts.SyntaxKind.SetAccessor;
-            if (info.known && info.names.every((name) => isAccessor ? propertiesSeen.get(name) === false : propertiesSeen.has(name))) {
-                if (property.kind === ts.SyntaxKind.SpreadAssignment) {
-                    this.addFindingAtNode(property, 'All properties of this object are overridden later.');
-                } else {
-                    this.addFindingAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
-                    if (isAccessor)
-                        continue; // avoid overriding the isAccessor state
+            if (info.known) {
+                if (info.names.length === 0) {
+                    this.addFindingAtNode(
+                        property,
+                        info.contextFiltered
+                            ? "Object doesn't contribute spreadable properties relevant for the target type."
+                            : "Object doesn't contain any properties to spread.",
+                        );
+                } else if (info.names.every((name) => isAccessor ? propertiesSeen.get(name) === false : propertiesSeen.has(name))) {
+                    if (property.kind === ts.SyntaxKind.SpreadAssignment) {
+                        this.addFindingAtNode(
+                            property,
+                            `All spreadable properties of this object${
+                                info.contextFiltered ? ' that are relevant for the target type' : ''
+                            } are overridden later.`,
+                        );
+                    } else {
+                        this.addFindingAtNode(property.name, `Property '${property.name.getText(this.sourceFile)}' is overridden later.`);
+                        if (isAccessor)
+                            continue; // avoid overriding the isAccessor state
+                    }
                 }
             }
             for (const name of info.assignedNames)
@@ -62,6 +86,7 @@ export class Rule extends TypedRule {
                     known: true,
                     names: [property.name.escapedText],
                     assignedNames: [property.name.escapedText],
+                    contextFiltered: false,
                 };
             default: {
                 const staticName = getPropertyName(property.name);
@@ -71,6 +96,7 @@ export class Rule extends TypedRule {
                         known: true,
                         names: [escapedName],
                         assignedNames: [escapedName],
+                        contextFiltered: false,
                     };
                 }
                 const lateBound = lateBoundPropertyNames((<ts.ComputedPropertyName>property.name).expression, this.checker);
@@ -81,14 +107,48 @@ export class Rule extends TypedRule {
                     names,
                     known: true,
                     assignedNames: names.length !== 1 ? [] : names, // if the computed name is a union, it's not sure which will be assigned
+                    contextFiltered: false,
                 };
             }
         }
     }
 
     private getPropertyInfoFromSpread(node: ts.Expression): PropertyInfo {
-        return getPropertyInfoFromType(this.checker.getTypeAtLocation(node)!);
+        const spreadProperties = getPropertyInfoFromType(this.checker.getTypeAtLocation(node)!);
+        if (!spreadProperties.known)
+            return spreadProperties;
+        const contextualType = this.checker.getContextualType(node);
+        if (contextualType === undefined)
+            return spreadProperties;
+        const contextProperties = getContextualProperties(contextualType);
+        if (!contextProperties.known)
+            return spreadProperties;
+        const relevantProperties = spreadProperties.names.filter((prop) => contextProperties.names.includes(prop));
+        if (relevantProperties.length === spreadProperties.names.length)
+            return spreadProperties;
+        return {
+            ...spreadProperties,
+            names: relevantProperties,
+            contextFiltered: true,
+        };
     }
+}
+
+function getContextualProperties(type: ts.Type): PropertyInfo {
+    if (isUnionOrIntersectionType(type))
+        return type.types.map(getContextualProperties).reduce(intersectPropertyInfo);
+    if (type.flags & ts.TypeFlags.Instantiable) {
+        const constraint = type.getConstraint();
+        return constraint === undefined ? emptyPropertyInfo : getContextualProperties(constraint);
+    }
+    if (!isObjectType(type))
+        return emptyPropertyInfo;
+    return {
+        known: type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
+        names: type.getProperties().map((prop) => prop.escapedName),
+        assignedNames: [],
+        contextFiltered: false,
+    };
 }
 
 function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
@@ -108,6 +168,7 @@ function getPropertyInfoFromType(type: ts.Type): PropertyInfo {
         known: type.getStringIndexType() === undefined && type.getNumberIndexType() === undefined,
         names: [],
         assignedNames: [],
+        contextFiltered: false,
     };
     for (const prop of type.getProperties()) {
         if (!isSpreadableProperty(prop))
@@ -131,6 +192,7 @@ function unionPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
         known: a.known && b.known,
         names: [...a.names, ...b.names],
         assignedNames: a.assignedNames.filter((name) => b.assignedNames.includes(name)),
+        contextFiltered: false,
     };
 }
 
@@ -139,5 +201,6 @@ function intersectPropertyInfo(a: PropertyInfo, b: PropertyInfo): PropertyInfo {
         known: a.known && b.known,
         names: [...a.names, ...b.names],
         assignedNames: [...a.assignedNames, ...b.assignedNames],
+        contextFiltered: false,
     };
 }

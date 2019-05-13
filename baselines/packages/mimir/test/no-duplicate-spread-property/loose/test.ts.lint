@@ -1,6 +1,7 @@
 export {};
 
 declare function get<T>(): T;
+declare function take<T>(p: T): void;
 
 declare class WithMethods {
     foo(): void;
@@ -264,6 +265,14 @@ var v: any;
     bar: 1,
 });
 
+take<{a: string}>({...get<{a: string, b: string}>(), a: ''});
+take<Record<string, string>>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: ''});
+take<{a: string} | {b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+take<{a: string, b: string}>({...get<{a: string, b: string}>(), a: '', b: ''});
+take<{a: string}>({...get<{c: string, b: string}>(), a: ''});
+take<{a: string}>({...get<Record<string, string>>(), a: ''});
+
 function test<T, U extends T, V extends any, W extends object>(t: T, u: U, v: V, w: W) {
     ({foo: 1, ...t, ...u, ...v});
     ({valueOf: null, toString: null, ...w}); // make sure we don't use the apparent type
@@ -278,6 +287,9 @@ function test2<T extends Record<'foo', number>, U extends T, V extends T & Recor
     ({...t, ...u, foo: 1});
     ({foo: 1, bar: 1, ...get<T & {bar: number}>()});
     ({foo: 1, bar: 1, ...v});
+
+    take<T>({...get<{bar: string}>(), ...u});
+    take<T>({...get<{foo: number, bar: string}>(), ...u});
 }
 
 function test3<T>(t: T) {
