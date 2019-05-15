@@ -4666,10 +4666,10 @@ type-fest@^0.3.0:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.3.1.tgz#63d00d204e059474fe5e1b7c011112bbd1dc29e1"
   integrity sha512-cUGJnCdr4STbePCgqNFbpVNCepa+kAVohJs1sLhxzdH+gnEoOd8VhbYa7pD3zZYGiURWM2xzEII3fQcRizDkYQ==
 
-typescript@3.5.0-dev.20190514:
-  version "3.5.0-dev.20190514"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.5.0-dev.20190514.tgz#f791a398f2b57cc514434726f690da68144ee73c"
-  integrity sha512-XFEpXv7n2nnYek4SaL09QcN8JnxwVplaPKPquPO12qc9okhN7Afmiu54LT1WP/6RmcXRFma1QKrr8Kfj1nLxYA==
+typescript@3.5.0-dev.20190515:
+  version "3.5.0-dev.20190515"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.5.0-dev.20190515.tgz#e34d9f4ae5352ecbb7bbc2f67db6cef3d5f7d58e"
+  integrity sha512-pE5yxFLdt5gT8PEX1Ra7vWU6HCdo4039be182oeWk8PTBWCWqr/XxlTjRxWfYgycNrI1vMjOux+n2y0aFJ9eUg==
 
 uglify-js@^3.1.4:
   version "3.5.12"
