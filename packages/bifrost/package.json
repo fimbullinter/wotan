@@ -15,7 +15,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/bifrost"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/bifrost"
   },
   "keywords": [
     "wotan",

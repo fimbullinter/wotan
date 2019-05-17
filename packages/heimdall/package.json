@@ -15,7 +15,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/heimdall"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/heimdall"
   },
   "keywords": [
     "wotan",

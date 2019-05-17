@@ -13,7 +13,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/valtyr"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/valtyr"
   },
   "keywords": [
     "wotan",

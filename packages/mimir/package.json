@@ -8,7 +8,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/mimir"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/mimir"
   },
   "keywords": [
     "wotan",
