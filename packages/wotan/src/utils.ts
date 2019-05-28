@@ -141,23 +141,6 @@ export function addUnique<T>(arr: T[], item: T & {[K in keyof T]: T[K]}) {
     return true;
 }
 
-export function createParseConfigHost(
-    host: Required<Pick<ts.CompilerHost, 'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists'>>,
-): ts.ParseConfigHost {
-    return {
-        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
-        readDirectory(rootDir, extensions, excludes, includes, depth) {
-            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
-        },
-        fileExists(f) {
-            return host.fileExists(f);
-        },
-        readFile(f) {
-            return host.readFile(f);
-        },
-    };
-}
-
 export function hasParseErrors(sourceFile: ts.SourceFile) {
     return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
 }

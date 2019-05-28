@@ -17,7 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/mithotyn"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/mithotyn"
   },
   "keywords": [
     "typescript",

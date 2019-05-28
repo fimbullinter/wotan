@@ -4,9 +4,10 @@ import {
     isIdentifier,
     isInSingleStatementContext,
     isBlockScopedDeclarationStatement,
+    unwrapParentheses,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { unwrapParens, tryStatements } from '../utils';
+import { tryStatements } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -94,6 +95,6 @@ function isRethrow(node: ts.CatchClause): boolean {
 function throwsVariable(statement: ts.Statement, name: ts.Identifier): boolean {
     if (!isThrowStatement(statement) || statement.expression === undefined)
         return false;
-    const expression = unwrapParens(statement.expression);
+    const expression = unwrapParentheses(statement.expression);
     return isIdentifier(expression) && expression.escapedText === name.escapedText;
 }

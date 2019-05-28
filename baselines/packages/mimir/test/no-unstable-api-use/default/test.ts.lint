@@ -472,14 +472,14 @@ declare var myIterable: {
 }
 
 myIterable[Symbol.iterator];
-~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Method 'Symbol.iterator' is deprecated: use async iterator instead.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Method '[Symbol.iterator]' is deprecated: use async iterator instead.]
 myIterable['__@iterator'];
 myIterable[Symbol.asyncIterator];
 myIterable['__@asyncIterator'];
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Method '__@asyncIterator' is deprecated.]
 
 const {[Symbol.iterator]: iteratorFn, [Symbol.asyncIterator]: asyncIteratorFn} = myIterable;
-       ~~~~~~~~~~~~~~~~~                                                                     [error no-unstable-api-use: Method 'Symbol.iterator' is deprecated: use async iterator instead.]
+       ~~~~~~~~~~~~~~~~~                                                                     [error no-unstable-api-use: Method '[Symbol.iterator]' is deprecated: use async iterator instead.]
 
 /**@deprecated var*/
 declare var myDeprecatedCallable: {

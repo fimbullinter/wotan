@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/ve"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/ve"
   },
   "keywords": [
     "wotan",

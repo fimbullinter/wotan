@@ -38,6 +38,8 @@ e as typeof e;
 ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 let f: Array<[number, string]> = ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 
+[] as [];
+
 declare const g: '1.0';
 g as string === '2.0';
 declare let h: Array<'a' | 'b' | 'c'>;
