@@ -10,9 +10,10 @@ import {
     isPropertyAssignment,
     isReassignmentTarget,
     isShorthandPropertyAssignment,
+    getLateBoundPropertyNames,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { elementAccessSymbols, propertiesOfType, lateBoundPropertyNames } from '../utils';
+import { elementAccessSymbols, propertiesOfType } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 const signatureFormatFlags = ts.TypeFormatFlags.UseFullyQualifiedType | ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
@@ -74,7 +75,7 @@ export class Rule extends TypedRule {
                 } else {
                     for (const {symbol, name} of propertiesOfType(
                             type,
-                            lateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker).properties,
+                            getLateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker).names,
                         )
                     )
                         this.checkStability(symbol, element.propertyName, name, describeWithName);

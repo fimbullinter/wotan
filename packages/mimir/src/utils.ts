@@ -6,10 +6,9 @@ import {
     VariableUse,
     UsageDomain,
     isReassignmentTarget,
-    isPropertyAccessExpression,
-    isIdentifier,
-    unionTypeParts,
-    isLiteralType,
+    getPropertyOfType,
+    getLateBoundPropertyNames,
+    PropertyName,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -172,61 +171,18 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {argumentExpression} = node;
     if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
         return;
-    const {properties} = lateBoundPropertyNames(argumentExpression, checker);
-    if (properties.length === 0)
+    const {names} = getLateBoundPropertyNames(argumentExpression, checker);
+    if (names.length === 0)
         return;
-    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), properties);
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), names);
 }
 
-export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
-    for (const {symbolName, name} of names) {
+export function *propertiesOfType(type: ts.Type, names: Iterable<PropertyName>) {
+    for (const {symbolName, displayName} of names) {
         const symbol = getPropertyOfType(type, symbolName);
         if (symbol !== undefined)
-            yield {symbol, name};
+            yield {symbol, name: displayName};
     }
-}
-
-export function getPropertyOfType(type: ts.Type, name: ts.__String) {
-    return type.getProperties().find((s) => s.escapedName === name);
-}
-
-export interface LateBoundPropertyInfo {
-    known: boolean;
-    properties: LateBoundPropertyName[];
-}
-
-export interface LateBoundPropertyName {
-    name: string;
-    symbolName: ts.__String;
-}
-
-export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChecker): LateBoundPropertyInfo {
-    let known = true;
-    const properties = [];
-    if (
-        isPropertyAccessExpression(node) &&
-        isIdentifier(node.expression) &&
-        node.expression.text === 'Symbol'
-    ) {
-        properties.push({
-            name: `Symbol.${node.name.text}`,
-            symbolName: <ts.__String>`__@${node.name.text}`,
-        });
-    } else {
-        const type = checker.getTypeAtLocation(node)!;
-        for (const key of unionTypeParts(checker.getBaseConstraintOfType(type) || type)) {
-            if (isLiteralType(key)) {
-                const name = String(key.value);
-                properties.push({
-                    name,
-                    symbolName: ts.escapeLeadingUnderscores(name),
-                });
-            } else {
-                known = false;
-            }
-        }
-    }
-    return {known, properties};
 }
 
 export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
@@ -254,10 +210,4 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
 
 export function formatPseudoBigInt(v: ts.PseudoBigInt) {
     return `${v.negative ? '-' : ''}${v.base10Value}n`;
-}
-
-export function unwrapParens(node: ts.Expression) {
-    while (node.kind === ts.SyntaxKind.ParenthesizedExpression)
-        node = (<ts.ParenthesizedExpression>node).expression;
-    return node;
 }

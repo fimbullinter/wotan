@@ -13,8 +13,11 @@ import {
     isStrictCompilerOptionEnabled,
     isInstantiableType,
     isUnionType,
+    PropertyName,
+    getPropertyOfType,
+    getLateBoundPropertyNames,
+    LateBoundPropertyNames,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -90,7 +93,7 @@ export class Rule extends AbstractRule {
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
                 continue;
             const lateBoundNames = propNames(element, i, checker);
-            if (!lateBoundNames.known || lateBoundNames.properties.some(maybeUndefined))
+            if (!lateBoundNames.known || lateBoundNames.names.some(maybeUndefined))
                 continue;
             // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
             // destructured type. The type of the variable then includes the type of the initializer as well.
@@ -98,7 +101,7 @@ export class Rule extends AbstractRule {
             this.addFindingAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
         }
 
-        function maybeUndefined({symbolName}: LateBoundPropertyName) {
+        function maybeUndefined({symbolName}: PropertyName) {
             const symbol = getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!)), symbolName);
             return symbol === undefined || symbolMaybeUndefined(checker, symbol, node);
         }
@@ -144,17 +147,17 @@ export class Rule extends AbstractRule {
     }
 }
 
-function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker) {
+function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker): LateBoundPropertyNames {
     const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
     return staticName !== undefined
-        ? {known: true, properties: [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
-        : lateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
+        ? {known: true, names: [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
+        : getLateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
 
 }
 
-function getArrayPropertyName(_: ts.BindingElement, i: number) {
+function getArrayPropertyName(_: ts.BindingElement, i: number): LateBoundPropertyNames {
     const name = String(i);
-    return {known: true, properties: [{name, symbolName: <ts.__String>name}]};
+    return {known: true, names: [{displayName: name, symbolName: <ts.__String>name}]};
 }
 
 function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
