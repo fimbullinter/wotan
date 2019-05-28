@@ -11,14 +11,16 @@ import {
     isMethodDeclaration,
     isPropertyDeclaration,
     getPropertyName,
-    isValidNumericLiteral,
     removeOptionalityFromType,
     isArrowFunction,
     getModifier,
     isFunctionExpression,
     getChildOfKind,
+    isNumericPropertyName,
+    getLateBoundPropertyNames,
+    PropertyName,
+    getPropertyOfType,
 } from 'tsutils';
-import { getPropertyOfType, lateBoundPropertyNames, LateBoundPropertyName } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -75,16 +77,16 @@ export class Rule extends TypedRule {
             return;
         }
         const staticName = getPropertyName(node.name);
-        const properties: LateBoundPropertyName[] = staticName !== undefined
-            ? [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : lateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, checker).properties;
-        for (const {name, symbolName} of properties)
+        const properties: PropertyName[] = staticName !== undefined
+            ? [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
+            : getLateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, checker).names;
+        for (const {displayName, symbolName} of properties)
             for (const heritageClause of clazz.heritageClauses)
                 for (const base of heritageClause.types)
                     if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
                         return this.addFindingAtNode(
                             getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
-                            `Overriding 'void'-returning method '${name}' of base type with a 'Promise'-returning method is unsafe.`,
+                            `Overriding 'void'-returning method '${displayName}' of base type with a 'Promise'-returning method is unsafe.`,
                         );
     }
 
@@ -98,22 +100,21 @@ export class Rule extends TypedRule {
         const contextualType = this.checker.getContextualType(parent);
         if (contextualType === undefined)
             return;
-        const properties: LateBoundPropertyName[] = staticName !== undefined
-            ? [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : lateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, this.checker).properties;
-        for (const {name, symbolName} of properties) {
+        const properties: PropertyName[] = staticName !== undefined
+            ? [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
+            : getLateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, this.checker).names;
+        for (const {displayName, symbolName} of properties) {
             const property = getPropertyOfType(contextualType, symbolName);
             const propertyType = property
                 ? this.checker.getTypeOfSymbolAtLocation(property, parent)
-                : isValidNumericLiteral(name) && String(+name) === name && contextualType.getNumberIndexType() ||
-                    contextualType.getStringIndexType();
+                : isNumericPropertyName(displayName) && contextualType.getNumberIndexType() || contextualType.getStringIndexType();
             if (!returnTypeMatches(propertyType, this.checker, isVoidType))
                 continue;
             const signature = this.checker.getSignatureFromDeclaration(node);
             if (signature !== undefined && typeContainsThenable(signature.getReturnType(), this.checker, node))
                 return this.addFindingAtNode(
                     getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
-                    `'Promise'-returning method '${name}' should not be assigned to a 'void'-returning function type.`,
+                    `'Promise'-returning method '${displayName}' should not be assigned to a 'void'-returning function type.`,
                 );
         }
     }

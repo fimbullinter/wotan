@@ -5,7 +5,6 @@ import {
     isVariableDeclaration,
     hasModifier,
     isFunctionScopeBoundary,
-    isObjectType,
     unionTypeParts,
     isFunctionExpression,
     isArrowFunction,
@@ -14,6 +13,8 @@ import {
     isStrictCompilerOptionEnabled,
     isConstAssertion,
     isInConstContext,
+    isTypeReference,
+    isTupleType,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -105,7 +106,7 @@ export class Rule extends TypedRule {
         }
         let targetType = this.checker.getTypeFromTypeNode(node.type);
         if ((targetType.flags & ts.TypeFlags.Literal) !== 0 && !isInConstContext(node) || // allow "foo" as "foo" to avoid widening
-            isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
+            isTupleType(isTypeReference(targetType) ? targetType.target : targetType))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
@@ -239,28 +240,4 @@ function isInlinedIife(node: ts.Node): boolean {
         node.asteriskToken === undefined && // exclude generators
         !hasModifier(node.modifiers, ts.SyntaxKind.AsyncKeyword) && // exclude async functions
         getIIFE(node) !== undefined;
-}
-
-/**
- * Sometimes tuple types don't have ObjectFlags.Tuple set, like when they're being matched against an inferred type.
- * So, in addition, check if there are integer properties 0..n and no other numeric keys
- */
-function couldBeTupleType(type: ts.ObjectType): boolean {
-    const properties = type.getProperties();
-    if (properties.length === 0)
-        return false;
-    let i = 0;
-    for (; i < properties.length; ++i) {
-        const name = properties[i].escapedName;
-        if (String(i) !== name) {
-            if (i === 0)
-                // if there are no integer properties, this is not a tuple
-                return false;
-            break;
-        }
-    }
-    for (; i < properties.length; ++i)
-        if (String(+properties[i].escapedName) === properties[i].escapedName)
-            return false;
-    return true;
 }

@@ -1,6 +1,6 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { lateBoundPropertyNames, propertiesOfType } from '../utils';
+import { propertiesOfType } from '../utils';
 import {
     isThisParameter,
     isTypeParameter,
@@ -9,6 +9,7 @@ import {
     isFunctionScopeBoundary,
     isMethodDeclaration,
     hasModifier,
+    getLateBoundPropertyNames,
  } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -20,11 +21,11 @@ export class Rule extends TypedRule {
     }
 
     private checkElementAccess(node: ts.ElementAccessExpression) {
-        const {properties} = lateBoundPropertyNames(node.argumentExpression, this.checker);
-        if (properties.length === 0)
+        const {names} = getLateBoundPropertyNames(node.argumentExpression, this.checker);
+        if (names.length === 0)
             return;
         const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
-        for (const {symbol, name} of propertiesOfType(type, properties))
+        for (const {symbol, name} of propertiesOfType(type, names))
             this.checkSymbol(symbol, name, node, node.expression, type);
     }
 

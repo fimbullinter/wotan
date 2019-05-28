@@ -55,7 +55,7 @@ delete optional.d;
 delete [].length;
 ~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'length' is required.]
 delete [][Symbol.iterator];
-~~~~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'Symbol.iterator' is required.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '[Symbol.iterator]' is required.]
 
 declare var myArrayLike: {
     0: string;

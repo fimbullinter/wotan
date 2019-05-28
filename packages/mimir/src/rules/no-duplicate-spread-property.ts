@@ -1,7 +1,14 @@
 import { TypedRule, excludeDeclarationFiles, requiresCompilerOption } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isReassignmentTarget, isObjectType, isClassLikeDeclaration, getPropertyName, isIntersectionType, isUnionType } from 'tsutils';
-import { lateBoundPropertyNames } from '../utils';
+import {
+    isReassignmentTarget,
+    isObjectType,
+    isClassLikeDeclaration,
+    getPropertyName,
+    isIntersectionType,
+    isUnionType,
+    getLateBoundPropertyNames,
+} from 'tsutils';
 
 interface PropertyInfo {
     known: boolean;
@@ -73,10 +80,10 @@ export class Rule extends TypedRule {
                         assignedNames: [escapedName],
                     };
                 }
-                const lateBound = lateBoundPropertyNames((<ts.ComputedPropertyName>property.name).expression, this.checker);
+                const lateBound = getLateBoundPropertyNames((<ts.ComputedPropertyName>property.name).expression, this.checker);
                 if (!lateBound.known)
                     return emptyPropertyInfo;
-                const names = lateBound.properties.map((p) => p.symbolName);
+                const names = lateBound.names.map((p) => p.symbolName);
                 return {
                     names,
                     known: true,
