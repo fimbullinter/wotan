@@ -161,7 +161,7 @@ export abstract class AbstractRule {
 
     public readonly sourceFile: ts.SourceFile;
 
-    public get program() {
+    public get program(): this['context']['program'] {
         return this.context.program;
     }
 
@@ -193,8 +193,6 @@ export abstract class ConfigurableRule<T> extends AbstractRule {
 
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
-    public readonly context!: TypedRuleContext;
-    public readonly program!: ts.Program;
 
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
     public get checker() {
@@ -203,7 +201,7 @@ export abstract class TypedRule extends AbstractRule {
         return checker;
     }
 
-    constructor(context: TypedRuleContext) {
+    constructor(public readonly context: TypedRuleContext) {
         super(context);
     }
 }

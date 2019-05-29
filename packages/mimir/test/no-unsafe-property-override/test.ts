@@ -11,8 +11,26 @@ class Base {
     get [name]() { return 1; }
     get [Symbol.toStringTag]() {return 'A'};
 }
+
+abstract class AbstractDerived extends Base {
+    prop = 1;
+}
+
+class Incomplete extends implements Object {
+    prop = 1;
+}
+
+class Implements implements Base {
+    prop: number;
+    prop2: number;
+    prop3: number;
+    prop4: number;
+    prop5: number;
+    [Symbol.toStringTag]: string;
+}
+
 const prop4 = 'prop4';
-class Derived extends Base {
+export class Derived extends Base {
     prop = 1;
     'prop2' = 1;
     'prop3' = 1;
@@ -22,7 +40,7 @@ class Derived extends Base {
     [Symbol.toStringTag] = 'B';
 }
 
-class Derived2 extends ((): new () => Readonly<Record<'foo', number>> => undefined!)() {
+/** @class */ class Derived2 extends ((): new () => Readonly<Record<'foo', number>> => undefined!)() {
     foo = 1;
 }
 

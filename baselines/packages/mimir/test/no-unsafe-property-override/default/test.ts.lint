@@ -11,8 +11,27 @@ class Base {
     get [name]() { return 1; }
     get [Symbol.toStringTag]() {return 'A'};
 }
+
+abstract class AbstractDerived extends Base {
+    prop = 1;
+    ~~~~      [error no-unsafe-property-override: Overriding readonly property 'prop' might fail at runtime.]
+}
+
+class Incomplete extends implements Object {
+    prop = 1;
+}
+
+class Implements implements Base {
+    prop: number;
+    prop2: number;
+    prop3: number;
+    prop4: number;
+    prop5: number;
+    [Symbol.toStringTag]: string;
+}
+
 const prop4 = 'prop4';
-class Derived extends Base {
+export class Derived extends Base {
     prop = 1;
     ~~~~      [error no-unsafe-property-override: Overriding readonly property 'prop' might fail at runtime.]
     'prop2' = 1;
@@ -27,7 +46,7 @@ class Derived extends Base {
     ~~~~~~~~~~~~~~~~~~~~        [error no-unsafe-property-override: Overriding readonly property '[Symbol.toStringTag]' might fail at runtime.]
 }
 
-class Derived2 extends ((): new () => Readonly<Record<'foo', number>> => undefined!)() {
+/** @class */ class Derived2 extends ((): new () => Readonly<Record<'foo', number>> => undefined!)() {
     foo = 1;
     ~~~      [error no-unsafe-property-override: Overriding readonly property 'foo' might fail at runtime.]
 }
