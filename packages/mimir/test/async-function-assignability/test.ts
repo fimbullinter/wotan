@@ -99,3 +99,7 @@ const otherName = 'overloaded';
     async baz() {}
     bas() {}
 });
+
+(class extends C<void> {
+    async ["f" + "oo"]() {}
+});
