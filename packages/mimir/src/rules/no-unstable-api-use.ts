@@ -11,6 +11,8 @@ import {
     isReassignmentTarget,
     isShorthandPropertyAssignment,
     getLateBoundPropertyNames,
+    getLateBoundPropertyNamesOfPropertyName,
+    getPropertyOfType,
 } from 'tsutils';
 import * as ts from 'typescript';
 import { elementAccessSymbols, propertiesOfType } from '../utils';
@@ -30,12 +32,12 @@ export class Rule extends TypedRule {
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
             } else if (isPropertyAssignment(node)) {
-                if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
+                if (isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node);
             } else if (isShorthandPropertyAssignment(node)) {
                 this.checkSymbol(this.checker.getShorthandAssignmentValueSymbol(node), node, node.name.text);
                 if (isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
+                    this.checkObjectDestructuring(node);
             } else if (isCallLikeExpression(node)) {
                 this.checkSignature(node);
             } else if (isObjectBindingPattern(node)) {
@@ -46,10 +48,20 @@ export class Rule extends TypedRule {
         }
     }
 
-    private checkObjectDestructuring(node: ts.Identifier) {
-        const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
-        if (symbol !== undefined)
-            return this.checkStability(symbol, node, node.text, describeWithName);
+    private checkObjectDestructuring(node: ts.PropertyAssignment | ts.ShorthandPropertyAssignment) {
+        // for compatibility with typescript@<3.5.0
+        if (this.checker.getTypeOfAssignmentPattern) {
+            const type = this.checker.getTypeOfAssignmentPattern(node.parent!);
+            for (const {symbolName, displayName} of getLateBoundPropertyNamesOfPropertyName(node.name, this.checker).names) {
+                const symbol = getPropertyOfType(type, symbolName);
+                if (symbol !== undefined)
+                    this.checkStability(symbol, node.name, displayName, describeWithName);
+            }
+        } else if (node.name.kind === ts.SyntaxKind.Identifier) {
+            const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node.name);
+            if (symbol !== undefined)
+                return this.checkStability(symbol, node, node.name.text, describeWithName);
+        }
     }
 
     private checkSignature(node: ts.CallLikeExpression) {
