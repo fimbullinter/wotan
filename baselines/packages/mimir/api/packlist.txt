@@ -76,6 +76,9 @@ src/rules/no-unreachable-code.js.map
 src/rules/no-unsafe-finally.d.ts
 src/rules/no-unsafe-finally.js
 src/rules/no-unsafe-finally.js.map
+src/rules/no-unsafe-property-override.d.ts
+src/rules/no-unsafe-property-override.js
+src/rules/no-unsafe-property-override.js.map
 src/rules/no-unstable-api-use.d.ts
 src/rules/no-unstable-api-use.js
 src/rules/no-unstable-api-use.js.map

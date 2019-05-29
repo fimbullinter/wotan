@@ -3,28 +3,13 @@ import {
     WrappedAst,
     getWrappedNodeAtPosition,
     isPropertyDeclaration,
-    isInConstContext,
-    isObjectFlagSet,
-    isObjectType,
-    isTypeReference,
-    isTupleType,
-    isPropertyAccessExpression,
-    isIdentifier,
-    isEntityNameExpression,
-    isPropertyAssignment,
-    unionTypeParts,
-    isSymbolFlagSet,
-    isIntersectionType,
-    isCallExpression,
-    isShorthandPropertyAssignment,
-    isVariableDeclaration,
+    isPropertyReadonlyInType,
+    getSingleLateBoundPropertyNameOfPropertyName,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { getPropertyOfType } from '../utils';
 
 export class Rule extends TypedRule {
     public apply() {
-        debugger;
         const re = /\bextends\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
@@ -41,14 +26,13 @@ export class Rule extends TypedRule {
             for (const member of node.parent!.members) {
                 if (!isPropertyDeclaration(member))
                     continue;
-                const symbol = this.checker.getSymbolAtLocation(member.name);
-                if (symbol === undefined)
+                const name = getSingleLateBoundPropertyNameOfPropertyName(member.name, this.checker);
+                if (name === undefined)
                     continue;
                 if (baseType === undefined)
                     baseType = this.checker.getTypeAtLocation(node.types[0]);
                 if (
-                    getPropertyOfType(baseType, symbol.escapedName) !== undefined &&
-                    isPropertyReadonlyInType(baseType, symbol.escapedName, this.checker)
+                    isPropertyReadonlyInType(baseType, name.symbolName, this.checker)
                 )
                     this.addFindingAtNode(
                         member.name,
