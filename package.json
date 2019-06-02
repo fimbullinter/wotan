@@ -59,9 +59,9 @@
     "ttypescript": "^1.5.5"
   },
   "devDependencies": {
-    "typescript": "3.5.0-dev.20190525"
+    "typescript": "3.6.0-dev.20190601"
   },
   "peerDependencies": {
-    "typescript": ">= 3.2.0 || >= 3.4.0-dev || >= 3.5.0-dev"
+    "typescript": ">= 3.3.0 || >= 3.6.0-dev || >= 3.7.0-dev"
   }
 }
