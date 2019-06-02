@@ -7,7 +7,6 @@ import {
     isUnionTypeNode,
     getPreviousToken,
     getNextToken,
-    getPropertyName,
     isReassignmentTarget,
     isBinaryExpression,
     isStrictCompilerOptionEnabled,
@@ -15,8 +14,8 @@ import {
     isUnionType,
     PropertyName,
     getPropertyOfType,
-    getLateBoundPropertyNames,
     LateBoundPropertyNames,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -148,10 +147,12 @@ export class Rule extends AbstractRule {
 }
 
 function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker): LateBoundPropertyNames {
-    const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
-    return staticName !== undefined
-        ? {known: true, names: [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
-        : getLateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
+    if (property.propertyName === undefined)
+        return {
+            known: true,
+            names: [{displayName: (<ts.Identifier>property.name).text, symbolName: (<ts.Identifier>property.name).escapedText }],
+        };
+    return getLateBoundPropertyNamesOfPropertyName(property.propertyName, checker);
 
 }
 

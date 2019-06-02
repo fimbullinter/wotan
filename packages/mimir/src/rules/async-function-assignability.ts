@@ -10,16 +10,15 @@ import {
     isThenableType,
     isMethodDeclaration,
     isPropertyDeclaration,
-    getPropertyName,
     removeOptionalityFromType,
     isArrowFunction,
     getModifier,
     isFunctionExpression,
     getChildOfKind,
     isNumericPropertyName,
-    getLateBoundPropertyNames,
-    PropertyName,
     getPropertyOfType,
+    getSingleLateBoundPropertyNameOfPropertyName,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -76,18 +75,17 @@ export class Rule extends TypedRule {
         } else if (!returnTypeMatches(checker.getTypeAtLocation(node), checker, typeContainsThenable, clazz)) {
             return;
         }
-        const staticName = getPropertyName(node.name);
-        const properties: PropertyName[] = staticName !== undefined
-            ? [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : getLateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, checker).names;
-        for (const {displayName, symbolName} of properties)
-            for (const heritageClause of clazz.heritageClauses)
-                for (const base of heritageClause.types)
-                    if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
-                        return this.addFindingAtNode(
-                            getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
-                            `Overriding 'void'-returning method '${displayName}' of base type with a 'Promise'-returning method is unsafe.`,
-                        );
+        const property = getSingleLateBoundPropertyNameOfPropertyName(node.name, this.checker);
+        if (property === undefined)
+            return;
+        const {displayName, symbolName} = property;
+        for (const heritageClause of clazz.heritageClauses)
+            for (const base of heritageClause.types)
+                if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
+                    return this.addFindingAtNode(
+                        getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
+                        `Overriding 'void'-returning method '${displayName}' of base type with a 'Promise'-returning method is unsafe.`,
+                    );
     }
 
     private getTypeOfProperty(classType: ts.Type, name: ts.__String, node: ts.Node) {
@@ -96,18 +94,14 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectMethodDeclaration(node: ts.MethodDeclaration, parent: ts.ObjectLiteralExpression) {
-        const staticName = getPropertyName(node.name);
         const contextualType = this.checker.getContextualType(parent);
         if (contextualType === undefined)
             return;
-        const properties: PropertyName[] = staticName !== undefined
-            ? [{displayName: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : getLateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, this.checker).names;
-        for (const {displayName, symbolName} of properties) {
+        for (const {displayName, symbolName} of getLateBoundPropertyNamesOfPropertyName(node.name, this.checker).names) {
             const property = getPropertyOfType(contextualType, symbolName);
-            const propertyType = property
+            const propertyType = property !== undefined
                 ? this.checker.getTypeOfSymbolAtLocation(property, parent)
-                : isNumericPropertyName(displayName) && contextualType.getNumberIndexType() || contextualType.getStringIndexType();
+                : isNumericPropertyName(symbolName) && contextualType.getNumberIndexType() || contextualType.getStringIndexType();
             if (!returnTypeMatches(propertyType, this.checker, isVoidType))
                 continue;
             const signature = this.checker.getSignatureFromDeclaration(node);
