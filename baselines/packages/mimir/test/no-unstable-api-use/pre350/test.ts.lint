@@ -320,7 +320,7 @@ namespace MyClass {
     let c: {};
     ({a, c: b, ...c} = obj);
       ~                      [error no-unstable-api-use: Property 'a' is deprecated: a]
-         ~                   [error no-unstable-api-use: Property 'c' is deprecated: c]
+         ~~~~                [error no-unstable-api-use: Property 'c' is deprecated: c]
 }
 
 {
@@ -355,9 +355,6 @@ namespace MyClass {
          ~~~               [error no-unstable-api-use: Property 'c' is deprecated: c]
     let v: string;
     ({[k]: v} = obj);
-      ~~~             [error no-unstable-api-use: Property 'a' is deprecated: a]
-      ~~~             [error no-unstable-api-use: Property 'b' is deprecated: b]
-      ~~~             [error no-unstable-api-use: Property 'c' is deprecated: c]
 }
 
 {

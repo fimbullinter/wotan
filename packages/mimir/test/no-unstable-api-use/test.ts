@@ -270,7 +270,7 @@ namespace MyClass {
     let k: keyof typeof obj = null as any;
     let {[k]: prop} = obj;
     let v: string;
-    ({[k]: v} = obj); // TODO this would be possible with some effort
+    ({[k]: v} = obj);
 }
 
 {
