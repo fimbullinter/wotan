@@ -4,10 +4,9 @@ import {
     isReassignmentTarget,
     isObjectType,
     isClassLikeDeclaration,
-    getPropertyName,
     isIntersectionType,
     isUnionType,
-    getLateBoundPropertyNames,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 
 interface PropertyInfo {
@@ -71,16 +70,7 @@ export class Rule extends TypedRule {
                     assignedNames: [property.name.escapedText],
                 };
             default: {
-                const staticName = getPropertyName(property.name);
-                if (staticName !== undefined) {
-                    const escapedName = ts.escapeLeadingUnderscores(staticName);
-                    return {
-                        known: true,
-                        names: [escapedName],
-                        assignedNames: [escapedName],
-                    };
-                }
-                const lateBound = getLateBoundPropertyNames((<ts.ComputedPropertyName>property.name).expression, this.checker);
+                const lateBound = getLateBoundPropertyNamesOfPropertyName(property.name, this.checker);
                 if (!lateBound.known)
                     return emptyPropertyInfo;
                 const names = lateBound.names.map((p) => p.symbolName);
