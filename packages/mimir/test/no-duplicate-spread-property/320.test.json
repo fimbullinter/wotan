@@ -1,5 +1,0 @@
-{
-  "project": "tsconfig.json",
-  "files": "*.ts",
-  "typescriptVersion": "~3.2.0"
-}

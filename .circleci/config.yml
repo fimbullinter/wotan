@@ -6,13 +6,13 @@ workflows:
       - test:
           requires:
             - build
-      - test@3.2:
-          requires:
-            - build
       - test@3.3:
           requires:
             - build
       - test@3.4:
+          requires:
+            - build
+      - test@3.5:
           requires:
             - build
 
@@ -77,21 +77,21 @@ jobs:
     docker:
       - image: circleci/node:12
     <<: *base
-  test@3.2:
-    docker:
-      - image: circleci/node:8@sha256:316f179402ccbe1041a85c73b1ea318ff90123d318a46660e4a27d3bbac6785c
-    environment:
-      typescriptVersion: "3.2"
-    <<: *base
   test@3.3:
     docker:
-      - image: circleci/node:10@sha256:8c1725cd6a55f99ece5bad3b153a8d8b8bc0fe93cea862b53d8c3823ff0ae371
+      - image: circleci/node:8@sha256:316f179402ccbe1041a85c73b1ea318ff90123d318a46660e4a27d3bbac6785c
     environment:
       typescriptVersion: "3.3"
     <<: *base
   test@3.4:
     docker:
-      - image: circleci/node:11@sha256:9666cb5c935b9360dbad0b3ac22b49a49aaee2a20371a94214ed04968210e7f8
+      - image: circleci/node:10@sha256:8c1725cd6a55f99ece5bad3b153a8d8b8bc0fe93cea862b53d8c3823ff0ae371
     environment:
       typescriptVersion: "3.4"
+    <<: *base
+  test@3.5:
+    docker:
+      - image: circleci/node:11@sha256:9666cb5c935b9360dbad0b3ac22b49a49aaee2a20371a94214ed04968210e7f8
+    environment:
+      typescriptVersion: "3.5"
     <<: *base
