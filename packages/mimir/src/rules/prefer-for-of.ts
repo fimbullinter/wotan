@@ -11,12 +11,13 @@ import {
     collectVariableUsage,
     VariableUse,
     isElementAccessExpression,
-    isReassignmentTarget,
     unionTypeParts,
     isIntersectionType,
     isTypeReference,
     isTypeFlagSet,
     isSymbolFlagSet,
+    getAccessKind,
+    AccessKind,
 } from 'tsutils';
 import * as path from 'path';
 import { typesAreEqual } from '../utils';
@@ -168,7 +169,7 @@ function isReadonlyArrayAccess(uses: VariableUse[], arrayVariable: string, state
         if (!isElementAccessExpression(parent) ||
             parent.argumentExpression !== use ||
             parent.expression.getText(sourceFile) !== arrayVariable ||
-            isReassignmentTarget(parent))
+            getAccessKind(parent) & AccessKind.Modification)
             return false;
         arrayAccess = true;
     }

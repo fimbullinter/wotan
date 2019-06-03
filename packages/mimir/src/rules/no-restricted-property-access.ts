@@ -10,6 +10,7 @@ import {
     isMethodDeclaration,
     hasModifier,
     getLateBoundPropertyNames,
+    getConstructorTypeOfClassLikeDeclaration,
  } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -124,7 +125,7 @@ export class Rule extends TypedRule {
             switch (node.kind) {
                 case ts.SyntaxKind.ClassDeclaration:
                 case ts.SyntaxKind.ClassExpression: {
-                    const declaredType = this.getDeclaredType(<ts.ClassLikeDeclaration>node);
+                    const declaredType = getConstructorTypeOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node, this.checker);
                     if (baseClasses.every((baseClass) => hasBase(declaredType, baseClass, typeContainsDeclaration)))
                         return declaredType;
                     break;
@@ -137,15 +138,7 @@ export class Rule extends TypedRule {
     }
 
     private printClass(declaration: ts.ClassLikeDeclaration) {
-        return this.checker.typeToString(this.getDeclaredType(declaration));
-    }
-
-    private getDeclaredType(declaration: ts.ClassLikeDeclaration) {
-        return this.checker.getDeclaredTypeOfSymbol(
-            declaration.name !== undefined
-                ? this.checker.getSymbolAtLocation(declaration.name)!
-                : this.checker.getTypeAtLocation(declaration).symbol!,
-        );
+        return this.checker.typeToString(getConstructorTypeOfClassLikeDeclaration(declaration, this.checker));
     }
 }
 
