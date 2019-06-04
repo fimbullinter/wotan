@@ -11,7 +11,7 @@ import {
     hasModifier,
     getLateBoundPropertyNames,
     getConstructorTypeOfClassLikeDeclaration,
- } from 'tsutils';
+} from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
