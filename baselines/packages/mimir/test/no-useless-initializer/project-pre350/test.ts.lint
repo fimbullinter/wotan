@@ -18,11 +18,8 @@
     let rest, a: number | undefined, b: number | undefined, e: number | undefined;
     const tuple: [number, number?] = [1, 2];
     [a = 1, e = 2] = tuple;
-         ~                  [error no-useless-initializer: Unnecessary default value as this element is never 'undefined'.]
     [, a = 1, ...rest] = [1, 2];
-           ~                     [error no-useless-initializer: Unnecessary default value as this element is never 'undefined'.]
     [a = 1, b = undefined ] = [1];
-         ~                         [error no-useless-initializer: Unnecessary default value as this element is never 'undefined'.]
     [a = 1] = rest;
 }
 {
@@ -116,7 +113,6 @@ declare function get<T>(): T;
     ({prop = ''} = obj);
              ~~          [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     ({'prop': prop = ''} = obj);
-                     ~~          [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]
     ({prop = ''} = {});
     ({prop: prop = ''} = get<typeof obj>());
                    ~~                        [error no-useless-initializer: Unnecessary default value as this property is never 'undefined'.]

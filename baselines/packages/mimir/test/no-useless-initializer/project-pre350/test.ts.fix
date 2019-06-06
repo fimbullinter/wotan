@@ -84,14 +84,14 @@ declare function get<T>(): T;
     let {nested: {prop: nestedProp = 'nestedProp'} = obj} = get<{nested: typeof obj}>();
     let {toString = () => 'foo'} = 1;
 
-    ({toString = () => 'foo'} = 2);
+    ({toString} = 2);
 
     ({prop} = obj);
     ({prop = ''} = {prop: 'foo'});
-    ({prop = ''} = obj);
+    ({prop} = obj);
     ({'prop': prop = ''} = obj);
     ({prop = ''} = {});
-    ({prop: prop = ''} = get<typeof obj>());
+    ({prop: prop} = get<typeof obj>());
     ({prop: prop} = get<typeof obj>());
     ({prop = ''} = get<{prop?: string}>());
     ({...{}} = obj);
