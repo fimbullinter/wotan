@@ -1,5 +1,36 @@
 # Change Log
 
+## v0.21.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.1 and v3.2 is no longer officially supported
+* Node.js v6 is no longer supported
+* `Rule.supports` can now return a string respresenting the reason for not supporting the file
+* `Linter#lintAndFix` now requires a `ProgramFactory` instead of `Program`
+* `Linter#lintAndFix` `UpdateFileCallback` is now expected to only return a `SourceFile`
+* `no-inferred-empty-object` was renamed to `no-uninferred-type-parameter`
+
+**Features:**
+
+* rules now debuglog the reason for not supporting a certain file
+* performance improvements
+  * when linting with `--project --references`
+    * parsed `tsconfig.json` files are cached for all project references
+  * when linting with `--project --fix`
+    * the project's dependency graph is recalculated lazily the next time a typed rule reuqests type information after fixing a file
+    * module resolutions are cached between fixes
+* `no-uninferred-type-parameter` properly handles new default constraint `unknown`
+* `no-uninferred-type-parameter` now detects uninferred type parameters in JS code falling back to `any`
+* `no-uninferred-type-parameter` correctly handles higher order function types
+* `no-useless-initializer` checks array destructuring
+* better handling of computed property names
+* better handling of object and array destructuring assignments
+
+**Bugfixes:**
+
+* comments are now included in the transpiled code and declaration files, this makes JSDoc and deprecations visible to API consumers
+
 ## v0.20.0
 
 :tada: Since the last release we published an [official extension for VSCode](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).
