@@ -8,6 +8,9 @@ const log = debug('wotan:argparse');
 
 // @internal
 export function parseArguments(args: string[], globalOptions?: GlobalOptions): Command {
+    log('Parsing arguments: %O', args);
+    if (globalOptions !== undefined)
+        log('global options: %O', globalOptions);
     args = args.map(trimSingleQuotes);
     const commandName = <CommandName>args[0];
     let command: Command;

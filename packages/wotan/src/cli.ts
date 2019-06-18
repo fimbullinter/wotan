@@ -39,5 +39,7 @@ export function loadConfig(dir: string) {
     });
 }
 
-if (require.main === module)
+if (require.main === module) {
+    log('CLI arguments: %O', process.argv);
     run(process.argv.slice(2));
+}
