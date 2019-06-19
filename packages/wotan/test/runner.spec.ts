@@ -63,6 +63,27 @@ test('throws error on file not included in project', (t) => {
     );
 });
 
+test('handles absolute paths with file system specific path separator', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.load(createCoreModule({}), createDefaultModule());
+    const runner = container.get(Runner);
+    const result = Array.from(runner.lintCollection({
+        config: undefined,
+        files: [
+            path.resolve('packages/wotan/test/project/setup/test.ts'),
+        ],
+        exclude: [],
+        project: ['test/project/setup'],
+        references: false,
+        fix: false,
+        extensions: undefined,
+        reportUselessDirectives: false,
+    }));
+    t.is(result.length, 1);
+    t.is(result[0][0], unixifyPath(path.resolve('packages/wotan/test/project/setup/test.ts')));
+});
+
 test('throws if no tsconfig.json can be found', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     @injectable()
