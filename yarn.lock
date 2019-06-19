@@ -3251,6 +3251,14 @@ normalize-glob@^0.0.1:
     brace-expansion "^1.1.11"
     is-negated-glob "^1.0.0"
 
+normalize-glob@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/normalize-glob/-/normalize-glob-0.0.2.tgz#be13e0566e6f493053a7c915bad26e82c8d85c2c"
+  integrity sha512-Cy3c7OIF3LPc35o5ucFq/jOctqjK98fCy7ihJHGg6hUkJLdHck42DZOakkXF+rKJMZDP24goTt0HK3WzxGxfEw==
+  dependencies:
+    brace-expansion "^1.1.11"
+    is-negated-glob "^1.0.0"
+
 normalize-package-data@^2.3.2, normalize-package-data@^2.3.4:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/normalize-package-data/-/normalize-package-data-2.5.0.tgz#e66db1838b200c1dfc233225d12cb36520e234a8"
