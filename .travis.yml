@@ -20,4 +20,4 @@ deploy:
     skip_cleanup: true
     script: bash -c 'set -o pipefail && echo $NPM_AUTH > ~/.npmrc && npm whoami | xargs echo logged in as && node scripts/release && node scripts/github-release'
     on:
-      condition: "$TRAVIS_EVENT_TYPE != cron && $TRAVIS_COMMIT_MESSAGE =~ ^v[0-9]+[.][0-9]+[.][0-9]+$"
+      condition: "$TRAVIS_EVENT_TYPE != cron && $TRAVIS_COMMIT_MESSAGE =~ ^v[0-9]+[.][0-9]+[.][0-9]+"

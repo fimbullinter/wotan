@@ -13,6 +13,13 @@ export interface PackageData {
     peerDependencies?: Dependencies;
 }
 
+export interface RootPackageData extends PackageData {
+    nextVersion: string;
+    dependencies: Dependencies;
+    devDependencies: Dependencies;
+    peerDependencies: Dependencies;
+}
+
 export function isTreeClean(directories: ReadonlyArray<string> = [], exceptions: ReadonlyArray<string> = []) {
     cp.spawnSync('git', ['update-index', '-q', '--refresh'], {stdio: 'ignore'});
     const modified = cp.spawnSync(
@@ -46,8 +53,18 @@ export function ensureBranch(name: string) {
         throw new Error(`Expected current branch to be ${name}, but it's actually ${branch}.`);
 }
 
+export function ensureBranchMatches(regex: RegExp) {
+    const branch = getCurrentBranch();
+    if (!regex.test(branch))
+    throw new Error(`Expected current branch to match /${regex.source}/${regex.flags}, but it's actually ${branch}.`);
+}
+
 export function getLastReleaseTag() {
     return cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*', '--abbrev=0'], {encoding: 'utf8'}).stdout.trim();
+}
+
+export function getRootPackage(): RootPackageData {
+    return require('../package.json');
 }
 
 export function getPackages() {

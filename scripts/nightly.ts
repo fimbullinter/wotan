@@ -7,6 +7,7 @@ import {
     execAndLog,
     ensureCleanTree,
     sortPackagesForPublishing,
+    getRootPackage,
 } from './util';
 
 if (process.argv.length < 3) {
@@ -20,7 +21,7 @@ ensureCleanTree(Array.from(publicPackages.keys(), (p) => 'packages/' + p));
 
 const currentDate = new Date();
 const version = // tslint:disable-next-line
-    `${require('../package.json').version}-dev.${currentDate.getFullYear() * 10000 + (currentDate.getMonth() + 1) * 100 + currentDate.getDate()}`;
+    `${getRootPackage().nextVersion}-dev.${currentDate.getFullYear() * 10000 + (currentDate.getMonth() + 1) * 100 + currentDate.getDate()}`;
 
 const needsRelease = new Set<string>();
 function markForRelease(name: string) {

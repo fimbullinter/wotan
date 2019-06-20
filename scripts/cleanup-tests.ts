@@ -3,8 +3,9 @@ import * as semver from 'semver';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as rimraf from 'rimraf';
+import { getRootPackage } from './util';
 
-const minimumTypescriptVersion = new semver.Range(require('../package.json').peerDependencies.typescript).set[0][0].semver;
+const minimumTypescriptVersion = new semver.Range(getRootPackage().peerDependencies.typescript).set[0][0].semver;
 const supportedRange = new semver.Range('>=' + minimumTypescriptVersion.version);
 
 for (const file of glob.sync('packages/*/test/**/{,*.}test.json')) {

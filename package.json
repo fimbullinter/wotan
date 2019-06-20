@@ -1,5 +1,6 @@
 {
-  "version": "0.22.0",
+  "version": "0.21.0",
+  "nextVersion": "0.22.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,{src,language-service}/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\" \"*.tsbuildinfo\"",
