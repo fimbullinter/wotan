@@ -15,7 +15,7 @@ export interface PackageData {
         type: string;
         url: string;
         directory?: string;
-    }
+    };
 }
 
 export interface RootPackageData extends PackageData {
