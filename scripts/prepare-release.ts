@@ -37,7 +37,7 @@ const changedPackages =
     releaseVersion.patch === 0 &&
     (releaseVersion.prerelease.length === 0 || +releaseVersion.prerelease[1] === 0)
         ? new Set(packages.keys())
-        : getChangedPackageNames(getLastReleaseTag(), packages.keys());
+        : getChangedPackageNames(getLastReleaseTag()[0], packages.keys());
 const needsRelease = new Set<string>();
 
 function determineReleaseTypeAndVersion([type, tag]: string[], currentVersion: string, nextVersion: string) {
