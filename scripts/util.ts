@@ -1,5 +1,6 @@
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import escapeStringRegexp = require('escape-string-regexp');
 
 export interface Dependencies {
     [name: string]: string;
@@ -11,6 +12,18 @@ export interface PackageData {
     private?: boolean;
     dependencies?: Dependencies;
     peerDependencies?: Dependencies;
+    repository: {
+        type: string;
+        url: string;
+        directory?: string;
+    };
+}
+
+export interface RootPackageData extends PackageData {
+    nextVersion: string;
+    dependencies: Dependencies;
+    devDependencies: Dependencies;
+    peerDependencies: Dependencies;
 }
 
 export function isTreeClean(directories: ReadonlyArray<string> = [], exceptions: ReadonlyArray<string> = []) {
@@ -46,8 +59,23 @@ export function ensureBranch(name: string) {
         throw new Error(`Expected current branch to be ${name}, but it's actually ${branch}.`);
 }
 
+export function ensureBranchMatches(regex: RegExp) {
+    const branch = getCurrentBranch();
+    if (!regex.test(branch))
+    throw new Error(`Expected current branch to match /${regex.source}/${regex.flags}, but it's actually ${branch}.`);
+}
+
+/** Returns the last release tag and the number of commits to the current commit. */
 export function getLastReleaseTag() {
-    return cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*', '--abbrev=0'], {encoding: 'utf8'}).stdout.trim();
+    const result = cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*'], {encoding: 'utf8'}).stdout.trim();
+    if (!result)
+        throw new Error('no release tag found');
+    const match = /(?:-(\d+)-g[a-f\d]+)$/.exec(result);
+    return match === null ? <const>[result, 0] : <const>[result.slice(0, -match[0].length), +match[1]];
+}
+
+export function getRootPackage(): RootPackageData {
+    return require('../package.json');
 }
 
 export function getPackages() {
@@ -132,4 +160,17 @@ export function sortPackagesForPublishing(packageNames: Iterable<string>, getPac
             throw new Error(`Circular dependency: ${Array.from(remaining.values(), ({name}) => name)}`);
     }
     return result;
+}
+
+export function getChangeLogForVersion(version: string) {
+    let content = fs.readFileSync('./CHANGELOG.md', 'utf8');
+    const re = new RegExp(`^## v${escapeStringRegexp(version)}$`, 'm');
+    let match = re.exec(content);
+    if (match === null)
+        return;
+    content = content.slice(match.index + match[0].length);
+    match = /^## (v\d+\.\d+\.\d+(?:-\w+\.\d+)?)$/m.exec(content);
+    if (match !== null)
+        content = content.slice(0, match.index);
+    return content.trim();
 }

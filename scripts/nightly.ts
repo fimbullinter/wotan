@@ -7,6 +7,7 @@ import {
     execAndLog,
     ensureCleanTree,
     sortPackagesForPublishing,
+    getRootPackage,
 } from './util';
 
 if (process.argv.length < 3) {
@@ -19,8 +20,8 @@ const {packages, publicPackages} = getPackages();
 ensureCleanTree(Array.from(publicPackages.keys(), (p) => 'packages/' + p));
 
 const currentDate = new Date();
-const version = // tslint:disable-next-line
-    `${require('../package.json').version}-dev.${currentDate.getFullYear() * 10000 + (currentDate.getMonth() + 1) * 100 + currentDate.getDate()}`;
+const version =
+    `${getRootPackage().nextVersion}-dev.${currentDate.getFullYear() * 10000 + (currentDate.getMonth() + 1) * 100 + currentDate.getDate()}`;
 
 const needsRelease = new Set<string>();
 function markForRelease(name: string) {
@@ -54,7 +55,7 @@ function updatePublicPackageDependencies() {
 }
 
 const lastNightly = process.argv[2]; // revision of the last nightly
-const lastReleaseTag = getLastReleaseTag();
+const [lastReleaseTag] = getLastReleaseTag();
 console.log('last stable release tag', lastReleaseTag);
 // if there was a release since the last nightly, only get the diff since that release
 const diffStart = lastNightly && cp.execSync(`git rev-list ${lastReleaseTag}...${lastNightly}`, {encoding: 'utf8'}).split(/\r?\n/)[0]
