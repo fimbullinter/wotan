@@ -20,7 +20,7 @@ const {releaseType, releaseVersion, releaseTag} =
 
 if (releaseType !== 'prerelease' || releaseTag === 'rc') {
     if (!getChangeLogForVersion(releaseVersion.version))
-        throw new Error(`No CHANGELOG entry for 'v${releaseVersion.version}'.`)
+        throw new Error(`No CHANGELOG entry for 'v${releaseVersion.version}'.`);
     if (releaseType === 'patch') {
         // branch name must either be 'master' or 'release-<major>.<minor>'
         ensureBranchMatches(new RegExp(`^(?:master|release-${rootManifest.version.replace(/^(\d+\.\d+)\..+$/, '$1')})$`));

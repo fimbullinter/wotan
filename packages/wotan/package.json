@@ -30,7 +30,6 @@
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "devDependencies": {
     "@types/debug": "^4.0.0",
-    "@types/escape-string-regexp": "^1.0.0",
     "@types/is-negated-glob": "^1.0.0",
     "@types/js-yaml": "^3.10.1",
     "@types/json5": "0.0.30",
