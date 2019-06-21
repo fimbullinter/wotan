@@ -20,10 +20,8 @@ if (tag !== 'v' + rootManifest.version) {
 const body = getChangeLogForVersion(rootManifest.version);
 const { user, repo } = parseGithubUrl(rootManifest.repository)!;
 
-const ghClient = new Github();
-ghClient.authenticate({
-    type: 'oauth',
-    token: process.env.GITHUB_TOKEN,
+const ghClient = new Github({
+    auth: process.env.GITHUB_TOKEN,
 });
 
 (async () => {
