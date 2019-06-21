@@ -1,7 +1,6 @@
-import * as fs from 'fs';
 import * as parseGithubUrl from 'github-url-to-object';
 import * as Github from '@octokit/rest';
-import { getLastReleaseTag, getRootPackage } from './util';
+import { getLastReleaseTag, getRootPackage, getChangeLogForVersion } from './util';
 
 if (!process.env.GITHUB_TOKEN) {
     console.error('Missing environment variable GITHUB_TOKEN');
@@ -13,18 +12,13 @@ if (newerCommits !== 0) {
     console.error('Missing release tag on the current commit.');
     throw process.exit(1);
 }
-const content = fs.readFileSync('./CHANGELOG.md', 'utf8');
-const re = /^## (v\d+\.\d+\.\d+(?:-\w+\.\d+)?)$/mg;
-const startMatch = re.exec(content)!;
-let body: string | undefined;
-if (startMatch[1] !== tag) {
-    console.log('No CHANGELOG entry for %s', tag);
-} else {
-    const start = startMatch.index + startMatch[0].length;
-    const end = re.exec(content)!.index;
-    body = content.substring(start, end).trim();
+const rootManifest = getRootPackage();
+if (tag !== 'v' + rootManifest.version) {
+    console.error('Git tag and version in package.json are different.');
+    throw process.exit(1);
 }
-const { user, repo } = parseGithubUrl(getRootPackage().repository)!;
+const body = getChangeLogForVersion(rootManifest.version);
+const { user, repo } = parseGithubUrl(rootManifest.repository)!;
 
 const ghClient = new Github();
 ghClient.authenticate({

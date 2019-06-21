@@ -1,5 +1,6 @@
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import escapeStringRegexp = require('escape-string-regexp');
 
 export interface Dependencies {
     [name: string]: string;
@@ -159,4 +160,17 @@ export function sortPackagesForPublishing(packageNames: Iterable<string>, getPac
             throw new Error(`Circular dependency: ${Array.from(remaining.values(), ({name}) => name)}`);
     }
     return result;
+}
+
+export function getChangeLogForVersion(version: string) {
+    let content = fs.readFileSync('./CHANGELOG.md', 'utf8');
+    const re = new RegExp(`^## v${escapeStringRegexp(version)}$`, 'm');
+    let match = re.exec(content);
+    if (match === null)
+        return;
+    content = content.slice(match.index + match[0].length);
+    match = /^## (v\d+\.\d+\.\d+(?:-\w+\.\d+)?)$/m.exec(content);
+    if (match !== null)
+        content = content.slice(0, match.index);
+    return content.trim();
 }

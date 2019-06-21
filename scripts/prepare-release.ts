@@ -10,6 +10,7 @@ import {
     Dependencies,
     ensureBranchMatches,
     getRootPackage,
+    getChangeLogForVersion,
 } from './util';
 import { SemVer, Range, satisfies } from 'semver';
 
@@ -17,11 +18,15 @@ const rootManifest = getRootPackage();
 const {releaseType, releaseVersion, releaseTag} =
     determineReleaseTypeAndVersion(process.argv.slice(2), rootManifest.version, rootManifest.nextVersion);
 
-if (releaseType === 'patch') {
-    // branch name must either be 'master' or 'release-<major>.<minor>'
-    ensureBranchMatches(new RegExp(`^(?:master|release-${rootManifest.version.replace(/^(\d+\.\d+)\..+$/, '$1')})$`));
-} else if (releaseType !== 'prerelease' || releaseTag === 'rc') {
-    ensureBranch('master');
+if (releaseType !== 'prerelease' || releaseTag === 'rc') {
+    if (!getChangeLogForVersion(releaseVersion.version))
+        throw new Error(`No CHANGELOG entry for 'v${releaseVersion.version}'.`)
+    if (releaseType === 'patch') {
+        // branch name must either be 'master' or 'release-<major>.<minor>'
+        ensureBranchMatches(new RegExp(`^(?:master|release-${rootManifest.version.replace(/^(\d+\.\d+)\..+$/, '$1')})$`));
+    } else {
+        ensureBranch('master');
+    }
 }
 ensureCleanTree(undefined, ['CHANGELOG.md']);
 
