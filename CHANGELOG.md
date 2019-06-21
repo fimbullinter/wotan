@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.21.1
+
+**Bugfixes:**
+
+* `wotan`: properly handle backslashes in Windows paths to not report "is not included in any of the projects"
+
 ## v0.21.0
 
 :warning: **Breaking Changes:**

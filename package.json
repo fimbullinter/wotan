@@ -1,5 +1,5 @@
 {
-  "version": "0.21.0",
+  "version": "0.21.1",
   "nextVersion": "0.22.0",
   "private": true,
   "scripts": {
@@ -27,7 +27,7 @@
   "dependencies": {
     "@fimbul/disir": "^0.21.0",
     "@fimbul/valtyr": "^0.21.0",
-    "@fimbul/wotan": "^0.21.0",
+    "@fimbul/wotan": "^0.21.1",
     "@octokit/rest": "^16.0.1",
     "@types/chalk": "^2.2.0",
     "@types/cross-spawn": "^6.0.0",
