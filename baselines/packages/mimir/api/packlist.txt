@@ -1,8 +1,8 @@
-package.json
-latest.yaml
 LICENSE
 NOTICE
 README.md
+latest.yaml
+package.json
 recommended.yaml
 src/formatters/json.d.ts
 src/formatters/json.js

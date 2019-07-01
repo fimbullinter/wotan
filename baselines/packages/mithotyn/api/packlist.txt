@@ -1,5 +1,5 @@
-package.json
-index.js
 LICENSE
 NOTICE
 README.md
+index.js
+package.json

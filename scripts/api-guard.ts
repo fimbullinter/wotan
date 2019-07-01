@@ -20,8 +20,8 @@ for (const pkg of getPackages().publicPackages.keys()) {
 }
 
 function checkPackage(packageDir: string, baselineDir: string, callback: (content: string, filename: string) => void) {
-    const list = packlist.sync({path: packageDir});
-    callback(list.join('\n'), path.join(baselineDir, 'packlist.txt'));
+    const list = packlist.sync({path: packageDir}).sort();
+    callback(list.join('\n') + '\n', path.join(baselineDir, 'packlist.txt'));
 
     for (const file of list)
         if (file.endsWith('.d.ts'))
