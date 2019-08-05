@@ -18,6 +18,11 @@ import {
     isSymbolFlagSet,
     getAccessKind,
     AccessKind,
+    getPropertyOfType,
+    removeOptionalityFromType,
+    someTypePart,
+    isUnionType,
+    getIteratorYieldResultFromIteratorResult,
 } from 'tsutils';
 import * as path from 'path';
 import { typesAreEqual } from '../utils';
@@ -95,7 +100,7 @@ export class Rule extends TypedRule {
         const indexType = type.getNumberIndexType() || type.getStringIndexType();
         if (indexType === undefined)
             return false;
-        const iteratorFn = type.getProperties().find((p) => p.escapedName === '__@iterator');
+        const iteratorFn = getPropertyOfType(type, <ts.__String>'__@iterator');
         if (!isPresentPublicAndRequired(iteratorFn))
             return false;
         return checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(iteratorFn, node), (iterator) => {
@@ -104,13 +109,16 @@ export class Rule extends TypedRule {
                 checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(next, node), (iteratorResult) => {
                     const done = iteratorResult.getProperty('done');
                     if (
-                        !isPresentPublicAndRequired(done) ||
-                        !unionTypeParts(this.checker.getTypeOfSymbolAtLocation(done, node))
-                            .every((t) => isTypeFlagSet(t, ts.TypeFlags.BooleanLike))
+                        !isPresentAndPublic(done) ||
+                        someTypePart(
+                            removeOptionalityFromType(this.checker, this.checker.getTypeOfSymbolAtLocation(done, node)),
+                            isUnionType,
+                            (t) => !isTypeFlagSet(t, ts.TypeFlags.BooleanLike),
+                        )
                     )
                         return false;
-                    const value = iteratorResult.getProperty('value');
-                    return isPresentPublicAndRequired(value) &&
+                    const value = getIteratorYieldResultFromIteratorResult(iteratorResult, node, this.checker).getProperty('value');
+                    return isPresentAndPublic(value) &&
                         typesAreEqual(this.checker.getTypeOfSymbolAtLocation(value, node), indexType, this.checker);
                 });
 
@@ -151,7 +159,11 @@ function isOptionalParameter(node: ts.ParameterDeclaration): boolean {
 }
 
 function isPresentPublicAndRequired(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
-    return symbol !== undefined && !isSymbolFlagSet(symbol, ts.SymbolFlags.Optional) &&
+    return isPresentAndPublic(symbol) && !isSymbolFlagSet(symbol, ts.SymbolFlags.Optional);
+}
+
+function isPresentAndPublic(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
+    return symbol !== undefined &&
         (
             symbol.declarations === undefined ||
             symbol.declarations.every((d) => (ts.getCombinedModifierFlags(d) & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)

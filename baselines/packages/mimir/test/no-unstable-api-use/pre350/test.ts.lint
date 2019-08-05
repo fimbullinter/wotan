@@ -1,4 +1,4 @@
-import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import def, {ns, v, something as somethingSomething, x, y} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
 import * as namespaceImport from './export-assignment';
 
@@ -18,6 +18,9 @@ def;
 ~~~  [error no-unstable-api-use: Variable 'def' is deprecated.]
 v;
 ~  [error no-unstable-api-use: Variable 'v' is deprecated.]
+x;
+y;
+~  [error no-unstable-api-use: Variable 'y' is deprecated.]
 somethingSomething;
 ~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Variable 'somethingSomething' is deprecated.]
 moduleNamespace.default;
