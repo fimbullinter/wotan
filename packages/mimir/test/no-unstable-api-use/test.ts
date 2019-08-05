@@ -1,4 +1,4 @@
-import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import def, {ns, v, something as somethingSomething, x} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
 import * as namespaceImport from './export-assignment';
 
@@ -11,6 +11,7 @@ namespaceImport;
 namespaceImport();
 def;
 v;
+x;
 somethingSomething;
 moduleNamespace.default;
 moduleNamespace.v;

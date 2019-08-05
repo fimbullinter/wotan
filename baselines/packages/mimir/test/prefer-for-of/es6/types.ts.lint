@@ -81,13 +81,6 @@ for (let i = 0; i < "foo".length; ++i) {
     "foo"[i]
 }
 
-declare let weirdArray: (MyArray<number> | ReadonlyArray<string>) & {foo: string} | Array<boolean>;
-
-for (let i = 0; i < weirdArray.length; ++i) {
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
-    weirdArray[i]
-}
-
 declare let arrayUnion: Array<any> | ArrayLike;
 
 for (let i = 0; i < arrayUnion.length; ++i) {
@@ -161,6 +154,7 @@ for (let i = 0; i < iteratorWithNextParameter.length; ++i) {
 
 declare let iteratorResultWithOptionalDone: ArrayLike & {[Symbol.iterator](): {next(): {done?: boolean, value: number}}};
 for (let i = 0; i < iteratorResultWithOptionalDone.length; ++i) {
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   [error prefer-for-of: Prefer a 'for-of' loop over a 'for' loop for this simple iteration.]
     iteratorResultWithOptionalDone[i]
 }
 

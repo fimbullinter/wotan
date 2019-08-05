@@ -42,6 +42,7 @@ multiParam(1, '2');
 multiParam(1, '2', true);
 
 weirdMultiParam();
+~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'T' is inferred as 'unknown'. Consider adding type arguments to the call.]
 ~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'U' is inferred as 'unknown'. Consider adding type arguments to the call.]
 ~~~~~~~~~~~~~~~~~  [error no-uninferred-type-parameter: TypeParameter 'V' is inferred as 'unknown'. Consider adding type arguments to the call.]
 

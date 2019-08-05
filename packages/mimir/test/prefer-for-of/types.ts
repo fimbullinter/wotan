@@ -73,12 +73,6 @@ for (let i = 0; i < "foo".length; ++i) {
     "foo"[i]
 }
 
-declare let weirdArray: (MyArray<number> | ReadonlyArray<string>) & {foo: string} | Array<boolean>;
-
-for (let i = 0; i < weirdArray.length; ++i) {
-    weirdArray[i]
-}
-
 declare let arrayUnion: Array<any> | ArrayLike;
 
 for (let i = 0; i < arrayUnion.length; ++i) {
