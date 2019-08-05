@@ -2,6 +2,8 @@
 
 /** docs */
 export const x = 1;
+/** @deprecated */
+export const y = 1;
 
 /** @deprecated */
 const v = 1;
