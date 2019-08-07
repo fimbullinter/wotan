@@ -46,7 +46,7 @@ class MyCustomDeprecatedRule extends AbstractRule {
 @predicate((_, {program, compilerOptions}) => program !== undefined && compilerOptions !== undefined)
 class ProgramAccessRule extends TypedRule {
     public apply() {
-        this.addFinding(0, 0, `${this.program.getCompilerOptions() === this.context.compilerOptions}`);
+        this.addFinding(0, 0, String(this.program.getCompilerOptions() === this.context.compilerOptions));
     }
 }
 

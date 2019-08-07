@@ -43,7 +43,7 @@ function format(literals: LiteralInfo) {
     if (literals.bigint !== undefined)
         result.push(Array.from(literals.bigint).join(' | '));
     if (literals.boolean !== undefined)
-        result.push(`${literals.boolean}`);
+        result.push(literals.boolean ? 'true' : 'false');
     return result.join(' | ');
 }
 
