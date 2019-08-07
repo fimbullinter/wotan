@@ -177,7 +177,7 @@ test('Linter', (t) => {
         [],
     );
     t.is(warnings.length, 5);
-    t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+    t.is(warnings[4], "Could not find rule 'non-existent' in '/foo'.");
 
     {
         const program = createFakeProgram(sourceFile, {});
