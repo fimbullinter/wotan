@@ -46,6 +46,9 @@ src/rules/no-duplicate-spread-property.js.map
 src/rules/no-fallthrough.d.ts
 src/rules/no-fallthrough.js
 src/rules/no-fallthrough.js.map
+src/rules/no-implicit-tostring.d.ts
+src/rules/no-implicit-tostring.js
+src/rules/no-implicit-tostring.js.map
 src/rules/no-invalid-assertion.d.ts
 src/rules/no-invalid-assertion.js
 src/rules/no-invalid-assertion.js.map
