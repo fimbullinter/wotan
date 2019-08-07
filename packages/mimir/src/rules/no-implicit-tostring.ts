@@ -116,12 +116,14 @@ export class Rule extends ConfigurableTypedRule<Options> {
     }
 
     private checkExpression(node: ts.Expression, type = this.getType(node)) {
-        if (type === 0 && this.options.allowNever)
+        if (type !== 0) {
+            // exclude all allowed types
+            type &= this.options.mask;
+            if (type === 0)
+                return;
+        } else if (this.options.allowNever) {
             return;
-        // exclude all allowed types
-        type &= this.options.mask;
-        if (type === 0)
-            return;
+        }
         this.addFindingAtNode(node, `Unexpected implicit string coercion of '${formatType(type)}'.`);
     }
 }
