@@ -37,7 +37,7 @@
     "@types/resolve": "^0.0.8",
     "@types/semver": "^6.0.0",
     "escape-string-regexp": "^2.0.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^3.0.0"
   },
   "dependencies": {
     "@fimbul/mimir": "^0.21.0",
