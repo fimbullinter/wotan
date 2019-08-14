@@ -7,6 +7,7 @@ interface RawOptions {
     allowNull?: boolean;
     allowUndefined?: boolean;
     allowNumber?: boolean;
+    allowBigInt?: boolean;
     allowBoolean?: boolean;
     allowNever?: boolean;
 }
@@ -19,12 +20,14 @@ interface Options {
 const enum Type {
     String = 1,
     Number = 2,
-    Boolean = 4,
-    Null = 8,
-    Undefined = 16,
-    NonPrimitive = 32,
-    Any = 64,
-    Symbol = 128,
+    BigInt = 4,
+    Boolean = 8,
+    Null = 16,
+    Undefined = 32,
+    NonPrimitive = 64,
+    Any = 128,
+    Symbol = 256,
+    Unknown = 512,
 }
 
 export class Rule extends ConfigurableTypedRule<Options> {
@@ -33,10 +36,12 @@ export class Rule extends ConfigurableTypedRule<Options> {
         let allowNever = false;
         if (options) {
             if (options.allowPrimitive) {
-                allowed |= Type.Number | Type.Boolean | Type.Null | Type.Undefined;
+                allowed |= Type.Number | Type.BigInt | Type.Boolean | Type.Null | Type.Undefined;
             } else {
                 if (options.allowNumber)
                     allowed |= Type.Number;
+                if (options.allowBigInt)
+                    allowed |= Type.BigInt;
                 if (options.allowBoolean)
                     allowed |= Type.Boolean;
                 if (options.allowNull)
@@ -89,6 +94,8 @@ export class Rule extends ConfigurableTypedRule<Options> {
         type = this.checker.getBaseConstraintOfType(type) || type;
         if (type.flags & ts.TypeFlags.Any)
             return Type.Any;
+        if (type.flags & ts.TypeFlags.Unknown)
+            return Type.Unknown;
         if (type.flags & ts.TypeFlags.Never)
             return 0;
         let result: Type = 0;
@@ -100,6 +107,8 @@ export class Rule extends ConfigurableTypedRule<Options> {
                 result |= Type.String;
             } else if (t.flags & ts.TypeFlags.NumberLike) {
                 result |= Type.Number;
+            } else if (t.flags & ts.TypeFlags.BigIntLike) {
+                result |= Type.BigInt;
             } else if (t.flags & ts.TypeFlags.BooleanLike) {
                 result |= Type.Boolean;
             } else if (t.flags & ts.TypeFlags.Null) {
@@ -134,6 +143,8 @@ function formatType(type: Type) {
     const types = [];
     if (type & Type.Number)
         types.push('number');
+    if (type & Type.BigInt)
+        types.push('bigint');
     if (type & Type.Boolean)
         types.push('boolean');
     if (type & Type.Null)
@@ -144,5 +155,7 @@ function formatType(type: Type) {
         types.push('object');
     if (type & Type.Symbol)
         types.push('symbol');
+    if (type & Type.Unknown)
+        types.push('unknown');
     return types.join(' | ');
 }
