@@ -4120,10 +4120,10 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typescript@3.7.0-dev.20190817:
-  version "3.7.0-dev.20190817"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.0-dev.20190817.tgz#28ef6913ea42d8e0835bb7552af83394795cec90"
-  integrity sha512-uWjAmp6yqyQMMgfPBbuNeZufrMxERXXwxXIJfUJvPqKpbHQN+Zch7JSMp+0jGrYQOrWm3MpCjDYKICtPbwZvwQ==
+typescript@3.7.0-dev.20190820:
+  version "3.7.0-dev.20190820"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.0-dev.20190820.tgz#f05f82d27574899dd6fd4abf6f36a6cb1e71e690"
+  integrity sha512-D6pkgZ/vWLnXq+72dj2jBbW1V5zYlMIGSApdG9QSGusp5+qonPuJY6Uqv47rwzSJsVtUgvaQZkDUQLWppKktYg==
 
 uglify-js@^3.1.4:
   version "3.6.0"
