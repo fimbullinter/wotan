@@ -1,4 +1,4 @@
-# no-unreachable-code
+# no-unsafe-finally
 
 Disallows control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement.
 
