@@ -140,6 +140,8 @@ export class Rule extends ConfigurableTypedRule<Options> {
 function formatType(type: Type) {
     if (type === 0)
         return 'never';
+    if (type === Type.Unknown)
+        return 'unknown';
     const types = [];
     if (type & Type.Number)
         types.push('number');
@@ -155,7 +157,5 @@ function formatType(type: Type) {
         types.push('object');
     if (type & Type.Symbol)
         types.push('symbol');
-    if (type & Type.Unknown)
-        types.push('unknown');
     return types.join(' | ');
 }
