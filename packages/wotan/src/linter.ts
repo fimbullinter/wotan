@@ -165,10 +165,14 @@ export class Linter {
 
         let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
-        if (programFactory !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
+        if (programFactory !== undefined) {
             const directive = getCheckJsDirective(sourceFile.text);
-            if (directive === undefined ? !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs') : !directive.enabled) {
-                log('Not using type information for this unchecked JS file');
+            if (
+                directive !== undefined
+                    ? !directive.enabled
+                    : /\.jsx?/.test(sourceFile.fileName) && !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs')
+            ) {
+                log('Not using type information for this unchecked file');
                 programFactory = undefined;
                 suppressMissingTypeInfoWarning = true;
             }
