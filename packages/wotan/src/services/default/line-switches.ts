@@ -265,7 +265,6 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
     public parse(context: LineSwitchParserContext) {
         const {sourceFile} = context;
         const result: RawLineSwitch[] = [];
-        // tslint:disable-next-line:max-line-length
         const commentRegex = /(\/[/*] *wotan-(enable|disable)((?:-next)?-line)?)( +(?:(?:[\w-]+\/)*[\w-]+ *, *)*(?:[\w-]+\/)*[\w-]+)? *(?:$|\*\/)/mg;
 
         for (let match = commentRegex.exec(sourceFile.text); match !== null; match = commentRegex.exec(sourceFile.text)) {
