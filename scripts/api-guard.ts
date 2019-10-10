@@ -29,7 +29,7 @@ function checkPackage(packageDir: string, baselineDir: string, callback: (conten
 }
 
 function stripPrivateMembers(source: string) {
-    const re = /^ +private \w+;\n/mg;
+    const re = /^ +private (?:readonly |get |set )?\w+(?:\(\w*\))?;\n/mg;
     let lastPos = 0;
     let result = '';
     let useAst = false;
