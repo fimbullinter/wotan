@@ -1,12 +1,11 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { isCodeLine, createBaseline } from '../src/baseline';
-import chalk, { Level } from 'chalk';
+import * as chalk from 'chalk';
 import { Finding, FileSummary } from '@fimbul/ymir';
 
 test.before(() => {
-    chalk.enabled = true;
-    chalk.level = Level.Basic;
+    (<any>chalk).level = chalk.Level.Basic;
 });
 
 test('isCodeLine', (t) => {

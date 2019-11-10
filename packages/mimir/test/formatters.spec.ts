@@ -2,12 +2,11 @@ import test, { ExecutionContext } from 'ava';
 import { Finding, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult } from '@fimbul/ymir';
 import { Formatter as JsonFormatter} from '../src/formatters/json';
 import { Formatter as StylishFormatter } from '../src/formatters/stylish';
-import chalk, { Level } from 'chalk';
+import * as chalk from 'chalk';
 import * as path from 'path';
 
 test.before(() => {
-    chalk.enabled = true;
-    chalk.level = Level.Basic;
+    (<any>chalk).level = chalk.Level.Basic;
 });
 
 function createFinding(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Finding {

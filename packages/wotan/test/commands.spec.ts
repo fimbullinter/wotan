@@ -10,12 +10,12 @@ import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { LintOptions } from '../src/runner';
 
 test.before(() => {
-    chalk.enabled = false;
+    (<any>chalk).level = chalk.Level.None;
 });
 
 test('ShowCommand', async (t) => {

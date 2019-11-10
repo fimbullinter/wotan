@@ -4,7 +4,7 @@ import * as mkdirp from 'mkdirp';
 import * as fs from 'fs';
 import * as diff from 'diff';
 import * as rimraf from 'rimraf';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { getPackages } from './util';
 import * as ts from 'typescript';
 
