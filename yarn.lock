@@ -4082,11 +4082,6 @@ ts-transform-const-enum@^0.0.1:
   resolved "https://registry.yarnpkg.com/ts-transform-const-enum/-/ts-transform-const-enum-0.0.1.tgz#eef558d993931967f29dcc776474177e41ad71a3"
   integrity sha512-tsOxCy8XDEcYvG9lE5Yud2YN11F4rnr6taoNyRb0CYeKAa5WwvjY8RToIaTcLNbu7UO7KA1HajhPCeiuYDl0Hw==
 
-ts-transform-readonly-array@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/ts-transform-readonly-array/-/ts-transform-readonly-array-0.0.1.tgz#09b8fc36ccb31829e8c63881bf29b7e5b613c144"
-  integrity sha512-wZXHdhZZjKOc2J+np35wx50o/LXdrj4Dr0mK4WEir9OkXt8iWaYPLZliQUDWY6XTHy12r3AYtzSAc3B/XiCNVg==
-
 tsconfig-paths-webpack-plugin@3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/tsconfig-paths-webpack-plugin/-/tsconfig-paths-webpack-plugin-3.2.0.tgz#6e70bd42915ad0efb64d3385163f0c1270f3e04d"
@@ -4189,10 +4184,10 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typescript@3.7.0-dev.20190926:
-  version "3.7.0-dev.20190926"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.0-dev.20190926.tgz#2e90fa4e56fad0fddb87e4d837cd33c7e4a55e7c"
-  integrity sha512-uOQij3UHJnzxY/8Kv1kdmvWTjghgbCD0kBOgVGbY7Rni8ER51O8iPMmI4YpanZmaiZbPK6zUaS60b04/2C91bA==
+typescript@^3.8.0-dev.20191231:
+  version "3.8.0-dev.20191231"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.8.0-dev.20191231.tgz#89314a3a4db76877d4cb74f68306ae037735db83"
+  integrity sha512-rz0fkf89v0hmTc6M15D6aEOvt/1Ox3IVQg7xq/A/QRsg0VDaHqn26+HP4ekaFmP/0kFoOv8R+HVfhM6FzRUq5Q==
 
 uglify-js@^3.1.4:
   version "3.7.3"

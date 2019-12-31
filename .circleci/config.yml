@@ -6,13 +6,13 @@ workflows:
       - test:
           requires:
             - build
-      - test@3.3:
-          requires:
-            - build
-      - test@3.4:
-          requires:
-            - build
       - test@3.5:
+          requires:
+            - build
+      - test@3.6:
+          requires:
+            - build
+      - test@3.7:
           requires:
             - build
 
@@ -34,12 +34,15 @@ base: &base
           yarn test-coverage
           yarn report-coverage
 
+latestNodeImage: &latestNodeImage
+  docker:
+    - image: circleci/node:13@sha256:5f5d070729bcc54f29516c258a306d0dd402b4f3b051416a5e62d601185d9958
+
 version: 2
 jobs:
   build:
     working_directory: '~/Project'
-    docker:
-      - image: circleci/node:13
+    <<: *latestNodeImage
     steps:
       - checkout
       - restore_cache:
@@ -74,24 +77,22 @@ jobs:
             - "packages/*/test"
             - yarn.lock
   test:
-    docker:
-      - image: circleci/node:13
-    <<: *base
-  test@3.3:
-    docker:
-      - image: circleci/node:10@sha256:9862cce9389d8e5b527b483ca5120dd410327b17cab037ae3705dbf9c655dfc1
-    environment:
-      typescriptVersion: "3.3"
-    <<: *base
-  test@3.4:
-    docker:
-      - image: circleci/node:12@sha256:4a263abc3254dd890bdd4acb20ec855c1e14f3a5c1a70e2f47be1cd59329025f
-    environment:
-      typescriptVersion: "3.4"
+    <<: *latestNodeImage
     <<: *base
   test@3.5:
     docker:
-      - image: circleci/node:13
+      - image: circleci/node:10@sha256:9862cce9389d8e5b527b483ca5120dd410327b17cab037ae3705dbf9c655dfc1
     environment:
       typescriptVersion: "3.5"
+    <<: *base
+  test@3.6:
+    docker:
+      - image: circleci/node:12@sha256:4a263abc3254dd890bdd4acb20ec855c1e14f3a5c1a70e2f47be1cd59329025f
+    environment:
+      typescriptVersion: "3.6"
+    <<: *base
+  test@3.7:
+    <<: *latestNodeImage
+    environment:
+      typescriptVersion: "3.7"
     <<: *base
