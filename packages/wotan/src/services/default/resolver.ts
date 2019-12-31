@@ -25,6 +25,7 @@ export class NodeResolver implements Resolver {
             paths,
             isFile: (file) => this.fs.isFile(file),
             readFileSync: (file) => this.fs.readFile(file),
+            isDirectory: (file) => this.fs.isDirectory(file),
         });
     }
 
