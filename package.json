@@ -54,15 +54,14 @@
     "semver": "^7.0.0",
     "travis-ci": "^2.1.1",
     "ts-transform-const-enum": "^0.0.1",
-    "ts-transform-readonly-array": "^0.0.1",
     "tslib": "^1.9.3",
     "tslint-consistent-codestyle": "^1.11.1",
     "ttypescript": "^1.5.5"
   },
   "devDependencies": {
-    "typescript": "3.7.0-dev.20190926"
+    "typescript": "^3.8.0-dev.20191231"
   },
   "peerDependencies": {
-    "typescript": ">= 3.3.0 || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev"
+    "typescript": ">= 3.5.0 || >= 3.8.0-dev || >= 3.8.0-beta || >= 3.8.0-rc || >= 3.9.0-dev"
   }
 }

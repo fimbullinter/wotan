@@ -4,8 +4,7 @@
     "rootDir": ".",
     "plugins": [
       { "transform": "ts-transform-const-enum" },
-      { "transform": "ts-transform-const-enum", "afterDeclarations": true },
-      { "transform": "ts-transform-readonly-array", "afterDeclarations": true }
+      { "transform": "ts-transform-const-enum", "afterDeclarations": true }
     ]
   },
   "include": [
