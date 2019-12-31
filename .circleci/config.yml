@@ -31,7 +31,7 @@ base: &base
     - run:
         name: Run Tests
         command: |
-          yarn test-coverage
+          node_modules/.bin/nyc node_modules/.bin/run-s test
           yarn report-coverage
 
 latestNodeImage: &latestNodeImage
