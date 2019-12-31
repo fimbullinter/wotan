@@ -1,15 +1,6 @@
 import { TypedRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTypeLiteralNode } from 'tsutils';
 
-const emptyObjectFallback = /^3\.[234]$/.test(ts.versionMajorMinor);
-
-const emptyObjectType: CheckType = {
-    display: '{}',
-    predicate(type) {
-        return isTypeLiteralNode(type) && type.members.length === 0;
-    },
-};
 const unknownType: CheckType = {
     display: 'unknown',
     predicate(type) {
@@ -25,7 +16,7 @@ const anyType: CheckType = {
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
-    private checkType = !/\.tsx?$/.test(this.sourceFile.fileName) ? anyType : emptyObjectFallback ? emptyObjectType : unknownType;
+    private checkType = !/\.tsx?$/.test(this.sourceFile.fileName) ? anyType : unknownType;
 
     public apply() {
         for (const node of this.context.getFlatAst()) {
