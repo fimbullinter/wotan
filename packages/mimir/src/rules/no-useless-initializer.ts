@@ -17,6 +17,7 @@ import {
     LateBoundPropertyNames,
     getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
+import { tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -105,10 +106,8 @@ export class Rule extends AbstractRule {
             const element = node.elements[i];
             if (!isBinaryExpression(element))
                 continue;
-            if (type === undefined) {
-                type = checker.getTypeOfAssignmentPattern(node);
-                type = checker.getBaseConstraintOfType(type) || type;
-            }
+            if (type === undefined)
+                type = tryGetBaseConstraintType(checker.getTypeOfAssignmentPattern(node), checker);
             if (symbolMaybeUndefined(checker, type.getProperty(String(i)), node))
                 continue;
             this.addFindingAtNode(

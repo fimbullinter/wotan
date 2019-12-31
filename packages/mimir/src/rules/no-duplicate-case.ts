@@ -12,7 +12,7 @@ import {
     isBooleanLiteralType,
 } from 'tsutils';
 import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
-import { switchStatements } from '../utils';
+import { switchStatements, tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -79,10 +79,8 @@ export class Rule extends AbstractRule {
         if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return [];
         const checker = this.program!.getTypeChecker();
-        let type = checker.getTypeAtLocation(node);
-        type = checker.getBaseConstraintOfType(type) || type;
         const result = new Set<string>();
-        for (const t of unionTypeParts(type)) {
+        for (const t of unionTypeParts(tryGetBaseConstraintType(checker.getTypeAtLocation(node), checker))) {
             // TODO handle intersection types
             if (isLiteralType(t)) {
                 result.add(formatPrimitive(prefixFn(t.value)));

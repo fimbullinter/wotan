@@ -1,6 +1,7 @@
 import { TypedRule, Replacement, excludeDeclarationFiles, requireLibraryFile } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isIdentifier, isCallExpression, unionTypeParts } from 'tsutils';
+import { tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 @requireLibraryFile('lib.es2015.core.d.ts')
@@ -25,7 +26,8 @@ export class Rule extends TypedRule {
     }
 
     private isCorrectArgumentType(arg: ts.Expression) {
-        const type = this.checker.getTypeAtLocation(arg)!;
-        return unionTypeParts(this.checker.getBaseConstraintOfType(type) || type).every((t) => (t.flags & ts.TypeFlags.NumberLike) !== 0);
+        return unionTypeParts(
+            tryGetBaseConstraintType(this.checker.getTypeAtLocation(arg), this.checker),
+        ).every((t) => (t.flags & ts.TypeFlags.NumberLike) !== 0);
     }
 }

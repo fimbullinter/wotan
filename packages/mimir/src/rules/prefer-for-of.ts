@@ -24,7 +24,7 @@ import {
     isUnionType,
     getIteratorYieldResultFromIteratorResult,
 } from 'tsutils';
-import { typesAreEqual } from '../utils';
+import { typesAreEqual, tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -66,7 +66,7 @@ export class Rule extends TypedRule {
         const type = this.checker.getTypeAtLocation(node)!;
         return this.isIterationProtocolAvailable()
             ? this.isIterable(this.checker.getApparentType(type), node)
-            : unionTypeParts(this.checker.getBaseConstraintOfType(type) || type).every(this.isArrayLike, this);
+            : unionTypeParts(tryGetBaseConstraintType(type, this.checker)).every(this.isArrayLike, this);
     }
 
     private isIterationProtocolAvailable(): boolean {

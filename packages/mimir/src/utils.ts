@@ -10,6 +10,7 @@ import {
     getLateBoundPropertyNames,
     PropertyName,
     isStatementInAmbientContext,
+    getPropertyName,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -220,4 +221,46 @@ export function isAmbientVariableDeclaration(node: ts.VariableDeclaration): bool
     return node.parent!.kind === ts.SyntaxKind.VariableDeclarationList &&
         node.parent.parent!.kind === ts.SyntaxKind.VariableStatement &&
         isStatementInAmbientContext(node.parent.parent);
+}
+
+export function tryGetBaseConstraintType(type: ts.Type, checker: ts.TypeChecker) {
+    return checker.getBaseConstraintOfType(type) || type;
+}
+
+export interface PropertyNameWithLocation extends PropertyName {
+    node: ts.Node;
+}
+
+export function *addNodeToPropertyNameList(node: ts.Node, list: Iterable<PropertyName>): IterableIterator<PropertyNameWithLocation> {
+    for (const element of list)
+        yield {node, symbolName: element.symbolName, displayName: element.displayName};
+}
+
+export function *destructuredProperties(node: ts.ObjectBindingPattern, checker: ts.TypeChecker) {
+    for (const element of node.elements) {
+        if (element.dotDotDotToken !== undefined)
+            continue;
+        if (element.propertyName === undefined) {
+            yield {
+                node: element.name,
+                symbolName: (<ts.Identifier>element.name).escapedText,
+                displayName: (<ts.Identifier>element.name).text,
+            };
+        } else {
+            const propName = getPropertyName(element.propertyName);
+            if (propName !== undefined) {
+                yield {
+                    node: element.propertyName,
+                    symbolName: ts.escapeLeadingUnderscores(propName),
+                    displayName: propName,
+                };
+            } else {
+                // TODO handle PrivateIdentifier
+                yield* addNodeToPropertyNameList(
+                    element.propertyName,
+                    getLateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression, checker).names,
+                );
+            }
+        }
+    }
 }
