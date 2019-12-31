@@ -77,17 +77,9 @@ export class Rule extends AbstractRule {
                 default:
                     continue;
             }
-            // for compatibility with typescript@<3.5.0
-            if (checker.getTypeOfAssignmentPattern !== undefined) {
-                const properties = getLateBoundPropertyNamesOfPropertyName(name, checker);
-                if (!properties.known || properties.names.some(maybeUndefined))
-                    continue;
-            } else if (
-                name.kind !== ts.SyntaxKind.Identifier ||
-                symbolMaybeUndefined(checker, checker.getPropertySymbolOfDestructuringAssignment(name), node)
-            ) {
+            const properties = getLateBoundPropertyNamesOfPropertyName(name, checker);
+            if (!properties.known || properties.names.some(maybeUndefined))
                 continue;
-            }
             this.addFindingAtNode(
                 errorNode,
                 "Unnecessary default value as this property is never 'undefined'.",
@@ -108,8 +100,6 @@ export class Rule extends AbstractRule {
         if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return;
         const checker = this.program!.getTypeChecker();
-        if (checker.getTypeOfAssignmentPattern === undefined)
-            return; // for compatibility with typescript@<3.5.0
         let type: ts.Type | undefined;
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];
