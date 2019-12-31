@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["es2017"],
+    "target": "es2019",
+    "lib": ["es2018"], // Node.js v10 doesn't support all runtime features of ES2019 like Symbol#description
     "module": "commonjs",
     "sourceMap": true,
     "importHelpers": true,
