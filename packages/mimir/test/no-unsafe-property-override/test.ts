@@ -68,11 +68,19 @@ class Derived6 extends ((): new () => Partial<Readonly<Record<'foo', number>>> &
 }
 
 const obj = {const: 1 + 1} as const;
+const spreaded = {...obj};
+const {...rest} = obj;
 
 class Derived7 extends ((): new() => typeof obj => undefined!)() {
     const = 1;
 }
 class Derived7_1 extends ((): new() => Mutable<typeof obj> => undefined!)() {
+    const = 1;
+}
+class Derived7_2 extends ((): new() => typeof spreaded => undefined!)() {
+    const = 1;
+}
+class Derived7_3 extends ((): new() => typeof rest => undefined!)() {
     const = 1;
 }
 
