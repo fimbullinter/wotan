@@ -164,10 +164,12 @@ test('applies TSLint rules correctly', (t) => {
     }
     t.throws(
         () => new (wrapTslintRule(WrongFileFailureRule, 'wrong-file'))(context).apply(),
+        null,
         "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'wrong-file'.",
     );
     t.throws(
         () => new (wrapTslintRule(WrongFileFailureRule))(context).apply(),
+        null,
         "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'rule.spec'.",
     );
 
@@ -192,6 +194,7 @@ test('applies TSLint rules correctly', (t) => {
     }
     t.throws(
         () => new (wrapTslintRule(AnotherWrongFileFailureRule))(context).apply(),
+        null,
         "Adding findings for a different SourceFile is not supported. Expected 'foo.ts' but received 'other.ts' from rule 'some-name'.",
     );
 });

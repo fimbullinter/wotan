@@ -58,6 +58,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Cannot find module 'non-existent' from '${process.cwd()}'`,
     );
 
@@ -69,6 +70,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
     );
 
@@ -80,6 +82,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         "Cannot find configuration for '../foo.ts'.",
     );
 
@@ -91,6 +94,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: 'non-existent.conf',
         }),
+        null,
         `Cannot find module 'non-existent.conf' from '${cwd}'`,
     );
 
@@ -570,6 +574,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
     );
 
@@ -582,6 +587,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `${
             unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-value.test.json'))
         }: Expected a value of type 'string | string[]' for option 'project'.`,
@@ -596,6 +602,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `${unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-name.test.json'))}: Unexpected option 'prjoect'.`,
     );
 

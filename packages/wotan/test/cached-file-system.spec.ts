@@ -121,7 +121,7 @@ test('readDirectory', (t) => {
 
     checkDirents();
 
-    t.throws(() => fs.readDirectory('/non-existent'), 'ENOENT');
+    t.throws(() => fs.readDirectory('/non-existent'), null, 'ENOENT');
 
     // ensure values are cached
     throwError = true;

@@ -38,7 +38,7 @@
     "@types/npm-packlist": "^1.1.0",
     "@types/parse5-sax-parser": "^5.0.1",
     "@types/rimraf": "^2.0.2",
-    "ava": "^2.0.0",
+    "ava": "^3.1.0",
     "chalk": "^3.0.0",
     "codecov": "^3.0.0",
     "dependency-cruiser": "^6.0.0",
