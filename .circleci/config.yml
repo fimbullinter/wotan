@@ -36,7 +36,7 @@ base: &base
 
 latestNodeImage: &latestNodeImage
   docker:
-    - image: circleci/node:13@sha256:9297e6d0031b6a87457c990a2930b1452cca4dc7b5c39331b90ab2e2538aa65d
+    - image: circleci/node:13@sha256:f15780090cb8cd3d20064ecb1f20a42f1bd25cd4b6d65c6e82bb446695b5c52d
 
 version: 2
 jobs:
@@ -81,13 +81,13 @@ jobs:
     <<: *base
   test@3.5:
     docker:
-      - image: circleci/node:10@sha256:75bb5eaff36802c8be23ff4a4ff9975b3821370c65bcf33f09812ac1da6ecab1
+      - image: circleci/node:10@sha256:76cd094aa8ec08b7c7b476432b8a736e532d88342403b53158bbe5b7407769c1
     environment:
       typescriptVersion: "3.5"
     <<: *base
   test@3.6:
     docker:
-      - image: circleci/node:12@sha256:d8bdf1656cba1108b7cbec548ad6fd864b3cc3d542d73f74b3395da98fb042c9
+      - image: circleci/node:12@sha256:d8378da5a85d2d9d7d026e28e6b0635efaa805938060edcd0305fd0f2a7c0cf7
     environment:
       typescriptVersion: "3.6"
     <<: *base
