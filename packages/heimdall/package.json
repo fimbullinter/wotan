@@ -33,6 +33,6 @@
     "@fimbul/bifrost": "^0.21.0",
     "inversify": "^5.0.0",
     "tslib": "^1.8.1",
-    "tslint": "^5.0.0"
+    "tslint": "^6.0.0"
   }
 }
