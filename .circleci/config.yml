@@ -36,7 +36,7 @@ base: &base
 
 latestNodeImage: &latestNodeImage
   docker:
-    - image: circleci/node:13@sha256:81c9a5068454693f05fcb6c68c4cb4aa23c1379c739fd8a7021601f4951df042
+    - image: circleci/node:13@sha256:99d1b81f6be1836f27addcc0d632db1948ee8240cbc5245af1cdbfc65ef9ebb7
 
 version: 2
 jobs:
