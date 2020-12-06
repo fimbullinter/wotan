@@ -171,26 +171,6 @@ abstract class EvenMoreDerivedAbstract extends DerivedAbstractAbstract {
     other = super['getProp']();
 }
 
-declare let privateProtected: Private & Protected;
-privateProtected['prop'];
-
-class Public {
-    prop = 1;
-}
-
-declare let publicPrivate: Public & Private;
-publicPrivate['prop'];
-
-declare let publicProtected: Public & Protected;
-publicProtected['prop']; // TODO report upstream
-
-class PrivateTwo {
-    private prop = 2;
-}
-
-declare let privatePrivate: Private & PrivateTwo;
-privatePrivate['prop'];
-
 declare function decorator(...args: any[]): any;
 
 class A {
