@@ -67,6 +67,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`prefer-namespace-keyword`](docs/prefer-namespace-keyword.md) | :wrench: Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
 [`prefer-number-methods`](docs/prefer-number-methods.md) | :mag: :wrench: Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite`. | No similar rule in TSLint.
 [`prefer-object-spread`](docs/prefer-object-spread.md) | :mag: :wrench: Prefer object spread over `Object.assign` for copying properties to a new object. | Performance, better handling of parens in fixer and avoids false positives that would cause a compile error when fixed.
+[`prefer-spread-arguments`](docs/prefer-spread-arguments.md) | :mag: :wrench: Prefer spread arguments over `Function.prototype.apply` to call variadic functions. | No similar rule in TSLint.
 [`return-never-call`](docs/return-never-call.md) | :mag: Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`. | TSLint has no similar rule.
 [`syntaxcheck`](docs/syntaxcheck.md) | :mag: :x: Reports syntax errors as lint errors.| Used to be part of the deprecated `tslint --type-check`
 [`trailing-newline`](docs/trailing-newline.md) | :wrench: Enforces a line break at the end of each file. | Nothing fancy here :(
