@@ -7,7 +7,9 @@ import * as ts from 'typescript';
 @injectable()
 export class NodeFileSystem implements FileSystem {
     public static normalizePath(path: string) {
-        return unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+        const normalized = unixifyPath(ts.sys.useCaseSensitiveFileNames ? path : path.toLowerCase());
+        // handle windows drive names 'C:' -> 'C:/', because reading 'C:' actually reads '.'
+        return normalized.includes('/') ? normalized : normalized + '/';
     }
     constructor(private logger: MessageHandler) {}
 

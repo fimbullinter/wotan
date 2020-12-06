@@ -18,7 +18,8 @@
     "incremental": true,
     "plugins": [
       {"name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true}
-    ]
+    ],
+    "newLine": "lf"
   },
   "include": [
   ]
