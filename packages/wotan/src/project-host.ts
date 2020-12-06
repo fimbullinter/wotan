@@ -287,8 +287,7 @@ export class ProjectHost implements ts.CompilerHost {
             fileName,
             undefined,
             undefined,
-            // TODO remove assertion on @next
-            <ts.ESMap<string, ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
+            this.tsconfigCache,
         );
     }
 
