@@ -212,7 +212,6 @@ abstract class EvenMoreDerivedAbstract extends DerivedAbstractAbstract {
 
 declare let privateProtected: Private & Protected;
 privateProtected['prop'];
-~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Private & Protected'.]
 
 class Public {
     prop = 1;
@@ -220,7 +219,10 @@ class Public {
 
 declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
-~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Private'.]
+
+declare let publicProtected: Public & Protected;
+publicProtected['prop'];
+~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Protected'.]
 
 class PrivateTwo {
     private prop = 2;
@@ -228,7 +230,6 @@ class PrivateTwo {
 
 declare let privatePrivate: Private & PrivateTwo;
 privatePrivate['prop'];
-~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Private & PrivateTwo'.]
 
 declare function decorator(...args: any[]): any;
 

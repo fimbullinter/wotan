@@ -1,5 +1,5 @@
 import mdefault, {m} from 'non-existent-module';
-                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'.]
+                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module' or its corresponding type declarations.]
 let foo: string;
 foo = 1;
 ~~~      [error typecheck: Type '1' is not assignable to type 'string'.]

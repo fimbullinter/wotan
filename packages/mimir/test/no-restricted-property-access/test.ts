@@ -181,6 +181,9 @@ class Public {
 declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
 
+declare let publicProtected: Public & Protected;
+publicProtected['prop'];
+
 class PrivateTwo {
     private prop = 2;
 }

@@ -1,7 +1,7 @@
 // @ts-check
 const m = require('non-existent-module');
       ~                                   [error typecheck: 'm' is declared but its value is never read.]
-                  ~~~~~~~~~~~~~~~~~~~~~   [error typecheck: Cannot find module 'non-existent-module'.]
+                  ~~~~~~~~~~~~~~~~~~~~~   [error typecheck: Cannot find module 'non-existent-module' or its corresponding type declarations.]
 /** @type {string} */
 let foo;
 foo = 1;
