@@ -221,8 +221,8 @@ declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
 
 declare let publicProtected: Public & Protected;
-publicProtected['prop'];
-~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Protected'.]
+publicProtected['prop']; // TODO report upstream
+~~~~~~~~~~~~~~~~~~~~~~~                          [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Protected'.]
 
 class PrivateTwo {
     private prop = 2;

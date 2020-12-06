@@ -11,6 +11,7 @@ rules:
   parameter-properties:
     options:
       mode: when-possible
+  no-uninferred-type-parameter: off
 overrides:
   - files: "packages/*/test/**"
     rules:

@@ -182,7 +182,7 @@ declare let publicPrivate: Public & Private;
 publicPrivate['prop'];
 
 declare let publicProtected: Public & Protected;
-publicProtected['prop'];
+publicProtected['prop']; // TODO report upstream
 
 class PrivateTwo {
     private prop = 2;

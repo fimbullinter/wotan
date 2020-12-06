@@ -134,7 +134,7 @@ export class Rule extends TypedRule {
 
         const typeArguments = (<ts.ExpressionWithTypeArguments><any>this.checker.signatureToSignatureDeclaration(
             signature,
-            ts.SyntaxKind.CallExpression,
+            ts.SyntaxKind.CallSignature,
             undefined,
             ts.NodeBuilderFlags.WriteTypeArgumentsOfSignature | ts.NodeBuilderFlags.IgnoreErrors,
         )).typeArguments!;

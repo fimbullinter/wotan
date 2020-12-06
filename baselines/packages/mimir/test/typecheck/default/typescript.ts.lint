@@ -1,9 +1,9 @@
 import mdefault, {m} from 'non-existent-module';
                   ~                              [error typecheck: 'm' is declared but its value is never read.]
-                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module' or its corresponding type declarations.]
+                          ~~~~~~~~~~~~~~~~~~~~~  [error typecheck: Cannot find module 'non-existent-module'. Did you mean to set the 'moduleResolution' option to 'node', or to add aliases to the 'paths' option?]
 let foo: string;
 foo = 1;
-~~~      [error typecheck: Type '1' is not assignable to type 'string'.]
+~~~      [error typecheck: Type 'number' is not assignable to type 'string'.]
 console.clog(foo);
         ~~~~       [error typecheck: Property 'clog' does not exist on type 'Console'. Did you mean 'log'?]
 console.log(mdefault);

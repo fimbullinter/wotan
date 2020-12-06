@@ -95,7 +95,7 @@ export declare abstract class ConfigurableRule<T> extends AbstractRule {
 export declare abstract class TypedRule extends AbstractRule {
     static readonly requiresTypeInformation = true;
     readonly context: TypedRuleContext;
-    readonly program: ts.Program;
+    get program(): ts.Program;
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
     get checker(): ts.TypeChecker;
     constructor(context: TypedRuleContext);
