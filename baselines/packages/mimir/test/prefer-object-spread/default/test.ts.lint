@@ -1,8 +1,17 @@
 interface Empty {}
 class Foo {
-    dontSpreadTypeParam<T extends object>(param: T, param2: T | undefined) {
+    spreadTypeParam<T extends object, U>(param: T, param2: T | undefined, param3: U) {
+        Object.assign({}, param);
+        ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+        Object.assign({}, param2);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+        Object.assign({}, param3);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    dontSpreadPrimitiveTypeParameter<T extends number, U extends object | V, V extends boolean>(param: T, param2: U, param3: V) {
         Object.assign({}, param);
         Object.assign({}, param2);
+        Object.assign({}, param3);
     }
     dontSpreadNonObject(param: number | boolean) {
         return Object.assign({}, param);
@@ -31,7 +40,15 @@ class Foo {
         return Object.assign({}, param);
                ~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
     }
-    dontSpreadThis() {
+    spreadThis() {
+        return Object.assign({}, this);
+               ~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    spreadThisParameter(this: object) {
+        return Object.assign({}, this);
+               ~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-object-spread: Prefer object spread over 'Object.assign'.]
+    }
+    dontSpreadPrimitiveThis(this: number) {
         return Object.assign({}, this);
     }
     spreadUnknown(param: unknown) {

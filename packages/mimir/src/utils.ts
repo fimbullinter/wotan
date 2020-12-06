@@ -9,6 +9,9 @@ import {
     getPropertyOfType,
     getLateBoundPropertyNames,
     PropertyName,
+    isIdentifier,
+    isCallExpression,
+    isPropertyAccessExpression,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -31,6 +34,26 @@ export function* tryStatements(context: RuleContext) {
         const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
         if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
             yield <ts.TryStatement>node;
+    }
+}
+
+/**
+ * Finds all CallExpressions where callee is a PropertyAccessExpression with name `methodName`.
+ * Does not find ElementAccessExpression or optional CallExpression.
+ */
+export function* findMethodCalls(context: RuleContext, methodName: string) {
+    const {text} = context.sourceFile;
+    const re = new RegExp(`(?:[.\\n]|\\*\\/)\\s*${methodName}\\s*[(\\/]`, 'g');
+    let wrappedAst: WrappedAst | undefined;
+    for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), re.lastIndex - 1)!;
+        if (
+            isCallExpression(node) &&
+            match.index < node.expression.end && // prevent duplicates caused by matching comment text
+            isPropertyAccessExpression(node.expression) &&
+            node.expression.name.text === methodName
+        )
+            yield <ts.CallExpression & {expression: ts.PropertyAccessExpression}>node;
     }
 }
 
@@ -210,4 +233,8 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
 
 export function formatPseudoBigInt(v: ts.PseudoBigInt) {
     return `${v.negative ? '-' : ''}${v.base10Value}n`;
+}
+
+export function isUndefined(node: ts.Expression): node is ts.Identifier {
+    return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
 }

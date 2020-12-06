@@ -1,8 +1,14 @@
 interface Empty {}
 class Foo {
-    dontSpreadTypeParam<T extends object>(param: T, param2: T | undefined) {
+    spreadTypeParam<T extends object, U>(param: T, param2: T | undefined, param3: U) {
         Object.assign({}, param);
         Object.assign({}, param2);
+        Object.assign({}, param3);
+    }
+    dontSpreadPrimitiveTypeParameter<T extends number, U extends object | V, V extends boolean>(param: T, param2: U, param3: V) {
+        Object.assign({}, param);
+        Object.assign({}, param2);
+        Object.assign({}, param3);
     }
     dontSpreadNonObject(param: number | boolean) {
         return Object.assign({}, param);
@@ -27,7 +33,13 @@ class Foo {
     spreadAny(param: any) {
         return Object.assign({}, param);
     }
-    dontSpreadThis() {
+    spreadThis() {
+        return Object.assign({}, this);
+    }
+    spreadThisParameter(this: object) {
+        return Object.assign({}, this);
+    }
+    dontSpreadPrimitiveThis(this: number) {
         return Object.assign({}, this);
     }
     spreadUnknown(param: unknown) {

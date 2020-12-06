@@ -133,6 +133,9 @@ src/rules/prefer-number-methods.js.map
 src/rules/prefer-object-spread.d.ts
 src/rules/prefer-object-spread.js
 src/rules/prefer-object-spread.js.map
+src/rules/prefer-spread-arguments.d.ts
+src/rules/prefer-spread-arguments.js
+src/rules/prefer-spread-arguments.js.map
 src/rules/return-never-call.d.ts
 src/rules/return-never-call.js
 src/rules/return-never-call.js.map
