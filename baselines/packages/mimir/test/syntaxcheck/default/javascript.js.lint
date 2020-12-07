@@ -9,7 +9,7 @@ let bar:;
         ~ [error syntaxcheck: Type expected.]
 
 new Set<string>();
-        ~~~~~~     [error syntaxcheck: Type arguments can only be used in TypeScript files.]
+                ~  [error syntaxcheck: Expression expected.]
 
 function () {}
          ~     [error syntaxcheck: Identifier expected.]

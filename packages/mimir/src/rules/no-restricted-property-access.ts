@@ -33,12 +33,6 @@ export class Rule extends TypedRule {
     private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
-        if (hasConflictingAccessModifiers(flags, symbol))
-            return this.addFindingAtNode(
-                errorNode,
-                `Property '${name}' has conflicting declarations and is inaccessible in type '${this.checker.typeToString(lhsType)}'.`,
-            );
-
         if (
             lhs !== undefined && lhs.kind === ts.SyntaxKind.ThisKeyword &&
             flags & ts.ModifierFlags.Abstract && hasNonMethodDeclaration(symbol)
@@ -161,14 +155,6 @@ function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
         }
         node = node.parent!;
     }
-}
-
-function hasConflictingAccessModifiers(flags: ts.ModifierFlags, symbol: ts.Symbol) {
-    return flags & ts.ModifierFlags.Private
-        ? symbol.declarations!.length !== 1
-        : (flags & ts.ModifierFlags.Protected) !== 0 &&
-            symbol.declarations!.length !== 1 &&
-            !symbol.declarations.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.ProtectedKeyword));
 }
 
 function hasBase<T>(type: ts.Type, needle: T, check: (type: ts.Type, needle: T) => boolean) {

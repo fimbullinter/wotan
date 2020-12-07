@@ -210,26 +210,6 @@ abstract class EvenMoreDerivedAbstract extends DerivedAbstractAbstract {
             ~~~~~~~~~~~~~~~~    [error no-restricted-property-access: Abstract method 'getProp' in class 'Abstract' cannot be accessed via the 'super' keyword.]
 }
 
-declare let privateProtected: Private & Protected;
-privateProtected['prop'];
-~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Private & Protected'.]
-
-class Public {
-    prop = 1;
-}
-
-declare let publicPrivate: Public & Private;
-publicPrivate['prop'];
-~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Public & Private'.]
-
-class PrivateTwo {
-    private prop = 2;
-}
-
-declare let privatePrivate: Private & PrivateTwo;
-privatePrivate['prop'];
-~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' has conflicting declarations and is inaccessible in type 'Private & PrivateTwo'.]
-
 declare function decorator(...args: any[]): any;
 
 class A {
