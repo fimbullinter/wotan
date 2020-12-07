@@ -28,7 +28,7 @@ base: &base
         name: Install correct TypeScript version
         command: |
           if [[ "$CIRCLE_JOB" =~ ^test@ ]]; then
-            yarn add -DW typescript@${$CIRCLE_JOB#test@}
+            yarn add -DW typescript@${CIRCLE_JOB#test@}
           else
             yarn
           fi
