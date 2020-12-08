@@ -1,5 +1,19 @@
 # Change Log
 
+## v0.22.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript <3.9 is no longer supported
+* Node.js v8, v11 and v13 are no longer supported
+
+**Features:**
+
+* Added support for typescript v3.9, v4.0 and v4.1
+  * Fixes compile errors and crashes in existing code and tests
+  * This does not contain full support for all language features added in those versions
+* `//@ts-nocheck` in .ts files now disables rules with type information for that file, as it was already the case in .js files
+
 ## v0.21.1
 
 **Bugfixes:**

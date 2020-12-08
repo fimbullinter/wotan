@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/mimir",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "Core rules of the Fimbullinter project",
   "main": "recommended.yaml",
   "publishConfig": {
@@ -26,13 +26,13 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "dependencies": {
-    "@fimbul/ymir": "^0.21.0",
+    "@fimbul/ymir": "^0.22.0",
     "chalk": "^4.0.0",
     "debug": "^4.0.0",
     "tslib": "^2.0.0",
     "tsutils": "^3.16.0"
   },
   "peerDependencies": {
-    "typescript": ">= 3.3.0 || >= 3.6.0-dev || >= 3.7.0-dev"
+    "typescript": ">= 4.0.0 || >= 4.2.0-dev"
   }
 }

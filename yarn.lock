@@ -184,6 +184,16 @@
   dependencies:
     arrify "^1.0.1"
 
+"@fimbul/bifrost@^0.21.0":
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/bifrost/-/bifrost-0.21.0.tgz#d0fafa25938fda475657a6a1e407a21bbe02c74e"
+  integrity sha512-ou8VU+nTmOW1jeg+FT+sn+an/M0Xb9G16RucrfhjXGWv1Q97kCoM5CG9Qj7GYOSdu7km72k7nY83Eyr53Bkakg==
+  dependencies:
+    "@fimbul/ymir" "^0.21.0"
+    get-caller-file "^2.0.0"
+    tslib "^1.8.1"
+    tsutils "^3.5.0"
+
 "@fimbul/mimir@^0.16.0":
   version "0.16.0"
   resolved "https://registry.yarnpkg.com/@fimbul/mimir/-/mimir-0.16.0.tgz#49d6f1c22ae64518c275939e4a21d8c551803adb"
@@ -225,6 +235,15 @@
   version "0.16.0"
   resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.16.0.tgz#1fa5f3589cb4043114682540d88138b72d93ccd7"
   integrity sha512-njz2/CalYeIaCFqQ8CkKXL15UL39LNE6MVp9k7Zw/IUfDbDl4FIpySPxUzZfvh/YG7AlMnZFmLnPVfGeSntc4Q==
+  dependencies:
+    inversify "^5.0.0"
+    reflect-metadata "^0.1.12"
+    tslib "^1.8.1"
+
+"@fimbul/ymir@^0.21.0":
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.21.0.tgz#8525726787aceeafd4e199472c0d795160b5d4a1"
+  integrity sha512-T/y7WqPsm4n3zhT08EpB5sfdm2Kvw3gurAxr2Lr5dQeLi8ZsMlNT/Jby+ZmuuAAd1PnXYzKp+2SXgIkQIIMCUg==
   dependencies:
     inversify "^5.0.0"
     reflect-metadata "^0.1.12"
