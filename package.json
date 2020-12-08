@@ -28,7 +28,7 @@
     "@fimbul/disir": "^0.21.0",
     "@fimbul/valtyr": "^0.21.0",
     "@fimbul/wotan": "^0.21.1",
-    "@octokit/rest": "^16.0.1",
+    "@octokit/rest": "^18.0.0",
     "@types/cross-spawn": "^6.0.0",
     "@types/diff": "^4.0.1",
     "@types/github-url-to-object": "^4.0.0",
