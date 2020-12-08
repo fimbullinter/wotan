@@ -5,7 +5,7 @@ import * as chalk from 'chalk';
 import { Finding, FileSummary } from '@fimbul/ymir';
 
 test.before(() => {
-    (<any>chalk).level = chalk.Level.Basic;
+    (<any>chalk).level = 1;
 });
 
 test('isCodeLine', (t) => {
