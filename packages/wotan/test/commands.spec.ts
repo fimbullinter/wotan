@@ -15,7 +15,7 @@ import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { LintOptions } from '../src/runner';
 
 test.before(() => {
-    (<any>chalk).level = chalk.Level.None;
+    (<any>chalk).level = 0;
 });
 
 test('ShowCommand', async (t) => {

@@ -6,7 +6,7 @@ import * as chalk from 'chalk';
 import * as path from 'path';
 
 test.before(() => {
-    (<any>chalk).level = chalk.Level.Basic;
+    (<any>chalk).level = 1;
 });
 
 function createFinding(name: string, severity: Severity, message: string, start: number, end: number, fix?: Replacement[]): Finding {
