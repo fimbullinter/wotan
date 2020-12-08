@@ -26,7 +26,7 @@
   "dependencies": {
     "inversify": "^5.0.0",
     "reflect-metadata": "^0.1.12",
-    "tslib": "^1.8.1"
+    "tslib": "^2.0.0"
   },
   "devDependencies": {
     "tsutils": "^3.5.0"

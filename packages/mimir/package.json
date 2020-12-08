@@ -29,7 +29,7 @@
     "@fimbul/ymir": "^0.21.0",
     "chalk": "^3.0.0",
     "debug": "^4.0.0",
-    "tslib": "^1.8.1",
+    "tslib": "^2.0.0",
     "tsutils": "^3.16.0"
   },
   "peerDependencies": {

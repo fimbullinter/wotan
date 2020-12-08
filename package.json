@@ -54,7 +54,7 @@
     "semver": "^7.0.0",
     "travis-ci": "^2.1.1",
     "ts-transform-const-enum": "^0.0.1",
-    "tslib": "^1.9.3",
+    "tslib": "^2.0.0",
     "tslint-consistent-codestyle": "^1.11.1",
     "ttypescript": "^1.5.5"
   },
