@@ -145,7 +145,7 @@ export class DefaultConfigurationProvider implements ConfigurationProvider {
                 return json5.parse(this.fs.readFile(filename));
             case '.yaml':
             case '.yml':
-                return yaml.safeLoad(this.fs.readFile(filename))!;
+                return <RawConfiguration>yaml.safeLoad(this.fs.readFile(filename));
             default:
                 return this.resolver.require(filename, {cache: false});
         }

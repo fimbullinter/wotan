@@ -74,7 +74,7 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
 
     private getFindings(file: ts.SourceFile, program: ts.Program) {
         let globalConfigDir = this.project.getCurrentDirectory();
-        let globalOptions;
+        let globalOptions: any;
         while (true) {
             const scriptSnapshot = this.project.getScriptSnapshot(globalConfigDir + '/.fimbullinter.yaml');
             if (scriptSnapshot !== undefined) {
