@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fimbul/ymir": "^0.21.0",
-    "parse5-sax-parser": "^5.0.0",
+    "parse5-sax-parser": "^6.0.0",
     "tslib": "^2.0.0",
     "void-elements": "^3.1.0"
   },
