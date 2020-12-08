@@ -1,5 +1,5 @@
 import * as parseGithubUrl from 'github-url-to-object';
-import * as Github from '@octokit/rest';
+import { Octokit } from '@octokit/rest';
 import { getLastReleaseTag, getRootPackage, getChangeLogForVersion } from './util';
 
 if (!process.env.GITHUB_TOKEN) {
@@ -20,7 +20,7 @@ if (tag !== 'v' + rootManifest.version) {
 const body = getChangeLogForVersion(rootManifest.version);
 const { user, repo } = parseGithubUrl(rootManifest.repository)!;
 
-const ghClient = new Github({
+const ghClient = new Octokit({
     auth: process.env.GITHUB_TOKEN,
 });
 
