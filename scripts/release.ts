@@ -18,7 +18,7 @@ const tag = new SemVer(getRootPackage().version).prerelease[0] || 'latest';
 
 for (const name of sortPackagesForPublishing(needsRelease, (p) => publicPackages.get(p)!)) {
     const manifest = publicPackages.get(name)!;
-    execAndLog(`npm publish packages/${name} --tag ${tag} ${process.argv.slice(2).join(' ')}`);
+    execAndLog(`npm publish packages/${name}/ --tag ${tag} ${process.argv.slice(2).join(' ')}`);
     if (tag === 'latest' || tag === 'rc')
         execAndLog(`npm dist-tag add ${manifest.name}@${manifest.version} next`);
 }

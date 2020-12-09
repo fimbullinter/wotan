@@ -69,7 +69,7 @@ if (needsRelease.size !== 0) {
     updatePublicPackageDependencies();
     for (const name of sortPackagesForPublishing(needsRelease, (p) => publicPackages.get(p)!)) {
         writeManifest(`packages/${name}/package.json`, publicPackages.get(name)!);
-        execAndLog(`npm publish packages/${name} --tag next ${process.argv.slice(3).join(' ')}`);
+        execAndLog(`npm publish packages/${name}/ --tag next ${process.argv.slice(3).join(' ')}`);
     }
 } else {
     console.log('nothing changed');
