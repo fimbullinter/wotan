@@ -7,7 +7,6 @@ import {
     isFalsyType,
     isTypeOfExpression,
     isTextualLiteral,
-    isIdentifier,
     isEmptyObjectType,
     isIntersectionType,
     isStrictCompilerOptionEnabled,
@@ -20,7 +19,7 @@ import {
     getPropertyOfType,
     intersectionTypeParts,
 } from 'tsutils';
-import { formatPseudoBigInt } from '../utils';
+import { formatPseudoBigInt, isUndefined } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -329,10 +328,6 @@ export class Rule extends TypedRule {
         }
         return true;
     }
-}
-
-function isUndefined(node: ts.Expression): node is ts.Identifier {
-    return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
 }
 
 function falsy(type: ts.Type): false | undefined {

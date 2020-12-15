@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "strictBindCallApply": true,
+    "lib": ["dom"],
+    "target": "ESNEXT",
+  }
+}

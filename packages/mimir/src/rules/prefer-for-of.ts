@@ -24,7 +24,6 @@ import {
     isUnionType,
     getIteratorYieldResultFromIteratorResult,
 } from 'tsutils';
-import * as path from 'path';
 import { typesAreEqual } from '../utils';
 
 @excludeDeclarationFiles
@@ -91,9 +90,7 @@ export class Rule extends TypedRule {
     }
 
     private isDeclaredInDefaultLib(node: ts.Node): boolean {
-        // we assume it's the global array type if it comes from any lib.xxx.d.ts file
-        return path.normalize(path.dirname(node.getSourceFile().fileName))
-            === path.dirname(ts.getDefaultLibFilePath(this.context.compilerOptions));
+        return node.getSourceFile().hasNoDefaultLib;
     }
 
     private isIterable(type: ts.Type, node: ts.Expression): boolean {

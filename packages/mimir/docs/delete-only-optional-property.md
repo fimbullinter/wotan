@@ -1,6 +1,6 @@
 # delete-only-optional-property
 
-:mag: requires type information
+:mag: requires type information and `strictNullChecks` compiler option
 
 Disallows `delete` of required properties.
 

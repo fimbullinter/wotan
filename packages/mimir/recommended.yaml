@@ -40,6 +40,7 @@ rules:
   prefer-namespace-keyword: error
   prefer-number-methods: error
   prefer-object-spread: error
+  prefer-spread-arguments: error
   return-never-call: error
   trailing-newline: error
   try-catch-return-await: error

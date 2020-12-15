@@ -1,7 +1,6 @@
 import { AbstractRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
-    isIdentifier,
     getChildOfKind,
     isFunctionWithBody,
     isUnionTypeNode,
@@ -17,6 +16,7 @@ import {
     LateBoundPropertyNames,
     getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
+import { isUndefined } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -219,8 +219,4 @@ function typeMaybeUndefined(checker: ts.TypeChecker, type: ts.Type): boolean {
     if (isUnionType(type))
         return type.types.some((t) => typeMaybeUndefined(checker, t));
     return (type.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Any | ts.TypeFlags.Unknown)) !== 0;
-}
-
-function isUndefined(node: ts.Expression) {
-    return isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword;
 }

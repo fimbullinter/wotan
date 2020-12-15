@@ -1,49 +1,32 @@
 import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
-    WrappedAst,
-    getWrappedNodeAtPosition,
     isIdentifier,
-    isPropertyAccessExpression,
-    isCallExpression,
     isObjectLiteralExpression,
     unionTypeParts,
     isFalsyType,
 } from 'tsutils';
-import { objectLiteralNeedsParens } from '../utils';
+import { findMethodCalls, objectLiteralNeedsParens } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        const re = /(?:[.\n]|\*\/)\s*assign\b/g;
-        let wrappedAst: WrappedAst | undefined;
-        for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
-            if (node.kind !== ts.SyntaxKind.Identifier || node.end !== re.lastIndex)
+        for (const node of findMethodCalls(this.context, 'assign')) {
+            if (
+                node.arguments.length === 0 || node.arguments[0].kind !== ts.SyntaxKind.ObjectLiteralExpression ||
+                !isIdentifier(node.expression.expression) || node.expression.expression.escapedText !== 'Object'
+            )
                 continue;
-            const parent = node.parent!;
-            if (!isPropertyAccessExpression(parent) || parent.name !== node ||
-                !isIdentifier(parent.expression) || parent.expression.text !== 'Object')
-                continue;
-            const grandParent = parent.parent!;
-            if (!isCallExpression(grandParent) || grandParent.expression !== parent ||
-                grandParent.arguments.length === 0 || !isObjectLiteralExpression(grandParent.arguments[0]))
-                continue;
-            if (grandParent.arguments.length === 1) {
-                this.addFindingAtNode(
-                    grandParent,
-                    "No need for 'Object.assign', use the object directly.",
-                    createFix(grandParent, this.sourceFile),
-                );
-            } else if (grandParent.arguments.every(this.isSpreadableObject, this)) {
-                this.addFindingAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
+            if (node.arguments.length === 1) {
+                this.addFindingAtNode(node, "No need for 'Object.assign', use the object directly.", createFix(node, this.sourceFile));
+            } else if (node.arguments.every(this.isSpreadableObject, this)) {
+                this.addFindingAtNode(node, "Prefer object spread over 'Object.assign'.", createFix(node, this.sourceFile));
             }
         }
     }
 
     private isSpreadableObject(node: ts.Expression): boolean {
         switch (node.kind) {
-            case ts.SyntaxKind.ThisKeyword:
             case ts.SyntaxKind.SpreadElement:
                 return false;
             case ts.SyntaxKind.ObjectLiteralExpression:
@@ -53,14 +36,22 @@ export class Rule extends TypedRule {
         if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
             return true;
         let seenObject = false;
-        for (const t of unionTypeParts(type)) {
+        const isSpreadable = (t: ts.Type): boolean => {
             if (t.flags & (ts.TypeFlags.Object | ts.TypeFlags.NonPrimitive)) {
                 seenObject = true;
-            } else if (!isFalsyType(t)) {
-                return false;
+                return true;
             }
-        }
-        return seenObject;
+            if (t.flags & ts.TypeFlags.TypeParameter) {
+                const constraint = this.checker.getBaseConstraintOfType(t);
+                if (!constraint) {
+                    seenObject = true;
+                    return true;
+                }
+                return unionTypeParts(constraint).every(isSpreadable);
+            }
+            return isFalsyType(t);
+        };
+        return unionTypeParts(type).every(isSpreadable) && seenObject;
     }
 }
 

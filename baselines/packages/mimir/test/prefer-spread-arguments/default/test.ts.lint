@@ -1,0 +1,111 @@
+export {};
+
+declare const args: any[];
+
+alert.apply(null, args);
+~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+alert.apply(undefined, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+alert.apply(alert, args);
+alert.apply(null, ...[args] as const);
+alert.apply(...[null, args] as const);
+
+declare const fn: ((...args: any[]) => void) | undefined;
+fn!.apply(null, args);
+~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+fn?.apply(null, args);
+~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+(fn as (...args: any[]) => void).apply(null, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+
+declare const obj: {apply(a: any, b: any): any};
+obj.apply(null, args);
+
+const nested = {obj};
+nested.obj.apply(nested, args);
+
+console.log.apply(null, args);
+console.log.apply(console, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+console.log.apply(console.log, args);
+console.log.apply(obj, args);
+console['log'].apply(console, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+(console['log'])!.apply(console, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+window.console.log.apply(window.console, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+window.console.log.apply(window.console!, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+window.console.log.apply(window['console'], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+window['console'].log.apply(window.console, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+window['console'].log.apply(window['console'], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+
+declare let objArr: {fn: (...args: any[]) => void}[];
+declare let i: number;
+objArr[0].fn.apply(objArr[0], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+objArr[0].fn.apply(objArr['0'], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+objArr[0].fn.apply(objArr[1], args);
+objArr[i].fn.apply(objArr[i], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+objArr[objArr.length].fn.apply(objArr[objArr.length], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+objArr[objArr.length].fn.apply(objArr[objArr['length']], args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+objArr[objArr.length - 1].fn.apply(objArr[objArr.length - 1], args);
+
+objArr[Symbol.iterator].apply(objArr, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+
+class C {
+    #fn!: (...args: any[]) => void;
+    #obj: {fn: (...args: any[]) => void};
+    [key: string]: {fn: (...args: any[]) => void};
+    constructor() {
+        this.#fn.apply(this, args);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+        this.#fn.apply(new C(), args);
+        this.#fn.apply(null, args);
+        this.#obj.fn.apply(this.#obj, args);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+        this.#obj.fn.apply(this, args);
+
+        this.#obj.fn.apply(this['#obj'], args);
+        this.#obj.fn.apply(this['obj'], args);
+        this['#obj'].fn.apply(this.#obj, args);
+        this['#obj'].fn.apply(this['#obj'], args);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+    }
+}
+
+class Base {
+    fn(...args: any[]) {};
+}
+
+class Derived extends Base {
+    fn() {
+        super.fn.apply(this, args);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+    }
+}
+
+fn.apply /* .apply() */(null /* .apply() */, args);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+fn. //
+~~~~~~
+  apply
+~~~~~~~
+(null, args);
+~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+
+fn.apply //
+~~~~~~~~~~~
+    (null, args);
+~~~~~~~~~~~~~~~~  [error prefer-spread-arguments: Prefer spread arguments over 'Function.prototype.apply'.]
+
+fn.apply //
