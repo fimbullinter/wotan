@@ -25,7 +25,7 @@ export class Rule extends AbstractRule {
                     Replacement.append(node.expression.getStart(this.sourceFile), '('),
                     Replacement.replace(node.expression.end, node.end, ').' + text),
                 ]
-                : Replacement.replace(node.expression.end, node.end, '.' + text),
+                : Replacement.replace(node.expression.end, node.end, (node.questionDotToken !== undefined ? '?.' : '.') + text),
         );
     }
 }

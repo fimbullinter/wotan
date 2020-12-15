@@ -14,11 +14,13 @@ let bar: number | undefined;
 const key = 'prop';
 const key2 = 'prop2'
 abstract class Foo {
+    static staticProp!: number | undefined;
+    declare ambientProp!: number | undefined;
     initialized!: boolean = true;
     any: any;
     foo!: number;
     bar: number | undefined;
-    abstract baz!: number;
+    abstract baz!: number | undefined;
     'bas': number;
     ['foobar']: number;
     ['foobaz']: number | undefined;
@@ -32,3 +34,16 @@ abstract class Foo {
         this.uninitialized;
     }
 }
+
+declare namespace foo {
+    class Foo {
+        prop!: number | undefined;
+    }
+    var ambient!: number | undefined;
+}
+
+declare class Ambient {
+    prop!: number | undefined;
+}
+
+declare var ambient!: number | undefined;

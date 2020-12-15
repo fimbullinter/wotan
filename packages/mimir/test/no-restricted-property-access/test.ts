@@ -32,6 +32,12 @@ new Private()['prop'];
 new Private()[];
 new Private()['pr' + 'op'];
 
+declare var optionalPrivate: Private | undefined;
+optionalPrivate?.['prop'];
+
+declare var optionalPrivateProp: undefined | {o: Private};
+optionalPrivateProp?.o['prop'];
+
 class Protected {
     protected prop = 1;
     other = this['prop'];

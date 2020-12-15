@@ -25,7 +25,7 @@ export class Rule extends TypedRule {
         const {names} = getLateBoundPropertyNames(node.argumentExpression, this.checker);
         if (names.length === 0)
             return;
-        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
+        const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression)).getNonNullableType();
         for (const {symbol, name} of propertiesOfType(type, names))
             this.checkSymbol(symbol, name, node, node.expression, type);
     }

@@ -5,6 +5,9 @@ obj['bar']['baz'];
 obj['__foo__'];
 obj[`fooBar`];
 
+obj?.['bar'];
+obj?.['bar']?.['baz'];
+
 obj[''];
 obj['1'];
 obj['.'];

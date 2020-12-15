@@ -1,6 +1,11 @@
 import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { expressionNeedsParensWhenReplacingNode, typesAreEqual } from '../utils';
+import {
+    expressionNeedsParensWhenReplacingNode,
+    isAmbientPropertyDeclaration,
+    isAmbientVariableDeclaration,
+    typesAreEqual,
+} from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
@@ -15,6 +20,7 @@ import {
     isInConstContext,
     isTypeReference,
     isTupleType,
+    isTypeFlagSet,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -50,9 +56,11 @@ export class Rule extends TypedRule {
     private checkDefiniteAssignmentAssertion(node: ts.VariableDeclaration) {
         // compiler already emits an error for definite assignment assertions on ambient or initialized variables
         if (node.exclamationToken !== undefined &&
-            node.initializer === undefined && (
+            node.initializer === undefined &&
+            !isAmbientVariableDeclaration(node) && (
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                // type does not allow undefined
+                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node.name)) & ts.TypeFlags.Undefined
             ))
             this.addFinding(
                 node.exclamationToken.end - 1,
@@ -66,10 +74,11 @@ export class Rule extends TypedRule {
         // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
-            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
+            !isAmbientPropertyDeclaration(node) &&
+            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword, ts.SyntaxKind.StaticKeyword) && (
                 node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictPropertyInitialization') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node)) & ts.TypeFlags.Undefined // type does not allow undefined
             ))
             this.addFinding(
                 node.exclamationToken.end - 1,
@@ -83,10 +92,15 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
-            const flags = getNullableFlags(this.checker.getBaseConstraintOfType(originalType) || originalType);
+            const flags = getNullableFlags(
+                this.checker.getBaseConstraintOfType(originalType) || originalType,
+                ts.isOptionalChain(node)
+                    ? (t) => isOptionalChainingMarkerType(this.checker, t) ? 0 : t.flags
+                    : undefined,
+            );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
-                if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
+                if (contextualType === undefined || (flags & ~getNullableFlagsOfReceiver(contextualType)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
             }
@@ -173,11 +187,15 @@ export class Rule extends TypedRule {
     }
 }
 
-function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
+function getNullableFlags(type: ts.Type, selector?: (t: ts.Type) => ts.TypeFlags): ts.TypeFlags {
     let flags = 0;
     for (const t of unionTypeParts(type))
-        flags |= t.flags;
-    return ((receiver && flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+        flags |= selector !== undefined ? selector(t) : t.flags;
+    return flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+}
+
+function getNullableFlagsOfReceiver(type: ts.Type) {
+    return getNullableFlags(type, (t) => t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown) ? -1 : t.flags);
 }
 
 function formatNullableFlags(flags: ts.TypeFlags) {
@@ -206,7 +224,7 @@ function formatNullableFlags(flags: ts.TypeFlags) {
  * We don't need to worry about strictPropertyInitialization errors, because they cannot be suppressed with a non-null assertion
  */
 function maybeUsedBeforeBeingAssigned(node: ts.Expression, type: ts.Type, checker: ts.TypeChecker): node is ts.Identifier {
-    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlags(type, true) & ts.TypeFlags.Undefined)
+    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlagsOfReceiver(type) & ts.TypeFlags.Undefined)
         return false;
     const symbol = checker.getSymbolAtLocation(node)!;
     const declaration = symbol.declarations![0];
@@ -240,4 +258,8 @@ function isInlinedIife(node: ts.Node): boolean {
         node.asteriskToken === undefined && // exclude generators
         !hasModifier(node.modifiers, ts.SyntaxKind.AsyncKeyword) && // exclude async functions
         getIIFE(node) !== undefined;
+}
+
+function isOptionalChainingMarkerType(checker: ts.TypeChecker, t: ts.Type) {
+    return isTypeFlagSet(t, ts.TypeFlags.Undefined) && checker.getNullableType(t.getNonNullableType(), ts.TypeFlags.Undefined) !== t;
 }
