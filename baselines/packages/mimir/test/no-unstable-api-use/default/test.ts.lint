@@ -541,3 +541,13 @@ myDeprecatedCallable();
 myDeprecatedCallable(1);
 ~~~~~~~~~~~~~~~~~~~~     [error no-unstable-api-use: Variable 'myDeprecatedCallable' is deprecated: var]
 ~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'myDeprecatedCallable(param: number): number' is deprecated: signature]
+
+class WithPrivateProp {
+    /** @deprecated */
+    #prop = 1;
+
+    get prop() {
+        return this.#prop;
+               ~~~~~~~~~~  [error no-unstable-api-use: Property '#prop' is deprecated.]
+    }
+}

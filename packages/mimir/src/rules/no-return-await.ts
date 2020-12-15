@@ -53,6 +53,7 @@ function isUnnecessaryAwait(node: ts.Node): boolean {
                         case ts.SyntaxKind.AmpersandAmpersandToken:
                         case ts.SyntaxKind.BarBarToken:
                         case ts.SyntaxKind.CommaToken:
+                        case ts.SyntaxKind.QuestionQuestionToken:
                             break outer;
                     }
                 }
