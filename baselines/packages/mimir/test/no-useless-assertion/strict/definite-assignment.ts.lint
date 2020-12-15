@@ -17,13 +17,15 @@ let bar!: number | undefined;
 const key = 'prop';
 const key2 = 'prop2'
 abstract class Foo {
+    static staticProp!: number | undefined;
+    declare ambientProp!: number | undefined;
     initialized!: boolean = true;
     any!: any;
        ~       [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     foo!: number;
     bar!: number | undefined;
        ~                      [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
-    abstract baz!: number;
+    abstract baz!: number | undefined;
     'bas'!: number;
          ~          [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     ['foobar']!: number;
@@ -45,3 +47,16 @@ abstract class Foo {
                           ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
     }
 }
+
+declare namespace foo {
+    class Foo {
+        prop!: number | undefined;
+    }
+    var ambient!: number | undefined;
+}
+
+declare class Ambient {
+    prop!: number | undefined;
+}
+
+declare var ambient!: number | undefined;

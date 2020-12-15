@@ -77,6 +77,13 @@ bas();
 ~~~~~  [error no-unstable-api-use: CallSignature 'bas(): string' is deprecated: Use the other overload instead.]
 bas('');
 
+declare let optionalBas: undefined | typeof bas;
+
+optionalBas;
+optionalBas?.();
+~~~~~~~~~~~~~~~  [error no-unstable-api-use: CallSignature 'optionalBas(): string | undefined' is deprecated: Use the other overload instead.]
+optionalBas?.('');
+
 /**@deprecated Variable is deprecated.*/
 declare const fn: typeof bas;
 fn;
@@ -137,6 +144,39 @@ obj[k];
 ~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated: a]
 ~~~~~~  [error no-unstable-api-use: Property 'foo' is deprecated: foo]
 obj[];
+
+declare let optionalObj: undefined | typeof obj;
+
+optionalObj?.a;
+~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated: a]
+optionalObj?.b;
+optionalObj?.c;
+~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'c' is deprecated: c]
+optionalObj?.d;
+~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'd' is deprecated: d]
+optionalObj?.foo;
+~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'foo' is deprecated: foo]
+optionalObj?.['a'];
+~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated: a]
+optionalObj?.['b'];
+optionalObj?.['c'];
+~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'c' is deprecated: c]
+optionalObj?.['d'];
+~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'd' is deprecated: d]
+optionalObj?.['foo'];
+~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'foo' is deprecated: foo]
+optionalObj?.[key];
+~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'foo' is deprecated: foo]
+optionalObj?.somethingElse;
+optionalObj?.['somethingElse'];
+optionalObj?.[key2];
+optionalObj?.[k];
+~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated: a]
+~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'foo' is deprecated: foo]
+
+declare let nestedOptionalObj: undefined | {o: typeof obj};
+nestedOptionalObj?.o['a'];
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-unstable-api-use: Property 'a' is deprecated: a]
 
 declare let obj2: {
     /**@deprecated*/

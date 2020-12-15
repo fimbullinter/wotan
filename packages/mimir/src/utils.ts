@@ -9,6 +9,7 @@ import {
     getPropertyOfType,
     getLateBoundPropertyNames,
     PropertyName,
+    isStatementInAmbientContext,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -174,7 +175,7 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {names} = getLateBoundPropertyNames(argumentExpression, checker);
     if (names.length === 0)
         return;
-    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), names);
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)).getNonNullableType(), names);
 }
 
 export function *propertiesOfType(type: ts.Type, names: Iterable<PropertyName>) {
@@ -210,4 +211,17 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
 
 export function formatPseudoBigInt(v: ts.PseudoBigInt) {
     return `${v.negative ? '-' : ''}${v.base10Value}n`;
+}
+
+/** Determines whether a property has the `declare` modifier or the containing class is ambient. */
+export function isAmbientPropertyDeclaration(node: ts.PropertyDeclaration): boolean {
+    return hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword) ||
+        node.parent!.kind === ts.SyntaxKind.ClassDeclaration && isStatementInAmbientContext(node.parent);
+}
+
+/** Determines whether the given variable declaration is ambient. */
+export function isAmbientVariableDeclaration(node: ts.VariableDeclaration): boolean {
+    return node.parent!.kind === ts.SyntaxKind.VariableDeclarationList &&
+        node.parent.parent!.kind === ts.SyntaxKind.VariableStatement &&
+        isStatementInAmbientContext(node.parent.parent);
 }

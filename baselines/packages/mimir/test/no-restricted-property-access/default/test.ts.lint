@@ -35,6 +35,14 @@ new Private()['prop'];
 new Private()[];
 new Private()['pr' + 'op'];
 
+declare var optionalPrivate: Private | undefined;
+optionalPrivate?.['prop'];
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+
+declare var optionalPrivateProp: undefined | {o: Private};
+optionalPrivateProp?.o['prop'];
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Private'.]
+
 class Protected {
     protected prop = 1;
     other = this['prop'];

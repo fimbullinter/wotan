@@ -1,0 +1,11 @@
+export {};
+declare function get<T>(): T;
+
+get<{prop: string}>()?.prop!;
+                           ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+get<{prop?: string}>()?.prop!;
+get<undefined | {prop: string}>()?.prop!;
+get<undefined | {prop: string}>()?.prop!.charAt(0);
+                                       ~            [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+get<undefined | {prop: string | null}>()?.prop!.charAt(0);
+get<undefined | {prop: string | undefined}>()?.prop!.charAt(0);

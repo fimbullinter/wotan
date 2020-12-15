@@ -73,3 +73,16 @@ delete myArrayLike['1'];
 ~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property '1' is required.]
 delete myArrayLike[2];
 delete myArrayLike[Symbol.iterator];
+
+declare var optionalObj: undefined | typeof obj;
+
+delete optionalObj?.a;
+delete optionalObj?.['a'];
+delete optionalObj?.b;
+~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+delete optionalObj?.['b'];
+~~~~~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'b' is required.]
+delete optionalObj?.c;
+~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'c' is required.]
+delete optionalObj?.d;
+~~~~~~~~~~~~~~~~~~~~~  [error delete-only-optional-property: Only 'delete' optional properties. Property 'd' is required.]
