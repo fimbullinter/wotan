@@ -296,7 +296,7 @@ export class Rule extends TypedRule {
             return type;
         if (unionTypeParts(type).some((t) => (t.flags & ts.TypeFlags.Undefined) !== 0))
             return type;
-        if (!isPropertyAccessExpression(node) && !isElementAccessExpression(node))
+        if ((!isPropertyAccessExpression(node) || node.name.kind === ts.SyntaxKind.PrivateIdentifier) && !isElementAccessExpression(node))
             return type;
         const objectType = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
         if (objectType.getStringIndexType() === undefined && objectType.getNumberIndexType() === undefined)

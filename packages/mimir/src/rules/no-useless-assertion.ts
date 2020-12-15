@@ -76,9 +76,10 @@ export class Rule extends TypedRule {
             node.initializer === undefined &&
             !isAmbientPropertyDeclaration(node) &&
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword, ts.SyntaxKind.StaticKeyword) && (
-                node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
+                // properties with string or computed name are not checked
+                node.name.kind !== ts.SyntaxKind.Identifier && node.name.kind !== ts.SyntaxKind.PrivateIdentifier ||
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictPropertyInitialization') ||
-                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node)) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node)) & ts.TypeFlags.Undefined // type allows undefined
             ))
             this.addFinding(
                 node.exclamationToken.end - 1,

@@ -410,3 +410,12 @@ declare var myDeprecatedCallable: {
 myDeprecatedCallable;
 myDeprecatedCallable();
 myDeprecatedCallable(1);
+
+class WithPrivateProp {
+    /** @deprecated */
+    #prop = 1;
+
+    get prop() {
+        return this.#prop;
+    }
+}
