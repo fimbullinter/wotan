@@ -53,6 +53,10 @@ export function getCurrentBranch() {
     return cp.spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {encoding: 'utf8'}).stdout.trim();
 }
 
+export function getObjectIds<T extends string[]>(...commitish: T) {
+    return <{[K in keyof T]: string}>cp.spawnSync('git', ['rev-parse', ...commitish], {encoding: 'utf8'}).stdout.trim().split(/\r?\n/);
+}
+
 export function ensureBranch(name: string) {
     const branch = getCurrentBranch();
     if (branch !== name)
@@ -66,8 +70,8 @@ export function ensureBranchMatches(regex: RegExp) {
 }
 
 /** Returns the last release tag and the number of commits to the current commit. */
-export function getLastReleaseTag() {
-    const result = cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*'], {encoding: 'utf8'}).stdout.trim();
+export function getLastReleaseTag(commit = 'HEAD') {
+    const result = cp.spawnSync('git', ['describe', '--tags', '--match=v*.*.*', commit], {encoding: 'utf8'}).stdout.trim();
     if (!result)
         throw new Error('no release tag found');
     const match = /(?:-(\d+)-g[a-f\d]+)$/.exec(result);
