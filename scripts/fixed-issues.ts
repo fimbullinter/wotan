@@ -1,16 +1,22 @@
 import {withCustomRequest} from '@octokit/graphql';
 import * as issueParser from 'issue-parser';
 
-export async function* fixedIssues(owner: string, repo: string, request: Parameters<typeof withCustomRequest>[0], startOid: string, endOid: string) {
+export async function* fixedIssues(
+    owner: string,
+    repo: string,
+    request: Parameters<typeof withCustomRequest>[0],
+    currentOid: string,
+    previousOid: string,
+) {
     const parser = issueParser('github');
     const graphql = withCustomRequest(request);
 
     let cursor: string | undefined;
     const seen = new Set<number>();
-    function* maybeYield(number: number) {
-        if (!seen.has(number)) {
-            seen.add(number);
-            yield number;
+    function* maybeYield(n: number) {
+        if (!seen.has(n)) {
+            seen.add(n);
+            yield n;
         }
     }
 
@@ -102,29 +108,28 @@ export async function* fixedIssues(owner: string, repo: string, request: Paramet
             {
                 owner,
                 repo,
-                startOid,
                 cursor,
-            }
+                startOid: currentOid,
+            },
         );
 
         for (const commit of result.repository.object.history.nodes) {
-            if (commit.oid === endOid)
+            if (commit.oid === previousOid)
                 break outer;
             if (commit.author.user.login === 'renovate-bot')
                 continue;
-            if (commit.associatedPullRequests.nodes.length === 0 && commit.messageBody) {
+            if (commit.associatedPullRequests.nodes.length === 0 && commit.messageBody)
                 // issues referenced via closing keyword in commit message
                 for (const closeRef of parser(commit.messageBody).actions.close ?? [])
                     if (closeRef.slug === undefined || closeRef.slug === `${owner}/${repo}`)
                         yield* maybeYield(+closeRef.issue);
-            }
             for (const pr of commit.associatedPullRequests.nodes) {
                 // issues linked in Github UI
                 const manuallyLinkedIssues = new Set<number>();
                 for (const event of pr.timelineItems.nodes)
                     manuallyLinkedIssues[event.__typename === 'ConnectedEvent' ? 'add' : 'delete'](event.number);
-                for (const number of manuallyLinkedIssues)
-                    yield* maybeYield(number);
+                for (const n of manuallyLinkedIssues)
+                    yield* maybeYield(n);
                 // issues referenced via closing keyword in PR description
                 for (const closeRef of parser(pr.body).actions.close ?? [])
                     if (closeRef.slug === undefined || closeRef.slug === `${owner}/${repo}`)
@@ -132,9 +137,8 @@ export async function* fixedIssues(owner: string, repo: string, request: Paramet
             }
         }
 
-        if (!result.repository.object.history.pageInfo.hasNextPage) {
+        if (!result.repository.object.history.pageInfo.hasNextPage)
             break;
-        }
         cursor = result.repository.object.history.pageInfo.endCursor;
     }
 }
