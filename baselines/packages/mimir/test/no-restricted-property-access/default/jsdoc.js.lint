@@ -1,0 +1,20 @@
+export class C {
+    /** @public */
+    a = 1;
+    /** @protected */
+    b = 1;
+    /** @private */
+    c = 1;
+
+    fn() {
+        this['a'];
+        this['b'];
+        this['c'];
+    }
+}
+
+new C()['a'];
+new C()['b'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'b' is protected and only accessible within class 'C' and its subclasses.]
+new C()['c'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'c' is private and only accessible within class 'C'.]

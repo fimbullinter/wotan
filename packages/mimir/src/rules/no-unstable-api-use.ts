@@ -149,7 +149,7 @@ function describeSymbol(symbol: ts.Symbol): string {
 
 function signatureToString(signature: ts.Signature, checker: ts.TypeChecker, _: undefined, node: ts.CallLikeExpression) {
     let construct = false;
-    switch (signature.declaration && signature.declaration.kind) {
+    switch (signature.declaration?.kind) {
         case ts.SyntaxKind.Constructor:
         case ts.SyntaxKind.ConstructSignature:
         case ts.SyntaxKind.ConstructorType:
