@@ -40,6 +40,7 @@ abstract class Foo {
     [key2]!: number | undefined;
           ~                      [error no-useless-assertion: This assertion is unnecessary as it has no effect on this declaration.]
     uninitialized: number;
+    noType!;
 
     constructor() {
         this.initialized!;
@@ -63,3 +64,4 @@ declare class Ambient {
 }
 
 declare var ambient!: number | undefined;
+var noType!;

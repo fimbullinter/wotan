@@ -27,6 +27,7 @@ abstract class Foo {
     [key]!: number;
     [key2]!: number | undefined;
     uninitialized: number;
+    noType!;
 
     constructor() {
         this.initialized!;
@@ -47,3 +48,4 @@ declare class Ambient {
 }
 
 declare var ambient!: number | undefined;
+var noType!;

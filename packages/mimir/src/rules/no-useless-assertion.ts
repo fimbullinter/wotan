@@ -57,6 +57,7 @@ export class Rule extends TypedRule {
         // compiler already emits an error for definite assignment assertions on ambient or initialized variables
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
+            node.type !== undefined &&
             !isAmbientVariableDeclaration(node) && (
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks') ||
                 // type does not allow undefined
@@ -74,6 +75,7 @@ export class Rule extends TypedRule {
         // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
+            node.type !== undefined &&
             !isAmbientPropertyDeclaration(node) &&
             !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword, ts.SyntaxKind.StaticKeyword) && (
                 // properties with string or computed name are not checked
