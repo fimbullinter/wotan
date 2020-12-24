@@ -31,7 +31,7 @@
     "@octokit/graphql": "^4.5.8",
     "@octokit/rest": "^18.0.0",
     "@types/cross-spawn": "^6.0.0",
-    "@types/diff": "^4.0.1",
+    "@types/diff": "^5.0.0",
     "@types/github-url-to-object": "^4.0.0",
     "@types/glob": "^7.0.0",
     "@types/issue-parser": "^3.0.0",
