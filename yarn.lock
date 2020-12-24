@@ -417,10 +417,10 @@
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.5.tgz#b14efa8852b7768d898906613c23f688713e02cd"
   integrity sha512-Q1y515GcOdTHgagaVFhHnIFQ38ygs/kmxdNpvpou+raI9UO3YZcHDngBSYKQklcKlvA7iuQlmIKbzvmxcOE9CQ==
 
-"@types/diff@^4.0.1":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@types/diff/-/diff-4.0.2.tgz#2e9bb89f9acc3ab0108f0f3dc4dbdcf2fff8a99c"
-  integrity sha512-mIenTfsIe586/yzsyfql69KRnA75S8SVXQbTLpDejRrjH0QSJcpu3AUOi/Vjnt9IOsXKxPhJfGpQUNMueIU1fQ==
+"@types/diff@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/diff/-/diff-5.0.0.tgz#eb71e94feae62548282c4889308a3dfb57e36020"
+  integrity sha512-jrm2K65CokCCX4NmowtA+MfXyuprZC13jbRuwprs6/04z/EcFg/MCwYdsHn+zgV4CQBiATiI7AEq7y1sZCtWKA==
 
 "@types/get-caller-file@^1.0.0":
   version "1.0.0"
