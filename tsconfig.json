@@ -16,11 +16,24 @@
     "declaration": true,
     "stripInternal": true,
     "incremental": true,
+    "rootDir": ".",
     "plugins": [
-      {"name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true}
+      { "name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true },
+      { "transform": "ts-transform-const-enum" },
+      { "transform": "ts-transform-const-enum", "afterDeclarations": true }
     ],
     "newLine": "lf"
   },
   "include": [
+    "scripts",
+    "custom-typings/*.d.ts",
+    "packages/*/src",
+    "packages/*/index.ts",
+    "packages/*/test/*.spec.ts",
+    "packages/wotan/language-service/"
+  ],
+  "exclude": [
+    "scripts/*.d.ts",
+    "packages/**/*.d.ts"
   ]
 }
