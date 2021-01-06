@@ -19,8 +19,8 @@ import {
     getLateBoundPropertyNames,
     getPropertyOfType,
     intersectionTypeParts,
+    formatPseudoBigInt,
 } from 'tsutils';
-import { formatPseudoBigInt } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -315,7 +315,7 @@ export class Rule extends TypedRule {
     private isPropertyPresent(node: ts.Expression, name: ts.Expression): true | undefined {
         if (!this.strictNullChecks)
             return;
-        const names = getLateBoundPropertyNames(name, this.checker); // TODO lateBoundPropertyNames should also be aware of index signatures
+        const names = getLateBoundPropertyNames(name, this.checker);
         if (!names.known)
             return;
         const types = unionTypeParts(this.checker.getApparentType(this.getTypeOfExpression(unwrapParentheses(node))));

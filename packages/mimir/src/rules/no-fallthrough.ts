@@ -10,7 +10,7 @@ export class Rule extends AbstractRule {
             for (let i = 1; i < clauses.length; ++i) {
                 if (clauses[i - 1].statements.length !== 0 &&
                     !ts.forEachLeadingCommentRange(this.sourceFile.text, clauses[i].pos, isFallthroughComment, this.sourceFile.text) &&
-                    !endsControlFlow(clauses[i - 1])) {
+                    !endsControlFlow(clauses[i - 1], this.program?.getTypeChecker())) {
                     const kind = clauses[i].kind === ts.SyntaxKind.CaseClause ? 'case' : 'default';
                     const start = clauses[i].getStart(this.sourceFile);
                     this.addFinding(start, start + kind.length, `Missing 'break' before '${kind}'.`);

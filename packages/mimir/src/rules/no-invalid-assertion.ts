@@ -1,7 +1,6 @@
 import { excludeDeclarationFiles, typescriptOnly, TypedRule } from '@fimbul/ymir';
-import { unionTypeParts, isIntersectionType, isConstAssertion } from 'tsutils';
+import { unionTypeParts, isIntersectionType, isConstAssertion, formatPseudoBigInt, isBooleanLiteralType } from 'tsutils';
 import * as ts from 'typescript';
-import { formatPseudoBigInt } from '../utils';
 
 @excludeDeclarationFiles
 @typescriptOnly
@@ -106,7 +105,7 @@ function getLiteralsByType(type: ts.Type) {
                 result.bigint = append(result.bigint, formatPseudoBigInt((<ts.BigIntLiteralType>t).value));
         } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
             if (!seenBoolean) {
-                const current = (<{intrinsicName: string}><{}>t).intrinsicName === 'true';
+                const current = isBooleanLiteralType(t, true);
                 if (result.boolean === undefined) {
                     result.boolean = current;
                 } else if (result.boolean !== current) {

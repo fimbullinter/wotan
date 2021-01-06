@@ -163,4 +163,5 @@ function test7(v: boolean, fail: () => never) {
             fail();
     }
     'foo';
+    ~~~~~  [error no-unreachable-code: Unreachable code detected.]
 }

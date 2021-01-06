@@ -8,59 +8,81 @@ n;
 get<string>();
 get<number>();
 get<never>();
-~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
 
 function test<T extends never>(param: T) {
     get<T>();
-    ~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    ~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
     get<typeof param>();
-    ~~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+    ~~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
     return param;
 }
 
 test(get<never>());
-~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
 
-function returned(fn: () => never) {
+function inferredByTs(fn: () => never) {
     fn();
-    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
     return fn();
 }
 
-function thrown(fn: () => never) {
-    fn();
-    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
-    throw fn();
+function returned() {
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
+    return get<never>();
 }
 
-function last(fn: () => never) {
+function thrown() {
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
+    throw get<never>();
+}
+
+function last() {
     console.log('foo');
     if (Boolean())
-        fn();
-        ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
-    fn();
-    ~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+        get<never>();
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
+    get<never>();
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
 }
 
 if (Boolean()) {
     get<never>();
-    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
 } else {
     get<never>();
-    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
 }
 
 declare let obj: { neverReturns(): never; }
 
 obj.neverReturns;
 obj.neverReturns();
-~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+
+let otherObj = obj;
+otherObj.neverReturns();
+~~~~~~~~~~~~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
+otherObj?.neverReturns();
 
 namespace ns {
     get<never>();
-    ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider throwing the result for better control flow analysis and type inference.]
+    ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
     function fn() {
         get<never>();
-        ~~~~~~~~~~~~~ [error return-never-call: This call never returns. Consider returning the result for better control flow analysis and type inference.]
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
+    }
+}
+
+function inTry() {
+    try {
+        get<never>();
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'throw'ing the result to make the control flow effect explicit.]
+    } catch {
+        get<never>();
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
+    } finally {
+        get<never>();
+        ~~~~~~~~~~~~~ [error return-never-call: This call never returns, but TypeScript cannot use it for control flow analysis. Consider 'return'ing the result to make the control flow effect explicit.]
     }
 }
