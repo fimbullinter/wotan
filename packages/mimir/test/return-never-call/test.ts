@@ -17,21 +17,26 @@ function test<T extends never>(param: T) {
 
 test(get<never>());
 
-function returned(fn: () => never) {
+function inferredByTs(fn: () => never) {
     fn();
     return fn();
 }
 
-function thrown(fn: () => never) {
-    fn();
-    throw fn();
+function returned() {
+    get<never>();
+    return get<never>();
 }
 
-function last(fn: () => never) {
+function thrown() {
+    get<never>();
+    throw get<never>();
+}
+
+function last() {
     console.log('foo');
     if (Boolean())
-        fn();
-    fn();
+        get<never>();
+    get<never>();
 }
 
 if (Boolean()) {
@@ -45,9 +50,23 @@ declare let obj: { neverReturns(): never; }
 obj.neverReturns;
 obj.neverReturns();
 
+let otherObj = obj;
+otherObj.neverReturns();
+otherObj?.neverReturns();
+
 namespace ns {
     get<never>();
     function fn() {
+        get<never>();
+    }
+}
+
+function inTry() {
+    try {
+        get<never>();
+    } catch {
+        get<never>();
+    } finally {
         get<never>();
     }
 }

@@ -179,7 +179,7 @@ test('Resolver', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(DirectoryService).to(NodeDirectoryService);
     const resolver = container.resolve(NodeResolver);
-    t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
+    t.is(resolver.resolve('tslib', __dirname, ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
     t.is(
         resolver.resolve('./no-debugger', path.resolve('packages/mimir/src/rules'), ['.ts']),

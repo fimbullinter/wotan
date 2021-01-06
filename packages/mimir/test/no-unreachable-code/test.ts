@@ -136,3 +136,12 @@ function test6() {
     }
     'bas';
 }
+function test7(v: boolean, fail: () => never) {
+    switch (v) {
+        case true:
+            return;
+        case false:
+            fail();
+    }
+    'foo';
+}

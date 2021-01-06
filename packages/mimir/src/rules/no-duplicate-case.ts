@@ -8,9 +8,11 @@ import {
     isLiteralType,
     unionTypeParts,
     isStrictCompilerOptionEnabled,
+    formatPseudoBigInt,
+    isBooleanLiteralType,
 } from 'tsutils';
 import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
-import { switchStatements, formatPseudoBigInt } from '../utils';
+import { switchStatements } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -85,7 +87,7 @@ export class Rule extends AbstractRule {
             if (isLiteralType(t)) {
                 result.add(formatPrimitive(prefixFn(t.value)));
             } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
-                result.add(formatPrimitive(prefixFn((<{intrinsicName: string}><{}>t).intrinsicName === 'true')));
+                result.add(formatPrimitive(prefixFn(isBooleanLiteralType(t, true))));
             } else if (t.flags & ts.TypeFlags.Undefined) {
                 result.add(formatPrimitive(prefixFn(undefined)));
             } else if (t.flags & ts.TypeFlags.Null) {

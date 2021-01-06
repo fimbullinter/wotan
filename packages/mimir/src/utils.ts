@@ -209,10 +209,6 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
     }
 }
 
-export function formatPseudoBigInt(v: ts.PseudoBigInt) {
-    return `${v.negative ? '-' : ''}${v.base10Value}n`;
-}
-
 /** Determines whether a property has the `declare` modifier or the containing class is ambient. */
 export function isAmbientPropertyDeclaration(node: ts.PropertyDeclaration): boolean {
     return hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword) ||

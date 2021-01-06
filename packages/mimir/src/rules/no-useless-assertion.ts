@@ -20,7 +20,7 @@ import {
     isInConstContext,
     isTypeReference,
     isTupleType,
-    isTypeFlagSet,
+    isOptionalChainingUndefinedMarkerType,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -96,7 +96,7 @@ export class Rule extends TypedRule {
             const flags = getNullableFlags(
                 this.checker.getBaseConstraintOfType(originalType) || originalType,
                 ts.isOptionalChain(node)
-                    ? (t) => isOptionalChainingMarkerType(this.checker, t) ? 0 : t.flags
+                    ? (t) => isOptionalChainingUndefinedMarkerType(this.checker, t) ? 0 : t.flags
                     : undefined,
             );
             if (flags !== 0) { // type is nullable
@@ -259,8 +259,4 @@ function isInlinedIife(node: ts.Node): boolean {
         node.asteriskToken === undefined && // exclude generators
         !hasModifier(node.modifiers, ts.SyntaxKind.AsyncKeyword) && // exclude async functions
         getIIFE(node) !== undefined;
-}
-
-function isOptionalChainingMarkerType(checker: ts.TypeChecker, t: ts.Type) {
-    return isTypeFlagSet(t, ts.TypeFlags.Undefined) && checker.getNullableType(t.getNonNullableType(), ts.TypeFlags.Undefined) !== t;
 }

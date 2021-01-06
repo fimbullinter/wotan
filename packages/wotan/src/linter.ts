@@ -19,7 +19,7 @@ import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange, invertChangeRange } from './utils';
-import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective } from 'tsutils';
+import { ConvertedAst, convertAst, isCompilerOptionEnabled, getTsCheckDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
 
@@ -166,7 +166,7 @@ export class Linter {
         let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
         if (programFactory !== undefined) {
-            const directive = getCheckJsDirective(sourceFile.text);
+            const directive = getTsCheckDirective(sourceFile.text);
             if (
                 directive !== undefined
                     ? !directive.enabled

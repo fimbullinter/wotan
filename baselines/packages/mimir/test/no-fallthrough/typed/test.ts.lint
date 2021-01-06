@@ -104,10 +104,8 @@ function testTyped(p: {kind: 'a', nested: boolean} | {kind: 'b' | 'c'}, fail: ()
             return 2;
         }
       case 'b':
-      ~~~~      [error no-fallthrough: Missing 'break' before 'case'.]
         fail();
       case 'c':
-      ~~~~      [error no-fallthrough: Missing 'break' before 'case'.]
         return 3;
     }
   }
