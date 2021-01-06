@@ -10,7 +10,7 @@ import {
     isMethodDeclaration,
     hasModifier,
     getLateBoundPropertyNames,
-    getConstructorTypeOfClassLikeDeclaration,
+    getInstanceTypeOfClassLikeDeclaration,
 } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -34,7 +34,7 @@ export class Rule extends TypedRule {
         const flags = getModifierFlagsOfSymbol(symbol);
 
         if (
-            lhs !== undefined && lhs.kind === ts.SyntaxKind.ThisKeyword &&
+            lhs?.kind === ts.SyntaxKind.ThisKeyword &&
             flags & ts.ModifierFlags.Abstract && hasNonMethodDeclaration(symbol)
         ) {
             const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
@@ -46,7 +46,7 @@ export class Rule extends TypedRule {
                     }' cannot be accessed during class initialization.`,
                 );
         }
-        if (lhs !== undefined && lhs.kind === ts.SyntaxKind.SuperKeyword) {
+        if (lhs?.kind === ts.SyntaxKind.SuperKeyword) {
             if (hasNonMethodDeclaration(symbol))
                 return this.addFindingAtNode(
                     errorNode,
@@ -91,7 +91,7 @@ export class Rule extends TypedRule {
 
     private getEnclosingClassFromThisParameter(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[]) {
         const thisParameter = getThisParameterFromContext(node);
-        if (thisParameter === undefined || thisParameter.type === undefined)
+        if (thisParameter?.type === undefined)
             return;
         let thisType = this.checker.getTypeFromTypeNode(thisParameter.type);
         if (isTypeParameter(thisType)) {
@@ -119,7 +119,7 @@ export class Rule extends TypedRule {
             switch (node.kind) {
                 case ts.SyntaxKind.ClassDeclaration:
                 case ts.SyntaxKind.ClassExpression: {
-                    const declaredType = getConstructorTypeOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node, this.checker);
+                    const declaredType = getInstanceTypeOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node, this.checker);
                     if (baseClasses.every((baseClass) => hasBase(declaredType, baseClass, typeContainsDeclaration)))
                         return declaredType;
                     break;
@@ -132,7 +132,7 @@ export class Rule extends TypedRule {
     }
 
     private printClass(declaration: ts.ClassLikeDeclaration) {
-        return this.checker.typeToString(getConstructorTypeOfClassLikeDeclaration(declaration, this.checker));
+        return this.checker.typeToString(getInstanceTypeOfClassLikeDeclaration(declaration, this.checker));
     }
 }
 

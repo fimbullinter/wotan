@@ -46,3 +46,4 @@ returnNever(); // TypeScript correctly handles this
 ## Related Rules
 
 * [`no-unreachable-code`](no-unreachable-code.md)
+* [`no-fallthrough`](no-fallthrough.md)

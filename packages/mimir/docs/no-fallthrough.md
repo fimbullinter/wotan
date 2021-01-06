@@ -117,3 +117,4 @@ function fn(p: {kind: 'a', nested: boolean} | {kind: 'b' | 'c'}) {
 
 * [`no-case-declaration`](no-case-declaration.md)
 * [`no-duplicate-case`](no-duplicate-case.md)
+* [`return-never-call`](return-never-call.md)
