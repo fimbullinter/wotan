@@ -113,7 +113,7 @@ function getLiteralsByType(type: ts.Type) {
                     seenBoolean = true;
                 }
             }
-        } else if (t.flags & ts.TypeFlags.String) {
+        } else if (t.flags & ts.TypeFlags.StringLike) {
             result.string = undefined;
             seenString = true;
         } else if (t.flags & ts.TypeFlags.Number) {
