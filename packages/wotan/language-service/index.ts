@@ -79,7 +79,7 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
             const scriptSnapshot = this.project.getScriptSnapshot(globalConfigDir + '/.fimbullinter.yaml');
             if (scriptSnapshot !== undefined) {
                 this.log(`Using '${globalConfigDir}/.fimbullinter.yaml' for global options.`);
-                globalOptions = yaml.safeLoad(scriptSnapshot.getText(0, scriptSnapshot.getLength())) || {};
+                globalOptions = yaml.load(scriptSnapshot.getText(0, scriptSnapshot.getLength())) || {};
                 break;
             }
             const parentDir = path.dirname(globalConfigDir);

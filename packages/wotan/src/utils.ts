@@ -42,7 +42,7 @@ export function format<T = any>(value: T, fmt = Format.Yaml): string {
         case Format.Json5:
             return json5.stringify(value, undefined, 2);
         case Format.Yaml:
-            return yaml.safeDump(value, {
+            return yaml.dump(value, {
                 indent: 2,
                 schema: yaml.JSON_SCHEMA,
                 sortKeys: true,
