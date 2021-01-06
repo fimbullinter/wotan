@@ -24,7 +24,6 @@ import {
     isUnionType,
     getIteratorYieldResultFromIteratorResult,
 } from 'tsutils';
-import * as path from 'path';
 import { typesAreEqual } from '../utils';
 
 @excludeDeclarationFiles
@@ -82,18 +81,12 @@ export class Rule extends TypedRule {
         if (type.flags & ts.TypeFlags.StringLike)
             return this.sourceFile.languageVersion >= ts.ScriptTarget.ES5; // iterating string is only possible starting from ES5
         if (type.symbol !== undefined && /^(Concat|Readonly)?Array$/.test(<string>type.symbol.escapedName) &&
-            type.symbol.declarations !== undefined && type.symbol.declarations.some(this.isDeclaredInDefaultLib, this))
+            type.symbol.declarations !== undefined && type.symbol.declarations.some((node) => node.getSourceFile().hasNoDefaultLib))
             return true;
         if (isIntersectionType(type))
             return type.types.some(this.isArrayLike, this);
         const baseTypes = type.getBaseTypes();
         return baseTypes !== undefined && baseTypes.some(this.isArrayLike, this);
-    }
-
-    private isDeclaredInDefaultLib(node: ts.Node): boolean {
-        // we assume it's the global array type if it comes from any lib.xxx.d.ts file
-        return path.normalize(path.dirname(node.getSourceFile().fileName))
-            === path.dirname(ts.getDefaultLibFilePath(this.context.compilerOptions));
     }
 
     private isIterable(type: ts.Type, node: ts.Expression): boolean {
