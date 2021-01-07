@@ -225,6 +225,7 @@ export class Rule extends TypedRule {
                 return 'undefined';
             if (t.flags & ts.TypeFlags.Null)
                 return 'null';
+            // TODO unique symbol
         }
         return;
     }

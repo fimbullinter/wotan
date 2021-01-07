@@ -95,6 +95,7 @@ export class Rule extends AbstractRule {
             } else {
                 return [];
             }
+            // TODO unique symbol
         }
         return Array.from(result);
     }

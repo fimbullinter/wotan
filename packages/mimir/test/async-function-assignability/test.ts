@@ -103,3 +103,17 @@ const otherName = 'overloaded';
 (class extends C<void> {
     async ["f" + "oo"]() {}
 });
+
+{
+    class C {
+        '#prop'() {}
+        foo() {}
+        static bar() {}
+    }
+    class D extends C {
+        #prop = async () => {};
+        static foo = async () => {}
+        static bar = async () => {}
+    }
+
+}

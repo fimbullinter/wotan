@@ -19,6 +19,7 @@ import {
     getPropertyOfType,
     getSingleLateBoundPropertyNameOfPropertyName,
     getLateBoundPropertyNamesOfPropertyName,
+    hasModifier,
 } from 'tsutils';
 
 @excludeDeclarationFiles
@@ -65,7 +66,11 @@ export class Rule extends TypedRule {
     }
 
     private checkClassProperty(node: ts.PropertyDeclaration | ts.MethodDeclaration, clazz: ts.ClassLikeDeclaration) {
-        if (clazz.heritageClauses === undefined)
+        if (
+            clazz.heritageClauses === undefined ||
+            node.name.kind === ts.SyntaxKind.PrivateIdentifier ||
+            hasModifier(node.modifiers, ts.SyntaxKind.StaticKeyword)
+        )
             return;
         const checker = this.checker;
         if (node.kind === ts.SyntaxKind.MethodDeclaration) {
