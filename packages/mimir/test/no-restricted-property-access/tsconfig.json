@@ -3,6 +3,7 @@
     "strict": true,
     "target": "esnext",
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "experimentalDecorators": true
   }
 }
