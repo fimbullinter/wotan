@@ -187,6 +187,8 @@ function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions,
     const extension = path.extname(fileName);
     switch (extension) {
         case '.tsx':
+        case '.js':
+        case '.jsx':
             break;
         case '.ts':
             if (path.extname(fileName.slice(0, -extension.length)) !== '.d')

@@ -1,1 +1,5 @@
-export class A {}
+import {A1} from './a1';
+
+export class A {
+    nested = new A1();
+}
