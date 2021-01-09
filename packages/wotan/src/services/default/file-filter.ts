@@ -22,12 +22,14 @@ class DefaultFileFilter implements FileFilter {
 
     public filter(file: ts.SourceFile) {
         const {fileName} = file;
+        if (fileName.endsWith('.json'))
+            return false;
         if (this.options.composite)
             return this.rootNames.includes(fileName);
         if (this.program.isSourceFileFromExternalLibrary(file))
             return false;
         if (!fileName.endsWith('.d.ts'))
-            return !fileName.endsWith('.json');
+            return true;
         if (
             // lib.xxx.d.ts
             fileName.startsWith(this.libDirectory) ||
