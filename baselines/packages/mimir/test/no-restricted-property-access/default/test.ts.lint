@@ -409,3 +409,9 @@ namespace testStatic {
         }
     }
 }
+
+class MyClass extends Object {
+    toString() {
+        return super['toString']();
+    }
+}
