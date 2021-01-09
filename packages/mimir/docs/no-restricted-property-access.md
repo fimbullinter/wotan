@@ -13,9 +13,8 @@ This rule implements the same checks as TypeScript but only for computed names w
 
 The following errors are detected:
 
-* accessing members with multiple declarations of conflicting visibility
 * accessing properties using `super`
-* accessing `abstract` methods using `super`
+* accessing `abstract` methods and accessors using `super`
 * accessing `abstract` properties during initialization of a class with no implementation for that property
 * accessing `private` and `protected` members outside of their visibility
 * accessing `protected` members on an instance of a super-class within a derived class
@@ -52,16 +51,6 @@ class D extends C {
     this['priv']; // accessing private member outside of the declaring class' body
     other['prot']; // accessing a protected member declared in a base class on an instance that is not instanceof the containing class
   }
-}
-
-class Public {
-  public prop = 1;
-}
-class Private {
-  private prop = 1;
-}
-function doStuff(instance: Public & Private) {
-  instance['prop']; // property has conflicting visibility modifiers
 }
 ```
 

@@ -7,7 +7,6 @@ import {
     isTypeReference,
     isIntersectionType,
     isFunctionScopeBoundary,
-    isMethodDeclaration,
     hasModifier,
     getLateBoundPropertyNames,
     getInstanceTypeOfClassLikeDeclaration,
@@ -27,38 +26,38 @@ export class Rule extends TypedRule {
             return;
         const type = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression)).getNonNullableType();
         for (const {symbol, name} of propertiesOfType(type, names))
-            this.checkSymbol(symbol, name, node, node.expression, type);
+            this.checkSymbol(symbol, name, node, type);
     }
 
-    private checkSymbol(symbol: ts.Symbol, name: string, errorNode: ts.Node, lhs: ts.Expression, lhsType: ts.Type) {
+    private checkSymbol(symbol: ts.Symbol, name: string, node: ts.ElementAccessExpression, lhsType: ts.Type) {
         const flags = getModifierFlagsOfSymbol(symbol);
 
         if (
-            lhs?.kind === ts.SyntaxKind.ThisKeyword &&
-            flags & ts.ModifierFlags.Abstract && hasNonMethodDeclaration(symbol)
+            node.expression.kind === ts.SyntaxKind.ThisKeyword &&
+            flags & ts.ModifierFlags.Abstract && hasNonPrototypeDeclaration(symbol)
         ) {
-            const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(errorNode.parent!);
+            const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(node.parent!);
             if (enclosingClass !== undefined)
                 return this.addFindingAtNode(
-                    errorNode,
+                    node,
                     `Abstract property '${name}' in class '${
                         this.printClass(enclosingClass)
                     }' cannot be accessed during class initialization.`,
                 );
         }
-        if (lhs?.kind === ts.SyntaxKind.SuperKeyword) {
-            if (hasNonMethodDeclaration(symbol))
+        if (node.expression.kind === ts.SyntaxKind.SuperKeyword && (flags & ts.ModifierFlags.Static) === 0 && !isStaticSuper(node)) {
+            if (hasNonPrototypeDeclaration(symbol))
                 return this.addFindingAtNode(
-                    errorNode,
-                    "Only public and protected methods of the base class are accessible via the 'super' keyword.",
+                    node,
+                    "Only public and protected methods and accessors of the base class are accessible via the 'super' keyword.",
                 );
             if (
                 flags & ts.ModifierFlags.Abstract &&
                 symbol.declarations!.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.AbstractKeyword))
             )
                 return this.addFindingAtNode(
-                    errorNode,
-                    `Abstract method '${name}' in class '${
+                    node,
+                    `Abstract member '${name}' in class '${
                         this.printClass(<ts.ClassLikeDeclaration>symbol.declarations![0].parent)
                     }' cannot be accessed via the 'super' keyword.`,
                 );
@@ -68,20 +67,20 @@ export class Rule extends TypedRule {
             return;
         if (flags & ts.ModifierFlags.Private) {
             const declaringClass = <ts.ClassLikeDeclaration>symbol.declarations![0].parent;
-            if (errorNode.pos < declaringClass.pos || errorNode.end > declaringClass.end)
-                this.failVisibility(errorNode, name, this.printClass(declaringClass), true);
+            if (node.pos < declaringClass.pos || node.end > declaringClass.end)
+                this.failVisibility(node, name, this.printClass(declaringClass), true);
         } else {
             const declaringClasses = symbol.declarations!.map((d) => <ts.ClassLikeDeclaration>d.parent);
-            let enclosingClass = this.findEnclosingClass(errorNode.parent!.parent!, declaringClasses);
+            let enclosingClass = this.findEnclosingClass(node.parent!, declaringClasses);
             if (enclosingClass === undefined) {
                 if ((flags & ts.ModifierFlags.Static) === 0)
-                    enclosingClass = this.getEnclosingClassFromThisParameter(errorNode.parent!.parent!, declaringClasses);
+                    enclosingClass = this.getEnclosingClassFromThisParameter(node.parent!, declaringClasses);
                 if (enclosingClass === undefined)
-                    return this.failVisibility(errorNode, name, this.checker.typeToString(lhsType), false);
+                    return this.failVisibility(node, name, this.checker.typeToString(lhsType), false);
             }
             if ((flags & ts.ModifierFlags.Static) === 0 && !hasBase(lhsType, enclosingClass, isIdentical))
                 return this.addFindingAtNode(
-                    errorNode,
+                    node,
                     `Property '${name}' is protected and only accessible through an instance of class '${
                         this.checker.typeToString(enclosingClass)
                     }'.`,
@@ -136,8 +135,52 @@ export class Rule extends TypedRule {
     }
 }
 
-function hasNonMethodDeclaration(symbol: ts.Symbol) {
-    return !symbol.declarations!.every(isMethodDeclaration);
+function isStaticSuper(node: ts.Node) {
+    while (true) {
+        switch (node.kind) {
+            // super in computed property names, heritage clauses and decorators refers to 'this' outside of the current class
+            case ts.SyntaxKind.ComputedPropertyName:
+            case ts.SyntaxKind.ExpressionWithTypeArguments:
+                node = node.parent!.parent!.parent!;
+                break;
+            case ts.SyntaxKind.Decorator:
+                switch (node.parent!.kind) {
+                    case ts.SyntaxKind.ClassDeclaration:
+                    case ts.SyntaxKind.ClassExpression:
+                        node = node.parent.parent!;
+                        break;
+                    case ts.SyntaxKind.Parameter:
+                        node = node.parent.parent!.parent!.parent!;
+                        break;
+                    default: // class element decorator
+                        node = node.parent.parent!.parent!;
+                }
+                break;
+            case ts.SyntaxKind.PropertyDeclaration:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.SetAccessor:
+                return hasModifier(node.modifiers, ts.SyntaxKind.StaticKeyword);
+            case ts.SyntaxKind.Constructor:
+                return false;
+            default:
+                node = node.parent!;
+        }
+    }
+}
+
+function hasNonPrototypeDeclaration(symbol: ts.Symbol) {
+    for (const {kind} of symbol.declarations!) {
+        switch (kind) {
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.MethodSignature:
+            case ts.SyntaxKind.GetAccessor:
+            case ts.SyntaxKind.SetAccessor:
+                continue;
+        }
+        return true;
+    }
+    return false;
 }
 
 function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
@@ -164,8 +207,7 @@ function hasBase<T>(type: ts.Type, needle: T, check: (type: ts.Type, needle: T) 
             if (check(t, needle))
                 return true;
         }
-        const baseTypes = t.getBaseTypes();
-        if (baseTypes !== undefined && baseTypes.some(recur))
+        if (t.getBaseTypes()?.some(recur))
             return true;
         return isIntersectionType(t) && t.types.some(recur);
     })(type);
@@ -176,7 +218,7 @@ function isIdentical<T>(a: T, b: T) {
 }
 
 function typeContainsDeclaration(type: ts.Type, declaration: ts.Declaration) {
-    return type.symbol !== undefined && type.symbol.declarations !== undefined && type.symbol.declarations.includes(declaration);
+    return type.symbol!.declarations!.includes(declaration);
 }
 
 function getThisParameterFromContext(node: ts.Node) {
@@ -195,9 +237,23 @@ function getThisParameterFromContext(node: ts.Node) {
             case ts.SyntaxKind.EnumDeclaration:
             case ts.SyntaxKind.SourceFile:
                 return;
+            // this in computed property names, heritage clauses and decorators refers to 'super' outside of the current class
+            case ts.SyntaxKind.ComputedPropertyName:
+            case ts.SyntaxKind.ExpressionWithTypeArguments:
+                node = node.parent!.parent!.parent!;
+                break;
             case ts.SyntaxKind.Decorator:
-                // skip the declaration the decorator belongs to, because decorators are always applied in the outer context
-                node = node.parent!.parent!;
+                switch (node.parent!.kind) {
+                    case ts.SyntaxKind.ClassDeclaration:
+                    case ts.SyntaxKind.ClassExpression:
+                        node = node.parent.parent!;
+                        break;
+                    case ts.SyntaxKind.Parameter:
+                        node = node.parent.parent!.parent!.parent!;
+                        break;
+                    default: // class element decorator
+                        node = node.parent.parent!.parent!;
+                }
                 break;
             default:
                 node = node.parent!;
