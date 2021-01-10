@@ -17,6 +17,8 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+obj.a;
+
 (1).toString();
 (1.).toString();
 (1.0).toString();
@@ -31,3 +33,15 @@ for (const key of Object.keys(obj))
 
 type T = string[]['length'];
 type V = string['charCodeAt'];
+
+null!['foo'];
+
+class C {
+    static pub = 1;
+    protected static prot = 2;
+    private static priv = 3;
+}
+
+C.pub;
+C['prot'];
+C['priv'];

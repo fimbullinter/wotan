@@ -1,12 +1,12 @@
 declare let obj: Record<string, any>;
 
 obj.foo;
-obj['bar']['baz'];
+obj['bar'].baz;
 obj['__foo__'];
 obj[`fooBar`];
 
 obj?.['bar'];
-obj?.['bar']?.['baz'];
+obj?.['bar']?.baz;
 
 obj[''];
 obj['1'];
@@ -19,11 +19,11 @@ obj[`foo${1}`];
 
 obj['\u0061'];
 
-1['toString']();
-1.['toString']();
-1.0['toString']();
-1e1['toString']();
-.0['toString']();
+(1).toString();
+(1.).toString();
+(1.0).toString();
+(1e1).toString();
+(.0).toString();
 1[''];
 
 for (const key of Object.keys(obj))
@@ -42,6 +42,6 @@ class C {
     private static priv = 3;
 }
 
-C['pub'];
+C.pub;
 C['prot'];
 C['priv'];
