@@ -10,6 +10,8 @@ src/formatters/json.js.map
 src/formatters/stylish.d.ts
 src/formatters/stylish.js
 src/formatters/stylish.js.map
+src/restricted-property.js
+src/restricted-property.js.map
 src/rules/async-function-assignability.d.ts
 src/rules/async-function-assignability.js
 src/rules/async-function-assignability.js.map

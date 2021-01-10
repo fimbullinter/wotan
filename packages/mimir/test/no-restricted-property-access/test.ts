@@ -358,3 +358,5 @@ class MyClass extends Object {
         return super['toString']();
     }
 }
+
+null!['prop'];

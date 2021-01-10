@@ -415,3 +415,6 @@ class MyClass extends Object {
         return super['toString']();
     }
 }
+
+null!['prop'];
+~~~~~~~~~~~~~  [error no-restricted-property-access: Invalid element access on type 'never'.]

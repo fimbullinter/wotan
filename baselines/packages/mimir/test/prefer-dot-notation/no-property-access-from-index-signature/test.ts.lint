@@ -2,17 +2,12 @@ declare let obj: Record<string, any>;
 
 obj.foo;
 obj['bar']['baz'];
-    ~~~~~          [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
            ~~~~~   [error prefer-dot-notation: Prefer 'obj.baz' over 'obj['baz']'.]
 obj['__foo__'];
-    ~~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.__foo__' over 'obj['__foo__']'.]
 obj[`fooBar`];
-    ~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.fooBar' over 'obj[`fooBar`]'.]
 
 obj?.['bar'];
-      ~~~~~   [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
 obj?.['bar']?.['baz'];
-      ~~~~~            [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
                ~~~~~   [error prefer-dot-notation: Prefer 'obj.baz' over 'obj['baz']'.]
 
 obj[''];

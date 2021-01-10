@@ -13,6 +13,7 @@ This rule implements the same checks as TypeScript but only for computed names w
 
 The following errors are detected:
 
+* accessing properties on `never`
 * accessing properties using `super`
 * accessing `abstract` methods and accessors using `super`
 * accessing `abstract` properties during initialization of a class with no implementation for that property
@@ -52,6 +53,9 @@ class D extends C {
     other['prot']; // accessing a protected member declared in a base class on an instance that is not instanceof the containing class
   }
 }
+
+declare const n: never;
+n['prop']; // accessing property on 'never'
 ```
 
 :thumbsup: Examples of correct code
@@ -79,3 +83,7 @@ function explicitThis(this: C) {
 ## Further Reading
 
 * TypeScript Handbook: [Classes](https://www.typescriptlang.org/docs/handbook/classes.html)
+
+## Related Rules
+
+* [`prefer-dot-notation`](prefer-dot-notation.md)
