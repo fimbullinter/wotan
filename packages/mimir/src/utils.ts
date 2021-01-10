@@ -18,7 +18,7 @@ export function* switchStatements(context: RuleContext) {
     const re = /\bswitch\s*[(/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.SwitchStatement && node.getStart(context.sourceFile) === match.index)
             yield <ts.SwitchStatement>node;
     }
@@ -29,7 +29,7 @@ export function* tryStatements(context: RuleContext) {
     const re = /\btry\s*[{/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
             yield <ts.TryStatement>node;
     }

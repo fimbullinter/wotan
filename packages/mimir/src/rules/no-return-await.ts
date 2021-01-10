@@ -11,7 +11,7 @@ export class Rule extends AbstractRule {
         const re = /(?:^|\|\||&&|return|=>|\*\/|[,(?:])\s*await\b/mg;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), re.lastIndex - 1)!;
             if (isAwaitExpression(node) && re.lastIndex === node.expression.pos && isUnnecessaryAwait(node)) {
                 const keywordStart = node.expression.pos - 'await'.length;
                 const replacements = [Replacement.delete(keywordStart, node.expression.getStart(this.sourceFile))];

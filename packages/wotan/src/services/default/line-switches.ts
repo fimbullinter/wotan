@@ -59,7 +59,7 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
         const raw = this.parser.parse({
             sourceFile,
             getCommentAtPosition(pos) {
-                const wrap = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), pos);
+                const wrap = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), pos);
                 if (wrap === undefined)
                     return;
                 return getCommentAtPosition(sourceFile, pos, wrap.node);

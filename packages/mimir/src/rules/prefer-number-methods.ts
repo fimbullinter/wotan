@@ -9,7 +9,7 @@ export class Rule extends TypedRule {
         const re = /\b(?:isNaN|isFinite)\s*[/(]/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (!isIdentifier(node) || node.text !== 'isNaN' && node.text !== 'isFinite' || node.end - node.text.length !== match.index)
                 continue;
             const parent = node.parent!;
