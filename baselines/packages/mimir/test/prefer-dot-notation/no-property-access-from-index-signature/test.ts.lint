@@ -19,6 +19,8 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+obj['\u0061'];
+
 1['toString']();
   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
 1.['toString']();

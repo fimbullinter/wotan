@@ -17,6 +17,8 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+obj.a;
+
 (1).toString();
 (1.).toString();
 (1.0).toString();
