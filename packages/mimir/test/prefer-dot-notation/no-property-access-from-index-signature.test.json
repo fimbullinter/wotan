@@ -1,3 +1,4 @@
 {
+  "typescriptVersion": ">= 4.1.0",
   "project": "tsconfig.nopropertyaccessfromindexsignature.json"
 }
