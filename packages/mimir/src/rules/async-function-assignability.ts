@@ -1,7 +1,6 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
-    NodeWrap,
     isTypeNodeKind,
     isExpression,
     isIdentifier,
@@ -25,13 +24,18 @@ import {
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        this.context.getWrappedAst().children.forEach(this.checkNode, this);
+        let wrap = this.context.getWrappedAst().next;
+        while (wrap.next !== undefined) {
+            if (isTypeNodeKind(wrap.kind)) {
+                wrap = wrap.skip!;
+            } else {
+                this.checkNode(wrap.node);
+                wrap = wrap.next;
+            }
+        }
     }
 
-    private checkNode({node, children}: NodeWrap) {
-        if (isTypeNodeKind(node.kind))
-            return;
-
+    private checkNode(node: ts.Node) {
         if (isExpression(node)) {
             if (!isIdentifier(node) || getUsageDomain(node) !== undefined)
                 this.checkAssignment(node);
@@ -45,7 +49,6 @@ export class Rule extends TypedRule {
                 this.checkClassProperty(node, parent);
             }
         }
-        return children.forEach(this.checkNode, this);
     }
 
     private checkAssignment(node: ts.Expression) {

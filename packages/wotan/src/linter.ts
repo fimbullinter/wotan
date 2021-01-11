@@ -54,7 +54,7 @@ class CachedProgramFactory implements ProgramFactory {
     constructor(private factory: ProgramFactory) {}
 
     public getCompilerOptions() {
-        return this.options || (this.options = this.factory.getCompilerOptions());
+        return this.options ??= this.factory.getCompilerOptions();
     }
 
     public getProgram() {
@@ -310,10 +310,10 @@ export class Linter {
         return result;
 
         function getFlatAst() {
-            return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
+            return (convertedAst ??= convertAst(sourceFile)).flat;
         }
         function getWrappedAst() {
-            return (convertedAst || (convertedAst = convertAst(sourceFile))).wrapped;
+            return (convertedAst ??= convertAst(sourceFile)).wrapped;
         }
     }
 }

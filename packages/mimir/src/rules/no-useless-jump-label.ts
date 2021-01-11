@@ -16,7 +16,7 @@ export class Rule extends AbstractRule {
         const re = /\b(break|continue)(?:\s|\/*)/gm;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (
                 isBreakOrContinueStatement(node) &&
                 node.label !== undefined &&

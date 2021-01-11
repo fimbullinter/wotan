@@ -24,7 +24,7 @@ export class Rule extends AbstractRule {
         const re = /(['"])use strict\1/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (
                 node.end === re.lastIndex &&
                 isStringLiteral(node) &&

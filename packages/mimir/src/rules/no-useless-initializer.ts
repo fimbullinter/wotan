@@ -90,7 +90,7 @@ export class Rule extends AbstractRule {
         function maybeUndefined({symbolName}: PropertyName) {
             return symbolMaybeUndefined(
                 checker,
-                getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeOfAssignmentPattern(node))), symbolName),
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeOfAssignmentPattern(node)), symbolName),
                 node,
             );
         }
@@ -140,7 +140,7 @@ export class Rule extends AbstractRule {
         function maybeUndefined({symbolName}: PropertyName) {
             return symbolMaybeUndefined(
                 checker,
-                getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!)), symbolName),
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeAtLocation(node)!), symbolName),
                 node,
             );
         }

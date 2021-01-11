@@ -4,8 +4,6 @@ import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
-    private containsYield = false;
-
     public apply() {
         return this.iterate(this.context.getWrappedAst().next, undefined);
     }
@@ -13,9 +11,7 @@ export class Rule extends AbstractRule {
     private iterate(wrap: NodeWrap, end: NodeWrap | undefined) {
         do { // iterate as linked list until we find a generator
             if (wrap.kind === ts.SyntaxKind.Block && isGenerator(wrap.node.parent)) {
-                this.containsYield = false;
-                wrap.children.forEach(this.visitNode, this); // walk the function body recursively
-                if (this.shouldFail()) // call as method so CFA doesn't infer `this.containsYield` as always false
+                if (!this.visitGeneratorBodyLookingForYield(wrap.next!, wrap.skip!))
                     this.fail(wrap.node.parent);
                 wrap = wrap.skip!; // continue right after the function body
             } else {
@@ -24,25 +20,20 @@ export class Rule extends AbstractRule {
         } while (wrap !== end);
     }
 
-    private visitNode(wrap: NodeWrap): void {
-        if (wrap.node.kind === ts.SyntaxKind.YieldExpression) {
-            this.containsYield = true;
-            if (wrap.children.length === 0)
-                return;
-            return this.visitNode(wrap.children[0]);
+    private visitGeneratorBodyLookingForYield(wrap: NodeWrap, end: NodeWrap): boolean {
+        let containsYield = false;
+        while (wrap !== end) {
+            if (wrap.node.kind === ts.SyntaxKind.YieldExpression)
+                containsYield = true;
+            if (isFunctionScopeBoundary(wrap.node)) {
+                // can iterate as linked list again for nested functions
+                this.iterate(wrap.next!, wrap.skip);
+                wrap = wrap.skip!;
+            } else {
+                wrap = wrap.next!;
+            }
         }
-        if (isFunctionScopeBoundary(wrap.node)) {
-            const saved = this.containsYield;
-            // can iterate as linked list again for nested functions
-            this.iterate(wrap.next!, wrap.skip);
-            this.containsYield = saved;
-            return;
-        }
-        return wrap.children.forEach(this.visitNode, this);
-    }
-
-    private shouldFail() {
-        return !this.containsYield;
+        return containsYield;
     }
 
     private fail({asteriskToken, name}: GeneratorDeclaration) {

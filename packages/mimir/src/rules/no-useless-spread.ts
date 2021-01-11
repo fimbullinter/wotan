@@ -19,10 +19,7 @@ export class Rule extends AbstractRule {
         const re = /\.{3}\s*[/[{]/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const { node } = getWrappedNodeAtPosition(
-                wrappedAst || (wrappedAst = this.context.getWrappedAst()),
-                match.index,
-            )!;
+            const { node } = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             switch (node.kind) {
                 case ts.SyntaxKind.SpreadElement:
                     if ((<ts.SpreadElement>node).expression.pos - 3 === match.index)
