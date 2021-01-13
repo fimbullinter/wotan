@@ -10,7 +10,7 @@ import {
     getLateBoundPropertyNames,
     PropertyName,
     isStatementInAmbientContext,
-    getPropertyName,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -247,20 +247,10 @@ export function *destructuredProperties(node: ts.ObjectBindingPattern, checker: 
                 displayName: (<ts.Identifier>element.name).text,
             };
         } else {
-            const propName = getPropertyName(element.propertyName);
-            if (propName !== undefined) {
-                yield {
-                    node: element.propertyName,
-                    symbolName: ts.escapeLeadingUnderscores(propName),
-                    displayName: propName,
-                };
-            } else {
-                // TODO handle PrivateIdentifier
-                yield* addNodeToPropertyNameList(
-                    element.propertyName,
-                    getLateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression, checker).names,
-                );
-            }
+            yield* addNodeToPropertyNameList(
+                element.propertyName,
+                getLateBoundPropertyNamesOfPropertyName(element.propertyName, checker).names,
+            );
         }
     }
 }
