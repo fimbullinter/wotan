@@ -21,6 +21,7 @@ import {
     intersectionTypeParts,
     formatPseudoBigInt,
 } from 'tsutils';
+import { tryGetBaseConstraintType } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -180,8 +181,7 @@ export class Rule extends TypedRule {
             if (isTextualLiteral(right)) {
                 literal = right.text;
             } else {
-                let type = this.getTypeOfExpression(right);
-                type = this.checker.getBaseConstraintOfType(type) || type;
+                const type = tryGetBaseConstraintType(this.getTypeOfExpression(right), this.checker);
                 if ((type.flags & ts.TypeFlags.StringLiteral) === 0)
                     return;
                 literal = (<ts.StringLiteralType>type).value;
@@ -214,8 +214,7 @@ export class Rule extends TypedRule {
 
     private getPrimitiveLiteral(node: ts.Expression) {
         // TODO reuse some logic from 'no-duplicate-case' to compute prefix unary expressions
-        let type: ts.Type | undefined = this.getTypeOfExpression(node);
-        type = this.checker.getBaseConstraintOfType(type) || type;
+        const type: ts.Type | undefined = tryGetBaseConstraintType(this.getTypeOfExpression(node), this.checker);
         for (const t of intersectionTypeParts(type)) {
             if (isLiteralType(t))
                 return typeof t.value === 'object' ? formatPseudoBigInt(t.value) : String(t.value);

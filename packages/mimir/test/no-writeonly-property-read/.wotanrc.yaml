@@ -1,0 +1,2 @@
+rules:
+  no-writeonly-property-read: error

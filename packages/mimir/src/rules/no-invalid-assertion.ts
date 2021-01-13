@@ -1,6 +1,7 @@
 import { excludeDeclarationFiles, typescriptOnly, TypedRule } from '@fimbul/ymir';
 import { unionTypeParts, isIntersectionType, isConstAssertion, formatPseudoBigInt, isBooleanLiteralType } from 'tsutils';
 import * as ts from 'typescript';
+import { tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 @typescriptOnly
@@ -18,8 +19,7 @@ export class Rule extends TypedRule {
     private checkAssertion(node: ts.AssertionExpression) {
         if (isConstAssertion(node))
             return;
-        let assertedType = this.checker.getTypeFromTypeNode(node.type);
-        assertedType = this.checker.getBaseConstraintOfType(assertedType) || assertedType;
+        const assertedType = tryGetBaseConstraintType(this.checker.getTypeFromTypeNode(node.type), this.checker);
         const assertedLiterals = getLiteralsByType(assertedType);
         if (isEmpty(assertedLiterals))
             return;

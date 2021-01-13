@@ -86,4 +86,5 @@ function explicitThis(this: C) {
 
 ## Related Rules
 
+* [`no-writeonly-property-read`](no-writeonly-property-read.md)
 * [`prefer-dot-notation`](prefer-dot-notation.md)

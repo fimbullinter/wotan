@@ -5,6 +5,7 @@ import {
     isAmbientPropertyDeclaration,
     isAmbientVariableDeclaration,
     typesAreEqual,
+    tryGetBaseConstraintType,
 } from '../utils';
 import {
     isVariableDeclaration,
@@ -96,7 +97,7 @@ export class Rule extends TypedRule {
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
             const flags = getNullableFlags(
-                this.checker.getBaseConstraintOfType(originalType) || originalType,
+                tryGetBaseConstraintType(originalType, this.checker),
                 ts.isOptionalChain(node)
                     ? (t) => isOptionalChainingUndefinedMarkerType(this.checker, t) ? 0 : t.flags
                     : undefined,
@@ -127,8 +128,8 @@ export class Rule extends TypedRule {
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
-            targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
-            sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
+            targetType = tryGetBaseConstraintType(targetType, this.checker);
+            sourceType = tryGetBaseConstraintType(sourceType, this.checker);
         }
         let message = FAIL_MESSAGE;
         if (!typesAreEqual(sourceType, targetType, this.checker)) {

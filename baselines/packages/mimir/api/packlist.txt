@@ -114,6 +114,9 @@ src/rules/no-useless-strict.js.map
 src/rules/no-useless-try-catch.d.ts
 src/rules/no-useless-try-catch.js
 src/rules/no-useless-try-catch.js.map
+src/rules/no-writeonly-property-read.d.ts
+src/rules/no-writeonly-property-read.js
+src/rules/no-writeonly-property-read.js.map
 src/rules/parameter-properties.d.ts
 src/rules/parameter-properties.js
 src/rules/parameter-properties.js.map

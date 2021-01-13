@@ -6,16 +6,14 @@ import {
     getUsageDomain,
     isCallLikeExpression,
     isObjectBindingPattern,
-    getPropertyName,
     isPropertyAssignment,
     isReassignmentTarget,
     isShorthandPropertyAssignment,
-    getLateBoundPropertyNames,
     getLateBoundPropertyNamesOfPropertyName,
     getPropertyOfType,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { elementAccessSymbols, propertiesOfType } from '../utils';
+import { elementAccessSymbols, destructuredProperties, tryGetBaseConstraintType } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 const signatureFormatFlags = ts.TypeFormatFlags.UseFullyQualifiedType | ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
@@ -49,7 +47,7 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectDestructuring(node: ts.PropertyAssignment | ts.ShorthandPropertyAssignment) {
-        const type = this.checker.getTypeOfAssignmentPattern(node.parent!);
+        const type = tryGetBaseConstraintType(this.checker.getTypeOfAssignmentPattern(node.parent!), this.checker);
         for (const {symbolName, displayName} of getLateBoundPropertyNamesOfPropertyName(node.name, this.checker).names) {
             const symbol = getPropertyOfType(type, symbolName);
             if (symbol !== undefined)
@@ -62,30 +60,11 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
-        const type = this.checker.getTypeAtLocation(node)!;
-        for (const element of node.elements) {
-            if (element.dotDotDotToken !== undefined)
-                continue;
-            if (element.propertyName === undefined) {
-                const name = (<ts.Identifier>element.name).text;
-                const symbol = type.getProperty(name);
-                if (symbol !== undefined)
-                    this.checkStability(symbol, element.name, name, describeWithName);
-            } else {
-                const propName = getPropertyName(element.propertyName);
-                if (propName !== undefined) {
-                    const symbol = type.getProperty(propName);
-                    if (symbol !== undefined)
-                        this.checkStability(symbol, element.propertyName, propName, describeWithName);
-                } else {
-                    for (const {symbol, name} of propertiesOfType(
-                            type,
-                            getLateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker).names,
-                        )
-                    )
-                        this.checkStability(symbol, element.propertyName, name, describeWithName);
-                }
-            }
+        const type = tryGetBaseConstraintType(this.checker.getTypeAtLocation(node), this.checker);
+        for (const {node: nameNode, symbolName, displayName} of destructuredProperties(node, this.checker)) {
+            const symbol = getPropertyOfType(type, symbolName);
+            if (symbol !== undefined)
+                this.checkStability(symbol, nameNode, displayName, describeWithName);
         }
     }
 
