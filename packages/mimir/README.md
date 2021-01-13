@@ -60,6 +60,7 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
 [`no-useless-strict`](docs/no-useless-strict.md) | :mag_right: :wrench: Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
 [`no-useless-try-catch`](docs/no-useless-try-catch.md) | :wrench: Detects `try` statements or parts thereof that can be removed. | There's no similar TSLint rule.
+[`no-writeonly-property-read`](docs/no-writeonly-property-read.md) | :mag: Disallows read access to properties that only have a `set` accessor. | There's no similar TSLint rule.
 [`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 [`prefer-const`](docs/prefer-const.md) | :wrench: :nut_and_bolt: Enforces the use of `const` for variables that are never reassigned. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used before being declared which results in a compiler or runtime error after fixing.
 [`prefer-dot-notation`](docs/prefer-dot-notation.md) | :mag: :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Similar to TSLint's `no-string-literal` rule, but more performant and more correct by avoiding compile errors after fixing.

@@ -18,7 +18,7 @@ This rule consists of 5 distinct checks to detect conditions that are always tru
 
 Types like `{toString(): string}` could contain primitive values. Due to a lack of type relationship APIs this rule is currently unable to detect these cases and assumes such types to be always truthy and `typeof` to return `"object"`.
 
-TypeScript doesn't include `undefined` in the type of index signatures (see [Microsoft/TypeScript#13778](https://github.com/Microsoft/TypeScript/issues/13778)). This rule doesn't know whether a certain value came from an index signature. There's some special handling to treat property access in conditions as potentially `undefined`. Unfortunately there's no reliable way to do the same if the value is assigned to an intermediate variable before using it in a condition:
+This rule works best when `noUncheckIndexedAccess` compilerOption is enabled, otherwise TypeScript doesn't include `undefined` in the type of index signatures (see [Microsoft/TypeScript#13778](https://github.com/Microsoft/TypeScript/issues/13778)). This rule doesn't know whether a certain value came from an index signature. There's some special handling to treat property access in conditions as potentially `undefined`. Unfortunately there's no reliable way to do the same if the value is assigned to an intermediate variable before using it in a condition:
 
 ```ts
 declare let arr: Array<Date>;
