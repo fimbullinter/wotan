@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "useDefineForClassFields": true
+  },
+  "files": ["use-before-assign.ts"]
+}

@@ -22,7 +22,7 @@ export class Rule extends TypedRule {
         if (names.length === 0)
             return;
         for (const {symbol, name} of propertiesOfType(type, names)) {
-            const error = getRestrictedElementAccessError(this.checker, symbol, name, node, type);
+            const error = getRestrictedElementAccessError(this.checker, symbol, name, node, type, this.context.compilerOptions);
             if (error !== undefined)
                 this.addFindingAtNode(node, error);
         }

@@ -40,6 +40,6 @@ export class Rule extends TypedRule {
                 return true; // should already be a compile error, don't mess with invalid code
             return isCompilerOptionEnabled(this.context.compilerOptions, 'noPropertyAccessFromIndexSignature');
         }
-        return getRestrictedElementAccessError(this.checker, symbol, name, node, type) !== undefined;
+        return getRestrictedElementAccessError(this.checker, symbol, name, node, type, this.context.compilerOptions) !== undefined;
     }
 }
