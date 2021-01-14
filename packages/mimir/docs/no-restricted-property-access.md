@@ -17,6 +17,7 @@ The following errors are detected:
 * accessing properties using `super`
 * accessing `abstract` methods and accessors using `super`
 * accessing `abstract` properties during initialization of a class with no implementation for that property
+* accessing properties via `this` before their initialization
 * accessing `private` and `protected` members outside of their visibility
 * accessing `protected` members on an instance of a super-class within a derived class
 
@@ -52,6 +53,12 @@ class D extends C {
     this['priv']; // accessing private member outside of the declaring class' body
     other['prot']; // accessing a protected member declared in a base class on an instance that is not instanceof the containing class
   }
+}
+
+class E {
+  a = this['b']; // accessing property before initialization
+  b = 1;
+  c: number = this['c']; // accessing property in its own initializer
 }
 
 declare const n: never;
