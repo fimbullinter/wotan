@@ -4,7 +4,9 @@ import {
     getAccessKind,
     getBaseClassMemberOfClassElement,
     getInstanceTypeOfClassLikeDeclaration,
+    getSymbolOfClassLikeDeclaration,
     hasModifier,
+    isClassLikeDeclaration,
     isCompilerOptionEnabled,
     isFunctionScopeBoundary,
     isIntersectionType,
@@ -28,8 +30,7 @@ export function getRestrictedElementAccessError(
         const useDuringClassInitialization = getPropertyDeclarationOrConstructorAccessingProperty(node.parent!);
         if (useDuringClassInitialization !== undefined) {
             if (flags & ts.ModifierFlags.Abstract)
-                return `Abstract property '${name}' in class '${printClass(useDuringClassInitialization.parent!, checker)
-                    }' cannot be accessed during class initialization.`;
+                return `Abstract property '${name}' in class '${printClass(getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>useDuringClassInitialization.parent, checker), checker)}' cannot be accessed during class initialization.`;
             if (
                 // checking use before assign in constructor requires control flow graph
                 useDuringClassInitialization.kind !== ts.SyntaxKind.Constructor &&
@@ -47,17 +48,18 @@ export function getRestrictedElementAccessError(
             flags & ts.ModifierFlags.Abstract &&
             symbol.declarations!.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.AbstractKeyword))
         )
-            return `Abstract member '${name}' in class '${printClass(getDeclaringClassOfProperty(symbol.valueDeclaration!), checker)}' cannot be accessed via the 'super' keyword.`;
+            return `Abstract member '${name}' in class '${printClass(getDeclaringClassOfMember(symbol.valueDeclaration!, checker), checker)}' cannot be accessed via the 'super' keyword.`;
     }
 
     if ((flags & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
         return;
     if (flags & ts.ModifierFlags.Private) {
-        const declaringClass = getDeclaringClassOfProperty(symbol.valueDeclaration!);
-        if (node.pos < declaringClass.pos || node.end > declaringClass.end)
+        const declaringClass = getDeclaringClassOfMember(symbol.valueDeclaration!, checker);
+        if (node.pos < declaringClass.valueDeclaration!.pos || node.end > declaringClass.valueDeclaration!.end)
             return failVisibility(name, printClass(declaringClass, checker), true);
     } else {
-        const declaringClasses = symbol.declarations!.map(getDeclaringClassOfProperty);
+        const declaringClasses = symbol.declarations!.map(
+            (d) => <ts.ClassLikeDeclaration>getDeclaringClassOfMember(d, checker).valueDeclaration);
         let enclosingClass = findEnclosingClass(node.parent!, declaringClasses, checker);
         if (enclosingClass === undefined) {
             if ((flags & ts.ModifierFlags.Static) === 0)
@@ -92,8 +94,8 @@ function findEnclosingClass(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[
     }
 }
 
-function printClass(declaration: ts.ClassLikeDeclaration, checker: ts.TypeChecker) {
-    return checker.typeToString(getInstanceTypeOfClassLikeDeclaration(declaration, checker));
+function printClass(symbol: ts.Symbol, checker: ts.TypeChecker) {
+    return checker.typeToString(checker.getDeclaredTypeOfSymbol(symbol));
 }
 
 function getEnclosingClassFromThisParameter(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[], checker: ts.TypeChecker) {
@@ -267,6 +269,37 @@ function isEmittingNativeClassFields(compilerOptions: ts.CompilerOptions) {
     return compilerOptions.target === ts.ScriptTarget.ESNext && isCompilerOptionEnabled(compilerOptions, 'useDefineForClassFields');
 }
 
-function getDeclaringClassOfProperty(decl: ts.Declaration) {
-    return <ts.ClassLikeDeclaration>(decl.kind === ts.SyntaxKind.Parameter ? decl.parent!.parent : decl.parent);
+function getDeclaringClassOfMember(node: ts.Node, checker: ts.TypeChecker): ts.Symbol {
+    switch (node.kind) {
+        case ts.SyntaxKind.PropertyDeclaration: // regular property
+            return getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node.parent, checker);
+        case ts.SyntaxKind.Parameter: // parameter property
+            return getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node.parent!.parent, checker);
+        case ts.SyntaxKind.MethodDeclaration:
+        case ts.SyntaxKind.GetAccessor:
+        case ts.SyntaxKind.SetAccessor:
+            if (isClassLikeDeclaration(node.parent!))
+                return getSymbolOfClassLikeDeclaration(node.parent, checker);
+            // falls through
+        // JS special property assignment declarations
+        case ts.SyntaxKind.PropertyAssignment: // 'C.prototype = {method() {}, prop: 1, shorthand, get a() {return 1;}, set a(v) {}}
+        case ts.SyntaxKind.ShorthandPropertyAssignment:
+            return checker.getSymbolAtLocation((<ts.AccessExpression>(<ts.BinaryExpression>node.parent!.parent).left).expression)!;
+        case ts.SyntaxKind.BinaryExpression: // this.foo = 1;
+            node = (<ts.BinaryExpression>node).left;
+            // falls through
+        case ts.SyntaxKind.PropertyAccessExpression: // 'this.foo', 'C.foo' or 'C.prototype.foo'
+        case ts.SyntaxKind.ElementAccessExpression:
+            node = (<ts.AccessExpression>node).expression;
+            switch (node.kind) {
+                case ts.SyntaxKind.PropertyAccessExpression:
+                case ts.SyntaxKind.ElementAccessExpression:
+                    node = (<ts.AccessExpression>node).expression;
+            }
+            return checker.getSymbolAtLocation(node)!;
+        /* istanbul ignore next */
+        default:
+            throw new Error(`unhandled property declaration kind ${node.kind}`);
+        // this doesn't handle access modifier: 'Object.defineProperty(C, 'foo', ...)' or 'Object.defineProperty(C.prototype, 'foo', ...)'
+    }
 }
