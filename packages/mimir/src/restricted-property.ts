@@ -1,9 +1,16 @@
 import * as ts from 'typescript';
 import {
+    AccessKind,
+    getAccessKind,
+    getBaseClassMemberOfClassElement,
     getInstanceTypeOfClassLikeDeclaration,
+    getSymbolOfClassLikeDeclaration,
     hasModifier,
+    isClassLikeDeclaration,
+    isCompilerOptionEnabled,
     isFunctionScopeBoundary,
     isIntersectionType,
+    isParameterDeclaration,
     isThisParameter,
     isTypeParameter,
     isTypeReference,
@@ -15,16 +22,24 @@ export function getRestrictedElementAccessError(
     name: string,
     node: ts.ElementAccessExpression,
     lhsType: ts.Type,
+    compilerOptions: ts.CompilerOptions,
 ): string | undefined {
     const flags = getModifierFlagsOfSymbol(symbol);
 
-    if (
-        node.expression.kind === ts.SyntaxKind.ThisKeyword &&
-        flags & ts.ModifierFlags.Abstract && hasNonPrototypeDeclaration(symbol)
-    ) {
-        const enclosingClass = getEnclosingClassOfAbstractPropertyAccess(node.parent!);
-        if (enclosingClass !== undefined)
-            return `Abstract property '${name}' in class '${printClass(enclosingClass, checker)}' cannot be accessed during class initialization.`;
+    if (node.expression.kind === ts.SyntaxKind.ThisKeyword && hasNonPrototypeDeclaration(symbol)) {
+        const useDuringClassInitialization = getPropertyDeclarationOrConstructorAccessingProperty(node.parent!);
+        if (useDuringClassInitialization !== undefined) {
+            if (flags & ts.ModifierFlags.Abstract)
+                return `Abstract property '${name}' in class '${printClass(getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>useDuringClassInitialization.parent, checker), checker)}' cannot be accessed during class initialization.`;
+            if (
+                // checking use before assign in constructor requires control flow graph
+                useDuringClassInitialization.kind !== ts.SyntaxKind.Constructor &&
+                // only checking read access
+                getAccessKind(node) & AccessKind.Read &&
+                isPropertyUsedBeforeAssign(symbol.valueDeclaration!, useDuringClassInitialization, compilerOptions, checker)
+            )
+                return `Property '${name}' is used before its initialization.`;
+        }
     }
     if (node.expression.kind === ts.SyntaxKind.SuperKeyword && (flags & ts.ModifierFlags.Static) === 0 && !isStaticSuper(node)) {
         if (hasNonPrototypeDeclaration(symbol))
@@ -33,17 +48,18 @@ export function getRestrictedElementAccessError(
             flags & ts.ModifierFlags.Abstract &&
             symbol.declarations!.every((d) => hasModifier(d.modifiers, ts.SyntaxKind.AbstractKeyword))
         )
-            return `Abstract member '${name}' in class '${printClass(<ts.ClassLikeDeclaration>symbol.declarations![0].parent, checker)}' cannot be accessed via the 'super' keyword.`;
+            return `Abstract member '${name}' in class '${printClass(getDeclaringClassOfMember(symbol.valueDeclaration!, checker), checker)}' cannot be accessed via the 'super' keyword.`;
     }
 
     if ((flags & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
         return;
     if (flags & ts.ModifierFlags.Private) {
-        const declaringClass = <ts.ClassLikeDeclaration>symbol.declarations![0].parent;
-        if (node.pos < declaringClass.pos || node.end > declaringClass.end)
+        const declaringClass = getDeclaringClassOfMember(symbol.valueDeclaration!, checker);
+        if (node.pos < declaringClass.valueDeclaration!.pos || node.end > declaringClass.valueDeclaration!.end)
             return failVisibility(name, printClass(declaringClass, checker), true);
     } else {
-        const declaringClasses = symbol.declarations!.map((d) => <ts.ClassLikeDeclaration>d.parent);
+        const declaringClasses = symbol.declarations!.map(
+            (d) => <ts.ClassLikeDeclaration>getDeclaringClassOfMember(d, checker).valueDeclaration);
         let enclosingClass = findEnclosingClass(node.parent!, declaringClasses, checker);
         if (enclosingClass === undefined) {
             if ((flags & ts.ModifierFlags.Static) === 0)
@@ -78,8 +94,8 @@ function findEnclosingClass(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[
     }
 }
 
-function printClass(declaration: ts.ClassLikeDeclaration, checker: ts.TypeChecker) {
-    return checker.typeToString(getInstanceTypeOfClassLikeDeclaration(declaration, checker));
+function printClass(symbol: ts.Symbol, checker: ts.TypeChecker) {
+    return checker.typeToString(checker.getDeclaredTypeOfSymbol(symbol));
 }
 
 function getEnclosingClassFromThisParameter(node: ts.Node, baseClasses: ts.ClassLikeDeclaration[], checker: ts.TypeChecker) {
@@ -145,19 +161,12 @@ function hasNonPrototypeDeclaration(symbol: ts.Symbol) {
     return false;
 }
 
-function getEnclosingClassOfAbstractPropertyAccess(node: ts.Node) {
+function getPropertyDeclarationOrConstructorAccessingProperty(node: ts.Node) {
     while (true) {
-        if (isFunctionScopeBoundary(node)) {
-            switch (node.kind) {
-                case ts.SyntaxKind.ClassDeclaration:
-                case ts.SyntaxKind.ClassExpression:
-                    return <ts.ClassLikeDeclaration>node;
-                case ts.SyntaxKind.Constructor:
-                    return <ts.ClassLikeDeclaration>node.parent;
-                default:
-                    return;
-            }
-        }
+        if (isFunctionScopeBoundary(node))
+            return node.kind === ts.SyntaxKind.Constructor ? <ts.ConstructorDeclaration>node : undefined;
+        if (node.kind === ts.SyntaxKind.PropertyDeclaration)
+            return <ts.PropertyDeclaration>node;
         node = node.parent!;
     }
 }
@@ -227,4 +236,70 @@ function getModifierFlagsOfSymbol(symbol: ts.Symbol): ts.ModifierFlags {
     return symbol.declarations === undefined
         ? ts.ModifierFlags.None
         : symbol.declarations.reduce((flags, decl) => flags | ts.getCombinedModifierFlags(decl), ts.ModifierFlags.None);
+}
+
+function isPropertyUsedBeforeAssign(
+    prop: ts.Declaration,
+    usedIn: ts.PropertyDeclaration,
+    compilerOptions: ts.CompilerOptions,
+    checker: ts.TypeChecker,
+): boolean {
+    if (isParameterDeclaration(prop))
+    // when emitting native class fields, parameter properties cannot be used in other property's initializers in the same class
+        return prop.parent!.parent === usedIn.parent && isEmittingNativeClassFields(compilerOptions);
+    // this also matches assignment declarations in the same class; we could handle them, but TypeScript doesn't, so why bother
+    if (prop.parent !== usedIn.parent)
+        return false;
+    // property is declared before use in the same class
+    if (prop.pos < usedIn.pos) {
+        // OK if immediately initialized
+        if ((<ts.PropertyDeclaration>prop).initializer !== undefined || (<ts.PropertyDeclaration>prop).exclamationToken !== undefined)
+            return false;
+        // NOT OK if [[Define]] semantics are used, because it overrides the property from the base class
+        if (
+            !hasModifier(prop.modifiers, ts.SyntaxKind.DeclareKeyword) &&
+            isCompilerOptionEnabled(compilerOptions, 'useDefineForClassFields')
+        )
+            return true;
+    }
+    return getBaseClassMemberOfClassElement(<ts.PropertyDeclaration>prop, checker) === undefined;
+}
+
+function isEmittingNativeClassFields(compilerOptions: ts.CompilerOptions) {
+    return compilerOptions.target === ts.ScriptTarget.ESNext && isCompilerOptionEnabled(compilerOptions, 'useDefineForClassFields');
+}
+
+function getDeclaringClassOfMember(node: ts.Node, checker: ts.TypeChecker): ts.Symbol {
+    switch (node.kind) {
+        case ts.SyntaxKind.PropertyDeclaration: // regular property
+            return getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node.parent, checker);
+        case ts.SyntaxKind.Parameter: // parameter property
+            return getSymbolOfClassLikeDeclaration(<ts.ClassLikeDeclaration>node.parent!.parent, checker);
+        case ts.SyntaxKind.MethodDeclaration:
+        case ts.SyntaxKind.GetAccessor:
+        case ts.SyntaxKind.SetAccessor:
+            if (isClassLikeDeclaration(node.parent!))
+                return getSymbolOfClassLikeDeclaration(node.parent, checker);
+            // falls through
+        // JS special property assignment declarations
+        case ts.SyntaxKind.PropertyAssignment: // 'C.prototype = {method() {}, prop: 1, shorthand, get a() {return 1;}, set a(v) {}}
+        case ts.SyntaxKind.ShorthandPropertyAssignment:
+            return checker.getSymbolAtLocation((<ts.AccessExpression>(<ts.BinaryExpression>node.parent!.parent).left).expression)!;
+        case ts.SyntaxKind.BinaryExpression: // this.foo = 1;
+            node = (<ts.BinaryExpression>node).left;
+            // falls through
+        case ts.SyntaxKind.PropertyAccessExpression: // 'this.foo', 'C.foo' or 'C.prototype.foo'
+        case ts.SyntaxKind.ElementAccessExpression:
+            node = (<ts.AccessExpression>node).expression;
+            switch (node.kind) {
+                case ts.SyntaxKind.PropertyAccessExpression:
+                case ts.SyntaxKind.ElementAccessExpression:
+                    node = (<ts.AccessExpression>node).expression;
+            }
+            return checker.getSymbolAtLocation(node)!;
+        /* istanbul ignore next */
+        default:
+            throw new Error(`unhandled property declaration kind ${node.kind}`);
+        // this doesn't handle access modifier: 'Object.defineProperty(C, 'foo', ...)' or 'Object.defineProperty(C.prototype, 'foo', ...)'
+    }
 }
