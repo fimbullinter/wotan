@@ -1,5 +1,39 @@
 # Change Log
 
+## v0.23.0
+
+:warning: **Breaking Changes:**
+
+* `prefer-dot-notation` now requires type information
+
+**Features:**
+
+* `prefer-dot-notation` no longer reports findings which would cause a compile error when fixed
+* new rule: `no-writeonly-property-read`
+* Added support for new language features in all rules:
+  * optional chaining
+  * nullish coalescing
+  * private identifiers
+  * control-flow effects of `never`-returning functions
+    * `no-fallthrough` and `no-unreachable-code` report better findings if type inforamtion is available
+    * `return-never-call` only reports calls that TypeScript's control-flow-analysis cannot detect
+  * template literal types
+* `no-restricted-property-access`
+  * allow accessing all members via static `super`
+  * allow accessing accessors via `super`
+  * allow accessing abstract accessors via `this` in constructor
+  * disallow read access to uninitialized properties in another property's initializer
+
+**Bugfixes:**
+
+* Exclude JSON files and declartions emitted from `.js(x)` files in composite projects
+* `async-function-assignability` fixed false-positive on static class members
+* `no-restricted-property-access`
+  * treat MethodSignature like MethodDeclaration
+  * fixed lookup of `this` container for decorators and computed property names
+  * fixed crash on parameter properties and special JS property assignments
+* most rules can now handle excessively deep AST structures, e.g. concatenating 5000 strings
+
 ## v0.22.0
 
 :warning: **Breaking Changes:**
