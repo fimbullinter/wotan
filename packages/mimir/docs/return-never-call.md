@@ -2,7 +2,7 @@
 
 :mag: requires type information
 
-Enforces `return`ing or `throw`ing the result of a function of method call that returns `never`.
+Enforces `return`ing or `throw`ing the result of a function or method call that returns `never`.
 
 ## Rationale
 
@@ -41,7 +41,7 @@ returnNever(); // TypeScript correctly handles this
 ## Further Reading
 
 * TypeScript Deep Dive: [Never](https://basarat.gitbooks.io/typescript/content/docs/types/never.html)
-* TypeScript Pull Request: [Assertions in control flow analysis](https://github.com/microsoft/TypeScript/pull/32695) describes the limiations
+* TypeScript Pull Request: [Assertions in control flow analysis](https://github.com/microsoft/TypeScript/pull/32695) describes the limitations
 
 ## Related Rules
 
