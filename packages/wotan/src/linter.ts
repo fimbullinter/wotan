@@ -3,23 +3,24 @@ import {
     Finding,
     EffectiveConfiguration,
     LintAndFixFileResult,
-    Replacement,
-    RuleContext,
     Severity,
-    RuleConstructor,
     MessageHandler,
     AbstractProcessor,
     DeprecationHandler,
-    DeprecationTarget,
     FindingFilterFactory,
-    FindingFilter,
+    FindingPosition,
+    Replacement,
 } from '@fimbul/ymir';
 import { applyFixes } from './fix';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange, invertChangeRange } from './utils';
-import { ConvertedAst, convertAst, isCompilerOptionEnabled, getTsCheckDirective } from 'tsutils';
+import { astConverter } from '@typescript-eslint/typescript-estree/dist/ast-converter';
+import { Extra as AstConverterOptions } from '@typescript-eslint/typescript-estree/dist/parser-options';
+import { analyze } from '@typescript-eslint/scope-manager';
+import { visitorKeys } from '@typescript-eslint/visitor-keys';
+import { SourceCode, Linter as EslintLinter } from 'eslint';
 
 const log = debug('wotan:linter');
 
@@ -76,10 +77,10 @@ export type UpdateFileCallback = (content: string, range: ts.TextChangeRange) =>
 @injectable()
 export class Linter {
     constructor(
-        private ruleLoader: RuleLoader,
-        private logger: MessageHandler,
-        private deprecationHandler: DeprecationHandler,
-        private filterFactory: FindingFilterFactory,
+        private _ruleLoader: RuleLoader,
+        private _logger: MessageHandler,
+        private _deprecationHandler: DeprecationHandler,
+        private _filterFactory: FindingFilterFactory,
     ) {}
 
     public lintFile(
@@ -156,169 +157,104 @@ export class Linter {
         sourceFile: ts.SourceFile,
         config: EffectiveConfiguration,
         programFactory: ProgramFactory | undefined,
-        processor: AbstractProcessor | undefined,
+        _processor: AbstractProcessor | undefined,
         options: LinterOptions,
-    ) {
+    ): Finding[] {
         // make sure that all rules get the same Program and CompilerOptions for this run
         programFactory &&= new CachedProgramFactory(programFactory);
 
-        let suppressMissingTypeInfoWarning = false;
-        log('Linting file %s', sourceFile.fileName);
-        if (programFactory !== undefined) {
-            const directive = getTsCheckDirective(sourceFile.text);
-            if (
-                directive !== undefined
-                    ? !directive.enabled
-                    : /\.jsx?/.test(sourceFile.fileName) && !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs')
-            ) {
-                log('Not using type information for this unchecked file');
-                programFactory = undefined;
-                suppressMissingTypeInfoWarning = true;
-            }
-        }
-        const rules = this.prepareRules(config, sourceFile, programFactory, suppressMissingTypeInfoWarning);
-        let findings;
-        if (rules.length === 0) {
-            log('No active rules');
-            if (options.reportUselessDirectives !== undefined) {
-                findings = this.filterFactory
-                    .create({sourceFile, getWrappedAst() { return convertAst(sourceFile).wrapped; }, ruleNames: []})
-                    .reportUseless(options.reportUselessDirectives);
-                log('Found %d useless directives', findings.length);
-            } else {
-                findings = [];
-            }
-        }
-        findings = this.applyRules(sourceFile, programFactory, rules, config.settings, options);
-        return processor === undefined ? findings : processor.postprocess(findings);
-    }
-
-    private prepareRules(
-        config: EffectiveConfiguration,
-        sourceFile: ts.SourceFile,
-        programFactory: ProgramFactory | undefined,
-        noWarn: boolean,
-    ) {
-        const rules: PreparedRule[] = [];
-        for (const [ruleName, {options, severity, rulesDirectories, rule}] of config.rules) {
-            if (severity === 'off')
-                continue;
-            const ctor = this.ruleLoader.loadRule(rule, rulesDirectories);
-            if (ctor === undefined)
-                continue;
-            if (ctor.deprecated)
-                this.deprecationHandler.handle(
-                    DeprecationTarget.Rule,
-                    ruleName,
-                    typeof ctor.deprecated === 'string' ? ctor.deprecated : undefined,
-                );
-            if (programFactory === undefined && ctor.requiresTypeInformation) {
-                if (noWarn) {
-                    log('Rule %s requires type information', ruleName);
-                } else {
-                    this.logger.warn(`Rule '${ruleName}' requires type information.`);
-                }
-                continue;
-            }
-            if (ctor.supports !== undefined) {
-                const supports = ctor.supports(sourceFile, {
-                    get program() { return programFactory && programFactory.getProgram(); },
-                    get compilerOptions() { return programFactory && programFactory.getCompilerOptions(); },
-                    options,
-                    settings: config.settings,
-                });
-                if (supports !== true) {
-                    if (!supports) {
-                        log(`Rule %s does not support this file`, ruleName);
-                    } else {
-                        log(`Rule %s does not support this file: %s`, ruleName, supports);
-                    }
-                    continue;
-                }
-            }
-            rules.push({ruleName, options, severity, ctor});
-        }
-        return rules;
-    }
-
-    private applyRules(
-        sourceFile: ts.SourceFile,
-        programFactory: ProgramFactory | undefined,
-        rules: PreparedRule[],
-        settings: Map<string, any>,
-        options: LinterOptions,
-    ) {
-        const result: Finding[] = [];
-        let findingFilter: FindingFilter | undefined;
-        let ruleName: string;
-        let severity: Severity;
-        let ctor: RuleConstructor;
-        let convertedAst: ConvertedAst | undefined;
-
-        const getFindingFilter = () => {
-            return findingFilter ??= this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
+        // TODO find out what these mean
+        const converterOptions: AstConverterOptions = {
+            EXPERIMENTAL_useSourceOfProjectReferenceRedirect: false,
+            code: sourceFile.text,
+            comment: true,
+            comments: [],
+            createDefaultProgram: false,
+            debugLevel: new Set(),
+            errorOnTypeScriptSyntacticAndSemanticIssues: false,
+            errorOnUnknownASTType: false,
+            extraFileExtensions: [],
+            filePath: sourceFile.fileName,
+            jsx: true,
+            loc: true,
+            log: () => {},
+            projects: [],
+            range: true,
+            strict: true,
+            tokens: [],
+            tsconfigRootDir: '',
+            useJSXTextNode: true,
+            preserveNodeMaps: true,
         };
-        const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
-            const finding: Finding = {
-                ruleName,
-                severity,
-                message,
-                start: {
-                    position: pos,
-                    ...ts.getLineAndCharacterOfPosition(sourceFile, pos),
+        const converted = astConverter(sourceFile, converterOptions, true);
+        const scopeManager = analyze(converted.estree, {
+            ecmaVersion: 2020,
+            sourceType: ts.isExternalModule(sourceFile) ? 'module' : 'script',
+            // TODO what to do here?
+        });
+
+        const sourceCode = new SourceCode({
+            text: sourceFile.text,
+            ast: converted.estree as any,
+            scopeManager: scopeManager as any,
+            parserServices: {
+                get program() {
+                    return programFactory?.getProgram(); // TODO is undefined an issue?
                 },
-                end: {
-                    position: end,
-                    ...ts.getLineAndCharacterOfPosition(sourceFile, end),
+                hasFullTypeInformation: programFactory !== undefined,
+                esTreeNodeToTSNodeMap: converted.astMaps.esTreeNodeToTSNodeMap,
+                tsNodeToESTreeNodeMap: converted.astMaps.tsNodeToESTreeNodeMap,
+            },
+            visitorKeys: visitorKeys as any,
+        });
+        const linter = new EslintLinter({cwd: undefined});
+        const linterConfig = {
+            extractConfig(): EslintLinter.Config {
+                const rules: EslintLinter.Config['rules'] = {};
+                for (const [name, {options: ruleOptions, severity}] of config.rules) {
+                    rules[name] = [severity === 'error' ? 'error' : 'warn', ruleOptions];
+                };
+                return {rules};
+            },
+            pluginRules: {
+                get(ruleId: string) {
+                    if (!ruleId.startsWith('@typescript-eslint/'))
+                        return null;
+                    const {rule, rulesDirectories} = config.rules.get(ruleId)!;
+                    return require(rulesDirectories![0] + '/' + rule).default;
+                }
+            },
+            pluginEnvironments: {
+                get(envId: string) {
+                    return null;
                 },
-                fix: fix === undefined
-                    ? undefined
-                    : !Array.isArray(fix)
-                        ? {replacements: [fix]}
-                        : fix.length === 0
-                            ? undefined
-                            : {replacements: fix},
+            },
+        };
+        // TODO check whether rule requires type checking
+        const result = linter.verify(sourceCode, linterConfig as any, {
+            allowInlineConfig: false,
+            filename: sourceFile.fileName,
+            reportUnusedDisableDirectives: options.reportUselessDirectives !== undefined,
+        });
+        for (const m of result) {
+            if ('suggestions' in m)
+                console.log(m['suggestions']);
+        }
+        return result.map((m) => ({
+            ruleName: m.ruleId ?? 'wargarbl', // TODO
+            message: m.message,
+            severity: m.severity === 1 ? 'warning' : 'error',
+            start: mapPosition(m.line, m.column),
+            end: m.endLine && m.endColumn ? mapPosition(m.endLine, m.endColumn) : mapPosition(m.line, m.column),
+            fix: m.fix ? {replacements: [Replacement.replace(m.fix.range[0], m.fix.range[1], m.fix.text)]} : undefined,
+        }));
+        function mapPosition(line: number, col: number): FindingPosition {
+            const position = ts.getPositionOfLineAndCharacter(sourceFile, line - 1, col - 1);
+            return {
+                position,
+                line: line - 1,
+                character: col - 1,
             };
-            if (getFindingFilter().filter(finding))
-                result.push(finding);
-        };
-
-        const context: { -readonly [K in keyof RuleContext]: RuleContext[K] } = {
-            addFinding,
-            getFlatAst,
-            getWrappedAst,
-            get program() { return programFactory?.getProgram(); },
-            get compilerOptions() { return programFactory?.getCompilerOptions(); },
-            sourceFile,
-            settings,
-            options: undefined,
-        };
-
-        for ({ruleName, severity, ctor, options: context.options} of rules) {
-            log('Executing rule %s', ruleName);
-            new ctor(context).apply();
-        }
-
-        log('Found %d findings', result.length);
-        if (options.reportUselessDirectives !== undefined) {
-            const useless = getFindingFilter().reportUseless(options.reportUselessDirectives);
-            log('Found %d useless directives', useless.length);
-            result.push(...useless);
-        }
-        return result;
-
-        function getFlatAst() {
-            return (convertedAst ??= convertAst(sourceFile)).flat;
-        }
-        function getWrappedAst() {
-            return (convertedAst ??= convertAst(sourceFile)).wrapped;
         }
     }
-}
-
-interface PreparedRule {
-    ctor: RuleConstructor;
-    options: any;
-    ruleName: string;
-    severity: Severity;
 }
