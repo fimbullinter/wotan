@@ -50,11 +50,10 @@ class DefaultFileFilter implements FileFilter {
     }
 
     private isOutputOfReferencedProject(fileName: string) {
-        if (this.outputsOfReferencedProjects === undefined)
-            this.outputsOfReferencedProjects = flatMap(
-                iterateProjectReferences(this.program.getResolvedProjectReferences()),
-                getOutputFileNamesOfProjectReference,
-            );
+        this.outputsOfReferencedProjects ??= flatMap(
+            iterateProjectReferences(this.program.getResolvedProjectReferences()),
+            getOutputFileNamesOfProjectReference,
+        );
         return this.outputsOfReferencedProjects.includes(fileName);
     }
 }

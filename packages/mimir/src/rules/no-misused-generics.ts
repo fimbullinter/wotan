@@ -13,8 +13,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkTypeParameters(typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>, signature: ts.SignatureDeclaration) {
-        if (this.usage === undefined)
-            this.usage = collectVariableUsage(this.sourceFile);
+        this.usage ??= collectVariableUsage(this.sourceFile);
         outer: for (const typeParameter of typeParameters) {
             let usedInParameters = false;
             let usedInReturnOrExtends = isFunctionWithBody(signature);

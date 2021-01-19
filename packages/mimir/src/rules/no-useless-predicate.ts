@@ -214,7 +214,7 @@ export class Rule extends TypedRule {
 
     private getPrimitiveLiteral(node: ts.Expression) {
         // TODO reuse some logic from 'no-duplicate-case' to compute prefix unary expressions
-        const type: ts.Type | undefined = tryGetBaseConstraintType(this.getTypeOfExpression(node), this.checker);
+        const type = tryGetBaseConstraintType(this.getTypeOfExpression(node), this.checker);
         for (const t of intersectionTypeParts(type)) {
             if (isLiteralType(t))
                 return typeof t.value === 'object' ? formatPseudoBigInt(t.value) : String(t.value);

@@ -159,9 +159,8 @@ export class Linter {
         processor: AbstractProcessor | undefined,
         options: LinterOptions,
     ) {
-        if (programFactory !== undefined)
-            // make sure that all rules get the same Program and CompilerOptions for this run
-            programFactory = new CachedProgramFactory(programFactory);
+        // make sure that all rules get the same Program and CompilerOptions for this run
+        programFactory &&= new CachedProgramFactory(programFactory);
 
         let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
@@ -257,8 +256,7 @@ export class Linter {
         let convertedAst: ConvertedAst | undefined;
 
         const getFindingFilter = () => {
-            return findingFilter ||
-                (findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)}));
+            return findingFilter ??= this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
         };
         const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
             const finding: Finding = {
@@ -289,8 +287,8 @@ export class Linter {
             addFinding,
             getFlatAst,
             getWrappedAst,
-            get program() { return programFactory && programFactory.getProgram(); },
-            get compilerOptions() { return programFactory && programFactory.getCompilerOptions(); },
+            get program() { return programFactory?.getProgram(); },
+            get compilerOptions() { return programFactory?.getCompilerOptions(); },
             sourceFile,
             settings,
             options: undefined,
