@@ -223,3 +223,12 @@ declare let privateIterable: PrivateIterable;
 for (let i = 0; i < privateIterable.length; ++i) {
     privateIterable[i]
 }
+
+
+{
+    interface Array extends ArrayLike {}
+    const customArrayType = null! as Array;
+    for (let i = 0; i < customArrayType.length; ++i) {
+        customArrayType[i];
+    }
+}
