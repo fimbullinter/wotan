@@ -11,20 +11,10 @@ import {
     collectVariableUsage,
     VariableUse,
     isElementAccessExpression,
-    unionTypeParts,
-    isIntersectionType,
-    isTypeReference,
-    isTypeFlagSet,
-    isSymbolFlagSet,
     getAccessKind,
     AccessKind,
-    getPropertyOfType,
-    removeOptionalityFromType,
-    someTypePart,
-    isUnionType,
-    getIteratorYieldResultFromIteratorResult,
 } from 'tsutils';
-import { typesAreEqual, tryGetBaseConstraintType } from '../utils';
+import { isExpressionIterable } from '../iteration';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
@@ -54,113 +44,13 @@ export class Rule extends TypedRule {
             return;
         if (!isReadonlyArrayAccess(this.usage.get(indexVariable)!.uses, arrayVariable.getText(this.sourceFile), node, this.sourceFile))
             return;
-        if (this.isIterationPossible(arrayVariable))
+        if (isExpressionIterable(arrayVariable, this.checker, this.context.compilerOptions, true))
             this.addFinding(
                 node.getStart(this.sourceFile),
                 node.statement.pos,
                 `Prefer a 'for-of' loop over a 'for' loop for this simple iteration.`,
             );
     }
-
-    private isIterationPossible(node: ts.Expression): boolean {
-        const type = this.checker.getTypeAtLocation(node)!;
-        return this.isIterationProtocolAvailable()
-            ? this.isIterable(this.checker.getApparentType(type), node)
-            : unionTypeParts(tryGetBaseConstraintType(type, this.checker)).every(this.isArrayLike, this);
-    }
-
-    private isIterationProtocolAvailable(): boolean {
-        return this.sourceFile.languageVersion >= ts.ScriptTarget.ES2015 || this.context.compilerOptions.downlevelIteration === true;
-    }
-
-    private isArrayLike(type: ts.Type): boolean {
-        if (isTypeReference(type))
-            type = type.target;
-        if (type.getNumberIndexType() === undefined)
-            return false;
-        if (type.flags & ts.TypeFlags.StringLike)
-            return this.sourceFile.languageVersion >= ts.ScriptTarget.ES5; // iterating string is only possible starting from ES5
-        if (type.symbol !== undefined && /^(Concat|Readonly)?Array$/.test(<string>type.symbol.escapedName) &&
-            type.symbol.declarations !== undefined && type.symbol.declarations.some((node) => node.getSourceFile().hasNoDefaultLib))
-            return true;
-        if (isIntersectionType(type))
-            return type.types.some(this.isArrayLike, this);
-        const baseTypes = type.getBaseTypes();
-        return baseTypes !== undefined && baseTypes.some(this.isArrayLike, this);
-    }
-
-    private isIterable(type: ts.Type, node: ts.Expression): boolean {
-        const indexType = type.getNumberIndexType() || type.getStringIndexType();
-        if (indexType === undefined)
-            return false;
-        const iteratorFn = getPropertyOfType(type, <ts.__String>'__@iterator');
-        if (!isPresentPublicAndRequired(iteratorFn))
-            return false;
-        return checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(iteratorFn, node), (iterator) => {
-            const next = iterator.getProperty('next');
-            return isPresentPublicAndRequired(next) &&
-                checkReturnTypeAndRequireZeroArity(this.checker.getTypeOfSymbolAtLocation(next, node), (iteratorResult) => {
-                    const done = iteratorResult.getProperty('done');
-                    if (
-                        !isPresentAndPublic(done) ||
-                        someTypePart(
-                            removeOptionalityFromType(this.checker, this.checker.getTypeOfSymbolAtLocation(done, node)),
-                            isUnionType,
-                            (t) => !isTypeFlagSet(t, ts.TypeFlags.BooleanLike),
-                        )
-                    )
-                        return false;
-                    const value = getIteratorYieldResultFromIteratorResult(iteratorResult, node, this.checker).getProperty('value');
-                    return isPresentAndPublic(value) &&
-                        typesAreEqual(this.checker.getTypeOfSymbolAtLocation(value, node), indexType, this.checker);
-                });
-
-        });
-    }
-}
-
-function checkReturnTypeAndRequireZeroArity(type: ts.Type, cb: (type: ts.Type) => boolean): boolean {
-    let zeroArity = false;
-    for (const signature of type.getCallSignatures()) {
-        if (!cb(signature.getReturnType()))
-            return false;
-        if (signatureHasArityZero(signature))
-            zeroArity = true;
-    }
-    return zeroArity;
-}
-
-function signatureHasArityZero(signature: ts.Signature): boolean {
-    if (signature.parameters.length === 0)
-        return true;
-    const decl = <ts.ParameterDeclaration | undefined>signature.parameters[0].declarations![0];
-    return decl !== undefined && isOptionalParameter(decl);
-}
-
-function isOptionalParameter(node: ts.ParameterDeclaration): boolean {
-    if (node.questionToken !== undefined || node.dotDotDotToken !== undefined)
-        return true;
-    if (node.flags & ts.NodeFlags.JavaScriptFile && ts.getJSDocParameterTags(node).some((tag) => tag.isBracketed))
-        return true;
-    if (node.initializer === undefined)
-        return false;
-    const parameters = node.parent!.parameters;
-    const nextIndex = parameters.indexOf(node) + 1;
-    if (nextIndex === parameters.length)
-        return true;
-    return isOptionalParameter(parameters[nextIndex]);
-}
-
-function isPresentPublicAndRequired(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
-    return isPresentAndPublic(symbol) && !isSymbolFlagSet(symbol, ts.SymbolFlags.Optional);
-}
-
-function isPresentAndPublic(symbol: ts.Symbol | undefined): symbol is ts.Symbol {
-    return symbol !== undefined &&
-        (
-            symbol.declarations === undefined ||
-            symbol.declarations.every((d) => (ts.getCombinedModifierFlags(d) & ts.ModifierFlags.NonPublicAccessibilityModifier) === 0)
-        );
 }
 
 function isReadonlyArrayAccess(uses: VariableUse[], arrayVariable: string, statement: ts.ForStatement, sourceFile: ts.SourceFile): boolean {

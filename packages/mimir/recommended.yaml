@@ -17,6 +17,7 @@ rules:
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error
+  no-object-spread-of-iterable: error
   no-octal-escape: error
   no-unassigned-variable: error
   no-uninferred-type-parameter: error
