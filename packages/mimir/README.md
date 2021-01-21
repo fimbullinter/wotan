@@ -38,7 +38,8 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-duplicate-case`](docs/no-duplicate-case.md) | :mag_right: Detects `switch` statements where multiple `case` clauses check for the same value. | This implementation tries to infer the value instead of just comparing the source code.
 [`no-duplicate-spread-property`](docs/no-duplicate-spread-property.md) | :mag: Detects properties in object literals with object spread that are always overridden. | TSLint has no such rule.
 [`no-fallthrough`](docs/no-fallthrough.md) | :mag_right: Prevents unintentional fallthough in `switch` statements from one case to another. | Allows more comment variants such as `fallthrough` or `fall through`.
-[`no-invalid-assertion`](docs/no-invalid-assertion.md) | :mag: Disallows asserting a literal type to a different literal type of the same widened type, e.g. `'foo' as 'bar'`.| TSLint has no similar rule.
+[`no-implicit-tostring`](docs/no-implicit-tostring.md) | :mag: :nut_and_bolt: Disallows implicit conversion of non-string values to string. |
+[`no-invalid-assertion`](docs/no-invalid-assertion.md) | :mag: Disallows asserting a literal type to a different literal type of the same widened type, e.g. `'foo' as 'bar'`. | TSLint has no similar rule.
 [`no-misused-generics`](docs/no-misused-generics.md) | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 [`no-nan-compare`](docs/no-nan-compare.md) | Disallows comparing with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
 [`no-object-spread-of-iterable`](docs/no-object-spread-of-iterable.md) | :mag: Disallows spreading iterable types into an object. |

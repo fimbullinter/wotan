@@ -6,11 +6,6 @@ interface RawOptions {
     allowNumber?: boolean;
     allowBigInt?: boolean;
     allowBoolean?: boolean;
-    allowNever?: boolean;
-}
-interface Options {
-    allowNever: boolean;
-    mask: Type;
 }
 declare enum Type {
     String = 1,
@@ -22,13 +17,11 @@ declare enum Type {
     NonPrimitive = 64,
     Any = 128,
     Symbol = 256,
-    Unknown = 512
+    Unknown = 512,
+    Void = 1024
 }
-export declare class Rule extends ConfigurableTypedRule<Options> {
-    parseOptions(options: RawOptions | null | undefined): {
-        allowNever: boolean;
-        mask: number;
-    };
+export declare class Rule extends ConfigurableTypedRule<Type> {
+    parseOptions(options: RawOptions | null | undefined): number;
     apply(): void;
 }
 export {};

@@ -1,6 +1,8 @@
 declare function get<T>(): T;
 declare function fn(...args: any[]): any;
 declare let obj: Record<string, unknown>;
+declare let s: string;
+declare let n: number;
 
 'foo' + 'bar';
 'foo' + 1;
@@ -10,6 +12,12 @@ declare let obj: Record<string, unknown>;
 1 + 1;
 'foo' + console.log('bar');
         ~~~~~~~~~~~~~~~~~~  [error no-implicit-tostring: Unexpected implicit string coercion of 'void'.]
+
+s += 'foo';
+s += 1;
+     ~  [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
+n += 'foo';
+n += 1;
 
 get<string | number>() + '';
 ~~~~~~~~~~~~~~~~~~~~~~       [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
@@ -32,6 +40,8 @@ fn`${true}`;
 `${Symbol.iterator}`;
 `${get<string>()}`;
 `${get<string & {__brand: never}>()}`;
+`${get<object & {__brand: never}>()}`;
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'object'.]
 `${get<string | number>()}`;
    ~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 `${get<unknown>()}`;

@@ -16,7 +16,6 @@ rules:
     severity: error
     options:
       allowPrimitive: true
-      allowNever: true
   no-invalid-assertion: error
   no-restricted-property-access: error
   no-return-await: error
