@@ -1,6 +1,7 @@
 import { ConfigurableTypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { unionTypeParts, isIntersectionType } from 'tsutils';
+import { tryGetBaseConstraintType } from '../utils';
 
 interface RawOptions {
     allowPrimitive?: boolean;
@@ -9,12 +10,6 @@ interface RawOptions {
     allowNumber?: boolean;
     allowBigInt?: boolean;
     allowBoolean?: boolean;
-    allowNever?: boolean;
-}
-
-interface Options {
-    allowNever: boolean;
-    mask: Type;
 }
 
 const enum Type {
@@ -28,12 +23,12 @@ const enum Type {
     Any = 128,
     Symbol = 256,
     Unknown = 512,
+    Void = 1024,
 }
 
-export class Rule extends ConfigurableTypedRule<Options> {
+export class Rule extends ConfigurableTypedRule<Type> {
     public parseOptions(options: RawOptions | null | undefined) {
-        let allowed = Type.String | Type.Any;
-        let allowNever = false;
+        let allowed = Type.String | Type.Any | Type.Symbol;
         if (options) {
             if (options.allowPrimitive) {
                 allowed |= Type.Number | Type.BigInt | Type.Boolean | Type.Null | Type.Undefined;
@@ -49,13 +44,8 @@ export class Rule extends ConfigurableTypedRule<Options> {
                 if (options.allowUndefined)
                     allowed |= Type.Undefined;
             }
-            if (options.allowNever)
-                allowNever = true;
         }
-        return {
-            allowNever,
-            mask: ~allowed,
-        };
+        return ~allowed;
     }
 
     public apply() {
@@ -67,9 +57,6 @@ export class Rule extends ConfigurableTypedRule<Options> {
                     break;
                 case ts.SyntaxKind.BinaryExpression:
                     this.checkBinaryExpression(<ts.BinaryExpression>node);
-                    break;
-                case ts.SyntaxKind.ElementAccessExpression:
-                    // TODO disallow numbers if there's a string index signature?
             }
         }
     }
@@ -90,19 +77,16 @@ export class Rule extends ConfigurableTypedRule<Options> {
     }
 
     private getType(node: ts.Expression) {
-        let type = this.checker.getTypeAtLocation(node);
-        type = this.checker.getBaseConstraintOfType(type) || type;
-        if (type.flags & ts.TypeFlags.Any)
+        const type = tryGetBaseConstraintType(this.checker.getTypeAtLocation(node), this.checker);
+        if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Never))
             return Type.Any;
         if (type.flags & ts.TypeFlags.Unknown)
             return Type.Unknown;
-        if (type.flags & ts.TypeFlags.Never)
-            return 0;
         let result: Type = 0;
         for (let t of unionTypeParts(type)) {
             if (isIntersectionType(t))
                 // handle tagged types by extracting the primitive
-                t = t.types.find(({flags}) => (flags & ts.TypeFlags.NonPrimitive) === 0) || t;
+                t = t.types.find(({flags}) => (flags & ts.TypeFlags.Object) === 0) || t;
             if (t.flags & ts.TypeFlags.StringLike) {
                 result |= Type.String;
             } else if (t.flags & ts.TypeFlags.NumberLike) {
@@ -117,6 +101,8 @@ export class Rule extends ConfigurableTypedRule<Options> {
                 result |= Type.Undefined;
             } else if (t.flags & ts.TypeFlags.ESSymbolLike) {
                 result |= Type.Symbol;
+            } else if (t.flags & ts.TypeFlags.Void) {
+                result |= Type.Void;
             } else {
                 result |= Type.NonPrimitive;
             }
@@ -125,21 +111,15 @@ export class Rule extends ConfigurableTypedRule<Options> {
     }
 
     private checkExpression(node: ts.Expression, type = this.getType(node)) {
-        if (type !== 0) {
-            // exclude all allowed types
-            type &= this.options.mask;
-            if (type === 0)
-                return;
-        } else if (this.options.allowNever) {
+        // exclude all allowed types
+        type &= this.options;
+        if (type === 0)
             return;
-        }
         this.addFindingAtNode(node, `Unexpected implicit string coercion of '${formatType(type)}'.`);
     }
 }
 
 function formatType(type: Type) {
-    if (type === 0)
-        return 'never';
     if (type === Type.Unknown)
         return 'unknown';
     const types = [];
@@ -155,7 +135,7 @@ function formatType(type: Type) {
         types.push('undefined');
     if (type & Type.NonPrimitive)
         types.push('object');
-    if (type & Type.Symbol)
-        types.push('symbol');
+    if (type & Type.Void)
+        types.push('void');
     return types.join(' | ');
 }
