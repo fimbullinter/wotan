@@ -357,3 +357,13 @@ get<any>() === get<any>();
 type Brand<T> = T & {__brand: never};
 get<Brand<'a'>>() === get<Brand<'a'>>();
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always truthy.]
+
+class Clazz {
+    [x: string]: string;
+    #prop: string;
+
+    fn() {
+        return this.#prop === undefined;
+               ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-predicate: Expression is always falsy.]
+    }
+}

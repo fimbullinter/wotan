@@ -1,5 +1,6 @@
 # prefer-dot-notation
 
+:mag: requires type information
 :wrench: fixable
 
 Enforces the use of `obj.foo` instead of `obj['foo']` where possible.
@@ -7,6 +8,8 @@ Enforces the use of `obj.foo` instead of `obj['foo']` where possible.
 ## Rationale
 
 Property access (dot notation) for statically known properties is easier to read and write. TypeScript has stricter checks for property access. Minifiers can mangle names of properties more efficiently when they are only accessed using dot notation.
+
+This rule excludes cases where using dot notation would cause a compile error, e.g. accessing a private property outside of the class. These cases are handled by [`no-restricted-property-access`](no-restricted-property-access.md).
 
 ## Examples
 
@@ -35,7 +38,7 @@ obj.foo_bar;
 
 // dynamic element access
 obj['prop' + Math.random()];
-for (const key of obj) {
+for (const key in obj) {
   console.log(obj[key]);
 }
 
@@ -51,3 +54,7 @@ obj['a-b'];
 ## Further Reading
 
 * MDN: [Property accessors](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_Accessors)
+
+## Related Rules
+
+* [`no-restricted-property-access`](no-restricted-property-access.md)

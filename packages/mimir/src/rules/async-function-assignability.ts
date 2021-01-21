@@ -1,7 +1,6 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
-    NodeWrap,
     isTypeNodeKind,
     isExpression,
     isIdentifier,
@@ -19,18 +18,24 @@ import {
     getPropertyOfType,
     getSingleLateBoundPropertyNameOfPropertyName,
     getLateBoundPropertyNamesOfPropertyName,
+    hasModifier,
 } from 'tsutils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        this.context.getWrappedAst().children.forEach(this.checkNode, this);
+        let wrap = this.context.getWrappedAst().next;
+        while (wrap.next !== undefined) {
+            if (isTypeNodeKind(wrap.kind)) {
+                wrap = wrap.skip!;
+            } else {
+                this.checkNode(wrap.node);
+                wrap = wrap.next;
+            }
+        }
     }
 
-    private checkNode({node, children}: NodeWrap) {
-        if (isTypeNodeKind(node.kind))
-            return;
-
+    private checkNode(node: ts.Node) {
         if (isExpression(node)) {
             if (!isIdentifier(node) || getUsageDomain(node) !== undefined)
                 this.checkAssignment(node);
@@ -44,7 +49,6 @@ export class Rule extends TypedRule {
                 this.checkClassProperty(node, parent);
             }
         }
-        return children.forEach(this.checkNode, this);
     }
 
     private checkAssignment(node: ts.Expression) {
@@ -65,7 +69,11 @@ export class Rule extends TypedRule {
     }
 
     private checkClassProperty(node: ts.PropertyDeclaration | ts.MethodDeclaration, clazz: ts.ClassLikeDeclaration) {
-        if (clazz.heritageClauses === undefined)
+        if (
+            clazz.heritageClauses === undefined ||
+            node.name.kind === ts.SyntaxKind.PrivateIdentifier ||
+            hasModifier(node.modifiers, ts.SyntaxKind.StaticKeyword)
+        )
             return;
         const checker = this.checker;
         if (node.kind === ts.SyntaxKind.MethodDeclaration) {

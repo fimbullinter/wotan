@@ -59,7 +59,7 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
         const raw = this.parser.parse({
             sourceFile,
             getCommentAtPosition(pos) {
-                const wrap = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), pos);
+                const wrap = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), pos);
                 if (wrap === undefined)
                     return;
                 return getCommentAtPosition(sourceFile, pos, wrap.node);
@@ -265,7 +265,6 @@ export class DefaultLineSwitchParser implements LineSwitchParser {
     public parse(context: LineSwitchParserContext) {
         const {sourceFile} = context;
         const result: RawLineSwitch[] = [];
-        // tslint:disable-next-line:max-line-length
         const commentRegex = /(\/[/*] *wotan-(enable|disable)((?:-next)?-line)?)( +(?:(?:[\w-]+\/)*[\w-]+ *, *)*(?:[\w-]+\/)*[\w-]+)? *(?:$|\*\/)/mg;
 
         for (let match = commentRegex.exec(sourceFile.text); match !== null; match = commentRegex.exec(sourceFile.text)) {

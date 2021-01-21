@@ -10,6 +10,10 @@ src/formatters/json.js.map
 src/formatters/stylish.d.ts
 src/formatters/stylish.js
 src/formatters/stylish.js.map
+src/iteration.js
+src/iteration.js.map
+src/restricted-property.js
+src/restricted-property.js.map
 src/rules/async-function-assignability.d.ts
 src/rules/async-function-assignability.js
 src/rules/async-function-assignability.js.map
@@ -58,6 +62,9 @@ src/rules/no-misused-generics.js.map
 src/rules/no-nan-compare.d.ts
 src/rules/no-nan-compare.js
 src/rules/no-nan-compare.js.map
+src/rules/no-object-spread-of-iterable.d.ts
+src/rules/no-object-spread-of-iterable.js
+src/rules/no-object-spread-of-iterable.js.map
 src/rules/no-octal-escape.d.ts
 src/rules/no-octal-escape.js
 src/rules/no-octal-escape.js.map
@@ -115,6 +122,9 @@ src/rules/no-useless-strict.js.map
 src/rules/no-useless-try-catch.d.ts
 src/rules/no-useless-try-catch.js
 src/rules/no-useless-try-catch.js.map
+src/rules/no-writeonly-property-read.d.ts
+src/rules/no-writeonly-property-read.js
+src/rules/no-writeonly-property-read.js.map
 src/rules/parameter-properties.d.ts
 src/rules/parameter-properties.js
 src/rules/parameter-properties.js.map

@@ -50,6 +50,12 @@ bas;
 bas();
 bas('');
 
+declare let optionalBas: undefined | typeof bas;
+
+optionalBas;
+optionalBas?.();
+optionalBas?.('');
+
 /**@deprecated Variable is deprecated.*/
 declare const fn: typeof bas;
 fn;
@@ -94,6 +100,27 @@ obj['somethingElse'];
 obj[key2];
 obj[k];
 obj[];
+
+declare let optionalObj: undefined | typeof obj;
+
+optionalObj?.a;
+optionalObj?.b;
+optionalObj?.c;
+optionalObj?.d;
+optionalObj?.foo;
+optionalObj?.['a'];
+optionalObj?.['b'];
+optionalObj?.['c'];
+optionalObj?.['d'];
+optionalObj?.['foo'];
+optionalObj?.[key];
+optionalObj?.somethingElse;
+optionalObj?.['somethingElse'];
+optionalObj?.[key2];
+optionalObj?.[k];
+
+declare let nestedOptionalObj: undefined | {o: typeof obj};
+nestedOptionalObj?.o['a'];
 
 declare let obj2: {
     /**@deprecated*/
@@ -383,3 +410,12 @@ declare var myDeprecatedCallable: {
 myDeprecatedCallable;
 myDeprecatedCallable();
 myDeprecatedCallable(1);
+
+class WithPrivateProp {
+    /** @deprecated */
+    #prop = 1;
+
+    get prop() {
+        return this.#prop;
+    }
+}

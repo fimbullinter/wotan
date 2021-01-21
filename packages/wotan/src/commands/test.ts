@@ -4,7 +4,7 @@ import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
 import { createBaseline } from '../baseline';
 import * as path from 'path';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { unixifyPath } from '../utils';
 import * as glob from 'glob';
 import { satisfies, SemVer } from 'semver';

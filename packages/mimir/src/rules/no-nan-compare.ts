@@ -8,7 +8,7 @@ export class Rule extends AbstractRule {
         const re = /\bNaN\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (!isIdentifier(node) || node.text !== 'NaN' || node.end !== match.index + 3)
                 continue;
             let parent = node.parent!;

@@ -1,0 +1,6 @@
+const obj = {};
+Object.defineProperty(obj, 'foo', {value: 1});
+Object.defineProperty(obj, 'bar', {get: () => 1});
+Object.defineProperty(obj, 'baz', {set: (/** @type {number} */ v) => {}});
+obj.foo + obj.bar + obj.baz;
+                        ~~~  [error no-writeonly-property-read: Cannot read property 'baz' of type 'typeof obj' as it only has a 'set' accessor.]

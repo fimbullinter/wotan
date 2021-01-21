@@ -287,7 +287,7 @@ export class ProjectHost implements ts.CompilerHost {
             fileName,
             undefined,
             undefined,
-            <ts.Map<ts.ExtendedConfigCacheEntry>>this.tsconfigCache,
+            this.tsconfigCache,
         );
     }
 

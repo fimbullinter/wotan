@@ -8,9 +8,11 @@ import {
     isLiteralType,
     unionTypeParts,
     isStrictCompilerOptionEnabled,
+    formatPseudoBigInt,
+    isBooleanLiteralType,
 } from 'tsutils';
 import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
-import { switchStatements, formatPseudoBigInt } from '../utils';
+import { switchStatements, tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -77,15 +79,13 @@ export class Rule extends AbstractRule {
         if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return [];
         const checker = this.program!.getTypeChecker();
-        let type = checker.getTypeAtLocation(node);
-        type = checker.getBaseConstraintOfType(type) || type;
         const result = new Set<string>();
-        for (const t of unionTypeParts(type)) {
+        for (const t of unionTypeParts(tryGetBaseConstraintType(checker.getTypeAtLocation(node), checker))) {
             // TODO handle intersection types
             if (isLiteralType(t)) {
                 result.add(formatPrimitive(prefixFn(t.value)));
             } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
-                result.add(formatPrimitive(prefixFn((<{intrinsicName: string}><{}>t).intrinsicName === 'true')));
+                result.add(formatPrimitive(prefixFn(isBooleanLiteralType(t, true))));
             } else if (t.flags & ts.TypeFlags.Undefined) {
                 result.add(formatPrimitive(prefixFn(undefined)));
             } else if (t.flags & ts.TypeFlags.Null) {
@@ -93,6 +93,7 @@ export class Rule extends AbstractRule {
             } else {
                 return [];
             }
+            // TODO unique symbol
         }
         return Array.from(result);
     }

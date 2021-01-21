@@ -39,15 +39,10 @@
   },
   "docker": {
     "enabled": true,
+    "pinDigests": true
+  },
+  "digest": {
     "schedule": "before 6am on Sunday",
-    "packageRules": [
-      {
-        "groupName": "Node Docker digests",
-        "packageNames": [
-          "circleci/node",
-          "node"
-        ]
-      }
-    ]
+    "groupName": "docker digests"
   }
 }

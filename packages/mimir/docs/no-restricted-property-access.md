@@ -13,10 +13,11 @@ This rule implements the same checks as TypeScript but only for computed names w
 
 The following errors are detected:
 
-* accessing members with multiple declarations of conflicting visibility
+* accessing properties on `never`
 * accessing properties using `super`
-* accessing `abstract` methods using `super`
+* accessing `abstract` methods and accessors using `super`
 * accessing `abstract` properties during initialization of a class with no implementation for that property
+* accessing properties via `this` before their initialization
 * accessing `private` and `protected` members outside of their visibility
 * accessing `protected` members on an instance of a super-class within a derived class
 
@@ -54,15 +55,14 @@ class D extends C {
   }
 }
 
-class Public {
-  public prop = 1;
+class E {
+  a = this['b']; // accessing property before initialization
+  b = 1;
+  c: number = this['c']; // accessing property in its own initializer
 }
-class Private {
-  private prop = 1;
-}
-function doStuff(instance: Public & Private) {
-  instance['prop']; // property has conflicting visibility modifiers
-}
+
+declare const n: never;
+n['prop']; // accessing property on 'never'
 ```
 
 :thumbsup: Examples of correct code
@@ -90,3 +90,8 @@ function explicitThis(this: C) {
 ## Further Reading
 
 * TypeScript Handbook: [Classes](https://www.typescriptlang.org/docs/handbook/classes.html)
+
+## Related Rules
+
+* [`no-writeonly-property-read`](no-writeonly-property-read.md)
+* [`prefer-dot-notation`](prefer-dot-notation.md)

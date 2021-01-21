@@ -106,8 +106,7 @@ export function wrapTslintFormatter(Formatter: TSLint.FormatterConstructor): For
             return;
 
             function getSourceFile() {
-                return sourceFile ||
-                    (sourceFile = ts.createSourceFile(fileName, summary.content, ts.ScriptTarget.Latest));
+                return sourceFile ??= ts.createSourceFile(fileName, summary.content, ts.ScriptTarget.Latest);
             }
         }
 

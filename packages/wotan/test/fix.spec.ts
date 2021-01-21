@@ -116,15 +116,15 @@ test('Fixer', (t) => {
 
     t.throws(
         () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replace(1, 4, 'b')]}]),
-        'Replacements of fix overlap.',
+        { message: 'Replacements of fix overlap.' },
     );
     t.throws(
         () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.replace(2, 5, 'b')]}]),
-        'Replacements of fix overlap.',
+        { message: 'Replacements of fix overlap.' },
     );
     t.throws(
         () => applyFixes('', [{replacements: [Replacement.delete(1, 4), Replacement.append(2, 'a')]}]),
-        'Replacements of fix overlap.',
+        { message: 'Replacements of fix overlap.' },
     );
 
     t.deepEqual(

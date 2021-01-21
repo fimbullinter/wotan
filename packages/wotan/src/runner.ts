@@ -344,7 +344,7 @@ export class Runner {
             if (commandLine.fileNames.length !== 0) {
                 if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
                     log("Using project '%s'", configFilePath);
-                    let resolvedReferences: ts.ResolvedProjectReference['references'];
+                    let resolvedReferences;
                     {
                         // this is in a nested block to allow garbage collection while recursing
                         const program =

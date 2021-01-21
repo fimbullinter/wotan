@@ -37,16 +37,17 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-debugger`](docs/no-debugger.md) | :wrench: Bans `debugger;` statements from your production code. | Performance!
 [`no-duplicate-case`](docs/no-duplicate-case.md) | :mag_right: Detects `switch` statements where multiple `case` clauses check for the same value. | This implementation tries to infer the value instead of just comparing the source code.
 [`no-duplicate-spread-property`](docs/no-duplicate-spread-property.md) | :mag: Detects properties in object literals with object spread that are always overridden. | TSLint has no such rule.
-[`no-fallthrough`](docs/no-fallthrough.md) | Prevents unintentional fallthough in `switch` statements from one case to another. | Allows more comment variants such as `fallthrough` or `fall through`.
+[`no-fallthrough`](docs/no-fallthrough.md) | :mag_right: Prevents unintentional fallthough in `switch` statements from one case to another. | Allows more comment variants such as `fallthrough` or `fall through`.
 [`no-invalid-assertion`](docs/no-invalid-assertion.md) | :mag: Disallows asserting a literal type to a different literal type of the same widened type, e.g. `'foo' as 'bar'`.| TSLint has no similar rule.
 [`no-misused-generics`](docs/no-misused-generics.md) | Detects generic type parameters that cannot be inferred from the functions parameters. It also detects generics that don't enforce any constraint between types. | There's no similar TSLint rule.
 [`no-nan-compare`](docs/no-nan-compare.md) | Disallows comparing with `NaN`, use `isNaN(number)` or `Number.isNaN(number)` instead. | Performance!
+[`no-object-spread-of-iterable`](docs/no-object-spread-of-iterable.md) | :mag: Disallows spreading iterable types into an object. |
 [`no-octal-escape`](docs/no-octal-escape.md) | :wrench: Disallows octal escape sequences in strings and template strings. | No such rule in TSLint.
 [`no-restricted-property-access`](docs/no-restricted-property-access.md) | :mag: Disallows accessing properties via computed name that would not be accessible using a static name. | TSLint has no similar rule.
 [`no-return-await`](docs/no-return-await.md) | :wrench: Disallows unnecesary `return await foo;` when you can simply `return foo;` | The same as TSLint's rule. I wrote both, but this one is faster.
 [`no-unassigned-variable`](docs/no-unassigned-variable.md) | Detects variables that are not initialized and never assigned a value. | There's no similar TSLint rule.
 [`no-uninferred-type-parameter`](docs/no-uninferred-type-parameter.md) | :mag: Detects type parameters that are inferred as `{}` because the compiler cannot infer a type. | Really checks every type parameter of function, method and constructor calls. Correctly handles type parameters from JSDoc comments. Recognises type parameter defaults on all merged declarations.
-[`no-unreachable-code`](docs/no-unreachable-code.md) | Disallows statements that will never be executed. | TSLint removed their `no-unreachable` rule in v4.0.0.
+[`no-unreachable-code`](docs/no-unreachable-code.md) | :mag_right: Disallows statements that will never be executed. | TSLint removed their `no-unreachable` rule in v4.0.0.
 [`no-unsafe-finally`](docs/no-unsafe-finally.md) | Disallows control flow statements `return`, `throw`, `break` and `continue` inside the `finally` block of a try statement. | Performance!
 [`no-unstable-api-use`](docs/no-unstable-api-use.md) | :mag: Disallows uses of deprecated or experimental APIs. | This rule checks element accesses (`foo[bar]`), JSX elements, chained function calls (`getFn()()`) in addition to what TSLint's `deprecation` rule does and has more useful error reporting.
 [`no-unused-expression`](docs/no-unused-expression.md) | :nut_and_bolt: Disallows side-effect free expressions whose value is not used. | This one is a bit stricter than TSLint's `no-unused-expression` and checks `for` loops in addition.
@@ -60,9 +61,10 @@ Rule | Description | Difference to TSLint rule / Why you should use it
 [`no-useless-spread`](docs/no-useless-spread.md) | :wrench: Disallows redundant array and object spread. | There's no similar TSLint rule.
 [`no-useless-strict`](docs/no-useless-strict.md) | :mag_right: :wrench: Disallows redundant `'use strict';` directives. | TSLint had a rule to enforce `'use strict'` everywhere.
 [`no-useless-try-catch`](docs/no-useless-try-catch.md) | :wrench: Detects `try` statements or parts thereof that can be removed. | There's no similar TSLint rule.
+[`no-writeonly-property-read`](docs/no-writeonly-property-read.md) | :mag: Disallows read access to properties that only have a `set` accessor. | There's no similar TSLint rule.
 [`parameter-properties`](docs/parameter-properties.md) | :wrench: :nut_and_bolt: :x: Enforces or disallows the use of parameter properties. | TSlint only has `no-parameter-properties` to disallow all parameter properties and has no autofixer.
 [`prefer-const`](docs/prefer-const.md) | :wrench: :nut_and_bolt: Enforces the use of `const` for variables that are never reassigned. | TSLint's `prefer-const` rule gives some false positives for merged declarations and variables used before being declared which results in a compiler or runtime error after fixing.
-[`prefer-dot-notation`](docs/prefer-dot-notation.md) | :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Same as TSLint's `no-string-literal` rule, but more performant.
+[`prefer-dot-notation`](docs/prefer-dot-notation.md) | :mag: :wrench: Enforces the use of `obj.foo` instead of `obj['foo']` where possible. | Similar to TSLint's `no-string-literal` rule, but more performant and more correct by avoiding compile errors after fixing.
 [`prefer-for-of`](docs/prefer-for-of.md) | :mag: Prefer `for...of` loops over regular `for` loops where possible. | Avoids the false positives of TSLint's `prefer-for-of` rule.
 [`prefer-namespace-keyword`](docs/prefer-namespace-keyword.md) | :wrench: Prefer `namespace foo {}` over `module foo {}` to avoid confusion with ECMAScript modules. | Same as TSLint's `no-internal-module`.
 [`prefer-number-methods`](docs/prefer-number-methods.md) | :mag: :wrench: Prefer ES2015's `Number.isNaN` and `Number.isFinite` over the global `isNaN` and `isFinite`. | No similar rule in TSLint.

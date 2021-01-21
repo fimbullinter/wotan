@@ -681,16 +681,16 @@ test('parses lint command', (t) => {
         'only parses severity or boolean as value for --report-useless-directives',
     );
 
-    t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
+    t.throws(() => parseArguments(['lint', '--foobar']), { message: "Unknown option '--foobar'." });
 
-    t.throws(() => parseArguments(['lint', '-m']), "Option '-m' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
-    t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--config']), "Option '--config' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--ext']), "Option '--ext' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--ext', 'mjs']), "Options '--ext' and '--project' cannot be used together.");
-    t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), "Options '--ext' and '--project' cannot be used together.");
+    t.throws(() => parseArguments(['lint', '-m']), { message: "Option '-m' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--exclude']), { message: "Option '--exclude' expects an argument." });
+    t.throws(() => parseArguments(['lint', '-f']), { message: "Option '-f' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--project']), { message: "Option '--project' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--config']), { message: "Option '--config' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--ext']), { message: "Option '--ext' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs']), { message: "Options '--ext' and '--project' cannot be used together." });
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), { message: "Options '--ext' and '--project' cannot be used together." });
 });
 
 test('parses save command', (t) => {
@@ -803,16 +803,20 @@ test('parses show command', (t) => {
         'uses defaults',
     );
 
-    t.throws(() => parseArguments(['show', '-f']), "Option '-f' expects an argument.");
-    t.throws(() => parseArguments(['show', '-f', 'foobar']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
+    t.throws(() => parseArguments(['show', '-f']), { message: "Option '-f' expects an argument." });
+    t.throws(
+        () => parseArguments(['show', '-f', 'foobar']),
+        null,
+        "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.",
+    );
 
-    t.throws(() => parseArguments(['show', '-c']), "Option '-c' expects an argument.");
+    t.throws(() => parseArguments(['show', '-c']), { message: "Option '-c' expects an argument." });
 
-    t.throws(() => parseArguments(['show'], {files: 'test.ts'}), 'filename expected');
-    t.throws(() => parseArguments(['show', '-c', 'config.yaml']), 'filename expected');
-    t.throws(() => parseArguments(['show', 'foo', 'bar']), 'more than one filename provided');
+    t.throws(() => parseArguments(['show'], {files: 'test.ts'}), { message: 'filename expected' });
+    t.throws(() => parseArguments(['show', '-c', 'config.yaml']), { message: 'filename expected' });
+    t.throws(() => parseArguments(['show', 'foo', 'bar']), { message: 'more than one filename provided' });
 
-    t.throws(() => parseArguments(['show', '--foobar']), "Unknown option '--foobar'.");
+    t.throws(() => parseArguments(['show', '--foobar']), { message: "Unknown option '--foobar'." });
 });
 
 test('parses test command', (t) => {
@@ -865,10 +869,10 @@ test('parses test command', (t) => {
         },
     );
 
-    t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), 'filename expected.');
-    t.throws(() => parseArguments(['test', '--option']), "Unknown option '--option'.");
+    t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), { message: 'filename expected.' });
+    t.throws(() => parseArguments(['test', '--option']), { message: "Unknown option '--option'." });
 });
 
 test('parses validate command', (t) => {
-    t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.");
+    t.throws(() => parseArguments(['validate']), { message: "'validate' is not implemented yet." });
 });

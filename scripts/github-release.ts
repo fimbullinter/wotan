@@ -1,6 +1,7 @@
 import * as parseGithubUrl from 'github-url-to-object';
-import * as Github from '@octokit/rest';
-import { getLastReleaseTag, getRootPackage, getChangeLogForVersion } from './util';
+import { Octokit } from '@octokit/rest';
+import { getLastReleaseTag, getRootPackage, getChangeLogForVersion, getObjectIds } from './util';
+import { fixedIssues } from './fixed-issues';
 
 if (!process.env.GITHUB_TOKEN) {
     console.error('Missing environment variable GITHUB_TOKEN');
@@ -20,7 +21,7 @@ if (tag !== 'v' + rootManifest.version) {
 const body = getChangeLogForVersion(rootManifest.version);
 const { user, repo } = parseGithubUrl(rootManifest.repository)!;
 
-const ghClient = new Github({
+const ghClient = new Octokit({
     auth: process.env.GITHUB_TOKEN,
 });
 
@@ -34,6 +35,19 @@ const ghClient = new Github({
         tag_name: tag,
     });
     console.log('Created GitHub release %s at %s', release.data.name, release.data.html_url);
+
+    const previousReleaseTag = getLastReleaseTag(`${tag}^`)[0];
+    const [currentReleaseOid, previousReleaseOid] = getObjectIds(tag, previousReleaseTag);
+    const commentBody = `:tada: This issue has been resolved in version [${tag}](${release.data.html_url}) :tada:`;
+    for await (const issueNumber of fixedIssues(user, repo, ghClient.request, currentReleaseOid, previousReleaseOid)) {
+        console.log('Posting comment on issue #%d', issueNumber);
+        await ghClient.issues.createComment({
+            repo,
+            issue_number: issueNumber,
+            owner: user,
+            body: commentBody,
+        });
+    }
 })().catch((err) => {
     console.error(err);
     process.exitCode = 1;

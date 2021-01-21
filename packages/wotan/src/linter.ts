@@ -19,7 +19,7 @@ import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
 import { calculateChangeRange, invertChangeRange } from './utils';
-import { ConvertedAst, convertAst, isCompilerOptionEnabled, getCheckJsDirective } from 'tsutils';
+import { ConvertedAst, convertAst, isCompilerOptionEnabled, getTsCheckDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
 
@@ -54,7 +54,7 @@ class CachedProgramFactory implements ProgramFactory {
     constructor(private factory: ProgramFactory) {}
 
     public getCompilerOptions() {
-        return this.options || (this.options = this.factory.getCompilerOptions());
+        return this.options ??= this.factory.getCompilerOptions();
     }
 
     public getProgram() {
@@ -159,16 +159,19 @@ export class Linter {
         processor: AbstractProcessor | undefined,
         options: LinterOptions,
     ) {
-        if (programFactory !== undefined)
-            // make sure that all rules get the same Program and CompilerOptions for this run
-            programFactory = new CachedProgramFactory(programFactory);
+        // make sure that all rules get the same Program and CompilerOptions for this run
+        programFactory &&= new CachedProgramFactory(programFactory);
 
         let suppressMissingTypeInfoWarning = false;
         log('Linting file %s', sourceFile.fileName);
-        if (programFactory !== undefined && /\.jsx?/.test(sourceFile.fileName)) {
-            const directive = getCheckJsDirective(sourceFile.text);
-            if (directive === undefined ? !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs') : !directive.enabled) {
-                log('Not using type information for this unchecked JS file');
+        if (programFactory !== undefined) {
+            const directive = getTsCheckDirective(sourceFile.text);
+            if (
+                directive !== undefined
+                    ? !directive.enabled
+                    : /\.jsx?/.test(sourceFile.fileName) && !isCompilerOptionEnabled(programFactory.getCompilerOptions(), 'checkJs')
+            ) {
+                log('Not using type information for this unchecked file');
                 programFactory = undefined;
                 suppressMissingTypeInfoWarning = true;
             }
@@ -253,8 +256,7 @@ export class Linter {
         let convertedAst: ConvertedAst | undefined;
 
         const getFindingFilter = () => {
-            return findingFilter ||
-                (findingFilter = this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)}));
+            return findingFilter ??= this.filterFactory.create({sourceFile, getWrappedAst, ruleNames: rules.map((r) => r.ruleName)});
         };
         const addFinding = (pos: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>) => {
             const finding: Finding = {
@@ -285,8 +287,8 @@ export class Linter {
             addFinding,
             getFlatAst,
             getWrappedAst,
-            get program() { return programFactory && programFactory.getProgram(); },
-            get compilerOptions() { return programFactory && programFactory.getCompilerOptions(); },
+            get program() { return programFactory?.getProgram(); },
+            get compilerOptions() { return programFactory?.getCompilerOptions(); },
             sourceFile,
             settings,
             options: undefined,
@@ -306,10 +308,10 @@ export class Linter {
         return result;
 
         function getFlatAst() {
-            return (convertedAst || (convertedAst = convertAst(sourceFile))).flat;
+            return (convertedAst ??= convertAst(sourceFile)).flat;
         }
         function getWrappedAst() {
-            return (convertedAst || (convertedAst = convertAst(sourceFile))).wrapped;
+            return (convertedAst ??= convertAst(sourceFile)).wrapped;
         }
     }
 }

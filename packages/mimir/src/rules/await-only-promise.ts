@@ -17,7 +17,7 @@ export class Rule extends TypedRule {
         const re = /\bawait\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (isAwaitExpression(node)) {
                 if (
                     node.expression.pos !== re.lastIndex ||

@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "esnext"
+    "target": "es2019",
+    "allowJs": true,
+    "checkJs": true,
+    "experimentalDecorators": true
   }
 }

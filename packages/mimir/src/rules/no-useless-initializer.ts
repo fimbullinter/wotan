@@ -17,6 +17,7 @@ import {
     LateBoundPropertyNames,
     getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
+import { tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -77,17 +78,9 @@ export class Rule extends AbstractRule {
                 default:
                     continue;
             }
-            // for compatibility with typescript@<3.5.0
-            if (checker.getTypeOfAssignmentPattern !== undefined) {
-                const properties = getLateBoundPropertyNamesOfPropertyName(name, checker);
-                if (!properties.known || properties.names.some(maybeUndefined))
-                    continue;
-            } else if (
-                name.kind !== ts.SyntaxKind.Identifier ||
-                symbolMaybeUndefined(checker, checker.getPropertySymbolOfDestructuringAssignment(name), node)
-            ) {
+            const properties = getLateBoundPropertyNamesOfPropertyName(name, checker);
+            if (!properties.known || properties.names.some(maybeUndefined))
                 continue;
-            }
             this.addFindingAtNode(
                 errorNode,
                 "Unnecessary default value as this property is never 'undefined'.",
@@ -98,7 +91,7 @@ export class Rule extends AbstractRule {
         function maybeUndefined({symbolName}: PropertyName) {
             return symbolMaybeUndefined(
                 checker,
-                getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeOfAssignmentPattern(node))), symbolName),
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeOfAssignmentPattern(node)), symbolName),
                 node,
             );
         }
@@ -108,17 +101,12 @@ export class Rule extends AbstractRule {
         if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return;
         const checker = this.program!.getTypeChecker();
-        if (checker.getTypeOfAssignmentPattern === undefined)
-            return; // for compatibility with typescript@<3.5.0
         let type: ts.Type | undefined;
         for (let i = 0; i < node.elements.length; ++i) {
             const element = node.elements[i];
             if (!isBinaryExpression(element))
                 continue;
-            if (type === undefined) {
-                type = checker.getTypeOfAssignmentPattern(node);
-                type = checker.getBaseConstraintOfType(type) || type;
-            }
+            type ??= tryGetBaseConstraintType(checker.getTypeOfAssignmentPattern(node), checker);
             if (symbolMaybeUndefined(checker, type.getProperty(String(i)), node))
                 continue;
             this.addFindingAtNode(
@@ -150,7 +138,7 @@ export class Rule extends AbstractRule {
         function maybeUndefined({symbolName}: PropertyName) {
             return symbolMaybeUndefined(
                 checker,
-                getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!)), symbolName),
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeAtLocation(node)!), symbolName),
                 node,
             );
         }

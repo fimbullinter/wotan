@@ -6,13 +6,13 @@ workflows:
       - test:
           requires:
             - build
-      - test@3.3:
+      - test@3.9:
           requires:
             - build
-      - test@3.4:
+      - test@4.0:
           requires:
             - build
-      - test@3.5:
+      - test@4.1:
           requires:
             - build
 
@@ -27,19 +27,26 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -DW typescript@$typescriptVersion}
+          if [[ "$CIRCLE_JOB" =~ ^test@ ]]; then
+            yarn add -DW typescript@${CIRCLE_JOB#test@}
+          else
+            yarn
+          fi
     - run:
         name: Run Tests
         command: |
-          yarn test-coverage
+          node_modules/.bin/nyc node_modules/.bin/run-s test
           yarn report-coverage
+
+latestNodeImage: &latestNodeImage
+  docker:
+    - image: circleci/node:15@sha256:fb8e55f8bd339bb6d1fd00551f4c4748e758b128c409c69b58e9ec583cb28942
 
 version: 2
 jobs:
   build:
     working_directory: '~/Project'
-    docker:
-      - image: circleci/node:12@sha256:6f0fa413ee49aa5fc48a4962c814682eaa9716281c7a03ef7c50d73f86c2f502
+    <<: *latestNodeImage
     steps:
       - checkout
       - restore_cache:
@@ -74,24 +81,17 @@ jobs:
             - "packages/*/test"
             - yarn.lock
   test:
-    docker:
-      - image: circleci/node:12@sha256:6f0fa413ee49aa5fc48a4962c814682eaa9716281c7a03ef7c50d73f86c2f502
+    <<: *latestNodeImage
     <<: *base
-  test@3.3:
+  test@3.9:
     docker:
-      - image: circleci/node:8@sha256:d15fdd06b69917bc558d96d69f17af5827e0cc79564a75037830b9609f1a103e
-    environment:
-      typescriptVersion: "3.3"
+      - image: circleci/node:10@sha256:176b75cb36883414956b933a8b7206f5c70450f3e9222e10106e8df0a7d11509
     <<: *base
-  test@3.4:
+  test@4.0:
     docker:
-      - image: circleci/node:10@sha256:9500537003453f28c4efa0e7a7934c6915391618d8571fd17fb513e96d2a73e7
-    environment:
-      typescriptVersion: "3.4"
+      - image: circleci/node:12@sha256:fa9a741a79fc155082cdb7f19d3776b41aa9002afdef2949f095b20d8144f6f6
     <<: *base
-  test@3.5:
+  test@4.1:
     docker:
-      - image: circleci/node:12@sha256:6f0fa413ee49aa5fc48a4962c814682eaa9716281c7a03ef7c50d73f86c2f502
-    environment:
-      typescriptVersion: "3.5"
+      - image: circleci/node:14@sha256:e217958c7b95affcc9a1738b64db3bea53e5ecebf438fa65e8913363082d1ce1
     <<: *base

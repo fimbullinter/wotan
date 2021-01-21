@@ -3,9 +3,11 @@ const foo: ';
 let bar: typeof foo;
 let baz: = bar;
          ~      [error syntaxcheck: Type expected.]
+               ~nil
 
+~nil
 new Map<string, string>;
-                       ~ [error syntaxcheck: '(' expected.]
+~~~~~~~~~~~~~~~~~~~~~~~  [error syntaxcheck: A 'new' expression with type arguments must always be followed by a parenthesized argument list.]
 
 namespace foo
 

@@ -81,7 +81,7 @@ export declare abstract class AbstractRule {
     static supports?: RulePredicate;
     static validateConfig?(config: any): string[] | string | undefined;
     readonly sourceFile: ts.SourceFile;
-    readonly program: ts.Program | undefined;
+    get program(): ts.Program | undefined;
     constructor(context: RuleContext);
     abstract apply(): void;
     addFinding(start: number, end: number, message: string, fix?: Replacement | ReadonlyArray<Replacement>): void;
@@ -95,9 +95,9 @@ export declare abstract class ConfigurableRule<T> extends AbstractRule {
 export declare abstract class TypedRule extends AbstractRule {
     static readonly requiresTypeInformation = true;
     readonly context: TypedRuleContext;
-    readonly program: ts.Program;
+    get program(): ts.Program;
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
-    readonly checker: ts.TypeChecker;
+    get checker(): ts.TypeChecker;
     constructor(context: TypedRuleContext);
 }
 export declare abstract class ConfigurableTypedRule<T> extends TypedRule {

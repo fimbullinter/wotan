@@ -1,3 +1,7 @@
+declare function decorator(...args: any[]): any;
+declare const BaseTypeWithoutDeclarations: new () => {};
+declare const BaseTypeWithoutSymbol: new () => object;
+
 class Private {
     private prop = 1;
     other = this['prop'];
@@ -32,6 +36,12 @@ new Private()['prop'];
 new Private()[];
 new Private()['pr' + 'op'];
 
+declare var optionalPrivate: Private | undefined;
+optionalPrivate?.['prop'];
+
+declare var optionalPrivateProp: undefined | {o: Private};
+optionalPrivateProp?.o['prop'];
+
 class Protected {
     protected prop = 1;
     other = this['prop'];
@@ -54,8 +64,10 @@ function testProtected(this: Protected) {
         bar = new Protected()['prop'],
     }
     @decorator(new Protected()['prop'])
-    class Inner {
+    class Inner extends (new Protected()['prop'] ? Object : Object) {
         bar = new Protected()['prop'];
+        @decorator(new Protected()['prop'])
+        [new Protected()['prop']](@decorator(new Protected()['prop']) param: string) {}
     }
 }
 new Protected()['prop'];
@@ -88,9 +100,56 @@ function testDerivedProtected(this: DerivedProtected) {
     new Protected()['prop'];
 }
 
+interface I { something(): void }
+class DerivedProtectedWithImplements extends Protected implements I {
+    something() {
+        this['prop'];
+        new Protected()['fn'](null!);
+    }
+}
+
 class Unrelated {}
 function testUnrelated(this: Unrelated) {
     new Protected()['prop'];
+}
+
+class WithoutDeclarations extends BaseTypeWithoutDeclarations {
+    prop = new Protected()['prop'];
+}
+
+class WithoutSymbol extends BaseTypeWithoutSymbol {
+    prop = new Protected()['prop'];
+}
+
+function mixin<T extends new (...args: any[]) => object>(p: T) {
+    return class extends p {
+        constructor(...args: any[]) {
+            super(...args);
+            new Protected()['prop'];
+        }
+    }
+}
+
+function mixin2<T extends new (...args: any[]) => Protected>(p: T) {
+    return class extends p {
+        protected fromMixin = 1;
+        constructor(...args: any[]) {
+            super(...args);
+            this['prop'];
+            new Protected()['prop'];
+            Protected['fn'](null!);
+        }
+    };
+}
+
+const MixedIn = mixin2(Protected);
+new MixedIn()['fromMixin'];
+
+class ExtendsMixin extends MixedIn {
+    fn() {
+        this['fromMixin'];
+        new MixedIn()['fromMixin'];
+    }
 }
 
 new class {
@@ -129,7 +188,7 @@ abstract class Abstract {
         other['prop'];
         this['getter'];
         () => this['prop'];
-        const {['prop']: prop, ['getter']: getter} = this; // TODO this could be an error
+        (this)['prop']; // should be an error, but TypeScript doesn't unwrap parens either
     }
     method() {
         this['prop'];
@@ -170,25 +229,6 @@ abstract class DerivedAbstractAbstract extends Abstract {
 abstract class EvenMoreDerivedAbstract extends DerivedAbstractAbstract {
     other = super['getProp']();
 }
-
-declare let privateProtected: Private & Protected;
-privateProtected['prop'];
-
-class Public {
-    prop = 1;
-}
-
-declare let publicPrivate: Public & Private;
-publicPrivate['prop'];
-
-class PrivateTwo {
-    private prop = 2;
-}
-
-declare let privatePrivate: Private & PrivateTwo;
-privatePrivate['prop'];
-
-declare function decorator(...args: any[]): any;
 
 class A {
     protected prop = 1;
@@ -269,3 +309,54 @@ class IntersectionSubclass extends Base {
         return super['method']();
     }
 }
+
+namespace testStatic {
+    class Base {
+        static prop = 1;
+        static method() {return 1;}
+        static get accessor() {return 1;}
+
+        v = 1;
+    }
+    namespace Base {
+        export var v = 1;
+    }
+
+    class Other {}
+
+    class Derived extends Base {
+        static fn() {
+            return super['prop'] + super['method']() + super['accessor'] + super['v'];
+        }
+
+        static nestedClass() {
+            @decorator(super['v'])
+            class C extends Other {
+                @decorator(super['v'])
+                static [super['v']](@decorator(super['v']) param: string) {}
+
+                @decorator(super['v'])
+                [super['v']](@decorator(super['v']) param: string) {}
+            }
+        }
+
+        nestedClass() {
+            @decorator(super['v'])
+            class C extends Other {
+                @decorator(super['v'])
+                static [super['v']](@decorator(super['v']) param: string) {}
+
+                @decorator(super['v'])
+                [super['v']](@decorator(super['v']) param: string) {}
+            }
+        }
+    }
+}
+
+class MyClass extends Object {
+    toString() {
+        return super['toString']();
+    }
+}
+
+null!['prop'];

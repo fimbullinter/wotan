@@ -1,4 +1,4 @@
-import { GlobalOptions } from '@fimbul/ymir';
+import { GlobalOptions, Severity } from '@fimbul/ymir';
 import { LintOptions } from './runner';
 import { OptionParser } from './optparse';
 export interface ParsedGlobalOptions extends LintOptions {
@@ -6,15 +6,15 @@ export interface ParsedGlobalOptions extends LintOptions {
     formatter: string | undefined;
 }
 export declare const GLOBAL_OPTIONS_SPEC: {
-    modules: OptionParser.ParseFunction<ReadonlyArray<string>>;
+    modules: OptionParser.ParseFunction<readonly string[]>;
     config: OptionParser.ParseFunction<string | undefined>;
-    files: OptionParser.ParseFunction<ReadonlyArray<string>>;
-    exclude: OptionParser.ParseFunction<ReadonlyArray<string>>;
-    project: OptionParser.ParseFunction<ReadonlyArray<string>>;
+    files: OptionParser.ParseFunction<readonly string[]>;
+    exclude: OptionParser.ParseFunction<readonly string[]>;
+    project: OptionParser.ParseFunction<readonly string[]>;
     references: OptionParser.ParseFunction<boolean>;
     formatter: OptionParser.ParseFunction<string | undefined>;
     fix: OptionParser.ParseFunction<number | boolean>;
-    extensions: OptionParser.ParseFunction<ReadonlyArray<string> | undefined>;
-    reportUselessDirectives: OptionParser.ParseFunction<boolean | "warning" | "error" | "suggestion">;
+    extensions: OptionParser.ParseFunction<readonly string[] | undefined>;
+    reportUselessDirectives: OptionParser.ParseFunction<boolean | Severity>;
 };
 export declare function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions;

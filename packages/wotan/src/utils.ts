@@ -42,7 +42,7 @@ export function format<T = any>(value: T, fmt = Format.Yaml): string {
         case Format.Json5:
             return json5.stringify(value, undefined, 2);
         case Format.Yaml:
-            return yaml.safeDump(value, {
+            return yaml.dump(value, {
                 indent: 2,
                 schema: yaml.JSON_SCHEMA,
                 sortKeys: true,
@@ -187,6 +187,8 @@ function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions,
     const extension = path.extname(fileName);
     switch (extension) {
         case '.tsx':
+        case '.js':
+        case '.jsx':
             break;
         case '.ts':
             if (path.extname(fileName.slice(0, -extension.length)) !== '.d')

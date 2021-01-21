@@ -9,6 +9,8 @@ import {
     getPropertyOfType,
     getLateBoundPropertyNames,
     PropertyName,
+    isStatementInAmbientContext,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -17,7 +19,7 @@ export function* switchStatements(context: RuleContext) {
     const re = /\bswitch\s*[(/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.SwitchStatement && node.getStart(context.sourceFile) === match.index)
             yield <ts.SwitchStatement>node;
     }
@@ -28,7 +30,7 @@ export function* tryStatements(context: RuleContext) {
     const re = /\btry\s*[{/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
             yield <ts.TryStatement>node;
     }
@@ -174,7 +176,7 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {names} = getLateBoundPropertyNames(argumentExpression, checker);
     if (names.length === 0)
         return;
-    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), names);
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)).getNonNullableType(), names);
 }
 
 export function *propertiesOfType(type: ts.Type, names: Iterable<PropertyName>) {
@@ -208,6 +210,47 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
     }
 }
 
-export function formatPseudoBigInt(v: ts.PseudoBigInt) {
-    return `${v.negative ? '-' : ''}${v.base10Value}n`;
+/** Determines whether a property has the `declare` modifier or the containing class is ambient. */
+export function isAmbientPropertyDeclaration(node: ts.PropertyDeclaration): boolean {
+    return hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword) ||
+        node.parent!.kind === ts.SyntaxKind.ClassDeclaration && isStatementInAmbientContext(node.parent);
+}
+
+/** Determines whether the given variable declaration is ambient. */
+export function isAmbientVariableDeclaration(node: ts.VariableDeclaration): boolean {
+    return node.parent!.kind === ts.SyntaxKind.VariableDeclarationList &&
+        node.parent.parent!.kind === ts.SyntaxKind.VariableStatement &&
+        isStatementInAmbientContext(node.parent.parent);
+}
+
+export function tryGetBaseConstraintType(type: ts.Type, checker: ts.TypeChecker) {
+    return checker.getBaseConstraintOfType(type) || type;
+}
+
+export interface PropertyNameWithLocation extends PropertyName {
+    node: ts.Node;
+}
+
+export function *addNodeToPropertyNameList(node: ts.Node, list: Iterable<PropertyName>): IterableIterator<PropertyNameWithLocation> {
+    for (const element of list)
+        yield {node, symbolName: element.symbolName, displayName: element.displayName};
+}
+
+export function *destructuredProperties(node: ts.ObjectBindingPattern, checker: ts.TypeChecker) {
+    for (const element of node.elements) {
+        if (element.dotDotDotToken !== undefined)
+            continue;
+        if (element.propertyName === undefined) {
+            yield {
+                node: element.name,
+                symbolName: (<ts.Identifier>element.name).escapedText,
+                displayName: (<ts.Identifier>element.name).text,
+            };
+        } else {
+            yield* addNodeToPropertyNameList(
+                element.propertyName,
+                getLateBoundPropertyNamesOfPropertyName(element.propertyName, checker).names,
+            );
+        }
+    }
 }

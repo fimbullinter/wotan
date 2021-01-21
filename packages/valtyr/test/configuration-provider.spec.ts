@@ -14,7 +14,7 @@ test('resolve', (t) => {
     t.regex(cp.resolve('tslint:all', '').replace(/\\/g, '/'), /\/tslint\/.*\/configs\/all.js$/);
     t.throws(
         () => cp.resolve('tslint:non-existent-name', ''),
-        "'tslint:non-existent-name' is not a valid builtin configuration, try 'tslint:recommended.'",
+        { message: "'tslint:non-existent-name' is not a valid builtin configuration, try 'tslint:recommended.'" },
     );
 
     t.is(cp.resolve('./fixtures/tslint.json', __dirname), path.resolve(__dirname, 'fixtures/tslint.json'));
@@ -102,14 +102,14 @@ test('parse', (t) => {
     cp = container.get(TslintConfigurationProvider);
     t.throws(
         () => cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
-        "Error parsing global configuration for 'valtyr': 'exclude' is not allowed in global configuration.",
+        { message: "Error parsing global configuration for 'valtyr': 'exclude' is not allowed in global configuration." },
     );
 
     container.rebind(GlobalOptions).toConstantValue({valtyr: {extends: 'wotan:recommended'}});
     cp = container.get(TslintConfigurationProvider);
     t.throws(
         () => cp.parse({extends: [], jsRules: new Map(), rules: new Map(), rulesDirectory: []}, 'tslint.json'),
-        "Error parsing global configuration for 'valtyr': Global configuration is not allowed to extend other configs.",
+        { message: "Error parsing global configuration for 'valtyr': Global configuration is not allowed to extend other configs." },
     );
 
     container.rebind(GlobalOptions).toConstantValue({valtyr: {processor: '@fimbul/ve'}});

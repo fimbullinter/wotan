@@ -56,4 +56,5 @@ function copy<T>(obj: T) {
 ## Related Rules
 
 * [`no-duplicate-spread-property`](no-duplciate-spread-property.md)
+* [`no-object-spread-of-iterable`](no-object-spread-of-iterable.md)
 * [`no-useless-spread`](no-useless-spread.md)

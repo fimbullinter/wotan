@@ -33,7 +33,7 @@ test('throws error on non-existing file', (t) => {
             extensions: undefined,
             reportUselessDirectives: false,
         })),
-        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.`,
+        { message: `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' does not exist.` },
     );
 });
 
@@ -57,9 +57,9 @@ test('throws error on file not included in project', (t) => {
             extensions: undefined,
             reportUselessDirectives: false,
         })),
-        `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in any of the projects: '${
-            unixifyPath(path.resolve('packages/wotan/test/project/setup/tsconfig.json'))
-        }'.`,
+        { message: `'${unixifyPath(path.resolve('packages/wotan/non-existent.ts'))}' is not included in any of the projects: '${
+                unixifyPath(path.resolve('packages/wotan/test/project/setup/tsconfig.json'))
+            }'.` },
     );
 });
 
@@ -114,7 +114,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             extensions: undefined,
             reportUselessDirectives: false,
         })),
-        `Cannot find a tsconfig.json file at the specified directory: '${unixifyPath(root)}'`,
+        { message: `Cannot find a tsconfig.json file at the specified directory: '${unixifyPath(root)}'` },
     );
 
     const dir = path.join(__dirname, 'non-existent');
@@ -129,7 +129,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             extensions: undefined,
             reportUselessDirectives: false,
         })),
-        `The specified path does not exist: '${unixifyPath(dir)}'`,
+        { message: `The specified path does not exist: '${unixifyPath(dir)}'` },
     );
 
     t.throws(
@@ -143,7 +143,7 @@ test('throws if no tsconfig.json can be found', (t) => {
             extensions: undefined,
             reportUselessDirectives: false,
         })),
-        `Cannot find tsconfig.json for directory '${unixifyPath(process.cwd())}'.`,
+        { message: `Cannot find tsconfig.json for directory '${unixifyPath(process.cwd())}'.` },
     );
 });
 

@@ -23,7 +23,7 @@ test('exits with code 0 on success', async (t) => {
 
 test('prints version', async (t) => {
     const version = require('../package.json').version;
-    t.deepEqual(await execCli(['-v']), {stdout: `${version}\n`, stderr: '', code: 0, err: null}); // tslint:disable-line:no-null-keyword
+    t.deepEqual(await execCli(['-v']), {stdout: `${version}\n`, stderr: '', code: 0, err: null});
     t.is((await execCli(['--version'])).stdout, `${version}\n`);
 });
 
@@ -46,7 +46,7 @@ test('exits with code 2 on lint error', async (t) => {
     const result = await execCli(['lint', '../mimir/test/trailing-newline/whitespace.ts', '-f', 'json']);
     t.is(result.stderr, '');
     t.is(result.code, 2);
-    t.is(result.stdout, /* tslint:disable-next-line */ `[
+    t.is(result.stdout, `[
 {"ruleName":"trailing-newline","severity":"error","message":"File must end with a newline.","start":{"position":5,"line":0,"character":5},"end":{"position":5,"line":0,"character":5},"fix":{"replacements":[{"start":5,"end":5,"text":"\\n"}]},"fileName":"${unixifyPath(path.resolve('packages/mimir/test/trailing-newline/whitespace.ts'))}"}
 ]
 `);

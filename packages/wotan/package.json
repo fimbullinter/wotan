@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/wotan",
-  "version": "0.21.1",
+  "version": "0.23.0",
   "description": "Pluggable TypeScript and JavaScript linter",
   "bin": "bin/main.js",
   "publishConfig": {
@@ -31,37 +31,37 @@
   "devDependencies": {
     "@types/debug": "^4.0.0",
     "@types/is-negated-glob": "^1.0.0",
-    "@types/js-yaml": "^3.10.1",
+    "@types/js-yaml": "^4.0.0",
     "@types/json5": "0.0.30",
     "@types/minimatch": "^3.0.1",
-    "@types/resolve": "^0.0.8",
-    "@types/semver": "^6.0.0",
-    "escape-string-regexp": "^2.0.0",
-    "rimraf": "^2.6.2"
+    "@types/resolve": "^1.14.0",
+    "@types/semver": "^7.0.0",
+    "escape-string-regexp": "^4.0.0",
+    "rimraf": "^3.0.0"
   },
   "dependencies": {
-    "@fimbul/mimir": "^0.21.0",
-    "@fimbul/ymir": "^0.21.0",
+    "@fimbul/mimir": "^0.23.0",
+    "@fimbul/ymir": "^0.22.0",
     "bind-decorator": "^1.0.11",
-    "chalk": "^2.3.0",
+    "chalk": "^4.0.0",
     "debug": "^4.0.0",
-    "diff": "^4.0.0",
+    "diff": "^5.0.0",
     "glob": "^7.1.2",
     "import-local": "^3.0.0",
     "inversify": "^5.0.0",
     "is-negated-glob": "^1.0.0",
-    "js-yaml": "^3.10.0",
+    "js-yaml": "^4.0.0",
     "json5": "^2.0.0",
     "minimatch": "^3.0.4",
     "normalize-glob": "^0.0.2",
     "reflect-metadata": "^0.1.12",
-    "resolve": "^1.5.0",
-    "semver": "^6.0.0",
+    "resolve": "^1.14.1",
+    "semver": "^7.0.0",
     "stable": "^0.1.8",
-    "tslib": "^1.8.1",
-    "tsutils": "^3.6.0"
+    "tslib": "^2.0.0",
+    "tsutils": "^3.18.0"
   },
   "peerDependencies": {
-    "typescript": ">= 3.3.0 || >= 3.6.0-dev || >= 3.7.0-dev"
+    "typescript": ">= 4.0.0 || >= 4.2.0-dev"
   }
 }
