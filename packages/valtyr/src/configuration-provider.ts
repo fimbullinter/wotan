@@ -154,7 +154,7 @@ function validateGlobalConfig(config: Configuration) {
             checkNonExistence(override, 'rules');
 }
 
-function checkNonExistence<T extends Configuration | Configuration.Override, K extends keyof T>(config: T, key: K) {
+function checkNonExistence<K extends keyof Configuration | keyof Configuration.Override>(config: Partial<Record<K, unknown>>, key: K) {
     if (config[key] !== undefined)
         throw new Error(`'${key}' is not allowed in global configuration.`);
 }

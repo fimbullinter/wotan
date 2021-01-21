@@ -161,7 +161,7 @@ export function sortPackagesForPublishing(packageNames: Iterable<string>, getPac
             changed = true;
         }
         if (!changed)
-            throw new Error(`Circular dependency: ${Array.from(remaining.values(), ({name}) => name)}`);
+            throw new Error(`Circular dependency: ${Array.from(remaining.values(), ({name}) => name).join(' => ')}`);
     }
     return result;
 }

@@ -11,6 +11,10 @@ rules:
   parameter-properties:
     options:
       mode: when-possible
+  no-implicit-tostring:
+    options:
+      allowNumber: true
+      allowNever: true
 overrides:
   - files: "packages/*/test/**"
     rules:

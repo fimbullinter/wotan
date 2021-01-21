@@ -1,0 +1,7 @@
+rules:
+  no-implicit-tostring:
+    severity: error
+    options:
+      allowBigInt: true
+      allowNull: true
+      allowUndefined: true

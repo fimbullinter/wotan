@@ -46,7 +46,7 @@ class MyCustomDeprecatedRule extends AbstractRule {
 @predicate((_, {program, compilerOptions}) => program !== undefined && compilerOptions !== undefined)
 class ProgramAccessRule extends TypedRule {
     public apply() {
-        this.addFinding(0, 0, `${this.program.getCompilerOptions() === this.context.compilerOptions}`);
+        this.addFinding(0, 0, String(this.program.getCompilerOptions() === this.context.compilerOptions));
     }
 }
 
@@ -177,7 +177,7 @@ test('Linter', (t) => {
         [],
     );
     t.is(warnings.length, 5);
-    t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+    t.is(warnings[4], "Could not find rule 'non-existent' in '/foo'.");
 
     {
         const program = createFakeProgram(sourceFile, {});

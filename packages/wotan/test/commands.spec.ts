@@ -141,7 +141,7 @@ test('ShowCommand', async (t) => {
     async function verify(command: ShowCommand) {
         let called = false;
         logger.log = (output) => {
-            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${command.format}`});
+            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${String(command.format)}`});
             called = true;
         };
         t.true(await runCommand(command, container));
