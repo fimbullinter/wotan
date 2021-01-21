@@ -6,26 +6,20 @@ declare let n: number;
 
 'foo' + 'bar';
 'foo' + 1;
-        ~  [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 1 + 'foo';
-~          [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 1 + 1;
 'foo' + console.log('bar');
         ~~~~~~~~~~~~~~~~~~  [error no-implicit-tostring: Unexpected implicit string coercion of 'void'.]
 
 s += 'foo';
 s += 1;
-     ~  [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 n += 'foo';
 n += 1;
 
 get<string | number>() + '';
-~~~~~~~~~~~~~~~~~~~~~~       [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 '' + get<string | number>();
-     ~~~~~~~~~~~~~~~~~~~~~~  [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 
 `${true}`;
-   ~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'boolean'.]
 fn`${true}`;
 
 ({
@@ -36,6 +30,7 @@ fn`${true}`;
 });
 
 `${1n}`;
+   ~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'bigint'.]
 `${Symbol.iterator}`;
 `${get<string>()}`;
 `${get<string & {__brand: never}>()}`;
@@ -44,19 +39,19 @@ fn`${true}`;
 `${get<{foo: string} & {__brand: never}>()}`;
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'object'.]
 `${get<string | number>()}`;
-   ~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 `${get<unknown>()}`;
    ~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'unknown'.]
 `${get<any>()}`;
 `${get<never>()}`;
 `${get<null | undefined>()}`;
+   ~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'null | undefined'.]
 `${get<string | undefined>()}`;
+   ~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'undefined'.]
 `${get<number | undefined>()}`;
-   ~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
+   ~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'undefined'.]
 
 function foo<T extends number>(p: T) {
     return 'foo' + p;
-                   ~  [error no-implicit-tostring: Unexpected implicit string coercion of 'number'.]
 }
 
 obj[1n];

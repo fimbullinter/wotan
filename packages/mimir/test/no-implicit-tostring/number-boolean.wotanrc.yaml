@@ -1,0 +1,6 @@
+rules:
+  no-implicit-tostring:
+    severity: error
+    options:
+      allowNumber: true
+      allowBoolean: true

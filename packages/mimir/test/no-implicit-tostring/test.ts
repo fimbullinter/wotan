@@ -33,6 +33,7 @@ fn`${true}`;
 `${get<string>()}`;
 `${get<string & {__brand: never}>()}`;
 `${get<object & {__brand: never}>()}`;
+`${get<{foo: string} & {__brand: never}>()}`;
 `${get<string | number>()}`;
 `${get<unknown>()}`;
 `${get<any>()}`;

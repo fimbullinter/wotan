@@ -35,6 +35,8 @@ fn`${true}`;
 `${get<string & {__brand: never}>()}`;
 `${get<object & {__brand: never}>()}`;
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'object'.]
+`${get<{foo: string} & {__brand: never}>()}`;
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'object'.]
 `${get<string | number>()}`;
 `${get<unknown>()}`;
    ~~~~~~~~~~~~~~    [error no-implicit-tostring: Unexpected implicit string coercion of 'unknown'.]
