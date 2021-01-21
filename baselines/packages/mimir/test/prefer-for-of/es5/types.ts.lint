@@ -214,3 +214,16 @@ declare let privateIterable: PrivateIterable;
 for (let i = 0; i < privateIterable.length; ++i) {
     privateIterable[i]
 }
+
+declare let record: Record<string, number>;
+for (let i = 0; i < record.length; ++i) {
+    record[i];
+}
+
+{
+    interface Array extends ArrayLike {}
+    const customArrayType = null! as Array;
+    for (let i = 0; i < customArrayType.length; ++i) {
+        customArrayType[i];
+    }
+}

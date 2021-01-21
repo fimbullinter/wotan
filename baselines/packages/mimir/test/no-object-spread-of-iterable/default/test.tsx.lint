@@ -1,0 +1,32 @@
+export {};
+
+[...[]];
+[...[1]];
+[...new Set()];
+[...new Map()];
+
+declare function doStuff(...args: any[]): void;
+doStuff(...[]);
+
+declare const arrayLike: ArrayLike<number>;
+({...arrayLike});
+let {...a} = [];
+({...a} = []);
+let b: Array<number>;
+({...b} = [1]);
+
+({...[]});
+     ~~    [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
+({...[1]});
+     ~~~    [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
+({...new Set()});
+     ~~~~~~~~~    [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
+({...new Map()});
+     ~~~~~~~~~    [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
+
+({a: 1, ...[1] as const});
+({..."..."});
+     ~~~~~    [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
+
+<span {...new Map()}></span>;
+          ~~~~~~~~~           [error no-object-spread-of-iterable: Spreading an Iterable type into an object is most likely a mistake. Did you intend to use array spread instead?]
