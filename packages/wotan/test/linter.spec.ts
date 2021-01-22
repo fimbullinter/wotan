@@ -46,7 +46,7 @@ class MyCustomDeprecatedRule extends AbstractRule {
 @predicate((_, {program, compilerOptions}) => program !== undefined && compilerOptions !== undefined)
 class ProgramAccessRule extends TypedRule {
     public apply() {
-        this.addFinding(0, 0, `${this.program.getCompilerOptions() === this.context.compilerOptions}`);
+        this.addFinding(0, 0, String(this.program.getCompilerOptions() === this.context.compilerOptions));
     }
 }
 
@@ -177,7 +177,7 @@ test('Linter', (t) => {
         [],
     );
     t.is(warnings.length, 5);
-    t.is(warnings[4], "Could not find rule 'non-existent' in /foo.");
+    t.is(warnings[4], "Could not find rule 'non-existent' in '/foo'.");
 
     {
         const program = createFakeProgram(sourceFile, {});
@@ -276,6 +276,17 @@ test('Linter', (t) => {
         [],
     );
     t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked JS file");
+
+    t.deepEqual<ReadonlyArray<Finding>>(
+        lintWithProgram(ts.createSourceFile('foo.ts', '// @ts-nocheck\nfoo;', ts.ScriptTarget.ESNext), {}, {
+            settings: new Map(),
+            rules: new Map<string, EffectiveConfiguration.RuleConfig>([
+                ['typed', {severity: 'error', rulesDirectories: undefined, options: undefined, rule: 'typed'}],
+            ]),
+        }),
+        [],
+    );
+    t.is(warnings.length, 6, "Shouldn't emit a warning if type information was discarded in an unchecked TS file");
 
     t.deepEqual<ReadonlyArray<Finding>>(
         lintWithProgram(ts.createSourceFile('foo.js', 'foo;', ts.ScriptTarget.ESNext), {allowJs: true, checkJs: true}, {

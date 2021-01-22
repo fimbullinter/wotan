@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/mithotyn",
-  "version": "0.18.0",
+  "version": "0.21.0",
   "description": "TypeScript LanguageService plugin for the Fimbullinter project",
   "main": "index",
   "files": [
@@ -17,7 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/mithotyn"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/mithotyn"
   },
   "keywords": [
     "typescript",

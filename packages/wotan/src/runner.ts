@@ -13,7 +13,7 @@ import {
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, createParseConfigHost, hasParseErrors, invertChangeRange } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -277,11 +277,15 @@ export class Runner {
 
         const allMatchedFiles: string [] = [];
         const include: IMinimatch[] = [];
-        const nonMagicGlobs = [];
+        const nonMagicGlobs: NonMagicGlob[] = [];
         for (const pattern of patterns) {
-            if (!pattern.hasMagic)
-                nonMagicGlobs.push(pattern.normalized[0]);
-            include.push(...pattern.normalized.map((p) => new Minimatch(p)));
+            if (!pattern.hasMagic) {
+                const mm = new Minimatch(pattern.normalized[0]);
+                nonMagicGlobs.push({raw: pattern.normalized[0], match: mm});
+                include.push(mm);
+            } else {
+                include.push(...pattern.normalized.map((p) => new Minimatch(p)));
+            }
         }
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
@@ -348,27 +352,20 @@ export class Runner {
             if (!addUnique(seen, configFilePath))
                 continue;
 
-            let commandLine: ts.ParsedCommandLine;
+            let commandLine;
             if (typeof configFile !== 'string') {
                 ({commandLine} = configFile);
             } else {
-                const sourceFile = host.getSourceFile(configFile, ts.ScriptTarget.JSON);
-                if (sourceFile === undefined)
+                commandLine = host.getParsedCommandLine(configFile);
+                if (commandLine === undefined)
                     continue;
-                commandLine = ts.parseJsonSourceFileConfigFileContent(
-                    <ts.TsConfigSourceFile>sourceFile,
-                    createParseConfigHost(host),
-                    path.dirname(configFile),
-                    {noEmit: true},
-                    configFile,
-                );
             }
             if (commandLine.errors.length !== 0)
                 this.logger.warn(ts.formatDiagnostics(commandLine.errors, host));
             if (commandLine.fileNames.length !== 0) {
                 if (!commandLine.options.composite || commandLine.fileNames.some((file) => isFileIncluded(host.getFileSystemFile(file)!))) {
                     log("Using project '%s'", configFilePath);
-                    let resolvedReferences: ts.ResolvedProjectReference['references'];
+                    let resolvedReferences;
                     {
                         // this is in a nested block to allow garbage collection while recursing
                         const program =
@@ -428,10 +425,15 @@ function getFiles(patterns: ReadonlyArray<NormalizedGlob>, exclude: ReadonlyArra
     return new Set(result.map(unixifyPath)); // deduplicate files
 }
 
-function ensurePatternsMatch(include: string[], exclude: IMinimatch[], files: string[], projects: ReadonlyArray<string>) {
+interface NonMagicGlob {
+    raw: string;
+    match: IMinimatch;
+}
+
+function ensurePatternsMatch(include: NonMagicGlob[], exclude: IMinimatch[], files: string[], projects: ReadonlyArray<string>) {
     for (const pattern of include)
-        if (!files.includes(pattern) && !isExcluded(pattern, exclude))
-            throw new ConfigurationError(`'${pattern}' is not included in any of the projects: '${projects.join("', '")}'.`);
+        if (!isExcluded(pattern.raw, exclude) && !files.some((f) => pattern.match.match(f)))
+            throw new ConfigurationError(`'${pattern.raw}' is not included in any of the projects: '${projects.join("', '")}'.`);
 }
 
 function isExcluded(file: string, exclude: IMinimatch[]): boolean {

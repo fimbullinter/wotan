@@ -1,6 +1,14 @@
 import { TypedRule, Replacement, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isAwaitExpression, isForOfStatement, WrappedAst, getWrappedNodeAtPosition, unionTypeParts } from 'tsutils';
+import {
+    isAwaitExpression,
+    isForOfStatement,
+    WrappedAst,
+    getWrappedNodeAtPosition,
+    unionTypeParts,
+    getPropertyOfType,
+    getIteratorYieldResultFromIteratorResult,
+} from 'tsutils';
 import { expressionNeedsParensWhenReplacingNode } from '../utils';
 
 @excludeDeclarationFiles
@@ -9,7 +17,7 @@ export class Rule extends TypedRule {
         const re = /\bawait\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (isAwaitExpression(node)) {
                 if (
                     node.expression.pos !== re.lastIndex ||
@@ -67,23 +75,18 @@ export class Rule extends TypedRule {
         if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
             return true;
         for (const t of unionTypeParts(type))
-            // there must either be a `AsyncIterable` or `Iterable<PromiseLike<any>>`
-            if (this.hasSymbolAsyncIterator(t) || this.isIterableOfPromises(t, node))
+            /*
+             * We already know this type implements the iteration protocol, we just need to know if it involves Promises.
+             * It must either be `AsyncIterable` or `Iterable<PromiseLike<any>>`.
+             * We consider a type as AsyncIterable when it has a property key [Symbol.asyncIterator].
+             */
+            if (getPropertyOfType(t, <ts.__String>'__@asyncIterator') !== undefined || this.isIterableOfPromises(t, node))
                 return true;
         return false;
     }
 
-    /**
-     * We consider a type as AsyncIterable when it has a property key [Symbol.asyncIterator].
-     * The spec requires this property to be a function returning an object with a `next` method which returns a Promise of IteratorResult.
-     * But that's none of our business as the compiler already does the heavy lifting.
-     */
-    private hasSymbolAsyncIterator(type: ts.Type): boolean {
-        return type.getProperties().some((prop) => prop.escapedName === '__@asyncIterator');
-    }
-
     private isIterableOfPromises(type: ts.Type, node: ts.Expression): boolean {
-        const symbol = type.getProperties().find((prop) => prop.escapedName === '__@iterator');
+        const symbol = getPropertyOfType(type, <ts.__String>'__@iterator');
         if (symbol === undefined)
             return false;
         const t = this.checker.getTypeOfSymbolAtLocation(symbol, node);
@@ -100,7 +103,7 @@ export class Rule extends TypedRule {
             if (nextType.flags & ts.TypeFlags.Any)
                 return true;
             for (const nextSignature of nextType.getCallSignatures()) {
-                const nextReturnType = nextSignature.getReturnType();
+                const nextReturnType = getIteratorYieldResultFromIteratorResult(nextSignature.getReturnType(), node, this.checker);
                 if (nextReturnType.flags & ts.TypeFlags.Any)
                     return true;
                 const value = nextReturnType.getProperty('value');

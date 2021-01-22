@@ -61,11 +61,10 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         const extensions = [...this.resolver.getDefaultExtensions(), '.json'];
         if (name.startsWith('tslint:')) {
             try {
-                if (this.tslintConfigDir === undefined)
-                    this.tslintConfigDir = path.join(
-                        this.resolver.resolve('tslint', path.dirname(__dirname), extensions),
-                        '../configs',
-                    );
+                this.tslintConfigDir ??= path.join(
+                    this.resolver.resolve('tslint', path.dirname(__dirname), extensions),
+                    '../configs',
+                );
                 return this.resolver.resolve(path.join(this.tslintConfigDir, name.substr('tslint:'.length)), '', extensions);
             } catch {
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'tslint:recommended.'`);
@@ -155,7 +154,7 @@ function validateGlobalConfig(config: Configuration) {
             checkNonExistence(override, 'rules');
 }
 
-function checkNonExistence<T extends Configuration | Configuration.Override, K extends keyof T>(config: T, key: K) {
+function checkNonExistence<K extends keyof Configuration | keyof Configuration.Override>(config: Partial<Record<K, unknown>>, key: K) {
     if (config[key] !== undefined)
         throw new Error(`'${key}' is not allowed in global configuration.`);
 }

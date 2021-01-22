@@ -15,8 +15,13 @@ import {
     isElementAccessExpression,
     isParenthesizedExpression,
     isLiteralType,
+    unwrapParentheses,
+    getLateBoundPropertyNames,
+    getPropertyOfType,
+    intersectionTypeParts,
+    formatPseudoBigInt,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, unwrapParens, formatPseudoBigInt } from '../utils';
+import { tryGetBaseConstraintType } from '../utils';
 
 interface TypePredicate {
     nullable: boolean;
@@ -154,8 +159,8 @@ export class Rule extends TypedRule {
     }
 
     private isConstantComparison(left: ts.Expression, right: ts.Expression, operator: ts.EqualityOperator) {
-        left = unwrapParens(left);
-        right = unwrapParens(right);
+        left = unwrapParentheses(left);
+        right = unwrapParentheses(right);
         const equals: Equals = {
             negated: operator === ts.SyntaxKind.ExclamationEqualsEqualsToken || operator === ts.SyntaxKind.ExclamationEqualsToken,
             strict: operator === ts.SyntaxKind.ExclamationEqualsEqualsToken || operator === ts.SyntaxKind.EqualsEqualsEqualsToken,
@@ -169,15 +174,14 @@ export class Rule extends TypedRule {
     private checkEquals(left: ts.Expression, right: ts.Expression, equals: Equals): boolean | undefined {
         let predicate: TypePredicate;
         if (isTypeOfExpression(left)) {
-            left = unwrapParens(left.expression);
+            left = unwrapParentheses(left.expression);
             if (right.kind === ts.SyntaxKind.NullKeyword || isUndefined(right))
                 return equals.negated;
             let literal: string;
             if (isTextualLiteral(right)) {
                 literal = right.text;
             } else {
-                let type = this.getTypeOfExpression(right);
-                type = this.checker.getBaseConstraintOfType(type) || type;
+                const type = tryGetBaseConstraintType(this.getTypeOfExpression(right), this.checker);
                 if ((type.flags & ts.TypeFlags.StringLiteral) === 0)
                     return;
                 literal = (<ts.StringLiteralType>type).value;
@@ -210,9 +214,8 @@ export class Rule extends TypedRule {
 
     private getPrimitiveLiteral(node: ts.Expression) {
         // TODO reuse some logic from 'no-duplicate-case' to compute prefix unary expressions
-        let type: ts.Type | undefined = this.getTypeOfExpression(node);
-        type = this.checker.getBaseConstraintOfType(type) || type;
-        for (const t of isIntersectionType(type) ? type.types : [type]) {
+        const type = tryGetBaseConstraintType(this.getTypeOfExpression(node), this.checker);
+        for (const t of intersectionTypeParts(type)) {
             if (isLiteralType(t))
                 return typeof t.value === 'object' ? formatPseudoBigInt(t.value) : String(t.value);
             if (t.flags & ts.TypeFlags.BooleanLiteral)
@@ -221,6 +224,7 @@ export class Rule extends TypedRule {
                 return 'undefined';
             if (t.flags & ts.TypeFlags.Null)
                 return 'null';
+            // TODO unique symbol
         }
         return;
     }
@@ -292,7 +296,7 @@ export class Rule extends TypedRule {
             return type;
         if (unionTypeParts(type).some((t) => (t.flags & ts.TypeFlags.Undefined) !== 0))
             return type;
-        if (!isPropertyAccessExpression(node) && !isElementAccessExpression(node))
+        if ((!isPropertyAccessExpression(node) || node.name.kind === ts.SyntaxKind.PrivateIdentifier) && !isElementAccessExpression(node))
             return type;
         const objectType = this.checker.getApparentType(this.checker.getTypeAtLocation(node.expression));
         if (objectType.getStringIndexType() === undefined && objectType.getNumberIndexType() === undefined)
@@ -301,8 +305,8 @@ export class Rule extends TypedRule {
             if (objectType.getProperty(node.name.text) !== undefined)
                 return type;
         } else {
-            const names = lateBoundPropertyNames(node.argumentExpression, this.checker);
-            if (names.known && names.properties.every(({symbolName}) => getPropertyOfType(objectType, symbolName) !== undefined))
+            const names = getLateBoundPropertyNames(node.argumentExpression, this.checker);
+            if (names.known && names.names.every(({symbolName}) => getPropertyOfType(objectType, symbolName) !== undefined))
                 return type;
         }
         return this.checker.getNullableType(type, ts.TypeFlags.Undefined);
@@ -311,11 +315,11 @@ export class Rule extends TypedRule {
     private isPropertyPresent(node: ts.Expression, name: ts.Expression): true | undefined {
         if (!this.strictNullChecks)
             return;
-        const names = lateBoundPropertyNames(name, this.checker); // TODO lateBoundPropertyNames should also be aware of index signatures
+        const names = getLateBoundPropertyNames(name, this.checker);
         if (!names.known)
             return;
-        const types = unionTypeParts(this.checker.getApparentType(this.getTypeOfExpression(unwrapParens(node))));
-        for (const {symbolName} of names.properties) {
+        const types = unionTypeParts(this.checker.getApparentType(this.getTypeOfExpression(unwrapParentheses(node))));
+        for (const {symbolName} of names.names) {
             // we check every union type member separately because symbols lose optionality when accessed through union types
             for (const type of types) {
                 const symbol = getPropertyOfType(type, symbolName);

@@ -18,7 +18,7 @@ export class Rule extends TypedRule {
         const re = /(?:[.\n]|\*\/)\s*assign\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), re.lastIndex - 1)!;
             if (node.kind !== ts.SyntaxKind.Identifier || node.end !== re.lastIndex)
                 continue;
             const parent = node.parent!;

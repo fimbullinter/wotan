@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "lib": ["es2018"], // Node.js v10 doesn't support all runtime features of ES2019 like Symbol#description
+    "module": "commonjs",
+    "sourceMap": true,
+    "importHelpers": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "stripInternal": true,
+    "incremental": true,
+    "rootDir": ".",
+    "plugins": [
+      { "name": "@fimbul/mithotyn", "displayErrorsAsWarnings": true },
+      { "transform": "ts-transform-const-enum" },
+      { "transform": "ts-transform-const-enum", "afterDeclarations": true }
+    ],
+    "newLine": "lf"
+  },
+  "include": [
+    "scripts",
+    "custom-typings/*.d.ts",
+    "packages/*/src",
+    "packages/*/index.ts",
+    "packages/*/test/*.spec.ts",
+    "packages/wotan/language-service/"
+  ],
+  "exclude": [
+    "scripts/*.d.ts",
+    "packages/**/*.d.ts"
+  ]
+}

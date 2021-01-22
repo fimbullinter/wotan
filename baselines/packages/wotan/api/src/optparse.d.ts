@@ -21,7 +21,8 @@ export declare namespace OptionParser {
     namespace Factory {
         type PrimitiveName = 'string' | 'number' | 'boolean';
         type PrimitiveMap<T extends PrimitiveName> = T extends 'string' ? string : T extends 'number' ? number : boolean;
-        function parsePrimitive<T extends PrimitiveName[]>(...types: T): ParseFunction<PrimitiveMap<T[number]> | undefined>;
-        function parsePrimitiveOrArray<T extends PrimitiveName>(type: T): ParseFunction<ReadonlyArray<PrimitiveMap<T>> | undefined>;
+        export function parsePrimitive<T extends PrimitiveName[]>(...types: T): ParseFunction<PrimitiveMap<T[number]> | undefined>;
+        export function parsePrimitiveOrArray<T extends PrimitiveName>(type: T): ParseFunction<ReadonlyArray<PrimitiveMap<T>> | undefined>;
+        export {};
     }
 }

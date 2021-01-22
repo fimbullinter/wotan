@@ -1,5 +1,7 @@
 # no-fallthrough
 
+:mag_right: works better with type information
+
 Prevents unintentional fallthough in `switch` statements from one clause to another. If the fallthrough is intended, add a comment that matches `/^\s*falls? ?through\b/i`.
 
 ## Rationale
@@ -88,9 +90,31 @@ switch (v) {
     console.log('other');
     // there is no following clause so 'break;' is not necessary here
 }
+
+// when linting with type information the following patterns are also recognized
+declare function fail(): never;
+
+function fn(p: {kind: 'a', nested: boolean} | {kind: 'b' | 'c'}) {
+  switch (p.kind) {
+    case 'a':
+      switch (p.nested) {
+        case true:
+          return 1;
+        case false:
+          return 2;
+      }
+      // switch statement is exhaustive (handles every possible value), so there's no possibility to fall through
+    case 'b':
+      fail();
+      // ends control flow by returning 'never'
+    case 'c':
+      return 3;
+  }
+}
 ```
 
 ## Related Rules
 
 * [`no-case-declaration`](no-case-declaration.md)
 * [`no-duplicate-case`](no-duplicate-case.md)
+* [`return-never-call`](return-never-call.md)

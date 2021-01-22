@@ -6,13 +6,14 @@ import {
     getUsageDomain,
     isCallLikeExpression,
     isObjectBindingPattern,
-    getPropertyName,
     isPropertyAssignment,
     isReassignmentTarget,
     isShorthandPropertyAssignment,
+    getLateBoundPropertyNamesOfPropertyName,
+    getPropertyOfType,
 } from 'tsutils';
 import * as ts from 'typescript';
-import { elementAccessSymbols, propertiesOfType, lateBoundPropertyNames } from '../utils';
+import { elementAccessSymbols, destructuredProperties, tryGetBaseConstraintType } from '../utils';
 
 const functionLikeSymbol = ts.SymbolFlags.Function | ts.SymbolFlags.Method;
 const signatureFormatFlags = ts.TypeFormatFlags.UseFullyQualifiedType | ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope;
@@ -29,12 +30,12 @@ export class Rule extends TypedRule {
             } else if (isElementAccessExpression(node)) {
                 this.checkElementAccess(node);
             } else if (isPropertyAssignment(node)) {
-                if (node.name.kind === ts.SyntaxKind.Identifier && isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
+                if (isReassignmentTarget(node.parent))
+                    this.checkObjectDestructuring(node);
             } else if (isShorthandPropertyAssignment(node)) {
                 this.checkSymbol(this.checker.getShorthandAssignmentValueSymbol(node), node, node.name.text);
                 if (isReassignmentTarget(node.parent))
-                    this.checkObjectDestructuring(node.name);
+                    this.checkObjectDestructuring(node);
             } else if (isCallLikeExpression(node)) {
                 this.checkSignature(node);
             } else if (isObjectBindingPattern(node)) {
@@ -45,10 +46,13 @@ export class Rule extends TypedRule {
         }
     }
 
-    private checkObjectDestructuring(node: ts.Identifier) {
-        const symbol = this.checker.getPropertySymbolOfDestructuringAssignment(node);
-        if (symbol !== undefined)
-            return this.checkStability(symbol, node, node.text, describeWithName);
+    private checkObjectDestructuring(node: ts.PropertyAssignment | ts.ShorthandPropertyAssignment) {
+        const type = tryGetBaseConstraintType(this.checker.getTypeOfAssignmentPattern(node.parent!), this.checker);
+        for (const {symbolName, displayName} of getLateBoundPropertyNamesOfPropertyName(node.name, this.checker).names) {
+            const symbol = getPropertyOfType(type, symbolName);
+            if (symbol !== undefined)
+                this.checkStability(symbol, node.name, displayName, describeWithName);
+        }
     }
 
     private checkSignature(node: ts.CallLikeExpression) {
@@ -56,30 +60,11 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectBindingPattern(node: ts.ObjectBindingPattern) {
-        const type = this.checker.getTypeAtLocation(node)!;
-        for (const element of node.elements) {
-            if (element.dotDotDotToken !== undefined)
-                continue;
-            if (element.propertyName === undefined) {
-                const name = (<ts.Identifier>element.name).text;
-                const symbol = type.getProperty(name);
-                if (symbol !== undefined)
-                    this.checkStability(symbol, element.name, name, describeWithName);
-            } else {
-                const propName = getPropertyName(element.propertyName);
-                if (propName !== undefined) {
-                    const symbol = type.getProperty(propName);
-                    if (symbol !== undefined)
-                        this.checkStability(symbol, element.propertyName, propName, describeWithName);
-                } else {
-                    for (const {symbol, name} of propertiesOfType(
-                            type,
-                            lateBoundPropertyNames((<ts.ComputedPropertyName>element.propertyName).expression!, this.checker).properties,
-                        )
-                    )
-                        this.checkStability(symbol, element.propertyName, name, describeWithName);
-                }
-            }
+        const type = tryGetBaseConstraintType(this.checker.getTypeAtLocation(node), this.checker);
+        for (const {node: nameNode, symbolName, displayName} of destructuredProperties(node, this.checker)) {
+            const symbol = getPropertyOfType(type, symbolName);
+            if (symbol !== undefined)
+                this.checkStability(symbol, nameNode, displayName, describeWithName);
         }
     }
 
@@ -143,7 +128,7 @@ function describeSymbol(symbol: ts.Symbol): string {
 
 function signatureToString(signature: ts.Signature, checker: ts.TypeChecker, _: undefined, node: ts.CallLikeExpression) {
     let construct = false;
-    switch (signature.declaration && signature.declaration.kind) {
+    switch (signature.declaration?.kind) {
         case ts.SyntaxKind.Constructor:
         case ts.SyntaxKind.ConstructSignature:
         case ts.SyntaxKind.ConstructorType:

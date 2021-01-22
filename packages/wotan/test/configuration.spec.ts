@@ -29,8 +29,6 @@ import { createDefaultModule } from '../src/di/default.module';
 import { DefaultBuiltinResolver } from '../src/services/default/builtin-resolver';
 import { NodeDirectoryService } from '../src/services/default/directory-service';
 
-// tslint:disable:no-null-keyword
-
 test('ConfigurationManager', (t) => {
     const container = new Container();
     const configProvider: ConfigurationProvider = {
@@ -360,7 +358,7 @@ test('DefaultConfigurationProvider.resolve', (t) => {
     const cp = container.resolve(DefaultConfigurationProvider);
     t.throws(
         () => cp.resolve('wotan:non-existent-preset', '.'),
-        "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'.",
+        { message: "'wotan:non-existent-preset' is not a valid builtin configuration, try 'wotan:recommended'." },
     );
     t.is(cp.resolve('wotan:recommended', ''), path.resolve('packages/mimir/recommended.yaml'));
 });
@@ -426,7 +424,7 @@ test('DefaultConfigurationProvider.read', (t) => {
     t.is(cp.read('empty.yaml'), null);
     t.throws(() => cp.read('invalid.json'));
     t.throws(() => cp.read('invalid.yaml'));
-    t.throws(() => cp.read('non-existent.json5'), 'file not found');
+    t.throws(() => cp.read('non-existent.json5'), { message: 'file not found' });
 });
 
 test('ConfigurationProvider.parse', (t) => {
@@ -470,11 +468,11 @@ test('ConfigurationProvider.parse', (t) => {
         filename: 'config.yaml',
     });
 
-    t.throws(() => cp.parse({aliases: {a: {alias: {rule: ''}}}}, 'config.yaml', mockContext), "Alias 'a/alias' does not specify a rule.");
-    t.throws(() => cp.parse({aliases: {a: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext), 'Circular Alias: a/alias => a/alias');
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: ''}}}}, 'config.yaml', mockContext), { message: "Alias 'a/alias' does not specify a rule." });
+    t.throws(() => cp.parse({aliases: {a: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext), { message: 'Circular Alias: a/alias => a/alias' });
     t.throws(
         () => cp.parse({aliases: {a: {alias: {rule: 'b/alias'}}, b: {alias: {rule: 'a/alias'}}}}, 'config.yaml', mockContext),
-        'Circular Alias: a/alias => b/alias => a/alias',
+        { message: 'Circular Alias: a/alias => b/alias => a/alias' },
     );
     t.deepEqual(cp.parse({aliases: {a: {alias: {rule: 'core-rule'}}}}, 'config.yaml', mockContext), {
         extends: [],
@@ -533,11 +531,11 @@ test('ConfigurationProvider.parse', (t) => {
 
     t.throws(
         () => cp.parse({aliases: {a: {alias: {rule: 'local/rule'}}}}, 'config.yaml', mockContext),
-        "No rulesDirectories specified for 'local'.",
+        { message: "No rulesDirectories specified for 'local'." },
     );
     t.throws(
         () => cp.parse({aliases: {a: {a: {rule: 'rule'}, b: {rule: 'a/a'}, c: {rule: 'a/d'}}}}, 'c.yaml', mockContext),
-        "No rulesDirectories specified for 'a'.",
+        { message: "No rulesDirectories specified for 'a'." },
     );
 
     t.deepEqual(
@@ -556,7 +554,7 @@ test('ConfigurationProvider.parse', (t) => {
     );
     t.throws(
         () => cp.parse({overrides: [{files: []}]}, 'c.yaml', mockContext),
-        'Override 0 does not specify files.',
+        { message: 'Override 0 does not specify files.' },
     );
     t.deepEqual(
         cp.parse({overrides: [{files: 'foo.ts', settings: {a: 1}}]}, 'c.yaml', mockContext),

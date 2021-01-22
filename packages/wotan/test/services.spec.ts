@@ -179,7 +179,7 @@ test('Resolver', (t) => {
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(DirectoryService).to(NodeDirectoryService);
     const resolver = container.resolve(NodeResolver);
-    t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
+    t.is(resolver.resolve('tslib', __dirname, ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
     t.is(
         resolver.resolve('./no-debugger', path.resolve('packages/mimir/src/rules'), ['.ts']),
@@ -248,14 +248,14 @@ test('FormatterLoader', (t) => {
         container.bind(DirectoryService).toConstantValue(directoryService);
         container.bind(FormatterLoaderHost).toConstantValue(host);
         const loader = container.resolve(FormatterLoader);
-        t.throws(() => loader.loadFormatter('foo'), "Cannot find formatter 'foo' relative to '/'.");
+        t.throws(() => loader.loadFormatter('foo'), { message: "Cannot find formatter 'foo' relative to '/'." });
         t.is(coreRequested, 1);
         t.is(customRequested, 1);
         cwd = '/foo';
-        t.throws(() => loader.loadFormatter('./foo'), "Cannot find formatter './foo' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('./foo'), { message: "Cannot find formatter './foo' relative to '/foo'." });
         t.is(coreRequested, 1);
         t.is(customRequested, 2);
-        t.throws(() => loader.loadFormatter('foo-bar'), "Cannot find formatter 'foo-bar' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('foo-bar'), { message: "Cannot find formatter 'foo-bar' relative to '/foo'." });
         t.is(coreRequested, 2);
         t.is(customRequested, 3);
     })();
@@ -285,7 +285,7 @@ test('FormatterLoader', (t) => {
         t.is(customRequested, 0);
         t.is(loader.loadFormatter('foo-bar'), Formatter);
         t.is(customRequested, 0);
-        t.throws(() => loader.loadFormatter('/foo/bar'), "Cannot find formatter '/foo/bar' relative to '/'.");
+        t.throws(() => loader.loadFormatter('/foo/bar'), { message: "Cannot find formatter '/foo/bar' relative to '/'." });
         t.is(customRequested, 1);
     })();
 
@@ -375,7 +375,6 @@ test('FileSystem', (t) => {
     t.throws(() => fileSystem.stat(f));
 
     t.is(warnings.length, 0);
-    // tslint:disable-next-line
     fs.writeFileSync(f, Buffer.from('471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'hex'));
     t.is(fileSystem.readFile(f), '');
     t.deepEqual(warnings, [`Detected MPEG TS file: '${f}'.`]);
@@ -414,7 +413,7 @@ test('ProcessorLoader', (t) => {
     container.bind(Resolver).toConstantValue(resolver);
     container.bind(CacheFactory).to(DefaultCacheFactory);
     const loader = container.resolve(ProcessorLoader);
-    t.throws(() => loader.loadProcessor('foo'), TypeError);
+    t.throws(() => loader.loadProcessor('foo'), {instanceOf: TypeError});
     class Processor {}
     r = (id) => {
         t.is(id, 'test');
@@ -424,7 +423,7 @@ test('ProcessorLoader', (t) => {
     r = () => t.fail('should be cached');
     t.is<any>(loader.loadProcessor('test'), Processor);
     r = () => ({});
-    t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
+    t.throws(() => loader.loadProcessor('bar'), { message: "'bar' has no export named 'Processor'." });
     r = require;
-    t.throws(() => loader.loadProcessor('./fooBarBaz'), /^Cannot find module '\.\/fooBarBaz'$/m);
+    t.throws(() => loader.loadProcessor('./fooBarBaz'), {message: /^Cannot find module '\.\/fooBarBaz'$/m});
 });

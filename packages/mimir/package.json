@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/mimir",
-  "version": "0.20.0",
+  "version": "0.23.0",
   "description": "Core rules of the Fimbullinter project",
   "main": "recommended.yaml",
   "publishConfig": {
@@ -8,7 +8,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/mimir"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/mimir"
   },
   "keywords": [
     "wotan",
@@ -25,13 +26,13 @@
   },
   "homepage": "https://github.com/fimbullinter/wotan#readme",
   "dependencies": {
-    "@fimbul/ymir": "^0.18.0",
-    "chalk": "^2.3.2",
+    "@fimbul/ymir": "^0.22.0",
+    "chalk": "^4.0.0",
     "debug": "^4.0.0",
-    "tslib": "^1.8.1",
-    "tsutils": "^3.8.0"
+    "tslib": "^2.0.0",
+    "tsutils": "^3.19.1"
   },
   "peerDependencies": {
-    "typescript": ">= 3.1.1 || >= 3.4.0-dev || >= 3.5.0-dev"
+    "typescript": ">= 4.0.0 || >= 4.2.0-dev"
   }
 }

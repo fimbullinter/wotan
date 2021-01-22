@@ -9,8 +9,16 @@
     const {c = undefined} = {}; // necessary
     let v = Boolean() ? {d: 1} : {};
     const {d = undefined} = v; // useless
-    const {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
+    let {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
     ({a = undefined, b = undefined} = {a}); // a useless, b necessary
+}
+{
+    let rest, a: number | undefined, b: number | undefined, e: number | undefined;
+    const tuple: [number, number?] = [1, 2];
+    [a, e = 2] = tuple;
+    [, a, ...rest] = [1, 2];
+    [a, b = undefined ] = [1];
+    [a = 1] = rest;
 }
 {
     let foo = "undefined";
@@ -81,7 +89,7 @@ declare function get<T>(): T;
     ({prop} = obj);
     ({prop = ''} = {prop: 'foo'});
     ({prop} = obj);
-    ({'prop': prop = ''} = obj);
+    ({'prop': prop} = obj);
     ({prop = ''} = {});
     ({prop: prop} = get<typeof obj>());
     ({prop: prop} = get<typeof obj>());

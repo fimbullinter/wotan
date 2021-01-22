@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/bifrost",
-  "version": "0.20.0",
+  "version": "0.22.0",
   "description": "Compatibility layer for TSLint rules",
   "main": "src/index",
   "types": "src/index",
@@ -15,7 +15,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fimbullinter/wotan/tree/master/packages/bifrost"
+    "url": "https://github.com/fimbullinter/wotan",
+    "directory": "packages/bifrost"
   },
   "keywords": [
     "wotan",
@@ -26,12 +27,12 @@
   ],
   "peerDependencies": {
     "tslint": "^5.0.0",
-    "typescript": ">= 3.1.1 || >= 3.4.0-dev || >= 3.5.0-dev"
+    "typescript": ">= 4.0.0 || >= 4.2.0-dev"
   },
   "dependencies": {
-    "@fimbul/ymir": "^0.18.0",
+    "@fimbul/ymir": "^0.22.0",
     "get-caller-file": "^2.0.0",
-    "tslib": "^1.8.1",
+    "tslib": "^2.0.0",
     "tsutils": "^3.5.0"
   },
   "devDependencies": {

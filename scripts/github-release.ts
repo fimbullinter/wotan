@@ -1,25 +1,28 @@
-import * as fs from 'fs';
 import * as parseGithubUrl from 'github-url-to-object';
-import * as Github  from '@octokit/rest';
+import { Octokit } from '@octokit/rest';
+import { getLastReleaseTag, getRootPackage, getChangeLogForVersion, getObjectIds } from './util';
+import { fixedIssues } from './fixed-issues';
 
 if (!process.env.GITHUB_TOKEN) {
     console.error('Missing environment variable GITHUB_TOKEN');
     throw process.exit(1);
 }
 
-const content = fs.readFileSync('./CHANGELOG.md', 'utf8');
-const re = /^## (v\d+\.\d+\.\d+)$/mg;
-const startMatch = re.exec(content)!;
-const start = startMatch.index + startMatch[0].length;
-const end = re.exec(content)!.index;
-const body = content.substring(start, end).trim();
-const tag = startMatch[1];
-const { user, repo } = parseGithubUrl(require(process.cwd() + '/package.json').repository)!;
+const [tag, newerCommits] = getLastReleaseTag();
+if (newerCommits !== 0) {
+    console.error('Missing release tag on the current commit.');
+    throw process.exit(1);
+}
+const rootManifest = getRootPackage();
+if (tag !== 'v' + rootManifest.version) {
+    console.error('Git tag and version in package.json are different.');
+    throw process.exit(1);
+}
+const body = getChangeLogForVersion(rootManifest.version);
+const { user, repo } = parseGithubUrl(rootManifest.repository)!;
 
-const ghClient = new Github();
-ghClient.authenticate({
-    type: 'oauth',
-    token: process.env.GITHUB_TOKEN,
+const ghClient = new Octokit({
+    auth: process.env.GITHUB_TOKEN,
 });
 
 (async () => {
@@ -32,6 +35,19 @@ ghClient.authenticate({
         tag_name: tag,
     });
     console.log('Created GitHub release %s at %s', release.data.name, release.data.html_url);
+
+    const previousReleaseTag = getLastReleaseTag(`${tag}^`)[0];
+    const [currentReleaseOid, previousReleaseOid] = getObjectIds(tag, previousReleaseTag);
+    const commentBody = `:tada: This issue has been resolved in version [${tag}](${release.data.html_url}) :tada:`;
+    for await (const issueNumber of fixedIssues(user, repo, ghClient.request, currentReleaseOid, previousReleaseOid)) {
+        console.log('Posting comment on issue #%d', issueNumber);
+        await ghClient.issues.createComment({
+            repo,
+            issue_number: issueNumber,
+            owner: user,
+            body: commentBody,
+        });
+    }
 })().catch((err) => {
     console.error(err);
     process.exitCode = 1;

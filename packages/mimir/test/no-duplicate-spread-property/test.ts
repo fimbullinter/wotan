@@ -289,3 +289,13 @@ function test4<T extends {foo: 1} | {bar: 1}, U extends {foo: 1} | {foo: 2}>(t: 
     ({foo: 1, bar: 1, ...t});
     ({foo: 1, bar: 1, ...u});
 }
+
+const symbol = Symbol();
+({
+    ...{[symbol]: 1},
+    [symbol]: 1
+});
+({
+    [symbol]: 1
+    ...{[symbol]: 1},
+});

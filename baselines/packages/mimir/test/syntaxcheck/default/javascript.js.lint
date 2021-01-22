@@ -1,15 +1,15 @@
 class Foo {
     public method() {}
-    ~~~~~~             [error syntaxcheck: 'public' can only be used in a .ts file.]
+    ~~~~~~             [error syntaxcheck: The 'public' modifier can only be used in TypeScript files.]
 }
 let foo: 'bar';
-         ~~~~~  [error syntaxcheck: 'types' can only be used in a .ts file.]
+         ~~~~~  [error syntaxcheck: Type annotations can only be used in TypeScript files.]
 let bar:;
-        ~nil [error syntaxcheck: 'types' can only be used in a .ts file.]
+        ~nil [error syntaxcheck: Type annotations can only be used in TypeScript files.]
         ~ [error syntaxcheck: Type expected.]
 
 new Set<string>();
-        ~~~~~~     [error syntaxcheck: 'type arguments' can only be used in a .ts file.]
+                ~  [error syntaxcheck: Expression expected.]
 
 function () {}
          ~     [error syntaxcheck: Identifier expected.]

@@ -1,7 +1,6 @@
 import { excludeDeclarationFiles, TypedRule } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import {
-    NodeWrap,
     isTypeNodeKind,
     isExpression,
     isIdentifier,
@@ -10,26 +9,33 @@ import {
     isThenableType,
     isMethodDeclaration,
     isPropertyDeclaration,
-    getPropertyName,
-    isValidNumericLiteral,
     removeOptionalityFromType,
     isArrowFunction,
     getModifier,
     isFunctionExpression,
     getChildOfKind,
+    isNumericPropertyName,
+    getPropertyOfType,
+    getSingleLateBoundPropertyNameOfPropertyName,
+    getLateBoundPropertyNamesOfPropertyName,
+    hasModifier,
 } from 'tsutils';
-import { getPropertyOfType, lateBoundPropertyNames, LateBoundPropertyName } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends TypedRule {
     public apply() {
-        this.context.getWrappedAst().children.forEach(this.checkNode, this);
+        let wrap = this.context.getWrappedAst().next;
+        while (wrap.next !== undefined) {
+            if (isTypeNodeKind(wrap.kind)) {
+                wrap = wrap.skip!;
+            } else {
+                this.checkNode(wrap.node);
+                wrap = wrap.next;
+            }
+        }
     }
 
-    private checkNode({node, children}: NodeWrap) {
-        if (isTypeNodeKind(node.kind))
-            return;
-
+    private checkNode(node: ts.Node) {
         if (isExpression(node)) {
             if (!isIdentifier(node) || getUsageDomain(node) !== undefined)
                 this.checkAssignment(node);
@@ -43,7 +49,6 @@ export class Rule extends TypedRule {
                 this.checkClassProperty(node, parent);
             }
         }
-        return children.forEach(this.checkNode, this);
     }
 
     private checkAssignment(node: ts.Expression) {
@@ -64,7 +69,11 @@ export class Rule extends TypedRule {
     }
 
     private checkClassProperty(node: ts.PropertyDeclaration | ts.MethodDeclaration, clazz: ts.ClassLikeDeclaration) {
-        if (clazz.heritageClauses === undefined)
+        if (
+            clazz.heritageClauses === undefined ||
+            node.name.kind === ts.SyntaxKind.PrivateIdentifier ||
+            hasModifier(node.modifiers, ts.SyntaxKind.StaticKeyword)
+        )
             return;
         const checker = this.checker;
         if (node.kind === ts.SyntaxKind.MethodDeclaration) {
@@ -74,18 +83,17 @@ export class Rule extends TypedRule {
         } else if (!returnTypeMatches(checker.getTypeAtLocation(node), checker, typeContainsThenable, clazz)) {
             return;
         }
-        const staticName = getPropertyName(node.name);
-        const properties: LateBoundPropertyName[] = staticName !== undefined
-            ? [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : lateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, checker).properties;
-        for (const {name, symbolName} of properties)
-            for (const heritageClause of clazz.heritageClauses)
-                for (const base of heritageClause.types)
-                    if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
-                        return this.addFindingAtNode(
-                            getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
-                            `Overriding 'void'-returning method '${name}' of base type with a 'Promise'-returning method is unsafe.`,
-                        );
+        const property = getSingleLateBoundPropertyNameOfPropertyName(node.name, this.checker);
+        if (property === undefined)
+            return;
+        const {displayName, symbolName} = property;
+        for (const heritageClause of clazz.heritageClauses)
+            for (const base of heritageClause.types)
+                if (returnTypeMatches(this.getTypeOfProperty(checker.getTypeAtLocation(base), symbolName, base), checker, isVoidType))
+                    return this.addFindingAtNode(
+                        getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
+                        `Overriding 'void'-returning method '${displayName}' of base type with a 'Promise'-returning method is unsafe.`,
+                    );
     }
 
     private getTypeOfProperty(classType: ts.Type, name: ts.__String, node: ts.Node) {
@@ -94,26 +102,21 @@ export class Rule extends TypedRule {
     }
 
     private checkObjectMethodDeclaration(node: ts.MethodDeclaration, parent: ts.ObjectLiteralExpression) {
-        const staticName = getPropertyName(node.name);
         const contextualType = this.checker.getContextualType(parent);
         if (contextualType === undefined)
             return;
-        const properties: LateBoundPropertyName[] = staticName !== undefined
-            ? [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]
-            : lateBoundPropertyNames((<ts.ComputedPropertyName>node.name).expression, this.checker).properties;
-        for (const {name, symbolName} of properties) {
+        for (const {displayName, symbolName} of getLateBoundPropertyNamesOfPropertyName(node.name, this.checker).names) {
             const property = getPropertyOfType(contextualType, symbolName);
-            const propertyType = property
+            const propertyType = property !== undefined
                 ? this.checker.getTypeOfSymbolAtLocation(property, parent)
-                : isValidNumericLiteral(name) && String(+name) === name && contextualType.getNumberIndexType() ||
-                    contextualType.getStringIndexType();
+                : isNumericPropertyName(symbolName) && contextualType.getNumberIndexType() || contextualType.getStringIndexType();
             if (!returnTypeMatches(propertyType, this.checker, isVoidType))
                 continue;
             const signature = this.checker.getSignatureFromDeclaration(node);
             if (signature !== undefined && typeContainsThenable(signature.getReturnType(), this.checker, node))
                 return this.addFindingAtNode(
                     getModifier(node, ts.SyntaxKind.AsyncKeyword) || node.name,
-                    `'Promise'-returning method '${name}' should not be assigned to a 'void'-returning function type.`,
+                    `'Promise'-returning method '${displayName}' should not be assigned to a 'void'-returning function type.`,
                 );
         }
     }

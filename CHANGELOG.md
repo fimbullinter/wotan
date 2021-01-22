@@ -1,5 +1,90 @@
 # Change Log
 
+## v0.23.0
+
+:warning: **Breaking Changes:**
+
+* `prefer-dot-notation` now requires type information
+
+**Features:**
+
+* `prefer-dot-notation` no longer reports findings which would cause a compile error when fixed
+* new rule: `no-writeonly-property-read`
+* Added support for new language features in all rules:
+  * optional chaining
+  * nullish coalescing
+  * private identifiers
+  * control-flow effects of `never`-returning functions
+    * `no-fallthrough` and `no-unreachable-code` report better findings if type inforamtion is available
+    * `return-never-call` only reports calls that TypeScript's control-flow-analysis cannot detect
+  * template literal types
+* `no-restricted-property-access`
+  * allow accessing all members via static `super`
+  * allow accessing accessors via `super`
+  * allow accessing abstract accessors via `this` in constructor
+  * disallow read access to uninitialized properties in another property's initializer
+
+**Bugfixes:**
+
+* Exclude JSON files and declartions emitted from `.js(x)` files in composite projects
+* `async-function-assignability` fixed false-positive on static class members
+* `no-restricted-property-access`
+  * treat MethodSignature like MethodDeclaration
+  * fixed lookup of `this` container for decorators and computed property names
+  * fixed crash on parameter properties and special JS property assignments
+* most rules can now handle excessively deep AST structures, e.g. concatenating 5000 strings
+
+## v0.22.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript <3.9 is no longer supported
+* Node.js v8, v11 and v13 are no longer supported
+
+**Features:**
+
+* Added support for typescript v3.9, v4.0 and v4.1
+  * Fixes compile errors and crashes in existing code and tests
+  * This does not contain full support for all language features added in those versions
+* `//@ts-nocheck` in .ts files now disables rules with type information for that file, as it was already the case in .js files
+
+## v0.21.1
+
+**Bugfixes:**
+
+* `wotan`: properly handle backslashes in Windows paths to not report "is not included in any of the projects"
+
+## v0.21.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.1 and v3.2 is no longer officially supported
+* Node.js v6 is no longer supported
+* `Rule.supports` can now return a string respresenting the reason for not supporting the file
+* `Linter#lintAndFix` now requires a `ProgramFactory` instead of `Program`
+* `Linter#lintAndFix` `UpdateFileCallback` is now expected to only return a `SourceFile`
+* `no-inferred-empty-object` was renamed to `no-uninferred-type-parameter`
+
+**Features:**
+
+* rules now debuglog the reason for not supporting a certain file
+* performance improvements
+  * when linting with `--project --references`
+    * parsed `tsconfig.json` files are cached for all project references
+  * when linting with `--project --fix`
+    * the project's dependency graph is recalculated lazily the next time a typed rule reuqests type information after fixing a file
+    * module resolutions are cached between fixes
+* `no-uninferred-type-parameter` properly handles new default constraint `unknown`
+* `no-uninferred-type-parameter` now detects uninferred type parameters in JS code falling back to `any`
+* `no-uninferred-type-parameter` correctly handles higher order function types
+* `no-useless-initializer` checks array destructuring
+* better handling of computed property names
+* better handling of object and array destructuring assignments
+
+**Bugfixes:**
+
+* comments are now included in the transpiled code and declaration files, this makes JSDoc and deprecations visible to API consumers
+
 ## v0.20.0
 
 :tada: Since the last release we published an [official extension for VSCode](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).

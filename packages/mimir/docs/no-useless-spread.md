@@ -69,4 +69,5 @@ Math.max(1, ...arr, 2);
 ## Related Rules
 
 * [`no-duplicate-spread-property`](no-duplicate-spread-property.md)
+* [`no-object-spread-of-iterable`](no-object-spread-of-iterable.md)
 * [`prefer-object-spread`](prefer-object-spread.md)

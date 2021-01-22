@@ -137,3 +137,21 @@ const otherName = 'overloaded';
     ~~~~~          [error async-function-assignability: Overriding 'void'-returning method 'baz' of base type with a 'Promise'-returning method is unsafe.]
     bas() {}
 });
+
+(class extends C<void> {
+    async ["f" + "oo"]() {}
+});
+
+{
+    class C {
+        '#prop'() {}
+        foo() {}
+        static bar() {}
+    }
+    class D extends C {
+        #prop = async () => {};
+        static foo = async () => {}
+        static bar = async () => {}
+    }
+
+}

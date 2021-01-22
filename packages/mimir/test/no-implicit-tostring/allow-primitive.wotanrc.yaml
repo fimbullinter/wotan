@@ -1,0 +1,5 @@
+rules:
+  no-implicit-tostring:
+    severity: error
+    options:
+      allowPrimitive: true

@@ -3,6 +3,9 @@
     "composite": true,
     "declaration": true,
     "outDir": "../out-a",
-    "declarationDir": "../outdir/a"
-  }
+    "declarationDir": "../outdir/a",
+    "allowJs": true,
+    "resolveJsonModule": true
+  },
+  "include": ["*", "data.json"]
 }

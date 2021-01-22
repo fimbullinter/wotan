@@ -10,12 +10,12 @@ import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ConsoleMessageHandler } from '../src/services/default/message-handler';
 import { LintOptions } from '../src/runner';
 
 test.before(() => {
-    chalk.enabled = false;
+    (<any>chalk).level = 0;
 });
 
 test('ShowCommand', async (t) => {
@@ -58,6 +58,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Cannot find module 'non-existent' from '${process.cwd()}'`,
     );
 
@@ -69,6 +70,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
     );
 
@@ -80,6 +82,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         "Cannot find configuration for '../foo.ts'.",
     );
 
@@ -91,6 +94,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: 'non-existent.conf',
         }),
+        null,
         `Cannot find module 'non-existent.conf' from '${cwd}'`,
     );
 
@@ -137,7 +141,7 @@ test('ShowCommand', async (t) => {
     async function verify(command: ShowCommand) {
         let called = false;
         logger.log = (output) => {
-            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${command.format}`});
+            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${String(command.format)}`});
             called = true;
         };
         t.true(await runCommand(command, container));
@@ -570,6 +574,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
     );
 
@@ -582,6 +587,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `${
             unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-value.test.json'))
         }: Expected a value of type 'string | string[]' for option 'project'.`,
@@ -596,6 +602,7 @@ test('TestCommand', async (t) => {
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `${unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-name.test.json'))}: Unexpected option 'prjoect'.`,
     );
 

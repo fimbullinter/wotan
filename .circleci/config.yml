@@ -6,13 +6,13 @@ workflows:
       - test:
           requires:
             - build
-      - test@3.2:
+      - test@3.9:
           requires:
             - build
-      - test@3.3:
+      - test@4.0:
           requires:
             - build
-      - test@3.4:
+      - test@4.1:
           requires:
             - build
 
@@ -27,19 +27,26 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -DW typescript@$typescriptVersion}
+          if [[ "$CIRCLE_JOB" =~ ^test@ ]]; then
+            yarn add -DW typescript@${CIRCLE_JOB#test@}
+          else
+            yarn
+          fi
     - run:
         name: Run Tests
         command: |
-          yarn coverage yarn test
+          node_modules/.bin/nyc node_modules/.bin/run-s test
           yarn report-coverage
+
+latestNodeImage: &latestNodeImage
+  docker:
+    - image: circleci/node:15@sha256:fb8e55f8bd339bb6d1fd00551f4c4748e758b128c409c69b58e9ec583cb28942
 
 version: 2
 jobs:
   build:
     working_directory: '~/Project'
-    docker:
-      - image: circleci/node:12
+    <<: *latestNodeImage
     steps:
       - checkout
       - restore_cache:
@@ -74,24 +81,17 @@ jobs:
             - "packages/*/test"
             - yarn.lock
   test:
-    docker:
-      - image: circleci/node:12
+    <<: *latestNodeImage
     <<: *base
-  test@3.2:
+  test@3.9:
     docker:
-      - image: circleci/node:8@sha256:ae1a61fa5e847b6da6fed773cd87d2579787093285a90ed4ca2bb5cf7ce7d616
-    environment:
-      typescriptVersion: "3.2"
+      - image: circleci/node:10@sha256:176b75cb36883414956b933a8b7206f5c70450f3e9222e10106e8df0a7d11509
     <<: *base
-  test@3.3:
+  test@4.0:
     docker:
-      - image: circleci/node:10@sha256:5e46f0762755729cfd17a97ac18058014cc7ad5cd2df9b065e52e8eca801d434
-    environment:
-      typescriptVersion: "3.3"
+      - image: circleci/node:12@sha256:fa9a741a79fc155082cdb7f19d3776b41aa9002afdef2949f095b20d8144f6f6
     <<: *base
-  test@3.4:
+  test@4.1:
     docker:
-      - image: circleci/node:11@sha256:818cac5ed201b80612fdac38ba413cb7959fc952fe50cf9cc59b03c5a2631dbf
-    environment:
-      typescriptVersion: "3.4"
+      - image: circleci/node:14@sha256:e217958c7b95affcc9a1738b64db3bea53e5ecebf438fa65e8913363082d1ce1
     <<: *base

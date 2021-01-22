@@ -8,56 +8,101 @@ import {
     ensureBranch,
     ensureCleanTree,
     Dependencies,
+    ensureBranchMatches,
+    getRootPackage,
+    getChangeLogForVersion,
 } from './util';
-import * as semver from 'semver';
+import { SemVer, Range, satisfies } from 'semver';
 
-ensureBranch('master');
+const rootManifest = getRootPackage();
+const {releaseType, releaseVersion, releaseTag} =
+    determineReleaseTypeAndVersion(process.argv.slice(2), rootManifest.version, rootManifest.nextVersion);
+
+if (releaseType !== 'prerelease' || releaseTag === 'rc') {
+    if (!getChangeLogForVersion(releaseVersion.version))
+        throw new Error(`No CHANGELOG entry for 'v${releaseVersion.version}'.`);
+    if (releaseType === 'patch') {
+        // branch name must either be 'master' or 'release-<major>.<minor>'
+        ensureBranchMatches(new RegExp(`^(?:master|release-${rootManifest.version.replace(/^(\d+\.\d+)\..+$/, '$1')})$`));
+    } else {
+        ensureBranch('master');
+    }
+}
 ensureCleanTree(undefined, ['CHANGELOG.md']);
 
 execAndLog('yarn');
 execAndLog('yarn verify');
 ensureCleanTree(undefined, ['CHANGELOG.md', 'yarn.lock']);
 
-const rootManifest = require('../package.json');
-const releaseVersion = rootManifest.version;
-const version = new semver.SemVer(releaseVersion);
-const isMajor = version.minor === 0 && version.patch === 0 && version.prerelease.length === 0 && version.build.length === 0;
-
 const {packages} = getPackages();
 
-const changedPackages = isMajor ? new Set<string>(packages.keys()) : getChangedPackageNames(getLastReleaseTag(), packages.keys());
+// if the current release is a major release OR the first prerelease of a tag of a major version, release all packages
+const changedPackages =
+    releaseVersion.minor === 0 &&
+    releaseVersion.patch === 0 &&
+    (releaseVersion.prerelease.length === 0 || +releaseVersion.prerelease[1] === 0)
+        ? new Set(packages.keys())
+        : getChangedPackageNames(getLastReleaseTag()[0], packages.keys());
 const needsRelease = new Set<string>();
+
+function determineReleaseTypeAndVersion([type, tag]: string[], currentVersion: string, nextVersion: string) {
+    if (type === undefined)
+        return <const>{releaseType: /^\d+\.0\.0$/.test(nextVersion) ? 'major' : 'minor', releaseVersion: new SemVer(nextVersion)};
+    switch (type) {
+        case 'patch':
+            return <const>{releaseType: 'patch', releaseVersion: new SemVer(currentVersion).inc('patch')};
+        case 'prerelease': {
+            if (tag === undefined)
+                throw new Error("Release type 'prerelease' requires a tag name, but none was specified.");
+            const curr = new SemVer(currentVersion);
+            const next = new SemVer(nextVersion);
+            const release = curr.compareMain(next) === 0 ? curr : next;
+            // if we the current version is already a prerelease, we need to increment that one
+            if (release.prerelease[0] !== tag) {
+                release.prerelease = [tag, '0'];
+            } else {
+                release.prerelease = [tag, String(+curr.prerelease[1] + 1)];
+            }
+
+            return <const>{releaseType: 'prerelease', releaseVersion: new SemVer(release.format()), releaseTag: tag};
+        }
+        default:
+            throw new Error(
+                `Unexpected release type '${
+                    type
+                }'. Only 'patch' and 'prerelease' are allowed. 'major' and 'minor' are determined automatically.`,
+            );
+    }
+}
 
 function markForRelease(name: string) {
     if (needsRelease.has(name))
-        return;
+        return false;
     needsRelease.add(name);
-    updateManifest(rootManifest);
-    for (const [localName, manifest] of packages)
-        if (updateManifest(manifest))
-            markForRelease(localName);
+    return true;
 }
 
-function updateManifest(manifest: PackageData): boolean {
+function updateManifest(manifest: PackageData, willBeReleased: boolean): boolean {
     let updated = false;
-    for (const localName of packages.keys()) {
-        const changed = changedPackages.has(localName);
-        if (!changed && !needsRelease.has(localName))
-            continue;
+    for (const localName of needsRelease.keys()) {
         const {name} = packages.get(localName)!;
-        update(manifest.dependencies, name, changed);
-        update(manifest.peerDependencies, name, changed);
+        update(manifest.dependencies, name);
+        update(manifest.peerDependencies, name);
     }
     return updated;
 
-    function update(dependencies: Dependencies | undefined, name: string, changed: boolean) {
+    function update(dependencies: Dependencies | undefined, name: string) {
         if (!dependencies || !dependencies[name])
             return;
-        const range = new semver.Range(dependencies[name]);
-        // make sure to publish a new version of a dependent package if the updated dependency wouldn't satisfy the constraint
-        if (changed || !semver.satisfies(version, range)) {
-            dependencies[name] = `^${releaseVersion}`;
-            updated = true;
+        const range = new Range(dependencies[name]);
+        // if we are publishing the package anyway, update the constraint to the current released version to ensure compatibility
+        if (willBeReleased || !satisfies(releaseVersion, range)) {
+            // preserve the range sigil, if present
+            const newRange = `${range.raw.replace(/\d.+$/, '')}${releaseVersion.version}`;
+            if (newRange !== range.raw) {
+                dependencies[name] = newRange;
+                updated = true;
+            }
         }
     }
 }
@@ -65,13 +110,24 @@ function updateManifest(manifest: PackageData): boolean {
 for (const name of changedPackages)
     markForRelease(name);
 
+let dependencyUpdated;
+do {
+    dependencyUpdated = false;
+    for (const [localName, manifest] of packages)
+        if (updateManifest(manifest, needsRelease.has(localName)) && markForRelease(localName))
+            dependencyUpdated = true;
+} while (dependencyUpdated);
+
 const supportedTypescriptVersions = rootManifest.peerDependencies.typescript;
-rootManifest.version = semver.inc(version, 'minor');
+rootManifest.version = releaseVersion.version;
+if (releaseType === 'major' || releaseType === 'minor')
+    rootManifest.nextVersion = new SemVer(releaseVersion.version).inc('minor').version;
+updateManifest(rootManifest, true);
 writeManifest('package.json', rootManifest);
 
 for (const name of needsRelease) {
     const manifest = packages.get(name)!;
-    manifest.version = releaseVersion;
+    manifest.version = releaseVersion.version;
     if (manifest.peerDependencies && manifest.peerDependencies.typescript)
         manifest.peerDependencies.typescript = supportedTypescriptVersions;
     writeManifest(`packages/${name}/package.json`, manifest);
@@ -80,6 +136,6 @@ for (const name of needsRelease) {
 // install dependencies to update yarn.lock
 execAndLog('yarn');
 
-execAndLog(`git commit -a -m "v${releaseVersion}"`);
-execAndLog(`git tag v${releaseVersion}`);
+execAndLog(`git commit -a -m "v${releaseVersion.version}"`);
+execAndLog(`git tag v${releaseVersion.version}`);
 execAndLog(`git push origin master --tags`);

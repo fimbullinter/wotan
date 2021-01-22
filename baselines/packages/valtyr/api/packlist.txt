@@ -1,10 +1,10 @@
-package.json
-index.d.ts
-index.js
-index.js.map
 LICENSE
 NOTICE
 README.md
+index.d.ts
+index.js
+index.js.map
+package.json
 src/configuration-provider.d.ts
 src/configuration-provider.js
 src/configuration-provider.js.map

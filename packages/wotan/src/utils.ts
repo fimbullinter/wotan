@@ -42,7 +42,7 @@ export function format<T = any>(value: T, fmt = Format.Yaml): string {
         case Format.Json5:
             return json5.stringify(value, undefined, 2);
         case Format.Yaml:
-            return yaml.safeDump(value, {
+            return yaml.dump(value, {
                 indent: 2,
                 schema: yaml.JSON_SCHEMA,
                 sortKeys: true,
@@ -141,23 +141,6 @@ export function addUnique<T>(arr: T[], item: T & {[K in keyof T]: T[K]}) {
     return true;
 }
 
-export function createParseConfigHost(
-    host: Required<Pick<ts.CompilerHost, 'readDirectory' | 'readFile' | 'useCaseSensitiveFileNames' | 'fileExists'>>,
-): ts.ParseConfigHost {
-    return {
-        useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
-        readDirectory(rootDir, extensions, excludes, includes, depth) {
-            return host.readDirectory(rootDir, extensions, excludes, includes, depth);
-        },
-        fileExists(f) {
-            return host.fileExists(f);
-        },
-        readFile(f) {
-            return host.readFile(f);
-        },
-    };
-}
-
 export function hasParseErrors(sourceFile: ts.SourceFile) {
     return (<{parseDiagnostics: ts.Diagnostic[]}><{}>sourceFile).parseDiagnostics.length !== 0;
 }
@@ -204,6 +187,8 @@ function getDeclarationOutputName(fileName: string, options: ts.CompilerOptions,
     const extension = path.extname(fileName);
     switch (extension) {
         case '.tsx':
+        case '.js':
+        case '.jsx':
             break;
         case '.ts':
             if (path.extname(fileName.slice(0, -extension.length)) !== '.d')

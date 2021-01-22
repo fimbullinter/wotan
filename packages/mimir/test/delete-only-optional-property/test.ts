@@ -59,3 +59,12 @@ delete myArrayLike[1];
 delete myArrayLike['1'];
 delete myArrayLike[2];
 delete myArrayLike[Symbol.iterator];
+
+declare var optionalObj: undefined | typeof obj;
+
+delete optionalObj?.a;
+delete optionalObj?.['a'];
+delete optionalObj?.b;
+delete optionalObj?.['b'];
+delete optionalObj?.c;
+delete optionalObj?.d;

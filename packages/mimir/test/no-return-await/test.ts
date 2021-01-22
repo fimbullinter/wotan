@@ -74,6 +74,7 @@ async function handleParens() {
 async function handleBinaryExpression() {
     return await foo() || await x;
     return await foo() && await x;
+    return await foo() ?? await x;
     return await foo(), await x;
     return await foo() + await x;
 }

@@ -12,11 +12,16 @@ rules:
   no-duplicate-case: error
   no-duplicate-spread-property: error
   no-fallthrough: error
+  no-implicit-tostring:
+    severity: error
+    options:
+      allowPrimitive: true
   no-invalid-assertion: error
   no-restricted-property-access: error
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error
+  no-object-spread-of-iterable: error
   no-octal-escape: error
   no-unassigned-variable: error
   no-uninferred-type-parameter: error
@@ -34,6 +39,7 @@ rules:
   no-useless-strict: error
   no-useless-spread: error
   no-useless-try-catch: error
+  no-writeonly-property-read: error
   prefer-const: error
   prefer-dot-notation: error
   prefer-for-of: error

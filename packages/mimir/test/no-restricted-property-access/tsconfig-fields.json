@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig-define.json",
+  "compilerOptions": {
+    "target": "ESNext"
+  }
+}

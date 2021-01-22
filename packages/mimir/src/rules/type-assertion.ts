@@ -26,7 +26,7 @@ function enforceClassicTypeAssertion(context: RuleContext) {
     const re = /\bas\b/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(context.sourceFile.text); match !== null; match = re.exec(context.sourceFile.text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (!isAsExpression(node) || node.type.pos !== re.lastIndex)
             continue;
         const parent = node.parent!;

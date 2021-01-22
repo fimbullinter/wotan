@@ -7,14 +7,17 @@ import {
     isUnionTypeNode,
     getPreviousToken,
     getNextToken,
-    getPropertyName,
     isReassignmentTarget,
     isBinaryExpression,
     isStrictCompilerOptionEnabled,
     isInstantiableType,
     isUnionType,
+    PropertyName,
+    getPropertyOfType,
+    LateBoundPropertyNames,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
-import { lateBoundPropertyNames, getPropertyOfType, LateBoundPropertyName } from '../utils';
+import { tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -40,6 +43,10 @@ export class Rule extends AbstractRule {
                     if (isReassignmentTarget(<ts.ObjectLiteralExpression>node))
                         this.checkObjectDestructuring(<ts.ObjectLiteralExpression>node);
                     break;
+                case ts.SyntaxKind.ArrayLiteralExpression:
+                    if (isReassignmentTarget(<ts.ArrayLiteralExpression>node))
+                        this.checkArrayDestructuring(<ts.ArrayLiteralExpression>node);
+                    break;
                 default:
                     if (!isJs && isFunctionWithBody(node))
                         this.checkFunctionParameters(node.parameters);
@@ -51,8 +58,9 @@ export class Rule extends AbstractRule {
         if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return;
         const checker = this.program!.getTypeChecker();
+        let type: ts.Type | undefined;
         for (const property of node.properties) {
-            let name: ts.Identifier;
+            let name: ts.PropertyName;
             let errorNode: ts.Expression;
             switch (property.kind) {
                 case ts.SyntaxKind.ShorthandPropertyAssignment:
@@ -62,7 +70,7 @@ export class Rule extends AbstractRule {
                     errorNode = property.objectAssignmentInitializer;
                     break;
                 case ts.SyntaxKind.PropertyAssignment:
-                    if (property.name.kind !== ts.SyntaxKind.Identifier || !isBinaryExpression(property.initializer))
+                    if (!isBinaryExpression(property.initializer))
                         continue;
                     name = property.name;
                     errorNode = property.initializer.right;
@@ -70,13 +78,42 @@ export class Rule extends AbstractRule {
                 default:
                     continue;
             }
-            const symbol = checker.getPropertySymbolOfDestructuringAssignment(name);
-            if (symbol !== undefined && !symbolMaybeUndefined(checker, symbol, name))
-                this.addFindingAtNode(
-                    errorNode,
-                    "Unnecessary default value as this property is never 'undefined'.",
-                    Replacement.delete(getChildOfKind(errorNode.parent!, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, errorNode.end),
-                );
+            const properties = getLateBoundPropertyNamesOfPropertyName(name, checker);
+            if (!properties.known || properties.names.some(maybeUndefined))
+                continue;
+            this.addFindingAtNode(
+                errorNode,
+                "Unnecessary default value as this property is never 'undefined'.",
+                Replacement.delete(getChildOfKind(errorNode.parent!, ts.SyntaxKind.EqualsToken, this.sourceFile)!.pos, errorNode.end),
+            );
+        }
+
+        function maybeUndefined({symbolName}: PropertyName) {
+            return symbolMaybeUndefined(
+                checker,
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeOfAssignmentPattern(node)), symbolName),
+                node,
+            );
+        }
+    }
+
+    private checkArrayDestructuring(node: ts.ArrayLiteralExpression) {
+        if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
+            return;
+        const checker = this.program!.getTypeChecker();
+        let type: ts.Type | undefined;
+        for (let i = 0; i < node.elements.length; ++i) {
+            const element = node.elements[i];
+            if (!isBinaryExpression(element))
+                continue;
+            type ??= tryGetBaseConstraintType(checker.getTypeOfAssignmentPattern(node), checker);
+            if (symbolMaybeUndefined(checker, type.getProperty(String(i)), node))
+                continue;
+            this.addFindingAtNode(
+                element.right,
+                "Unnecessary default value as this element is never 'undefined'.",
+                Replacement.delete(element.operatorToken.pos, element.end),
+            );
         }
     }
 
@@ -90,7 +127,7 @@ export class Rule extends AbstractRule {
             if (element.kind === ts.SyntaxKind.OmittedExpression || element.initializer === undefined)
                 continue;
             const lateBoundNames = propNames(element, i, checker);
-            if (!lateBoundNames.known || lateBoundNames.properties.some(maybeUndefined))
+            if (!lateBoundNames.known || lateBoundNames.names.some(maybeUndefined))
                 continue;
             // TODO we currently cannot autofix this case: it's possible to use a default value that's not assignable to the
             // destructured type. The type of the variable then includes the type of the initializer as well.
@@ -98,9 +135,12 @@ export class Rule extends AbstractRule {
             this.addFindingAtNode(element.initializer, "Unnecessary default value as this property is never 'undefined'.");
         }
 
-        function maybeUndefined({symbolName}: LateBoundPropertyName) {
-            const symbol = getPropertyOfType(type || (type = checker.getApparentType(checker.getTypeAtLocation(node)!)), symbolName);
-            return symbol === undefined || symbolMaybeUndefined(checker, symbol, node);
+        function maybeUndefined({symbolName}: PropertyName) {
+            return symbolMaybeUndefined(
+                checker,
+                getPropertyOfType(type ??= checker.getApparentType(checker.getTypeAtLocation(node)!), symbolName),
+                node,
+            );
         }
     }
 
@@ -144,21 +184,25 @@ export class Rule extends AbstractRule {
     }
 }
 
-function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker) {
-    const staticName = getPropertyName(property.propertyName === undefined ? <ts.Identifier>property.name : property.propertyName);
-    return staticName !== undefined
-        ? {known: true, properties: [{name: staticName, symbolName: ts.escapeLeadingUnderscores(staticName)}]}
-        : lateBoundPropertyNames((<ts.ComputedPropertyName>property.propertyName).expression, checker);
+function getObjectPropertyName(property: ts.BindingElement, _i: number, checker: ts.TypeChecker): LateBoundPropertyNames {
+    if (property.propertyName === undefined)
+        return {
+            known: true,
+            names: [{displayName: (<ts.Identifier>property.name).text, symbolName: (<ts.Identifier>property.name).escapedText }],
+        };
+    return getLateBoundPropertyNamesOfPropertyName(property.propertyName, checker);
 
 }
 
-function getArrayPropertyName(_: ts.BindingElement, i: number) {
+function getArrayPropertyName(_: ts.BindingElement, i: number): LateBoundPropertyNames {
     const name = String(i);
-    return {known: true, properties: [{name, symbolName: <ts.__String>name}]};
+    return {known: true, names: [{displayName: name, symbolName: <ts.__String>name}]};
 }
 
-function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol, node: ts.Node): boolean {
-    if (symbol.flags & (ts.SymbolFlags.Optional | (Number.isNaN(+symbol.escapedName) ? 0 : ts.SymbolFlags.Transient)))
+function symbolMaybeUndefined(checker: ts.TypeChecker, symbol: ts.Symbol | undefined, node: ts.Node): boolean {
+    if (symbol === undefined)
+        return true;
+    if (symbol.flags & ts.SymbolFlags.Optional)
         return true;
     return typeMaybeUndefined(checker, checker.getTypeOfSymbolAtLocation(symbol, node));
 }
@@ -167,7 +211,7 @@ function typeMaybeUndefined(checker: ts.TypeChecker, type: ts.Type): boolean {
     if (isInstantiableType(type)) {
         const constraint = checker.getBaseConstraintOfType(type);
         if (constraint === undefined)
-        return true;
+            return true;
         type = constraint;
     }
     if (isUnionType(type))

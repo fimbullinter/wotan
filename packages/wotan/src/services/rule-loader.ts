@@ -25,7 +25,7 @@ export class RuleLoader {
             if (ctor !== undefined)
                 return ctor;
         }
-        this.logger.warn(`Could not find rule '${name}' in ${directories}.`);
+        this.logger.warn(`Could not find rule '${name}' in '${directories.join()}'.`);
         return;
     }
 

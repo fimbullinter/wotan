@@ -4,7 +4,7 @@ import * as mkdirp from 'mkdirp';
 import * as fs from 'fs';
 import * as diff from 'diff';
 import * as rimraf from 'rimraf';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { getPackages } from './util';
 import * as ts from 'typescript';
 
@@ -20,8 +20,8 @@ for (const pkg of getPackages().publicPackages.keys()) {
 }
 
 function checkPackage(packageDir: string, baselineDir: string, callback: (content: string, filename: string) => void) {
-    const list = packlist.sync({path: packageDir});
-    callback(list.join('\n'), path.join(baselineDir, 'packlist.txt'));
+    const list = packlist.sync({path: packageDir}).sort();
+    callback(list.join('\n') + '\n', path.join(baselineDir, 'packlist.txt'));
 
     for (const file of list)
         if (file.endsWith('.d.ts'))
@@ -29,7 +29,7 @@ function checkPackage(packageDir: string, baselineDir: string, callback: (conten
 }
 
 function stripPrivateMembers(source: string) {
-    const re = /^ +private \w+;\n/mg;
+    const re = /^ +(?:#private|private (?:readonly |get |set )?\w+(?:\(\w*\))?);\n/mg;
     let lastPos = 0;
     let result = '';
     let useAst = false;

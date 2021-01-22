@@ -1,4 +1,4 @@
-import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import def, {ns, v, something as somethingSomething, x, y} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
 import * as namespaceImport from './export-assignment';
 
@@ -11,6 +11,8 @@ namespaceImport;
 namespaceImport();
 def;
 v;
+x;
+y;
 somethingSomething;
 moduleNamespace.default;
 moduleNamespace.v;
@@ -47,6 +49,12 @@ declare const bas: {
 bas;
 bas();
 bas('');
+
+declare let optionalBas: undefined | typeof bas;
+
+optionalBas;
+optionalBas?.();
+optionalBas?.('');
 
 /**@deprecated Variable is deprecated.*/
 declare const fn: typeof bas;
@@ -92,6 +100,27 @@ obj['somethingElse'];
 obj[key2];
 obj[k];
 obj[];
+
+declare let optionalObj: undefined | typeof obj;
+
+optionalObj?.a;
+optionalObj?.b;
+optionalObj?.c;
+optionalObj?.d;
+optionalObj?.foo;
+optionalObj?.['a'];
+optionalObj?.['b'];
+optionalObj?.['c'];
+optionalObj?.['d'];
+optionalObj?.['foo'];
+optionalObj?.[key];
+optionalObj?.somethingElse;
+optionalObj?.['somethingElse'];
+optionalObj?.[key2];
+optionalObj?.[k];
+
+declare let nestedOptionalObj: undefined | {o: typeof obj};
+nestedOptionalObj?.o['a'];
 
 declare let obj2: {
     /**@deprecated*/
@@ -270,7 +299,7 @@ namespace MyClass {
     let k: keyof typeof obj = null as any;
     let {[k]: prop} = obj;
     let v: string;
-    ({[k]: v} = obj); // TODO this would be possible with some effort
+    ({[k]: v} = obj);
 }
 
 {
@@ -381,3 +410,12 @@ declare var myDeprecatedCallable: {
 myDeprecatedCallable;
 myDeprecatedCallable();
 myDeprecatedCallable(1);
+
+class WithPrivateProp {
+    /** @deprecated */
+    #prop = 1;
+
+    get prop() {
+        return this.#prop;
+    }
+}

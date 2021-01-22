@@ -15,7 +15,7 @@ export class Rule extends TypedRule {
         const re = /\bdelete\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (!isDeleteExpression(node) || node.expression.pos !== re.lastIndex)
                 continue;
             const {expression} = node;

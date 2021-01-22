@@ -1,4 +1,4 @@
 {
   "project": "tsconfig-loose.json",
-  "files": ["global.ts", "non-null.ts", "type-assertion.ts"]
+  "exclude": ["global2.ts"]
 }

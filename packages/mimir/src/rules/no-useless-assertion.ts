@@ -1,11 +1,16 @@
 import { TypedRule, Replacement, typescriptOnly, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { expressionNeedsParensWhenReplacingNode, typesAreEqual } from '../utils';
+import {
+    expressionNeedsParensWhenReplacingNode,
+    isAmbientPropertyDeclaration,
+    isAmbientVariableDeclaration,
+    typesAreEqual,
+    tryGetBaseConstraintType,
+} from '../utils';
 import {
     isVariableDeclaration,
     hasModifier,
     isFunctionScopeBoundary,
-    isObjectType,
     unionTypeParts,
     isFunctionExpression,
     isArrowFunction,
@@ -14,6 +19,9 @@ import {
     isStrictCompilerOptionEnabled,
     isConstAssertion,
     isInConstContext,
+    isTypeReference,
+    isTupleType,
+    isOptionalChainingUndefinedMarkerType,
 } from 'tsutils';
 import * as debug from 'debug';
 
@@ -49,9 +57,12 @@ export class Rule extends TypedRule {
     private checkDefiniteAssignmentAssertion(node: ts.VariableDeclaration) {
         // compiler already emits an error for definite assignment assertions on ambient or initialized variables
         if (node.exclamationToken !== undefined &&
-            node.initializer === undefined && (
+            node.initializer === undefined &&
+            node.type !== undefined &&
+            !isAmbientVariableDeclaration(node) && (
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node.name), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                // type does not allow undefined
+                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node.name)) & ts.TypeFlags.Undefined
             ))
             this.addFinding(
                 node.exclamationToken.end - 1,
@@ -65,10 +76,13 @@ export class Rule extends TypedRule {
         // compiler emits an error for definite assignment assertions on ambient, initialized or abstract properties
         if (node.exclamationToken !== undefined &&
             node.initializer === undefined &&
-            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword) && (
-                node.name.kind !== ts.SyntaxKind.Identifier || // properties with string or computed name are not checked
+            node.type !== undefined &&
+            !isAmbientPropertyDeclaration(node) &&
+            !hasModifier(node.modifiers, ts.SyntaxKind.AbstractKeyword, ts.SyntaxKind.StaticKeyword) && (
+                // properties with string or computed name are not checked
+                node.name.kind !== ts.SyntaxKind.Identifier && node.name.kind !== ts.SyntaxKind.PrivateIdentifier ||
                 !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictPropertyInitialization') ||
-                getNullableFlags(this.checker.getTypeAtLocation(node), true) & ts.TypeFlags.Undefined // type does not allow undefined
+                getNullableFlagsOfReceiver(this.checker.getTypeAtLocation(node)) & ts.TypeFlags.Undefined // type allows undefined
             ))
             this.addFinding(
                 node.exclamationToken.end - 1,
@@ -82,10 +96,15 @@ export class Rule extends TypedRule {
         let message = FAIL_MESSAGE;
         if (this.strictNullChecks) {
             const originalType = this.checker.getTypeAtLocation(node.expression);
-            const flags = getNullableFlags(this.checker.getBaseConstraintOfType(originalType) || originalType);
+            const flags = getNullableFlags(
+                tryGetBaseConstraintType(originalType, this.checker),
+                ts.isOptionalChain(node)
+                    ? (t) => isOptionalChainingUndefinedMarkerType(this.checker, t) ? 0 : t.flags
+                    : undefined,
+            );
             if (flags !== 0) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
-                if (contextualType === undefined || (flags & ~getNullableFlags(contextualType, true)))
+                if (contextualType === undefined || (flags & ~getNullableFlagsOfReceiver(contextualType)))
                     return;
                 message = `This assertion is unnecessary as the receiver accepts ${formatNullableFlags(flags)} values.`;
             }
@@ -105,12 +124,12 @@ export class Rule extends TypedRule {
         }
         let targetType = this.checker.getTypeFromTypeNode(node.type);
         if ((targetType.flags & ts.TypeFlags.Literal) !== 0 && !isInConstContext(node) || // allow "foo" as "foo" to avoid widening
-            isObjectType(targetType) && (targetType.objectFlags & ts.ObjectFlags.Tuple || couldBeTupleType(targetType)))
+            isTupleType(isTypeReference(targetType) ? targetType.target : targetType))
             return;
         let sourceType = this.checker.getTypeAtLocation(node.expression);
         if ((targetType.flags & (ts.TypeFlags.TypeVariable | ts.TypeFlags.Instantiable)) === 0) {
-            targetType = this.checker.getBaseConstraintOfType(targetType) || targetType;
-            sourceType = this.checker.getBaseConstraintOfType(sourceType) || sourceType;
+            targetType = tryGetBaseConstraintType(targetType, this.checker);
+            sourceType = tryGetBaseConstraintType(sourceType, this.checker);
         }
         let message = FAIL_MESSAGE;
         if (!typesAreEqual(sourceType, targetType, this.checker)) {
@@ -172,11 +191,15 @@ export class Rule extends TypedRule {
     }
 }
 
-function getNullableFlags(type: ts.Type, receiver?: boolean): ts.TypeFlags {
+function getNullableFlags(type: ts.Type, selector?: (t: ts.Type) => ts.TypeFlags): ts.TypeFlags {
     let flags = 0;
     for (const t of unionTypeParts(type))
-        flags |= t.flags;
-    return ((receiver && flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) ? -1 : flags) & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+        flags |= selector !== undefined ? selector(t) : t.flags;
+    return flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+}
+
+function getNullableFlagsOfReceiver(type: ts.Type) {
+    return getNullableFlags(type, (t) => t.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown) ? -1 : t.flags);
 }
 
 function formatNullableFlags(flags: ts.TypeFlags) {
@@ -205,7 +228,7 @@ function formatNullableFlags(flags: ts.TypeFlags) {
  * We don't need to worry about strictPropertyInitialization errors, because they cannot be suppressed with a non-null assertion
  */
 function maybeUsedBeforeBeingAssigned(node: ts.Expression, type: ts.Type, checker: ts.TypeChecker): node is ts.Identifier {
-    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlags(type, true) & ts.TypeFlags.Undefined)
+    if (node.kind !== ts.SyntaxKind.Identifier || getNullableFlagsOfReceiver(type) & ts.TypeFlags.Undefined)
         return false;
     const symbol = checker.getSymbolAtLocation(node)!;
     const declaration = symbol.declarations![0];
@@ -239,28 +262,4 @@ function isInlinedIife(node: ts.Node): boolean {
         node.asteriskToken === undefined && // exclude generators
         !hasModifier(node.modifiers, ts.SyntaxKind.AsyncKeyword) && // exclude async functions
         getIIFE(node) !== undefined;
-}
-
-/**
- * Sometimes tuple types don't have ObjectFlags.Tuple set, like when they're being matched against an inferred type.
- * So, in addition, check if there are integer properties 0..n and no other numeric keys
- */
-function couldBeTupleType(type: ts.ObjectType): boolean {
-    const properties = type.getProperties();
-    if (properties.length === 0)
-        return false;
-    let i = 0;
-    for (; i < properties.length; ++i) {
-        const name = properties[i].escapedName;
-        if (String(i) !== name) {
-            if (i === 0)
-                // if there are no integer properties, this is not a tuple
-                return false;
-            break;
-        }
-    }
-    for (; i < properties.length; ++i)
-        if (String(+properties[i].escapedName) === properties[i].escapedName)
-            return false;
-    return true;
 }

@@ -6,10 +6,11 @@ import {
     VariableUse,
     UsageDomain,
     isReassignmentTarget,
-    isPropertyAccessExpression,
-    isIdentifier,
-    unionTypeParts,
-    isLiteralType,
+    getPropertyOfType,
+    getLateBoundPropertyNames,
+    PropertyName,
+    isStatementInAmbientContext,
+    getLateBoundPropertyNamesOfPropertyName,
 } from 'tsutils';
 import { RuleContext } from '@fimbul/ymir';
 
@@ -18,7 +19,7 @@ export function* switchStatements(context: RuleContext) {
     const re = /\bswitch\s*[(/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.SwitchStatement && node.getStart(context.sourceFile) === match.index)
             yield <ts.SwitchStatement>node;
     }
@@ -29,7 +30,7 @@ export function* tryStatements(context: RuleContext) {
     const re = /\btry\s*[{/]/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (node.kind === ts.SyntaxKind.TryStatement && (<ts.TryStatement>node).tryBlock.pos - 'try'.length === match.index)
             yield <ts.TryStatement>node;
     }
@@ -172,61 +173,18 @@ export function *elementAccessSymbols(node: ts.ElementAccessExpression, checker:
     const {argumentExpression} = node;
     if (argumentExpression === undefined || argumentExpression.pos === argumentExpression.end)
         return;
-    const {properties} = lateBoundPropertyNames(argumentExpression, checker);
-    if (properties.length === 0)
+    const {names} = getLateBoundPropertyNames(argumentExpression, checker);
+    if (names.length === 0)
         return;
-    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)!), properties);
+    yield* propertiesOfType(checker.getApparentType(checker.getTypeAtLocation(node.expression)).getNonNullableType(), names);
 }
 
-export function *propertiesOfType(type: ts.Type, names: Iterable<LateBoundPropertyName>) {
-    for (const {symbolName, name} of names) {
+export function *propertiesOfType(type: ts.Type, names: Iterable<PropertyName>) {
+    for (const {symbolName, displayName} of names) {
         const symbol = getPropertyOfType(type, symbolName);
         if (symbol !== undefined)
-            yield {symbol, name};
+            yield {symbol, name: displayName};
     }
-}
-
-export function getPropertyOfType(type: ts.Type, name: ts.__String) {
-    return type.getProperties().find((s) => s.escapedName === name);
-}
-
-export interface LateBoundPropertyInfo {
-    known: boolean;
-    properties: LateBoundPropertyName[];
-}
-
-export interface LateBoundPropertyName {
-    name: string;
-    symbolName: ts.__String;
-}
-
-export function lateBoundPropertyNames(node: ts.Expression, checker: ts.TypeChecker): LateBoundPropertyInfo {
-    let known = true;
-    const properties = [];
-    if (
-        isPropertyAccessExpression(node) &&
-        isIdentifier(node.expression) &&
-        node.expression.text === 'Symbol'
-    ) {
-        properties.push({
-            name: `Symbol.${node.name.text}`,
-            symbolName: <ts.__String>`__@${node.name.text}`,
-        });
-    } else {
-        const type = checker.getTypeAtLocation(node)!;
-        for (const key of unionTypeParts(checker.getBaseConstraintOfType(type) || type)) {
-            if (isLiteralType(key)) {
-                const name = String(key.value);
-                properties.push({
-                    name,
-                    symbolName: ts.escapeLeadingUnderscores(name),
-                });
-            } else {
-                known = false;
-            }
-        }
-    }
-    return {known, properties};
 }
 
 export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
@@ -252,12 +210,47 @@ export function hasDirectivePrologue(node: ts.Node): node is ts.BlockLike {
     }
 }
 
-export function formatPseudoBigInt(v: ts.PseudoBigInt) {
-    return `${v.negative ? '-' : ''}${v.base10Value}n`;
+/** Determines whether a property has the `declare` modifier or the containing class is ambient. */
+export function isAmbientPropertyDeclaration(node: ts.PropertyDeclaration): boolean {
+    return hasModifier(node.modifiers, ts.SyntaxKind.DeclareKeyword) ||
+        node.parent!.kind === ts.SyntaxKind.ClassDeclaration && isStatementInAmbientContext(node.parent);
 }
 
-export function unwrapParens(node: ts.Expression) {
-    while (node.kind === ts.SyntaxKind.ParenthesizedExpression)
-        node = (<ts.ParenthesizedExpression>node).expression;
-    return node;
+/** Determines whether the given variable declaration is ambient. */
+export function isAmbientVariableDeclaration(node: ts.VariableDeclaration): boolean {
+    return node.parent!.kind === ts.SyntaxKind.VariableDeclarationList &&
+        node.parent.parent!.kind === ts.SyntaxKind.VariableStatement &&
+        isStatementInAmbientContext(node.parent.parent);
+}
+
+export function tryGetBaseConstraintType(type: ts.Type, checker: ts.TypeChecker) {
+    return checker.getBaseConstraintOfType(type) || type;
+}
+
+export interface PropertyNameWithLocation extends PropertyName {
+    node: ts.Node;
+}
+
+export function *addNodeToPropertyNameList(node: ts.Node, list: Iterable<PropertyName>): IterableIterator<PropertyNameWithLocation> {
+    for (const element of list)
+        yield {node, symbolName: element.symbolName, displayName: element.displayName};
+}
+
+export function *destructuredProperties(node: ts.ObjectBindingPattern, checker: ts.TypeChecker) {
+    for (const element of node.elements) {
+        if (element.dotDotDotToken !== undefined)
+            continue;
+        if (element.propertyName === undefined) {
+            yield {
+                node: element.name,
+                symbolName: (<ts.Identifier>element.name).escapedText,
+                displayName: (<ts.Identifier>element.name).text,
+            };
+        } else {
+            yield* addNodeToPropertyNameList(
+                element.propertyName,
+                getLateBoundPropertyNamesOfPropertyName(element.propertyName, checker).names,
+            );
+        }
+    }
 }

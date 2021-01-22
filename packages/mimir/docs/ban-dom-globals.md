@@ -1,4 +1,4 @@
-# await-async-result
+# ban-dom-globals
 
 :mag: requires type information
 

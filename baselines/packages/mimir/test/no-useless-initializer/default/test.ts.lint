@@ -11,8 +11,16 @@
     const {c = undefined} = {}; // necessary
     let v = Boolean() ? {d: 1} : {};
     const {d = undefined} = v; // useless
-    const {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
+    let {e = undefined} = Boolean() ? {e: 1} : {}; // necessary
     ({a = undefined, b = undefined} = {a}); // a useless, b necessary
+}
+{
+    let rest, a: number | undefined, b: number | undefined, e: number | undefined;
+    const tuple: [number, number?] = [1, 2];
+    [a = 1, e = 2] = tuple;
+    [, a = 1, ...rest] = [1, 2];
+    [a = 1, b = undefined ] = [1];
+    [a = 1] = rest;
 }
 {
     let foo = "undefined";

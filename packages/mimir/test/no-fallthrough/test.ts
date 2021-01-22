@@ -80,3 +80,19 @@ x./* comment */switch
 let foo: {
     switch(x): void;
 } = { switch(x) {}};
+
+function testTyped(p: {kind: 'a', nested: boolean} | {kind: 'b' | 'c'}, fail: () => never) {
+    switch (p.kind) {
+      case 'a':
+        switch (p.nested) {
+          case true:
+            return 1;
+          case false:
+            return 2;
+        }
+      case 'b':
+        fail();
+      case 'c':
+        return 3;
+    }
+  }

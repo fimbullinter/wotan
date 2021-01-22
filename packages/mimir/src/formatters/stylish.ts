@@ -1,5 +1,5 @@
 import { Finding, AbstractFormatter, FileSummary, Severity } from '@fimbul/ymir';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import * as path from 'path';
 
 interface FindingInfo {
@@ -9,7 +9,7 @@ interface FindingInfo {
     message: string;
 }
 
-const COLORS: Record<Severity, typeof chalk> = {
+const COLORS: Record<Severity, chalk.Chalk> = {
     error: chalk.red,
     warning: chalk.yellow,
     suggestion: chalk.cyan,

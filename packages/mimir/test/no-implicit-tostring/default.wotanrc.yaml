@@ -1,0 +1,2 @@
+rules:
+  no-implicit-tostring: error

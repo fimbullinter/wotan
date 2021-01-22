@@ -85,6 +85,8 @@ async function handleBinaryExpression() {
                           ~~~~~    [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
     return await foo() && await x;
                           ~~~~~    [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
+    return await foo() ?? await x;
+                          ~~~~~    [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
     return await foo(), await x;
                         ~~~~~    [error no-return-await: Awaiting the returned value is redundant as it is wrapped in a Promise anyway.]
     return await foo() + await x;
