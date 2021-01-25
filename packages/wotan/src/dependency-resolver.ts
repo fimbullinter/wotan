@@ -1,153 +1,164 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
-import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind } from 'tsutils';
+import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind, isCompilerOptionEnabled } from 'tsutils';
 import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences } from './utils';
 import bind from 'bind-decorator';
+import { ProjectHost } from './project-host';
 
 export interface DependencyResolver {
-    update(program: DependencyResolverProgram, updatedFiles: Iterable<string>): void;
-    getDependencies(fileName: string): ReadonlyArray<string>;
-    getFilesAffectingGlobalScope(): ReadonlyArray<string>;
+    update(program: ts.Program, updatedFile: string): void;
+    getDependencies(fileName: string): ReadonlyMap<string, null | readonly string[]>;
+    getFilesAffectingGlobalScope(): readonly string[];
 }
-
-export type DependencyResolverProgram =
-    Pick<ts.Program, 'getCompilerOptions' | 'getSourceFiles' | 'getSourceFile' | 'getCurrentDirectory' | 'getResolvedProjectReferences'>;
 
 @injectable()
 export class DependencyResolverFactory {
-    public create(host: ts.CompilerHost, program: DependencyResolverProgram): DependencyResolver {
+    public create(host: ProjectHost, program: ts.Program): DependencyResolver {
         return new DependencyResolverImpl(host, program);
     }
 }
 
+export interface DependencyResolverState {
+    affectsGlobalScope: readonly string[];
+    ambientModules: ReadonlyMap<string, readonly string[]>;
+    moduleAugmentations: ReadonlyMap<string, readonly string[]>;
+    patternAmbientModules: ReadonlyMap<string, readonly string[]>;
+}
+
 class DependencyResolverImpl implements DependencyResolver {
-    private affectsGlobalScope!: ReadonlyArray<string>;
-    private ambientModules!: ReadonlyMap<string, string[]>;
-    private moduleAugmentations!: ReadonlyMap<string, string[]>;
-    private patternAmbientModules!: ReadonlyMap<string, string[]>;
-    private ambientModuleAugmentations!: ReadonlyMap<string, string[]>;
-    private patternModuleAugmentations!: ReadonlyMap<string, string[]>;
-    private moduleDependenciesPerFile!: ReadonlyMap<string, string[][]>;
-    private dependencies = new Map<string, Set<string>>();
+    private dependencies = new Map<string, Map<string, string | null>>();
     private fileToProjectReference: ReadonlyMap<string, ts.ResolvedProjectReference> | undefined = undefined;
+    private fileMetadata = new Map<string, MetaData>();
+    private compilerOptions = this.program.getCompilerOptions();
 
-    private cache = ts.createModuleResolutionCache(this.program.getCurrentDirectory(), (f) => this.host.getCanonicalFileName(f));
-    constructor(private host: ts.CompilerHost, private program: DependencyResolverProgram) {
-        this.collectMetaData();
-    }
+    private state: DependencyResolverState | undefined = undefined;
 
-    public update(program: DependencyResolverProgram, updatedFiles: Iterable<string>) {
-        for (const file of updatedFiles)
-            this.dependencies.delete(file);
+    constructor(private host: ProjectHost, private program: ts.Program) {}
+
+    public update(program: ts.Program, updatedFile: string) {
+        this.state = undefined;
+        this.dependencies.delete(updatedFile);
+        this.fileMetadata.delete(updatedFile);
         this.program = program;
-        this.collectMetaData();
     }
 
-    private collectMetaData() {
-        const affectsGlobalScope = new Set<string>();
+    private buildState(): DependencyResolverState {
+        const affectsGlobalScope = [];
         const ambientModules = new Map<string, string[]>();
         const patternAmbientModules = new Map<string, string[]>();
         const moduleAugmentationsTemp = new Map<string, string[]>();
-        const moduleDepencenciesPerFile = new Map<string, string[][]>();
         for (const file of this.program.getSourceFiles()) {
-            const meta = collectFileMetadata(file);
+            const meta = this.getFileMetaData(file.fileName);
             if (meta.affectsGlobalScope)
-                affectsGlobalScope.add(file.fileName);
+                affectsGlobalScope.push(file.fileName);
             for (const ambientModule of meta.ambientModules) {
                 const map = meta.isExternalModule
                     ? moduleAugmentationsTemp
                     : ambientModule.includes('*')
                         ? patternAmbientModules
                         : ambientModules;
-                addToListWithReverse(map, ambientModule, file.fileName, meta.isExternalModule ? undefined : moduleDepencenciesPerFile);
-                const existing = map.get(ambientModule);
-                if (existing === undefined) {
-                    map.set(ambientModule, [file.fileName]);
-                } else {
-                    existing.push(file.fileName);
-                }
+                addToList(map, ambientModule, file.fileName);
             }
         }
 
-        const ambientModuleAugmentations = new Map<string, string[]>();
         const moduleAugmentations = new Map<string, string[]>();
-        const patternModuleAugmentations = new Map<string, string[]>();
         for (const [module, files] of moduleAugmentationsTemp) {
-            if (ambientModules.has(module)) {
-                ambientModuleAugmentations.set(module, files);
+            // if an ambient module with the same identifier exists, the augmentation always applies to that
+            const ambientModuleAffectingFiles = ambientModules.get(module);
+            if (ambientModuleAffectingFiles !== undefined) {
+                ambientModuleAffectingFiles.push(...files);
                 continue;
             }
             for (const file of files) {
-                const {resolvedModule} = ts.resolveModuleName(module, file, this.program.getCompilerOptions(), this.host, this.cache);
-                if (resolvedModule !== undefined) {
-                    addToListWithReverse(moduleAugmentations, resolvedModule.resolvedFileName, file, moduleDepencenciesPerFile);
+                const resolved = this.getExternalReferences(file).get(module);
+                // if an augmentation's identifier can be resolved from the declaring file, the augmentation applies to the resolved path
+                if (resolved != null) {
+                    addToList(moduleAugmentations, resolved, file);
                 } else {
+                    // if a pattern ambient module matches the augmented identifier, the augmentation applies to that
                     const matchingPattern = getBestMatchingPattern(module, patternAmbientModules.keys());
                     if (matchingPattern !== undefined)
-                        addToListWithReverse(patternModuleAugmentations, matchingPattern, file, moduleDepencenciesPerFile);
+                        addToList(patternAmbientModules, matchingPattern, file);
                 }
             }
         }
 
-        this.ambientModules = ambientModules;
-        this.patternAmbientModules = patternAmbientModules;
-        this.ambientModuleAugmentations = ambientModuleAugmentations;
-        this.moduleAugmentations = moduleAugmentations;
-        this.patternModuleAugmentations = patternModuleAugmentations;
-        this.moduleDependenciesPerFile = moduleDepencenciesPerFile;
-        this.affectsGlobalScope = Array.from(affectsGlobalScope).sort();
+        return {
+            affectsGlobalScope,
+            ambientModules,
+            moduleAugmentations,
+            patternAmbientModules,
+        };
     }
 
-    public getDependencies(file: string) {
-        const result = new Set<string>();
-        const dependenciesFromModuleDeclarations = this.moduleDependenciesPerFile.get(file);
-        if (dependenciesFromModuleDeclarations)
-            for (const deps of dependenciesFromModuleDeclarations)
-                addAllExceptSelf(result, deps, file);
-        addAllExceptSelf(result, resolveCachedResult(this.dependencies, file, this.resolveDependencies), file);
-        return Array.from(result).sort();
+    public getFilesAffectingGlobalScope() {
+        return (this.state ??= this.buildState()).affectsGlobalScope;
     }
 
-    @bind
-    private resolveDependencies(fileName: string) {
-        const result = new Set<string>();
-        const sourceFile = this.program.getSourceFile(fileName)!;
-        let redirect: ts.ResolvedProjectReference | undefined;
-        let options: ts.CompilerOptions | undefined;
-        for (const {text: moduleName} of findImports(sourceFile, ImportKind.All)) {
-            const filesAffectingAmbientModule = this.ambientModules.get(moduleName);
+    public getDependencies(file: string) { // TODO is it worth caching this?
+        this.state ??= this.buildState();
+        const result = new Map<string, null | readonly string[]>();
+        for (const [identifier, resolved] of this.getExternalReferences(file)) {
+            const filesAffectingAmbientModule = this.state.ambientModules.get(identifier);
             if (filesAffectingAmbientModule !== undefined) {
-                addAllExceptSelf(result, filesAffectingAmbientModule, moduleName);
-                addAllExceptSelf(result, this.ambientModuleAugmentations.get(moduleName), fileName);
-                continue;
-            }
-
-            if (options === undefined) {
-                if (this.fileToProjectReference === undefined)
-                    this.fileToProjectReference = createProjectReferenceMap(this.program.getResolvedProjectReferences());
-                redirect = this.fileToProjectReference.get(fileName);
-                options = redirect === undefined ? this.program.getCompilerOptions() : redirect.commandLine.options;
-            }
-
-            const {resolvedModule} = ts.resolveModuleName(moduleName, fileName, options, this.host, this.cache, redirect);
-            if (resolvedModule !== undefined) {
-                if (resolvedModule.resolvedFileName !== fileName)
-                    result.add(resolvedModule.resolvedFileName);
-                addAllExceptSelf(result, this.moduleAugmentations.get(resolvedModule.resolvedFileName), fileName);
+                result.set(identifier, filesAffectingAmbientModule);
+            } else if (resolved !== null) {
+                const list = [resolved];
+                const augmentations = this.state.moduleAugmentations.get(resolved);
+                if (augmentations !== undefined)
+                    list.push(...augmentations);
+                result.set(identifier, list);
             } else {
-                const pattern = getBestMatchingPattern(moduleName, this.patternAmbientModules.keys());
+                const pattern = getBestMatchingPattern(identifier, this.state.patternAmbientModules.keys());
                 if (pattern !== undefined) {
-                    addAllExceptSelf(result, this.patternAmbientModules.get(pattern), fileName);
-                    addAllExceptSelf(result, this.patternModuleAugmentations.get(pattern), fileName);
+                    result.set(identifier, this.state.patternAmbientModules.get(pattern)!);
+                } else {
+                    result.set(identifier, null);
                 }
             }
         }
+        const meta = this.fileMetadata.get(file)!;
+        if (!meta.isExternalModule)
+            for (const ambientModule of meta.ambientModules)
+                result.set(ambientModule, this.state[ambientModule.includes('*') ? 'patternAmbientModules' : 'ambientModules'].get(ambientModule)!);
 
         return result;
     }
 
-    public getFilesAffectingGlobalScope() {
-        return this.affectsGlobalScope;
+    private getFileMetaData(fileName: string) {
+        return resolveCachedResult(this.fileMetadata, fileName, this.collectMetaDataForFile);
+    }
+
+    private getExternalReferences(fileName: string) {
+        return resolveCachedResult(this.dependencies, fileName, this.collectExternalReferences);
+    }
+
+    @bind
+    private collectMetaDataForFile(fileName: string) {
+        return collectFileMetadata(this.program.getSourceFile(fileName)!, this.compilerOptions);
+    }
+
+    @bind
+    private collectExternalReferences(fileName: string): Map<string, string | null> {
+        // TODO useSourceOfProjectReferenceRedirect
+        // TODO referenced files
+        const sourceFile = this.program.getSourceFile(fileName)!;
+        const references = new Set(findImports(sourceFile, ImportKind.All, false).map(({text}) => text));
+        if (ts.isExternalModule(sourceFile)) {
+            // if (isCompilerOptionEnabled(this.compilerOptions, 'importHelpers'))
+            //     references.add('tslib')
+            for (const augmentation of this.getFileMetaData(fileName).ambientModules)
+                references.add(augmentation);
+        }
+        const result = new Map<string, string | null>();
+        if (references.size === 0)
+            return result;
+        this.fileToProjectReference ??= createProjectReferenceMap(this.program.getResolvedProjectReferences());
+        const arr = Array.from(references);
+        const resolved = this.host.resolveModuleNames(arr, fileName, undefined, this.fileToProjectReference.get(fileName));
+        for (let i = 0; i < resolved.length; ++i)
+            result.set(arr[i], resolved[i]?.resolvedFileName ?? null);
+        return result;
     }
 }
 
@@ -171,13 +182,6 @@ function getBestMatchingPattern(moduleName: string, patternAmbientModules: Itera
     return longestMatch;
 }
 
-function addAllExceptSelf(receiver: Set<string>, list: Iterable<string> | undefined, current: string) {
-    if (list)
-        for (const file of list)
-            if (file !== current)
-                receiver.add(file);
-}
-
 function createProjectReferenceMap(references: ts.ResolvedProjectReference['references']) {
     const result = new Map<string, ts.ResolvedProjectReference>();
     for (const ref of iterateProjectReferences(references))
@@ -186,20 +190,13 @@ function createProjectReferenceMap(references: ts.ResolvedProjectReference['refe
     return result;
 }
 
-function addToListWithReverse(map: Map<string, string[]>, key: string, value: string, reverse?: Map<string, string[][]>) {
-    const list = addToList(map, key, value);
-    if (reverse !== undefined)
-        addToList(reverse, value, list);
-}
-
 function addToList<T>(map: Map<string, T[]>, key: string, value: T) {
-    let arr = map.get(key);
+    const arr = map.get(key);
     if (arr === undefined) {
-        map.set(key, arr = [value]);
+        map.set(key, [value]);
     } else {
         arr.push(value);
     }
-    return arr;
 }
 
 interface MetaData {
@@ -208,7 +205,7 @@ interface MetaData {
     isExternalModule: boolean;
 }
 
-function collectFileMetadata(sourceFile: ts.SourceFile): MetaData {
+function collectFileMetadata(sourceFile: ts.SourceFile, compilerOptions: ts.CompilerOptions): MetaData {
     let affectsGlobalScope: boolean | undefined;
     const ambientModules = new Set<string>();
     const isExternalModule = ts.isExternalModule(sourceFile);
@@ -218,7 +215,8 @@ function collectFileMetadata(sourceFile: ts.SourceFile): MetaData {
         } else if (isModuleDeclaration(statement) && statement.name.kind === ts.SyntaxKind.StringLiteral) {
             ambientModules.add(statement.name.text);
         } else if (isNamespaceExportDeclaration(statement)) {
-            affectsGlobalScope = true; // TODO that's only correct with allowUmdGlobalAccess compilerOption
+            if (isCompilerOptionEnabled(compilerOptions, 'allowUmdGlobalAccess'))
+                affectsGlobalScope = true;
         } else if (affectsGlobalScope === undefined) { // files that only consist of ambient modules do not affect global scope
             affectsGlobalScope = !isExternalModule;
         }

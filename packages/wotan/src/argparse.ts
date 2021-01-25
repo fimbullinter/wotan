@@ -53,6 +53,7 @@ export const GLOBAL_OPTIONS_SPEC = {
     exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
     project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
     references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
+    cache: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
     formatter: OptionParser.Factory.parsePrimitive('string'),
     fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
     extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
@@ -115,6 +116,9 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
             case '-r':
             case '--references':
                 ({index: i, argument: result.references} = parseOptionalBoolean(args, i));
+                break;
+            case '--cache':
+                ({index: i, argument: result.cache} = parseOptionalBoolean(args, i));
                 break;
             case '-e':
             case '--exclude':

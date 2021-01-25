@@ -33,6 +33,7 @@
     "@fimbul/bifrost": "^0.22.0",
     "inversify": "^5.0.0",
     "tslib": "^2.0.0",
-    "tslint": "^5.0.0"
+    "tslint": "^5.0.0",
+    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz"
   }
 }

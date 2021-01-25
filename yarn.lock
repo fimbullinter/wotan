@@ -3773,17 +3773,16 @@ tslint@^5.0.0:
     tslib "^1.8.0"
     tsutils "^2.29.0"
 
+tsutils@../../../tsutils/tsutils-3.19.1.tgz, tsutils@^3.19.1, tsutils@^3.5.0, tsutils@^3.5.1:
+  version "3.19.1"
+  resolved "../../../tsutils/tsutils-3.19.1.tgz#51c10066443cd4fd8818700f3b231ecbc522e0f1"
+  dependencies:
+    tslib "^1.8.1"
+
 tsutils@^2.29.0:
   version "2.29.0"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.29.0.tgz#32b488501467acbedd4b85498673a0812aca0b99"
   integrity sha512-g5JVHCIJwzfISaXpXE1qvNalca5Jwob6FjI4AoPlqMusJ6ftFE7IkkFoMhVLRgK+4Kx3gkzb8UZK5t5yTTvEmA==
-  dependencies:
-    tslib "^1.8.1"
-
-tsutils@^3.18.0, tsutils@^3.19.1, tsutils@^3.5.0, tsutils@^3.5.1:
-  version "3.19.1"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.19.1.tgz#d8566e0c51c82f32f9c25a4d367cd62409a547a9"
-  integrity sha512-GEdoBf5XI324lu7ycad7s6laADfnAqCw6wLGI+knxvw9vsIYBaJfYdmeCEG3FMMUiSm3OGgNb+m6utsWf5h9Vw==
   dependencies:
     tslib "^1.8.1"
 

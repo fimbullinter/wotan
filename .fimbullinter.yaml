@@ -1,3 +1,4 @@
 project:
   - tsconfig.json
 reportUselessDirectives: true
+cache: true

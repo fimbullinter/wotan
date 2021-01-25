@@ -7,6 +7,9 @@ import { Linter } from '../linter';
 import { Runner } from '../runner';
 import { ProcessorLoader } from '../services/processor-loader';
 import { GlobalOptions } from '@fimbul/ymir';
+import { ProgramStateFactory } from '../program-state';
+import { StatePersistence } from '../state-persistence';
+import { DependencyResolverFactory } from '../dependency-resolver';
 
 export function createCoreModule(globalOptions: GlobalOptions) {
     return new ContainerModule((bind) => {
@@ -17,6 +20,9 @@ export function createCoreModule(globalOptions: GlobalOptions) {
         bind(ProcessorLoader).toSelf();
         bind(Linter).toSelf();
         bind(Runner).toSelf();
+        bind(ProgramStateFactory).toSelf();
+        bind(StatePersistence).toSelf(); // TODO allow overriding
+        bind(DependencyResolverFactory).toSelf();
         bind(GlobalOptions).toConstantValue(globalOptions);
     });
 }

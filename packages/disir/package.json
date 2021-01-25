@@ -7,7 +7,7 @@
   "dependencies": {
     "@fimbul/ymir": "^0.22.0",
     "tslib": "^2.0.0",
-    "tsutils": "^3.5.0"
+    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz"
   },
   "peerDependencies": {
     "typescript": ">= 4.0.0 || >= 4.2.0-dev"

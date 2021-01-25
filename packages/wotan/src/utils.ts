@@ -217,12 +217,3 @@ export function djb2(str: string) {
         hash = ((hash << 5) + hash) + str.charCodeAt(i);
     return hash;
 }
-
-export function arraysAreEqual<T extends string | number | boolean | null | undefined>(a: ReadonlyArray<T>, b: ReadonlyArray<T>) {
-    if (a.length !== b.length)
-        return false;
-    for (let i = 0; i < a.length; ++i)
-        if (a[i] !== b[i])
-            return false;
-    return true;
-}
