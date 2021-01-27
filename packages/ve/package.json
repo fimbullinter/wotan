@@ -32,7 +32,6 @@
     "@fimbul/ymir": "^0.22.0",
     "parse5-sax-parser": "^6.0.0",
     "tslib": "^2.0.0",
-    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz",
     "void-elements": "^3.1.0"
   },
   "devDependencies": {

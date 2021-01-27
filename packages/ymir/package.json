@@ -27,7 +27,7 @@
     "inversify": "^5.0.0",
     "reflect-metadata": "^0.1.12",
     "tslib": "^2.0.0",
-    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz"
+    "tsutils": "^3.20.0"
   },
   "devDependencies": {
     "tsutils": "^3.5.0"

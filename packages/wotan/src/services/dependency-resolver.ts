@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind, isCompilerOptionEnabled } from 'tsutils';
-import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences } from './utils';
+import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences } from '../utils';
 import bind from 'bind-decorator';
-import { ProjectHost } from './project-host';
+import { ProjectHost } from '../project-host';
 
 export interface DependencyResolver {
     update(program: ts.Program, updatedFile: string): void;
@@ -18,7 +18,7 @@ export class DependencyResolverFactory {
     }
 }
 
-export interface DependencyResolverState {
+interface DependencyResolverState {
     affectsGlobalScope: readonly string[];
     ambientModules: ReadonlyMap<string, readonly string[]>;
     moduleAugmentations: ReadonlyMap<string, readonly string[]>;
@@ -72,8 +72,8 @@ class DependencyResolverImpl implements DependencyResolver {
             for (const file of files) {
                 const resolved = this.getExternalReferences(file).get(module);
                 // if an augmentation's identifier can be resolved from the declaring file, the augmentation applies to the resolved path
-                if (resolved != null) {
-                    addToList(moduleAugmentations, resolved, file);
+                if (resolved !== null) {
+                    addToList(moduleAugmentations, resolved!, file);
                 } else {
                     // if a pattern ambient module matches the augmented identifier, the augmentation applies to that
                     const matchingPattern = getBestMatchingPattern(module, patternAmbientModules.keys());
@@ -95,7 +95,7 @@ class DependencyResolverImpl implements DependencyResolver {
         return (this.state ??= this.buildState()).affectsGlobalScope;
     }
 
-    public getDependencies(file: string) { // TODO is it worth caching this?
+    public getDependencies(file: string) {
         this.state ??= this.buildState();
         const result = new Map<string, null | readonly string[]>();
         for (const [identifier, resolved] of this.getExternalReferences(file)) {
@@ -120,7 +120,10 @@ class DependencyResolverImpl implements DependencyResolver {
         const meta = this.fileMetadata.get(file)!;
         if (!meta.isExternalModule)
             for (const ambientModule of meta.ambientModules)
-                result.set(ambientModule, this.state[ambientModule.includes('*') ? 'patternAmbientModules' : 'ambientModules'].get(ambientModule)!);
+                result.set(
+                    ambientModule,
+                    this.state[ambientModule.includes('*') ? 'patternAmbientModules' : 'ambientModules'].get(ambientModule)!,
+                );
 
         return result;
     }
@@ -142,14 +145,12 @@ class DependencyResolverImpl implements DependencyResolver {
     private collectExternalReferences(fileName: string): Map<string, string | null> {
         // TODO useSourceOfProjectReferenceRedirect
         // TODO referenced files
+        // TODO add tslib if importHelpers is enabled
         const sourceFile = this.program.getSourceFile(fileName)!;
         const references = new Set(findImports(sourceFile, ImportKind.All, false).map(({text}) => text));
-        if (ts.isExternalModule(sourceFile)) {
-            // if (isCompilerOptionEnabled(this.compilerOptions, 'importHelpers'))
-            //     references.add('tslib')
+        if (ts.isExternalModule(sourceFile))
             for (const augmentation of this.getFileMetaData(fileName).ambientModules)
                 references.add(augmentation);
-        }
         const result = new Map<string, string | null>();
         if (references.size === 0)
             return result;

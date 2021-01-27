@@ -22,7 +22,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import { normalizeGlob } from 'normalize-glob';
-import { ProgramStateFactory } from './program-state';
+import { ProgramStateFactory } from './services/program-state';
 
 const log = debug('wotan:runner');
 
@@ -118,6 +118,8 @@ export class Runner {
                 const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
                 let summary: FileSummary;
                 const fix = shouldFix(sourceFile, options, originalName);
+                // TODO consider reportUselessDirectives in cache
+                const resultFromCache = programState?.getUpToDateResult(sourceFile.fileName, effectiveConfig);
                 if (fix) {
                     let updatedFile = false;
                     summary = this.linter.lintAndFix(
@@ -125,6 +127,7 @@ export class Runner {
                         originalContent,
                         effectiveConfig,
                         (content, range) => {
+                            invalidatedProgram = true;
                             const oldContent = sourceFile.text;
                             sourceFile = ts.updateSourceFile(sourceFile, content, range);
                             const hasErrors = hasParseErrors(sourceFile);
@@ -143,14 +146,13 @@ export class Runner {
                         mapped?.processor,
                         linterOptions,
                         // pass cached results so we can apply fixes from cache
-                        programState?.getUpToDateResult(file, effectiveConfig),
+                        resultFromCache,
                     );
                     if (updatedFile)
                         programState?.update(factory.getProgram(), sourceFile.fileName);
                 } else {
                     summary = {
-                        findings: programState?.getUpToDateResult(file, effectiveConfig) ||
-                            this.linter.getFindings(
+                        findings: resultFromCache ?? this.linter.getFindings(
                                 sourceFile,
                                 effectiveConfig,
                                 factory,
@@ -161,13 +163,10 @@ export class Runner {
                         content: originalContent,
                     };
                 }
-                programState?.setFileResult(file, effectiveConfig, summary.findings);
+                if (programState !== undefined && resultFromCache !== summary.findings)
+                    programState.setFileResult(file, effectiveConfig, summary.findings);
                 yield [originalName, summary];
             }
-            // TODO always use a ProgramState when fixing, but only load old state if --cache is enabled
-            // loop over the files for n iterations while fixes are applied
-            // after each fix, create a new old state from the previous old state and the current state
-            // that way we know whether we need to check the first file again if the last file was changed via autofix
             programState?.save();
         }
     }

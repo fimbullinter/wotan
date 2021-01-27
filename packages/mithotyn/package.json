@@ -32,8 +32,7 @@
     "editor"
   ],
   "dependencies": {
-    "mock-require": "^3.0.2",
-    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz"
+    "mock-require": "^3.0.2"
   },
   "devDependencies": {
     "@fimbul/wotan": "^0.16.0",

@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
-import { CachedFileSystem } from './services/cached-file-system';
-import { StaticProgramState } from './program-state';
+import { CachedFileSystem } from '../cached-file-system';
 import debug = require('debug');
 import * as yaml from 'js-yaml';
+import { StatePersistence, StaticProgramState } from '@fimbul/ymir';
 
 const log = debug('wotan:statePersistence');
 
@@ -14,7 +14,7 @@ interface CacheFileContent {
 const CACHE_VERSION = '1';
 
 @injectable()
-export class StatePersistence {
+export class DefaultStatePersistence implements StatePersistence {
     constructor(private fs: CachedFileSystem) {}
 
     public loadState(project: string): StaticProgramState | undefined {

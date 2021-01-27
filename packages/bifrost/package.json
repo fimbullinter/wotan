@@ -33,7 +33,7 @@
     "@fimbul/ymir": "^0.22.0",
     "get-caller-file": "^2.0.0",
     "tslib": "^2.0.0",
-    "tsutils": "../../../tsutils/tsutils-3.19.1.tgz"
+    "tsutils": "^3.5.0"
   },
   "devDependencies": {
     "@types/get-caller-file": "^1.0.0"
