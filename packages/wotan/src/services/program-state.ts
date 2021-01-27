@@ -23,7 +23,7 @@ export class ProgramStateFactory {
     constructor(private resolverFactory: DependencyResolverFactory, private statePersistence: StatePersistence) {}
 
     public create(program: ts.Program, host: ProjectHost, tsconfigPath: string) {
-        return new ProgramStateImpl(program, this.resolverFactory.create(host, program), this.statePersistence, tsconfigPath);
+        return new ProgramStateImpl(host, program, this.resolverFactory.create(host, program), this.statePersistence, tsconfigPath);
     }
 }
 
@@ -34,7 +34,9 @@ interface FileResults {
 
 const oldStateSymbol = Symbol('oldState');
 class ProgramStateImpl implements ProgramState {
-    private optionsHash = computeCompilerOptionsHash(this.program.getCompilerOptions());
+    private projectDirectory = path.posix.dirname(this.project);
+    private canonicalProjectDirectory = this.host.getCanonicalFileName(this.projectDirectory);
+    private optionsHash = computeCompilerOptionsHash(this.program.getCompilerOptions(), this.projectDirectory);
     private assumeChangesOnlyAffectDirectDependencies =
         isCompilerOptionEnabled(this.program.getCompilerOptions(), 'assumeChangesOnlyAffectDirectDependencies');
     private fileHashes = new Map<string, string>();
@@ -42,10 +44,10 @@ class ProgramStateImpl implements ProgramState {
     private relativePathNames = new Map<string, string>();
     private [oldStateSymbol]: StaticProgramState | undefined;
     private recheckOldState = true;
-    private projectDirectory = path.posix.dirname(this.project);
     private dependenciesUpToDate = new Map<string, boolean>();
 
     constructor(
+        private host: ts.CompilerHost,
         private program: ts.Program,
         private resolver: DependencyResolver,
         private statePersistence: StatePersistence,
@@ -100,7 +102,7 @@ class ProgramStateImpl implements ProgramState {
 
     @bind
     private makeRelativePath(fileName: string) {
-        return path.posix.relative(this.projectDirectory, fileName);
+        return path.posix.relative(this.canonicalProjectDirectory, this.host.getCanonicalFileName(fileName));
     }
 
     public getUpToDateResult(fileName: string, config: ReducedConfiguration) {
@@ -364,112 +366,129 @@ function compareHashKey(a: {hash: string}, b: {hash: string}) {
     return a.hash < b.hash ? -1 : a.hash === b.hash ? 0 : 1;
 }
 
-function computeCompilerOptionsHash(options: ts.CompilerOptions) {
-    const obj: Record<string, unknown> = {};
-    for (const key of Object.keys(options).sort())
-        if (isKnownCompilerOption(key))
-            obj[key] = options[key]; // TODO make paths relative and use correct casing
-    return '' + djb2(JSON.stringify(obj));
+const enum CompilerOptionKind {
+    Ignore = 0,
+    Value = 1,
+    Path = 2,
+    PathArray = 3,
 }
 
-function isKnownCompilerOption(option: string): boolean {
-    type KnownOptions = // tslint:disable-next-line:no-unused
-        {[K in keyof ts.CompilerOptions]: string extends K ? never : K} extends {[K in keyof ts.CompilerOptions]: infer P} ? P : never;
-    const o = <KnownOptions>option;
-    switch (o) {
-        case 'allowJs':
-        case 'allowSyntheticDefaultImports':
-        case 'allowUmdGlobalAccess':
-        case 'allowUnreachableCode':
-        case 'allowUnusedLabels':
-        case 'alwaysStrict':
-        case 'assumeChangesOnlyAffectDirectDependencies':
-        case 'baseUrl':
-        case 'charset':
-        case 'checkJs':
-        case 'composite':
-        case 'declaration':
-        case 'declarationDir':
-        case 'declarationMap':
-        case 'disableReferencedProjectLoad':
-        case 'disableSizeLimit':
-        case 'disableSourceOfProjectReferenceRedirect':
-        case 'disableSolutionSearching':
-        case 'downlevelIteration':
-        case 'emitBOM':
-        case 'emitDeclarationOnly':
-        case 'emitDecoratorMetadata':
-        case 'esModuleInterop':
-        case 'experimentalDecorators':
-        case 'forceConsistentCasingInFileNames':
-        case 'importHelpers':
-        case 'importsNotUsedAsValues':
-        case 'incremental':
-        case 'inlineSourceMap':
-        case 'inlineSources':
-        case 'isolatedModules':
-        case 'jsx':
-        case 'jsxFactory':
-        case 'jsxFragmentFactory':
-        case 'jsxImportSource':
-        case 'keyofStringsOnly':
-        case 'lib':
-        case 'locale':
-        case 'mapRoot':
-        case 'maxNodeModuleJsDepth':
-        case 'module':
-        case 'moduleResolution':
-        case 'newLine':
-        case 'noEmit':
-        case 'noEmitHelpers':
-        case 'noEmitOnError':
-        case 'noErrorTruncation':
-        case 'noFallthroughCasesInSwitch':
-        case 'noImplicitAny':
-        case 'noImplicitReturns':
-        case 'noImplicitThis':
-        case 'noImplicitUseStrict':
-        case 'noLib':
-        case 'noPropertyAccessFromIndexSignature':
-        case 'noResolve':
-        case 'noStrictGenericChecks':
-        case 'noUncheckedIndexedAccess':
-        case 'noUnusedLocals':
-        case 'noUnusedParameters':
-        case 'out':
-        case 'outDir':
-        case 'outFile':
-        case 'paths':
-        case 'preserveConstEnums':
-        case 'preserveSymlinks':
-        case 'project':
-        case 'reactNamespace':
-        case 'removeComments':
-        case 'resolveJsonModule':
-        case 'rootDir':
-        case 'rootDirs':
-        case 'skipDefaultLibCheck':
-        case 'skipLibCheck':
-        case 'sourceMap':
-        case 'sourceRoot':
-        case 'strict':
-        case 'strictBindCallApply':
-        case 'strictFunctionTypes':
-        case 'strictNullChecks':
-        case 'strictPropertyInitialization':
-        case 'stripInternal':
-        case 'suppressExcessPropertyErrors':
-        case 'suppressImplicitAnyIndexErrors':
-        case 'target':
-        case 'traceResolution':
-        case 'tsBuildInfoFile':
-        case 'typeRoots':
-        case 'types':
-        case 'useDefineForClassFields':
-            return true;
-        default:
-            type AssertNever<T extends never> = T;
-            return <AssertNever<typeof o>>false;
+type KnownCompilerOptions = // tslint:disable-next-line:no-unused
+    {[K in keyof ts.CompilerOptions]: string extends K ? never : K} extends {[K in keyof ts.CompilerOptions]: infer P} ? P : never;
+
+type AdditionalCompilerOptions = 'pathsBasePath';
+
+const compilerOptionKinds: Record<KnownCompilerOptions | AdditionalCompilerOptions, CompilerOptionKind> = {
+    allowJs: CompilerOptionKind.Value,
+    allowSyntheticDefaultImports: CompilerOptionKind.Value,
+    allowUmdGlobalAccess: CompilerOptionKind.Value,
+    allowUnreachableCode: CompilerOptionKind.Value,
+    allowUnusedLabels: CompilerOptionKind.Value,
+    alwaysStrict: CompilerOptionKind.Value,
+    assumeChangesOnlyAffectDirectDependencies: CompilerOptionKind.Value,
+    baseUrl: CompilerOptionKind.Path,
+    charset: CompilerOptionKind.Value,
+    checkJs: CompilerOptionKind.Value,
+    composite: CompilerOptionKind.Value,
+    declaration: CompilerOptionKind.Value,
+    declarationDir: CompilerOptionKind.Path,
+    declarationMap: CompilerOptionKind.Value,
+    disableReferencedProjectLoad: CompilerOptionKind.Ignore,
+    disableSizeLimit: CompilerOptionKind.Value,
+    disableSourceOfProjectReferenceRedirect: CompilerOptionKind.Value,
+    disableSolutionSearching: CompilerOptionKind.Ignore,
+    downlevelIteration: CompilerOptionKind.Value,
+    emitBOM: CompilerOptionKind.Value,
+    emitDeclarationOnly: CompilerOptionKind.Value,
+    emitDecoratorMetadata: CompilerOptionKind.Value,
+    esModuleInterop: CompilerOptionKind.Value,
+    experimentalDecorators: CompilerOptionKind.Value,
+    forceConsistentCasingInFileNames: CompilerOptionKind.Value,
+    importHelpers: CompilerOptionKind.Value,
+    importsNotUsedAsValues: CompilerOptionKind.Value,
+    incremental: CompilerOptionKind.Value,
+    inlineSourceMap: CompilerOptionKind.Value,
+    inlineSources: CompilerOptionKind.Value,
+    isolatedModules: CompilerOptionKind.Value,
+    jsx: CompilerOptionKind.Value,
+    jsxFactory: CompilerOptionKind.Value,
+    jsxFragmentFactory: CompilerOptionKind.Value,
+    jsxImportSource: CompilerOptionKind.Value,
+    keyofStringsOnly: CompilerOptionKind.Value,
+    lib: CompilerOptionKind.Value,
+    locale: CompilerOptionKind.Value,
+    mapRoot: CompilerOptionKind.Value,
+    maxNodeModuleJsDepth: CompilerOptionKind.Value,
+    module: CompilerOptionKind.Value,
+    moduleResolution: CompilerOptionKind.Value,
+    newLine: CompilerOptionKind.Value,
+    noEmit: CompilerOptionKind.Value,
+    noEmitHelpers: CompilerOptionKind.Value,
+    noEmitOnError: CompilerOptionKind.Value,
+    noErrorTruncation: CompilerOptionKind.Value,
+    noFallthroughCasesInSwitch: CompilerOptionKind.Value,
+    noImplicitAny: CompilerOptionKind.Value,
+    noImplicitReturns: CompilerOptionKind.Value,
+    noImplicitThis: CompilerOptionKind.Value,
+    noImplicitUseStrict: CompilerOptionKind.Value,
+    noLib: CompilerOptionKind.Value,
+    noPropertyAccessFromIndexSignature: CompilerOptionKind.Value,
+    noResolve: CompilerOptionKind.Value,
+    noStrictGenericChecks: CompilerOptionKind.Value,
+    noUncheckedIndexedAccess: CompilerOptionKind.Value,
+    noUnusedLocals: CompilerOptionKind.Value,
+    noUnusedParameters: CompilerOptionKind.Value,
+    out: CompilerOptionKind.Value,
+    outDir: CompilerOptionKind.Path,
+    outFile: CompilerOptionKind.Path,
+    paths: CompilerOptionKind.Value,
+    pathsBasePath: CompilerOptionKind.Path,
+    preserveConstEnums: CompilerOptionKind.Value,
+    preserveSymlinks: CompilerOptionKind.Value,
+    project: CompilerOptionKind.Ignore,
+    reactNamespace: CompilerOptionKind.Value,
+    removeComments: CompilerOptionKind.Value,
+    resolveJsonModule: CompilerOptionKind.Value,
+    rootDir: CompilerOptionKind.Path,
+    rootDirs: CompilerOptionKind.PathArray,
+    skipDefaultLibCheck: CompilerOptionKind.Value,
+    skipLibCheck: CompilerOptionKind.Value,
+    sourceMap: CompilerOptionKind.Value,
+    sourceRoot: CompilerOptionKind.Value,
+    strict: CompilerOptionKind.Value,
+    strictBindCallApply: CompilerOptionKind.Value,
+    strictFunctionTypes: CompilerOptionKind.Value,
+    strictNullChecks: CompilerOptionKind.Value,
+    strictPropertyInitialization: CompilerOptionKind.Value,
+    stripInternal: CompilerOptionKind.Value,
+    suppressExcessPropertyErrors: CompilerOptionKind.Value,
+    suppressImplicitAnyIndexErrors: CompilerOptionKind.Value,
+    target: CompilerOptionKind.Value,
+    traceResolution: CompilerOptionKind.Value,
+    tsBuildInfoFile: CompilerOptionKind.Ignore,
+    typeRoots: CompilerOptionKind.PathArray,
+    types: CompilerOptionKind.Value,
+    useDefineForClassFields: CompilerOptionKind.Value,
+};
+
+function computeCompilerOptionsHash(options: ts.CompilerOptions, relativeTo: string) {
+    const obj: Record<string, unknown> = {};
+    for (const key of Object.keys(options).sort()) {
+        switch (compilerOptionKinds[<KnownCompilerOptions>key]) {
+            case CompilerOptionKind.Value:
+                obj[key] = options[key];
+                break;
+            case CompilerOptionKind.Path:
+                obj[key] = makeRelativePath(<string>options[key]);
+                break;
+            case CompilerOptionKind.PathArray:
+                obj[key] = (<string[]>options[key]).map(makeRelativePath);
+        }
+    }
+    return '' + djb2(JSON.stringify(obj));
+
+    function makeRelativePath(p: string) {
+        return path.posix.relative(relativeTo, p);
     }
 }
 
