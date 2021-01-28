@@ -523,6 +523,8 @@ export interface StatePersistence {
 export abstract class StatePersistence {}
 
 export interface StaticProgramState {
+    /** Version of the cache format */
+    readonly v: number;
     /** TypeScript version */
     readonly ts: string;
     /** Hash of compilerOptions */

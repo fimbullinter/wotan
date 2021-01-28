@@ -7,11 +7,11 @@ import { StatePersistence, StaticProgramState } from '@fimbul/ymir';
 const log = debug('wotan:statePersistence');
 
 interface CacheFileContent {
-    v: string;
+    v: number;
     state: StaticProgramState;
 }
 
-const CACHE_VERSION = '1';
+const CACHE_VERSION = 1;
 
 @injectable()
 export class DefaultStatePersistence implements StatePersistence {

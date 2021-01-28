@@ -32,6 +32,14 @@ interface FileResults {
     readonly result: ReadonlyArray<Finding>;
 }
 
+const enum DependencyState {
+    Unknown = 0,
+    Outdated = 1,
+    Ok = 2,
+}
+
+const STATE_VERSION = 1;
+
 const oldStateSymbol = Symbol('oldState');
 class ProgramStateImpl implements ProgramState {
     private projectDirectory = path.posix.dirname(this.project);
@@ -44,7 +52,7 @@ class ProgramStateImpl implements ProgramState {
     private relativePathNames = new Map<string, string>();
     private [oldStateSymbol]: StaticProgramState | undefined;
     private recheckOldState = true;
-    private dependenciesUpToDate = new Map<string, boolean>();
+    private dependenciesUpToDate: Uint8Array;
 
     constructor(
         private host: ts.CompilerHost,
@@ -54,7 +62,13 @@ class ProgramStateImpl implements ProgramState {
         private project: string,
     ) {
         const oldState = this.statePersistence.loadState(project);
-        this[oldStateSymbol] = (oldState?.ts !== ts.version || oldState.options !== this.optionsHash) ? undefined : oldState;
+        if (oldState?.v !== STATE_VERSION || oldState.ts !== ts.version || oldState.options !== this.optionsHash) {
+            this[oldStateSymbol] = undefined;
+            this.dependenciesUpToDate = new Uint8Array(0);
+        } else {
+            this[oldStateSymbol] = oldState;
+            this.dependenciesUpToDate = new Uint8Array(oldState.files.length);
+        }
     }
 
     /** get old state if global files didn't change */
@@ -84,7 +98,7 @@ class ProgramStateImpl implements ProgramState {
         this.resolver.update(program, updatedFile);
         this.fileHashes.delete(updatedFile);
         this.recheckOldState = true;
-        this.dependenciesUpToDate = new Map();
+        this.dependenciesUpToDate.fill(DependencyState.Unknown);
     }
 
     private getFileHash(file: string) {
@@ -131,10 +145,10 @@ class ProgramStateImpl implements ProgramState {
             // we need to create a state where the file is up-to-date
             // so we replace the old state with the current state
             // this includes all results from old state that were still up-to-date and all file results if they were still valid
-            this[oldStateSymbol] = this.aggregate();
+            const newState = this[oldStateSymbol] = this.aggregate();
             this.recheckOldState = false;
             this.fileResults = new Map();
-            this.dependenciesUpToDate = new Map(this.program.getSourceFiles().map((f) => [f.fileName, true]));
+            this.dependenciesUpToDate = new Uint8Array(newState.files.length).fill(DependencyState.Ok);
         }
         this.fileResults.set(fileName, {result, config: '' + djb2(JSON.stringify(stripConfig(config)))});
     }
@@ -147,68 +161,86 @@ class ProgramStateImpl implements ProgramState {
         if (!(relative in oldState.lookup))
             return false;
         const index = oldState.lookup[relative];
-        return oldState.files[index].hash === this.getFileHash(fileName) &&
-            this.fileDependenciesUpToDate(fileName, index, oldState);
+        if (oldState.files[index].hash !== this.getFileHash(fileName))
+            return false;
+        switch (<DependencyState>this.dependenciesUpToDate[index]) {
+            case DependencyState.Unknown:
+                return this.fileDependenciesUpToDate(fileName, index, oldState);
+            case DependencyState.Ok:
+                return true;
+            case DependencyState.Outdated:
+                return false;
+        }
     }
 
-    private fileDependenciesUpToDate(fileName: string, index: number, oldState: StaticProgramState): boolean {
+    private fileDependenciesUpToDate(fileName: string, index: number, oldState: StaticProgramState): boolean { // TODO something is wrong
+        // File names that are waiting to be processed, each iteration of the loop processes one file
         const fileNameQueue = [fileName];
-        const stateQueue = [index];
+        // For each entry in `fileNameQueue` this holds the index of that file in `oldState.files`
+        const indexQueue = [index];
+        // If a file is waiting for its children to be processed, it is moved from `indexQueue` to `parents`
+        const parents: number[] = [];
+        // For each entry in `parents` this holds the number of children that still need to be processed for that file
         const childCounts = [];
+        // For each entry in `parents` this holds the index in of the earliest circular dependency in `parents`.
+        // For example, a value of `[Number.MAX_SAFE_INTEGER, 0]` means that `parents[1]` has a dependency on `parents[0]` (the root file).
         const circularDependenciesQueue: number[] = [];
-        const cycles: Array<Set<string>> = [];
+        // If a file has a circular on one of its parents, it is moved from `indexQueue` to the current cycle
+        // or creates a new cycle if its parent is not already in a cycle.
+        const cycles: Array<Set<number>> = [];
         while (true) {
-            fileName = fileNameQueue[fileNameQueue.length - 1];
-            switch (this.dependenciesUpToDate.get(fileName)) {
-                case false:
-                    return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
-                case undefined: {
+            index = indexQueue.pop()!;
+            fileName = fileNameQueue.pop()!;
+            switch (<DependencyState>this.dependenciesUpToDate[index]) {
+                case DependencyState.Outdated:
+                    return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                case DependencyState.Unknown: {
                     let earliestCircularDependency = Number.MAX_SAFE_INTEGER;
                     let childCount = 0;
 
                     for (const cycle of cycles) {
-                        if (cycle.has(fileName)) {
+                        if (cycle.has(index)) {
                             // we already know this is a circular dependency, skip this one and simply mark the parent as circular
                             earliestCircularDependency =
-                                findCircularDependencyOfCycle(fileNameQueue, childCounts, circularDependenciesQueue, cycle);
+                                findCircularDependencyOfCycle(parents, circularDependenciesQueue, cycle);
                             break;
                         }
                     }
-                    if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER) {
-                        const old = oldState.files[stateQueue[stateQueue.length - 1]];
+                    if (earliestCircularDependency === Number.MAX_SAFE_INTEGER) {
+                        const old = oldState.files[index];
                         const dependencies = this.resolver.getDependencies(fileName);
                         const keys = Object.keys(old.dependencies);
 
                         if (dependencies.size !== keys.length)
-                            return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
+                            return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                         for (const key of keys) {
                             let newDeps = dependencies.get(key);
                             if (newDeps === undefined)
-                                return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
+                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                             const oldDeps = old.dependencies[key];
                             if (oldDeps === null) {
                                 if (newDeps !== null)
-                                    return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
+                                    return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                                 continue;
                             }
                             if (newDeps === null)
-                                return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
+                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                             newDeps = Array.from(new Set(newDeps));
                             if (newDeps.length !== oldDeps.length)
-                                return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
+                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                             const newDepsWithHash = this.sortByHash(newDeps);
                             for (let i = 0; i < newDepsWithHash.length; ++i) {
                                 const oldDepState = oldState.files[oldDeps[i]];
                                 if (newDepsWithHash[i].hash !== oldDepState.hash)
-                                    return markSelfAndParentsAsOutdated(fileNameQueue, childCounts, this.dependenciesUpToDate);
-                                if (!this.assumeChangesOnlyAffectDirectDependencies) {
-                                    const indexInQueue = findParent(stateQueue, childCounts, oldDeps[i]);
+                                    return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                                if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithHash[i].fileName) {
+                                    const indexInQueue = parents.indexOf(oldDeps[i])
                                     if (indexInQueue === -1) {
                                         // no circular dependency
                                         fileNameQueue.push(newDepsWithHash[i].fileName);
-                                        stateQueue.push(oldDeps[i]);
+                                        indexQueue.push(oldDeps[i]);
                                         ++childCount;
-                                    } else if (indexInQueue < earliestCircularDependency && newDepsWithHash[i].fileName !== fileName) {
+                                    } else if (indexInQueue < earliestCircularDependency) {
                                         earliestCircularDependency = indexInQueue;
                                     }
                                 }
@@ -216,56 +248,36 @@ class ProgramStateImpl implements ProgramState {
                         }
                     }
 
-                    if (earliestCircularDependency === Number.MAX_SAFE_INTEGER) {
-                        this.dependenciesUpToDate.set(fileName, true);
-                    } else {
-                        const parentCircularDep = circularDependenciesQueue[circularDependenciesQueue.length - 1];
-                        if (parentCircularDep === Number.MAX_SAFE_INTEGER) {
-                            cycles.push(new Set([fileName]));
-                        } else {
-                            cycles[cycles.length - 1].add(fileName);
-                        }
-                        if (earliestCircularDependency < parentCircularDep)
-                            circularDependenciesQueue[circularDependenciesQueue.length - 1] = earliestCircularDependency;
+                    if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER) {
+                        earliestCircularDependency =
+                            setCircularDependency(parents, circularDependenciesQueue, index, cycles, earliestCircularDependency);
+                    } else if (childCount === 0) {
+                        this.dependenciesUpToDate[index] = DependencyState.Ok;
                     }
                     if (childCount !== 0) {
+                        parents.push(index);
                         childCounts.push(childCount);
                         circularDependenciesQueue.push(earliestCircularDependency);
                         continue;
                     }
                 }
             }
+            // we only get here for files with no children to process
 
-            fileNameQueue.pop();
-            stateQueue.pop();
-            if (fileNameQueue.length === 0)
-                return true;
+            if (parents.length === 0)
+                return true; // only happens if the initial file has no dependencies or they are all already known as Ok
 
             while (--childCounts[childCounts.length - 1] === 0) {
+                index = parents.pop()!;
                 childCounts.pop();
-                stateQueue.pop();
-                fileName = fileNameQueue.pop()!;
                 const earliestCircularDependency = circularDependenciesQueue.pop()!;
-                if (earliestCircularDependency >= stateQueue.length) {
-                    this.dependenciesUpToDate.set(fileName, true); // cycle ends here
+                if (earliestCircularDependency >= parents.length) {
+                    this.dependenciesUpToDate[index] = DependencyState.Ok;
                     if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER)
-                        for (const f of cycles.pop()!)
-                            this.dependenciesUpToDate.set(f, true); // update result for files that had a circular dependency on this one
-                } else {
-                    const parentCircularDep = circularDependenciesQueue[circularDependenciesQueue.length - 1];
-                    if (parentCircularDep === Number.MAX_SAFE_INTEGER) {
-                        cycles[cycles.length - 1].add(fileName); // parent had no cycle, keep the existing one
-                    } else if (!cycles[cycles.length - 1].has(fileName)) {
-                        const currentCycle = cycles.pop()!;
-                        const previousCycle = cycles[cycles.length - 1];
-                        previousCycle.add(fileName);
-                        for (const f of currentCycle)
-                            previousCycle.add(f); // merge cycles
-                    }
-                    if (earliestCircularDependency < circularDependenciesQueue[circularDependenciesQueue.length - 1])
-                        circularDependenciesQueue[circularDependenciesQueue.length - 1] = earliestCircularDependency;
+                        for (const dep of cycles.pop()!) // cycle ends here
+                            this.dependenciesUpToDate[dep] = DependencyState.Ok; // update result for files that had a circular dependency on this one
                 }
-                if (fileNameQueue.length === 0)
+                if (parents.length === 0)
                     return true;
             }
         }
@@ -312,6 +324,7 @@ class ProgramStateImpl implements ProgramState {
         return {
             files,
             lookup,
+            v: STATE_VERSION,
             ts: ts.version,
             global: this.sortByHash(this.resolver.getFilesAffectingGlobalScope()).map(mapToIndex),
             options: this.optionsHash,
@@ -325,40 +338,60 @@ class ProgramStateImpl implements ProgramState {
     }
 }
 
-function findCircularDependencyOfCycle(
-    fileNameQueue: readonly string[],
-    childCounts: readonly number[],
-    circularDependencies: readonly number[],
-    cycle: ReadonlySet<string>,
-) {
-    if (circularDependencies[0] !== Number.MAX_SAFE_INTEGER && cycle.has(fileNameQueue[0]))
-        return circularDependencies[0];
-    for (let i = 0, current = 0; i < childCounts.length; ++i) {
-        current += childCounts[i];
-        const dep = circularDependencies[current];
-        if (dep !== Number.MAX_SAFE_INTEGER && cycle.has(fileNameQueue[current]))
+function findCircularDependencyOfCycle(parents: readonly number[], circularDependencies: readonly number[], cycle: ReadonlySet<number>) {
+    for (let i = 0; i < parents.length; ++i) {
+        const dep = circularDependencies[i];
+        if (dep !== Number.MAX_SAFE_INTEGER && cycle.has(parents[i]))
             return dep;
     }
     throw new Error('should never happen');
 }
 
-function findParent(stateQueue: readonly number[], childCounts: readonly number[], needle: number): number {
-    if (stateQueue[0] === needle)
-        return 0;
-    for (let i = 0, current = 0; i < childCounts.length; ++i) {
-        current += childCounts[i];
-        if (stateQueue[current] === needle)
-            return current;
+function setCircularDependency(parents: readonly number[], circularDependencies: number[], self: number, cycles: Array<Set<number>>, earliestCircularDependency: number) {
+    let cyclesToMerge = 0
+    for (let i = circularDependencies.length - 1, inCycle = false; i >= earliestCircularDependency; --i) {
+        const dep = circularDependencies[i];
+        if (dep === Number.MAX_SAFE_INTEGER) {
+            inCycle = false;
+        } else {
+            if (!inCycle) {
+                ++cyclesToMerge;
+                inCycle = true;
+            }
+            if (dep === i) {
+                inCycle = false; // if cycle ends here, the next parent might start a new one
+            } else if (dep <= earliestCircularDependency) {
+                earliestCircularDependency = dep;
+                break;
+            }
+        }
     }
-    return -1;
+    let targetCycle;
+    if (cyclesToMerge === 0) {
+        targetCycle = new Set<number>();
+        cycles.push(targetCycle);
+    } else {
+        targetCycle = cycles[cycles.length - cyclesToMerge];
+        while (--cyclesToMerge)
+            for (const d of cycles.pop()!)
+                targetCycle.add(d);
+    }
+    targetCycle.add(self);
+    for (let i = circularDependencies.length - 1; i >= earliestCircularDependency; --i) {
+        targetCycle.add(parents[i]);
+        circularDependencies[i] = earliestCircularDependency;
+    }
+    return earliestCircularDependency;
 }
 
-function markSelfAndParentsAsOutdated(fileNameQueue: readonly string[], childCounts: readonly number[], results: Map<string, boolean>) {
-    results.set(fileNameQueue[0], false);
-    for (let i = 0, current = 0; i < childCounts.length; ++i) {
-        current += childCounts[i];
-        results.set(fileNameQueue[current], false);
+function markAsOutdated(parents: readonly number[], index: number, cycles: ReadonlyArray<ReadonlySet<number>>,results: Uint8Array) {
+    results[index] = DependencyState.Outdated;
+    for (index of parents) {
+        results[index] = DependencyState.Outdated;
     }
+    for (const cycle of cycles)
+        for (index of cycle)
+            results[index] = DependencyState.Outdated;
     return false;
 }
 
