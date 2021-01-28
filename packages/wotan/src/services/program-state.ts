@@ -124,9 +124,9 @@ class ProgramStateImpl implements ProgramState {
         if (oldState === undefined)
             return;
         const relative = this.getRelativePath(fileName);
-        if (!(relative in oldState.lookup))
-            return;
         const index = oldState.lookup[relative];
+        if (index === undefined)
+            return;
         const old = oldState.files[index];
         if (
             old.result === undefined ||
@@ -158,10 +158,8 @@ class ProgramStateImpl implements ProgramState {
         if (oldState === undefined)
             return false;
         const relative = this.getRelativePath(fileName);
-        if (!(relative in oldState.lookup))
-            return false;
         const index = oldState.lookup[relative];
-        if (oldState.files[index].hash !== this.getFileHash(fileName))
+        if (index === undefined || oldState.files[index].hash !== this.getFileHash(fileName))
             return false;
         switch (<DependencyState>this.dependenciesUpToDate[index]) {
             case DependencyState.Unknown:
@@ -304,12 +302,14 @@ class ProgramStateImpl implements ProgramState {
         for (let i = 0; i < sourceFiles.length; ++i)
             lookup[this.getRelativePath(sourceFiles[i].fileName)] = i;
         for (const file of sourceFiles) {
-            const relativePath = this.relativePathNames.get(file.fileName)!;
             let results = this.fileResults.get(file.fileName);
-            if (results === undefined && oldState !== undefined && relativePath in oldState.lookup) {
-                const old = oldState.files[oldState.lookup[relativePath]];
-                if (old.result !== undefined)
-                    results = <FileResults>old;
+            if (results === undefined && oldState !== undefined) {
+                const index = oldState.lookup[this.relativePathNames.get(file.fileName)!];
+                if (index !== undefined) {
+                    const old = oldState.files[index];
+                    if (old.result !== undefined)
+                        results = <FileResults>old;
+                }
             }
             if (results !== undefined && !this.isFileUpToDate(file.fileName)) {
                 log('Discarding outdated results for %s', file.fileName);

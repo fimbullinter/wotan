@@ -153,12 +153,12 @@ export class Runner {
                 } else {
                     summary = {
                         findings: resultFromCache ?? this.linter.getFindings(
-                                sourceFile,
-                                effectiveConfig,
-                                factory,
-                                mapped?.processor,
-                                linterOptions,
-                            ),
+                            sourceFile,
+                            effectiveConfig,
+                            factory,
+                            mapped?.processor,
+                            linterOptions,
+                        ),
                         fixes: 0,
                         content: originalContent,
                     };
