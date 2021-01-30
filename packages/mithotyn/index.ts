@@ -58,7 +58,7 @@ function createProxy(
     interceptor: Partial<import('@fimbul/wotan/language-service').PartialLanguageServiceInterceptor>,
     log: (m: string) => void,
 ) {
-    const proxy = Object.create(null); // tslint:disable-line:no-null-keyword
+    const proxy = Object.create(null);
     for (const method of Object.keys(ls)) {
         if (typeof (<any>interceptor)[method] === 'function') {
             proxy[method] = (...args: any[]) => {

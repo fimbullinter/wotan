@@ -22,6 +22,7 @@ export interface ProgramState {
 export class ProgramStateFactory {
     constructor(private resolverFactory: DependencyResolverFactory, private statePersistence: StatePersistence) {}
 
+    // TODO don't depend on ProjectHost
     public create(program: ts.Program, host: ProjectHost, tsconfigPath: string) {
         return new ProgramStateImpl(host, program, this.resolverFactory.create(host, program), this.statePersistence, tsconfigPath);
     }
@@ -232,7 +233,7 @@ class ProgramStateImpl implements ProgramState {
                                 if (newDepsWithHash[i].hash !== oldDepState.hash)
                                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                                 if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithHash[i].fileName) {
-                                    const indexInQueue = parents.indexOf(oldDeps[i])
+                                    const indexInQueue = parents.indexOf(oldDeps[i]);
                                     if (indexInQueue === -1) {
                                         // no circular dependency
                                         fileNameQueue.push(newDepsWithHash[i].fileName);
@@ -273,7 +274,8 @@ class ProgramStateImpl implements ProgramState {
                     this.dependenciesUpToDate[index] = DependencyState.Ok;
                     if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER)
                         for (const dep of cycles.pop()!) // cycle ends here
-                            this.dependenciesUpToDate[dep] = DependencyState.Ok; // update result for files that had a circular dependency on this one
+                            // update result for files that had a circular dependency on this one
+                            this.dependenciesUpToDate[dep] = DependencyState.Ok;
                 }
                 if (parents.length === 0)
                     return true;
@@ -347,8 +349,14 @@ function findCircularDependencyOfCycle(parents: readonly number[], circularDepen
     throw new Error('should never happen');
 }
 
-function setCircularDependency(parents: readonly number[], circularDependencies: number[], self: number, cycles: Array<Set<number>>, earliestCircularDependency: number) {
-    let cyclesToMerge = 0
+function setCircularDependency(
+    parents: readonly number[],
+    circularDependencies: number[],
+    self: number,
+    cycles: Array<Set<number>>,
+    earliestCircularDependency: number,
+) {
+    let cyclesToMerge = 0;
     for (let i = circularDependencies.length - 1, inCycle = false; i >= earliestCircularDependency; --i) {
         const dep = circularDependencies[i];
         if (dep === Number.MAX_SAFE_INTEGER) {
@@ -384,11 +392,10 @@ function setCircularDependency(parents: readonly number[], circularDependencies:
     return earliestCircularDependency;
 }
 
-function markAsOutdated(parents: readonly number[], index: number, cycles: ReadonlyArray<ReadonlySet<number>>,results: Uint8Array) {
+function markAsOutdated(parents: readonly number[], index: number, cycles: ReadonlyArray<ReadonlySet<number>>, results: Uint8Array) {
     results[index] = DependencyState.Outdated;
-    for (index of parents) {
+    for (index of parents)
         results[index] = DependencyState.Outdated;
-    }
     for (const cycle of cycles)
         for (index of cycle)
             results[index] = DependencyState.Outdated;

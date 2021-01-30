@@ -363,3 +363,42 @@ export interface FileFilter {
     /** @returns `true` if the file should be linted, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
     filter(file: ts.SourceFile): boolean;
 }
+export interface StatePersistence {
+    loadState(project: string): StaticProgramState | undefined;
+    saveState(project: string, state: StaticProgramState): void;
+}
+export declare abstract class StatePersistence {
+}
+export interface StaticProgramState {
+    /** Version of the cache format */
+    readonly v: number;
+    /** TypeScript version */
+    readonly ts: string;
+    /** Hash of compilerOptions */
+    readonly options: string;
+    /** Maps filename to index in 'files' array */
+    readonly lookup: Readonly<Record<string, number>>;
+    /** Index of files that affect global scope */
+    readonly global: readonly number[];
+    /** Information about all files in the program */
+    readonly files: readonly StaticProgramState.FileState[];
+}
+export declare namespace StaticProgramState {
+    interface FileState {
+        /** Hash of file contents */
+        readonly hash: string;
+        /**
+         * Key: module specifier as referenced in the file, order may be random
+         * Value: - `null` if dependency could not be resolved
+         *        - List of files (or rather their index) that the module specifier resolves to.
+         *          That is the actual file at that path and/or files containing `declare module "..."` for that module specifier.
+         *          May contain the current file.
+         *          This list is ordered by the hash of the files ascending,
+         */
+        readonly dependencies: Readonly<Record<string, null | readonly number[]>>;
+        /** The list of findings if this file has up-to-date results */
+        readonly result?: readonly Finding[];
+        /** Hash of the configuration used to produce `result` for this file */
+        readonly config?: string;
+    }
+}

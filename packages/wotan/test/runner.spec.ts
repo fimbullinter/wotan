@@ -19,6 +19,7 @@ test('throws error on non-existing file', (t) => {
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 'test/fixtures/invalid.js', // exists
@@ -44,6 +45,7 @@ test('throws error on file not included in project', (t) => {
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 'non-existent.js', // does not exist, but is excluded
@@ -69,6 +71,7 @@ test('handles absolute paths with file system specific path separator', (t) => {
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const result = Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [
             path.resolve('packages/wotan/test/project/setup/test.ts'),
@@ -105,6 +108,7 @@ test('throws if no tsconfig.json can be found', (t) => {
     const {root} = path.parse(process.cwd());
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -120,6 +124,7 @@ test('throws if no tsconfig.json can be found', (t) => {
     const dir = path.join(__dirname, 'non-existent');
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -134,6 +139,7 @@ test('throws if no tsconfig.json can be found', (t) => {
 
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -192,6 +198,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     const runner = container.get(Runner);
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -205,6 +212,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -218,6 +226,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -233,6 +242,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -344,6 +354,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const result = Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -371,6 +382,7 @@ test('works with absolute and relative paths', (t) => {
 
     function testRunner(project: boolean) {
         const result = Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')),
@@ -408,6 +420,7 @@ test('normalizes globs', (t) => {
 
     function testRunner(project: boolean) {
         const result = Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 '../paths/a.ts',
@@ -435,6 +448,7 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
 
     const result = Array.from(
         runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],

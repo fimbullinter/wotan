@@ -17,6 +17,7 @@ test('parseGlobalOptions', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
     );
 
@@ -33,6 +34,7 @@ test('parseGlobalOptions', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'ignores excess options',
     );
@@ -50,6 +52,7 @@ test('parseGlobalOptions', (t) => {
             fix: 10,
             extensions: ['.mjs'],
             reportUselessDirectives: false,
+            cache: false,
         },
     );
 
@@ -66,6 +69,7 @@ test('parseGlobalOptions', (t) => {
             fix: true,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
     );
 
@@ -82,6 +86,7 @@ test('parseGlobalOptions', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'invalid values are ignored',
     );
@@ -112,6 +117,7 @@ test('defaults to lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
     );
     t.deepEqual<Command>(
@@ -128,6 +134,7 @@ test('defaults to lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
     );
 });
@@ -147,6 +154,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'parses modules',
     );
@@ -165,6 +173,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'treats all arguments after -- as files',
     );
@@ -183,6 +192,7 @@ test('parses lint command', (t) => {
             fix: true,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'trims single quotes',
     );
@@ -201,6 +211,7 @@ test('parses lint command', (t) => {
             fix: true,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--fix argument is optional',
     );
@@ -219,6 +230,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to false',
     );
@@ -237,6 +249,7 @@ test('parses lint command', (t) => {
             fix: true,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to true',
     );
@@ -255,6 +268,7 @@ test('parses lint command', (t) => {
             fix: 10,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to any number',
     );
@@ -273,6 +287,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--project is accumulated',
     );
@@ -291,6 +306,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--exclude is accumulated',
     );
@@ -309,6 +325,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'files can be interspersed, specifying an option multiple times overrides its value',
     );
@@ -327,6 +344,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '-c specifies config',
     );
@@ -345,6 +363,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--config specifies config',
     );
@@ -363,6 +382,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: ['.mjs', '.es6', '.esm'],
             reportUselessDirectives: false,
+            cache: false,
         },
         '--ext can be comma separated, values are sanitized',
     );
@@ -381,6 +401,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: ['.mjs', '.es6'],
             reportUselessDirectives: false,
+            cache: false,
         },
         '--ext can occur multiple times',
     );
@@ -399,6 +420,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: ['.esm', '.mjs', '.es6'],
             reportUselessDirectives: false,
+            cache: false,
         },
         '--ext merges arrays',
     );
@@ -417,6 +439,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '-r switches project references',
     );
@@ -435,6 +458,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         '--references switches project references',
     );
@@ -466,6 +490,7 @@ test('parses lint command', (t) => {
             fix: true,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'overrides defaults',
     );
@@ -497,6 +522,7 @@ test('parses lint command', (t) => {
             fix: 10,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'uses defaults where not overridden',
     );
@@ -515,6 +541,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: true,
+            cache: false,
         },
         'value for --report-useless-directives is optional, default is true',
     );
@@ -533,6 +560,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: true,
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -551,6 +579,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -569,6 +598,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: true,
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -587,6 +617,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: 'error',
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -605,6 +636,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: 'warning',
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -623,6 +655,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: 'warning',
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -641,6 +674,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: 'suggestion',
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -659,6 +693,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: 'suggestion',
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -677,6 +712,7 @@ test('parses lint command', (t) => {
             fix: false,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
         'only parses severity or boolean as value for --report-useless-directives',
     );
@@ -721,6 +757,7 @@ test('parses save command', (t) => {
             fix: 10,
             extensions: undefined,
             reportUselessDirectives: false,
+            cache: false,
         },
     );
 });

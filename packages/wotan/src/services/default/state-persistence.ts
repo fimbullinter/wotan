@@ -39,7 +39,7 @@ export class DefaultStatePersistence implements StatePersistence {
         const fileName = buildFilename(project);
         log("Writing cache '%s'", fileName);
         try {
-            const content: CacheFileContent = {v: CACHE_VERSION, state};
+            const content: CacheFileContent = {state, v: CACHE_VERSION};
             this.fs.writeFile(fileName, yaml.dump(content, {indent: 2, sortKeys: true}));
         } catch {
             log("Error writing cache '%s'", fileName);

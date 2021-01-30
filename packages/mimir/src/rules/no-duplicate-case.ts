@@ -68,7 +68,7 @@ export class Rule extends AbstractRule {
         if (isBigIntLiteral(node))
             return [formatPrimitive(prefixFn({base10Value: node.text.slice(0, -1), negative: false}))];
         if (node.kind === ts.SyntaxKind.NullKeyword)
-            return [formatPrimitive(prefixFn(null))]; // tslint:disable-line:no-null-keyword
+            return [formatPrimitive(prefixFn(null))];
         if (isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword)
             return [formatPrimitive(prefixFn(undefined))];
         if (node.kind === ts.SyntaxKind.TrueKeyword)
@@ -89,7 +89,7 @@ export class Rule extends AbstractRule {
             } else if (t.flags & ts.TypeFlags.Undefined) {
                 result.add(formatPrimitive(prefixFn(undefined)));
             } else if (t.flags & ts.TypeFlags.Null) {
-                result.add(formatPrimitive(prefixFn(null))); // tslint:disable-line:no-null-keyword
+                result.add(formatPrimitive(prefixFn(null)));
             } else {
                 return [];
             }

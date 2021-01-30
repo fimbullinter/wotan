@@ -20,5 +20,7 @@ export declare type UpdateFileCallback = (content: string, range: ts.TextChangeR
 export declare class Linter {
     constructor(ruleLoader: RuleLoader, logger: MessageHandler, deprecationHandler: DeprecationHandler, filterFactory: FindingFilterFactory);
     lintFile(file: ts.SourceFile, config: EffectiveConfiguration, programOrFactory?: ProgramFactory | ts.Program, options?: LinterOptions): ReadonlyArray<Finding>;
-    lintAndFix(file: ts.SourceFile, content: string, config: EffectiveConfiguration, updateFile: UpdateFileCallback, iterations?: number, programFactory?: ProgramFactory, processor?: AbstractProcessor, options?: LinterOptions): LintAndFixFileResult;
+    lintAndFix(file: ts.SourceFile, content: string, config: EffectiveConfiguration, updateFile: UpdateFileCallback, iterations?: number, programFactory?: ProgramFactory, processor?: AbstractProcessor, options?: LinterOptions, 
+    /** Initial set of findings from a cache. If provided, the initial linting is skipped and these findings are used for fixing. */
+    findings?: readonly Finding[]): LintAndFixFileResult;
 }
