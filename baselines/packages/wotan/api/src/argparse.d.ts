@@ -14,7 +14,7 @@ export declare const GLOBAL_OPTIONS_SPEC: {
     references: OptionParser.ParseFunction<boolean>;
     formatter: OptionParser.ParseFunction<string | undefined>;
     fix: OptionParser.ParseFunction<number | boolean>;
-    extensions: OptionParser.ParseFunction<readonly string[] | undefined>;
+    extensions: OptionParser.ParseFunction<string[] | undefined>;
     reportUselessDirectives: OptionParser.ParseFunction<boolean | Severity>;
 };
 export declare function parseGlobalOptions(options: GlobalOptions | undefined): ParsedGlobalOptions;
