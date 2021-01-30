@@ -1,7 +1,6 @@
 import * as ts from 'typescript';
-import { DependencyResolver, DependencyResolverFactory } from './dependency-resolver';
+import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
 import { EffectiveConfiguration, Finding, ReducedConfiguration, StatePersistence } from '@fimbul/ymir';
-import { ProjectHost } from '../project-host';
 export interface ProgramState {
     update(program: ts.Program, updatedFile: string): void;
     getUpToDateResult(fileName: string, config: EffectiveConfiguration): readonly Finding[] | undefined;
@@ -10,11 +9,12 @@ export interface ProgramState {
 }
 export declare class ProgramStateFactory {
     constructor(resolverFactory: DependencyResolverFactory, statePersistence: StatePersistence);
-    create(program: ts.Program, host: ProjectHost, tsconfigPath: string): ProgramStateImpl;
+    create(program: ts.Program, host: ProgramStateHost & DependencyResolverHost, tsconfigPath: string): ProgramStateImpl;
 }
+export declare type ProgramStateHost = Pick<ts.CompilerHost, 'getCanonicalFileName' | 'useCaseSensitiveFileNames'>;
 declare const oldStateSymbol: unique symbol;
 declare class ProgramStateImpl implements ProgramState {
-    constructor(host: ts.CompilerHost, program: ts.Program, resolver: DependencyResolver, statePersistence: StatePersistence, project: string);
+    constructor(host: ProgramStateHost, program: ts.Program, resolver: DependencyResolver, statePersistence: StatePersistence, project: string);
     update(program: ts.Program, updatedFile: string): void;
     getUpToDateResult(fileName: string, config: ReducedConfiguration): readonly Finding[] | undefined;
     setFileResult(fileName: string, config: ReducedConfiguration, result: ReadonlyArray<Finding>): void;

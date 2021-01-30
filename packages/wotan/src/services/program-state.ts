@@ -1,11 +1,10 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
-import { DependencyResolver, DependencyResolverFactory } from './dependency-resolver';
+import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
 import { resolveCachedResult, djb2 } from '../utils';
 import bind from 'bind-decorator';
 import { EffectiveConfiguration, Finding, ReducedConfiguration, StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import debug = require('debug');
-import { ProjectHost } from '../project-host';
 import { isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
 
@@ -22,11 +21,12 @@ export interface ProgramState {
 export class ProgramStateFactory {
     constructor(private resolverFactory: DependencyResolverFactory, private statePersistence: StatePersistence) {}
 
-    // TODO don't depend on ProjectHost
-    public create(program: ts.Program, host: ProjectHost, tsconfigPath: string) {
+    public create(program: ts.Program, host: ProgramStateHost & DependencyResolverHost, tsconfigPath: string) {
         return new ProgramStateImpl(host, program, this.resolverFactory.create(host, program), this.statePersistence, tsconfigPath);
     }
 }
+
+export type ProgramStateHost = Pick<ts.CompilerHost, 'getCanonicalFileName' | 'useCaseSensitiveFileNames'>;
 
 interface FileResults {
     readonly config: string;
@@ -56,7 +56,7 @@ class ProgramStateImpl implements ProgramState {
     private dependenciesUpToDate: Uint8Array;
 
     constructor(
-        private host: ts.CompilerHost,
+        private host: ProgramStateHost,
         private program: ts.Program,
         private resolver: DependencyResolver,
         private statePersistence: StatePersistence,
@@ -67,7 +67,7 @@ class ProgramStateImpl implements ProgramState {
             this[oldStateSymbol] = undefined;
             this.dependenciesUpToDate = new Uint8Array(0);
         } else {
-            this[oldStateSymbol] = oldState;
+            this[oldStateSymbol] = this.remapFileNames(oldState);
             this.dependenciesUpToDate = new Uint8Array(oldState.files.length);
         }
     }
@@ -124,8 +124,7 @@ class ProgramStateImpl implements ProgramState {
         const oldState = this.tryReuseOldState();
         if (oldState === undefined)
             return;
-        const relative = this.getRelativePath(fileName);
-        const index = oldState.lookup[relative];
+        const index = this.lookupFileIndex(fileName, oldState);
         if (index === undefined)
             return;
         const old = oldState.files[index];
@@ -145,7 +144,7 @@ class ProgramStateImpl implements ProgramState {
             log('File %s is outdated, merging current state into old state', fileName);
             // we need to create a state where the file is up-to-date
             // so we replace the old state with the current state
-            // this includes all results from old state that were still up-to-date and all file results if they were still valid
+            // this includes all results from old state that are still up-to-date and all file results if they are still valid
             const newState = this[oldStateSymbol] = this.aggregate();
             this.recheckOldState = false;
             this.fileResults = new Map();
@@ -158,8 +157,7 @@ class ProgramStateImpl implements ProgramState {
         const oldState = this.tryReuseOldState();
         if (oldState === undefined)
             return false;
-        const relative = this.getRelativePath(fileName);
-        const index = oldState.lookup[relative];
+        const index = this.lookupFileIndex(fileName, oldState);
         if (index === undefined || oldState.files[index].hash !== this.getFileHash(fileName))
             return false;
         switch (<DependencyState>this.dependenciesUpToDate[index]) {
@@ -306,7 +304,7 @@ class ProgramStateImpl implements ProgramState {
         for (const file of sourceFiles) {
             let results = this.fileResults.get(file.fileName);
             if (results === undefined && oldState !== undefined) {
-                const index = oldState.lookup[this.relativePathNames.get(file.fileName)!];
+                const index = this.lookupFileIndex(file.fileName, oldState);
                 if (index !== undefined) {
                     const old = oldState.files[index];
                     if (old.result !== undefined)
@@ -328,6 +326,7 @@ class ProgramStateImpl implements ProgramState {
             lookup,
             v: STATE_VERSION,
             ts: ts.version,
+            cs: this.host.useCaseSensitiveFileNames(),
             global: this.sortByHash(this.resolver.getFilesAffectingGlobalScope()).map(mapToIndex),
             options: this.optionsHash,
         };
@@ -337,6 +336,20 @@ class ProgramStateImpl implements ProgramState {
         return fileNames
             .map((f) => ({fileName: f, hash: this.getFileHash(f)}))
             .sort(compareHashKey);
+    }
+
+    private lookupFileIndex(fileName: string, oldState: StaticProgramState): number | undefined {
+        return oldState.lookup[this.host.getCanonicalFileName(this.getRelativePath(fileName))];
+    }
+
+    private remapFileNames(oldState: StaticProgramState): StaticProgramState {
+        // only need to remap if oldState is case sensitive and current host is case insensitive
+        if (!oldState.cs || this.host.useCaseSensitiveFileNames())
+            return oldState;
+        const lookup: Record<string, number> = {};
+        for (const [key, value] of Object.entries(oldState.lookup))
+            lookup[this.host.getCanonicalFileName(key)] = value;
+        return {...oldState, lookup};
     }
 }
 

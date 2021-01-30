@@ -374,6 +374,8 @@ export interface StaticProgramState {
     readonly v: number;
     /** TypeScript version */
     readonly ts: string;
+    /** Whether the state was created using case-sensitive file names */
+    readonly cs: boolean;
     /** Hash of compilerOptions */
     readonly options: string;
     /** Maps filename to index in 'files' array */

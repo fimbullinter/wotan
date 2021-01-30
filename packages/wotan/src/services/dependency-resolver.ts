@@ -1,9 +1,8 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
-import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind, isCompilerOptionEnabled } from 'tsutils';
+import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind } from 'tsutils';
 import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences } from '../utils';
 import bind from 'bind-decorator';
-import { ProjectHost } from '../project-host';
 
 export interface DependencyResolver {
     update(program: ts.Program, updatedFile: string): void;
@@ -11,9 +10,11 @@ export interface DependencyResolver {
     getFilesAffectingGlobalScope(): readonly string[];
 }
 
+export type DependencyResolverHost = Required<Pick<ts.CompilerHost, 'resolveModuleNames'>>;
+
 @injectable()
 export class DependencyResolverFactory {
-    public create(host: ProjectHost, program: ts.Program): DependencyResolver {
+    public create(host: DependencyResolverHost, program: ts.Program): DependencyResolver {
         return new DependencyResolverImpl(host, program);
     }
 }
@@ -33,7 +34,7 @@ class DependencyResolverImpl implements DependencyResolver {
 
     private state: DependencyResolverState | undefined = undefined;
 
-    constructor(private host: ProjectHost, private program: ts.Program) {}
+    constructor(private host: DependencyResolverHost, private program: ts.Program) {}
 
     public update(program: ts.Program, updatedFile: string) {
         this.state = undefined;
@@ -138,7 +139,7 @@ class DependencyResolverImpl implements DependencyResolver {
 
     @bind
     private collectMetaDataForFile(fileName: string) {
-        return collectFileMetadata(this.program.getSourceFile(fileName)!, this.compilerOptions);
+        return collectFileMetadata(this.program.getSourceFile(fileName)!);
     }
 
     @bind
@@ -156,7 +157,7 @@ class DependencyResolverImpl implements DependencyResolver {
             return result;
         this.fileToProjectReference ??= createProjectReferenceMap(this.program.getResolvedProjectReferences());
         const arr = Array.from(references);
-        const resolved = this.host.resolveModuleNames(arr, fileName, undefined, this.fileToProjectReference.get(fileName));
+        const resolved = this.host.resolveModuleNames(arr, fileName, undefined, this.fileToProjectReference.get(fileName), this.compilerOptions);
         for (let i = 0; i < resolved.length; ++i)
             result.set(arr[i], resolved[i]?.resolvedFileName ?? null);
         return result;
@@ -206,7 +207,7 @@ interface MetaData {
     isExternalModule: boolean;
 }
 
-function collectFileMetadata(sourceFile: ts.SourceFile, compilerOptions: ts.CompilerOptions): MetaData {
+function collectFileMetadata(sourceFile: ts.SourceFile): MetaData {
     let affectsGlobalScope: boolean | undefined;
     const ambientModules = new Set<string>();
     const isExternalModule = ts.isExternalModule(sourceFile);
@@ -216,8 +217,7 @@ function collectFileMetadata(sourceFile: ts.SourceFile, compilerOptions: ts.Comp
         } else if (isModuleDeclaration(statement) && statement.name.kind === ts.SyntaxKind.StringLiteral) {
             ambientModules.add(statement.name.text);
         } else if (isNamespaceExportDeclaration(statement)) {
-            if (isCompilerOptionEnabled(compilerOptions, 'allowUmdGlobalAccess'))
-                affectsGlobalScope = true;
+            affectsGlobalScope = true;
         } else if (affectsGlobalScope === undefined) { // files that only consist of ambient modules do not affect global scope
             affectsGlobalScope = !isExternalModule;
         }
