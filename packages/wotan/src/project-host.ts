@@ -291,10 +291,16 @@ export class ProjectHost implements ts.CompilerHost {
         );
     }
 
-    public resolveModuleNames(names: string[], file: string, _?: unknown, reference?: ts.ResolvedProjectReference) {
+    public resolveModuleNames(
+        names: string[],
+         file: string,
+         _: unknown | undefined,
+         reference: ts.ResolvedProjectReference | undefined,
+         options: ts.CompilerOptions,
+    ) {
         const seen = new Map<string, ts.ResolvedModuleFull | undefined>();
         const resolve = (name: string) =>
-            ts.resolveModuleName(name, file, this.compilerOptions, this, this.moduleResolutionCache, reference).resolvedModule;
+            ts.resolveModuleName(name, file, options, this, this.moduleResolutionCache, reference).resolvedModule;
         return names.map((name) => resolveCachedResult(seen, name, resolve));
     }
 }

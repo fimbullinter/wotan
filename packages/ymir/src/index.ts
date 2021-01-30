@@ -503,7 +503,9 @@ export interface RawLineSwitchRule {
 
 export interface FileFilterContext {
     program: ts.Program;
-    host: Required<Pick<ts.CompilerHost, 'directoryExists'>>;
+    host: Required<Pick<ts.CompilerHost, 'directoryExists'>> & {
+        useSourceOfProjectReferenceRedirect?(): boolean;
+    };
 }
 
 export interface FileFilterFactory {

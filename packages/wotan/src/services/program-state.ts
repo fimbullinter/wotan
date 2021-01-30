@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
-import { resolveCachedResult, djb2 } from '../utils';
+import { resolveCachedResult, djb2, unixifyPath } from '../utils';
 import bind from 'bind-decorator';
 import { EffectiveConfiguration, Finding, ReducedConfiguration, StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import debug = require('debug');
@@ -117,7 +117,7 @@ class ProgramStateImpl implements ProgramState {
 
     @bind
     private makeRelativePath(fileName: string) {
-        return path.posix.relative(this.canonicalProjectDirectory, this.host.getCanonicalFileName(fileName));
+        return unixifyPath(path.relative(this.canonicalProjectDirectory, this.host.getCanonicalFileName(fileName)));
     }
 
     public getUpToDateResult(fileName: string, config: ReducedConfiguration) {

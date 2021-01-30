@@ -1,8 +1,9 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { isModuleDeclaration, isNamespaceExportDeclaration, findImports, ImportKind } from 'tsutils';
-import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences } from '../utils';
+import { resolveCachedResult, getOutputFileNamesOfProjectReference, iterateProjectReferences, unixifyPath } from '../utils';
 import bind from 'bind-decorator';
+import * as path from 'path';
 
 export interface DependencyResolver {
     update(program: ts.Program, updatedFile: string): void;
@@ -10,7 +11,9 @@ export interface DependencyResolver {
     getFilesAffectingGlobalScope(): readonly string[];
 }
 
-export type DependencyResolverHost = Required<Pick<ts.CompilerHost, 'resolveModuleNames'>>;
+export type DependencyResolverHost = Required<Pick<ts.CompilerHost, 'resolveModuleNames'>> & {
+    useSourceOfProjectReferenceRedirect?(): boolean;
+};
 
 @injectable()
 export class DependencyResolverFactory {
@@ -31,6 +34,8 @@ class DependencyResolverImpl implements DependencyResolver {
     private fileToProjectReference: ReadonlyMap<string, ts.ResolvedProjectReference> | undefined = undefined;
     private fileMetadata = new Map<string, MetaData>();
     private compilerOptions = this.program.getCompilerOptions();
+    private useSourceOfProjectReferenceRedirect = this.host.useSourceOfProjectReferenceRedirect?.() === true &&
+        !this.compilerOptions.disableSourceOfProjectReferenceRedirect;
 
     private state: DependencyResolverState | undefined = undefined;
 
@@ -73,8 +78,8 @@ class DependencyResolverImpl implements DependencyResolver {
             for (const file of files) {
                 const resolved = this.getExternalReferences(file).get(module);
                 // if an augmentation's identifier can be resolved from the declaring file, the augmentation applies to the resolved path
-                if (resolved !== null) {
-                    addToList(moduleAugmentations, resolved!, file);
+                if (resolved != null) { // tslint:disable-line:triple-equals
+                    addToList(moduleAugmentations, resolved, file);
                 } else {
                     // if a pattern ambient module matches the augmented identifier, the augmentation applies to that
                     const matchingPattern = getBestMatchingPattern(module, patternAmbientModules.keys());
@@ -144,8 +149,6 @@ class DependencyResolverImpl implements DependencyResolver {
 
     @bind
     private collectExternalReferences(fileName: string): Map<string, string | null> {
-        // TODO useSourceOfProjectReferenceRedirect
-        // TODO referenced files
         // TODO add tslib if importHelpers is enabled
         const sourceFile = this.program.getSourceFile(fileName)!;
         const references = new Set(findImports(sourceFile, ImportKind.All, false).map(({text}) => text));
@@ -157,9 +160,26 @@ class DependencyResolverImpl implements DependencyResolver {
             return result;
         this.fileToProjectReference ??= createProjectReferenceMap(this.program.getResolvedProjectReferences());
         const arr = Array.from(references);
-        const resolved = this.host.resolveModuleNames(arr, fileName, undefined, this.fileToProjectReference.get(fileName), this.compilerOptions);
-        for (let i = 0; i < resolved.length; ++i)
-            result.set(arr[i], resolved[i]?.resolvedFileName ?? null);
+        const resolved =
+            this.host.resolveModuleNames(arr, fileName, undefined, this.fileToProjectReference.get(fileName), this.compilerOptions);
+        for (let i = 0; i < resolved.length; ++i) {
+            const current = resolved[i];
+            if (current === undefined) {
+                result.set(arr[i], null);
+            } else {
+                const projectReference = this.useSourceOfProjectReferenceRedirect
+                    ? this.fileToProjectReference.get(current.resolvedFileName)
+                    : undefined;
+                if (projectReference === undefined) {
+                    result.set(arr[i], current.resolvedFileName);
+                } else if (projectReference.commandLine.options.outFile) {
+                    // with outFile the files must be global anyway, so we don't care about the exact file
+                    result.set(arr[i], projectReference.commandLine.fileNames[0]);
+                } else {
+                    result.set(arr[i], getSourceOfProjectReferenceRedirect(current.resolvedFileName, projectReference));
+                }
+            }
+        }
         return result;
     }
 }
@@ -223,4 +243,20 @@ function collectFileMetadata(sourceFile: ts.SourceFile): MetaData {
         }
     }
     return {ambientModules, isExternalModule, affectsGlobalScope: affectsGlobalScope === true};
+}
+
+function getSourceOfProjectReferenceRedirect(outputFileName: string, ref: ts.ResolvedProjectReference): string {
+    const options = ref.commandLine.options;
+    const projectDirectory = path.dirname(ref.sourceFile.fileName);
+    const origin = unixifyPath(path.resolve(
+        options.rootDir || projectDirectory,
+        path.relative(options.declarationDir || options.outDir || projectDirectory, outputFileName.slice(0, -5)),
+    ));
+
+    for (const extension of ['.ts', '.tsx', '.js', '.jsx']) {
+        const name = origin + extension;
+        if (ref.commandLine.fileNames.includes(name))
+            return name;
+    }
+    return outputFileName; // should never happen
 }
