@@ -43,7 +43,7 @@ const STATE_VERSION = 1;
 
 const oldStateSymbol = Symbol('oldState');
 class ProgramStateImpl implements ProgramState {
-    private projectDirectory = path.posix.dirname(this.project);
+    private projectDirectory = unixifyPath(path.dirname(this.project));
     private canonicalProjectDirectory = this.host.getCanonicalFileName(this.projectDirectory);
     private optionsHash = computeCompilerOptionsHash(this.program.getCompilerOptions(), this.projectDirectory);
     private assumeChangesOnlyAffectDirectDependencies =
@@ -188,79 +188,82 @@ class ProgramStateImpl implements ProgramState {
         while (true) {
             index = indexQueue.pop()!;
             fileName = fileNameQueue.pop()!;
-            switch (<DependencyState>this.dependenciesUpToDate[index]) {
-                case DependencyState.Outdated:
+            processFile: {
+                switch (<DependencyState>this.dependenciesUpToDate[index]) {
+                    case DependencyState.Outdated:
+                        return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                    case DependencyState.Ok:
+                        break processFile;
+                }
+                for (const cycle of cycles) {
+                    if (cycle.has(index)) {
+                        // we already know this is a circular dependency, skip this one and simply mark the parent as circular
+                        setCircularDependency(
+                            parents,
+                            circularDependenciesQueue,
+                            index,
+                            cycles,
+                            findCircularDependencyOfCycle(parents, circularDependenciesQueue, cycle),
+                        );
+                        break processFile;
+                    }
+                }
+                let earliestCircularDependency = Number.MAX_SAFE_INTEGER;
+                let childCount = 0;
+                const old = oldState.files[index];
+                const dependencies = this.resolver.getDependencies(fileName);
+                const keys = Object.keys(old.dependencies);
+
+                if (dependencies.size !== keys.length)
                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                case DependencyState.Unknown: {
-                    let earliestCircularDependency = Number.MAX_SAFE_INTEGER;
-                    let childCount = 0;
-
-                    for (const cycle of cycles) {
-                        if (cycle.has(index)) {
-                            // we already know this is a circular dependency, skip this one and simply mark the parent as circular
-                            earliestCircularDependency =
-                                findCircularDependencyOfCycle(parents, circularDependenciesQueue, cycle);
-                            break;
-                        }
-                    }
-                    if (earliestCircularDependency === Number.MAX_SAFE_INTEGER) {
-                        const old = oldState.files[index];
-                        const dependencies = this.resolver.getDependencies(fileName);
-                        const keys = Object.keys(old.dependencies);
-
-                        if (dependencies.size !== keys.length)
+                for (const key of keys) {
+                    let newDeps = dependencies.get(key);
+                    if (newDeps === undefined)
+                        return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                    const oldDeps = old.dependencies[key];
+                    if (oldDeps === null) {
+                        if (newDeps !== null)
                             return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                        for (const key of keys) {
-                            let newDeps = dependencies.get(key);
-                            if (newDeps === undefined)
-                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                            const oldDeps = old.dependencies[key];
-                            if (oldDeps === null) {
-                                if (newDeps !== null)
-                                    return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                                continue;
-                            }
-                            if (newDeps === null)
-                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                            newDeps = Array.from(new Set(newDeps));
-                            if (newDeps.length !== oldDeps.length)
-                                return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                            const newDepsWithHash = this.sortByHash(newDeps);
-                            for (let i = 0; i < newDepsWithHash.length; ++i) {
-                                const oldDepState = oldState.files[oldDeps[i]];
-                                if (newDepsWithHash[i].hash !== oldDepState.hash)
-                                    return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                                if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithHash[i].fileName) {
-                                    const indexInQueue = parents.indexOf(oldDeps[i]);
-                                    if (indexInQueue === -1) {
-                                        // no circular dependency
-                                        fileNameQueue.push(newDepsWithHash[i].fileName);
-                                        indexQueue.push(oldDeps[i]);
-                                        ++childCount;
-                                    } else if (indexInQueue < earliestCircularDependency) {
-                                        earliestCircularDependency = indexInQueue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER) {
-                        earliestCircularDependency =
-                            setCircularDependency(parents, circularDependenciesQueue, index, cycles, earliestCircularDependency);
-                    } else if (childCount === 0) {
-                        this.dependenciesUpToDate[index] = DependencyState.Ok;
-                    }
-                    if (childCount !== 0) {
-                        parents.push(index);
-                        childCounts.push(childCount);
-                        circularDependenciesQueue.push(earliestCircularDependency);
                         continue;
                     }
+                    if (newDeps === null)
+                        return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                    newDeps = Array.from(new Set(newDeps));
+                    if (newDeps.length !== oldDeps.length)
+                        return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                    const newDepsWithHash = this.sortByHash(newDeps);
+                    for (let i = 0; i < newDepsWithHash.length; ++i) {
+                        const oldDepState = oldState.files[oldDeps[i]];
+                        if (newDepsWithHash[i].hash !== oldDepState.hash)
+                            return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                        if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithHash[i].fileName) {
+                            const indexInQueue = parents.indexOf(oldDeps[i]);
+                            if (indexInQueue === -1) {
+                                // no circular dependency
+                                fileNameQueue.push(newDepsWithHash[i].fileName);
+                                indexQueue.push(oldDeps[i]);
+                                ++childCount;
+                            } else if (indexInQueue < earliestCircularDependency) {
+                                earliestCircularDependency = indexInQueue;
+                            }
+                        }
+                    }
+                }
+
+                if (earliestCircularDependency !== Number.MAX_SAFE_INTEGER) {
+                    earliestCircularDependency =
+                        setCircularDependency(parents, circularDependenciesQueue, index, cycles, earliestCircularDependency);
+                } else if (childCount === 0) {
+                    this.dependenciesUpToDate[index] = DependencyState.Ok;
+                }
+                if (childCount !== 0) {
+                    parents.push(index);
+                    childCounts.push(childCount);
+                    circularDependenciesQueue.push(earliestCircularDependency);
+                    continue;
                 }
             }
             // we only get here for files with no children to process
-
             if (parents.length === 0)
                 return true; // only happens if the initial file has no dependencies or they are all already known as Ok
 
@@ -541,7 +544,7 @@ function computeCompilerOptionsHash(options: ts.CompilerOptions, relativeTo: str
     return '' + djb2(JSON.stringify(obj));
 
     function makeRelativePath(p: string) {
-        return path.posix.relative(relativeTo, p);
+        return unixifyPath(path.relative(relativeTo, p));
     }
 }
 
