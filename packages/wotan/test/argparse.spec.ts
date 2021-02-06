@@ -100,6 +100,9 @@ test('parseGlobalOptions', (t) => {
     t.is(parseGlobalOptions({reportUselessDirectives: 'off'}).reportUselessDirectives, false);
     t.is(parseGlobalOptions({reportUselessDirectives: true}).reportUselessDirectives, true);
     t.is(parseGlobalOptions({reportUselessDirectives: false}).reportUselessDirectives, false);
+
+    t.is(parseGlobalOptions({cache: false}).cache, false);
+    t.is(parseGlobalOptions({cache: true}).cache, true);
 });
 
 test('defaults to lint command', (t) => {
@@ -717,6 +720,82 @@ test('parses lint command', (t) => {
         'only parses severity or boolean as value for --report-useless-directives',
     );
 
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: true,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', 'true', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: true,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', 'false', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        'parses --cache with implicit --project',
+    );
+
     t.throws(() => parseArguments(['lint', '--foobar']), { message: "Unknown option '--foobar'." });
 
     t.throws(() => parseArguments(['lint', '-m']), { message: "Option '-m' expects an argument." });
@@ -727,6 +806,7 @@ test('parses lint command', (t) => {
     t.throws(() => parseArguments(['lint', '--ext']), { message: "Option '--ext' expects an argument." });
     t.throws(() => parseArguments(['lint', '--ext', 'mjs']), { message: "Options '--ext' and '--project' cannot be used together." });
     t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), { message: "Options '--ext' and '--project' cannot be used together." });
+    t.throws(() => parseArguments(['lint', '--cache', 'a.ts']), { message: "Option '--cache' can only be used together with '--project'" });
 });
 
 test('parses save command', (t) => {

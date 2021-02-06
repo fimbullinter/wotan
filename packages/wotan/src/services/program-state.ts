@@ -362,6 +362,7 @@ function findCircularDependencyOfCycle(parents: readonly number[], circularDepen
         if (dep !== Number.MAX_SAFE_INTEGER && cycle.has(parents[i]))
             return dep;
     }
+    /* istanbul ignore next */
     throw new Error('should never happen');
 }
 

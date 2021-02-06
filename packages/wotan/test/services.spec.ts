@@ -460,6 +460,7 @@ test('StatePersistence', (t) => {
                     return { isDirectory() { return true; }, isFile() { return false; } };
                 case './tsconfig-mismatch.fimbullintercache':
                 case './tsconfig-throws.fimbullintercache':
+                case './tsconfig-empty.fimbullintercache':
                 case './tsconfig-correct.fimbullintercache':
                     return { isDirectory() { return false; }, isFile() { return true; } };
                 default:
@@ -472,6 +473,8 @@ test('StatePersistence', (t) => {
                     return yaml.dump(fileContent);
                 case './tsconfig-mismatch.fimbullintercache':
                     return yaml.dump({state, v: 0});
+                case './tsconfig-empty.fimbullintercache':
+                    return '';
                 case './tsconfig-throws.fimbullintercache':
                     throw new Error();
                 default:
@@ -492,6 +495,7 @@ test('StatePersistence', (t) => {
     t.is(service.loadState('./tsconfig-nonexist.json'), undefined);
     t.is(service.loadState('./tsconfig-mismatch.json'), undefined);
     t.is(service.loadState('./tsconfig-throws.json'), undefined);
+    t.is(service.loadState('./tsconfig-empty.json'), undefined);
     t.deepEqual(service.loadState('./tsconfig-correct.json'), state);
 
     service.saveState('./tsconfig-throws.json', state);
