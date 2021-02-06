@@ -3,7 +3,7 @@ import * as ts from 'typescript';
 import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
 import { resolveCachedResult, djb2, unixifyPath } from '../utils';
 import bind from 'bind-decorator';
-import { EffectiveConfiguration, Finding, ReducedConfiguration, StatePersistence, StaticProgramState } from '@fimbul/ymir';
+import { Finding, StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import debug = require('debug');
 import { isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
@@ -12,8 +12,8 @@ const log = debug('wotan:programState');
 
 export interface ProgramState {
     update(program: ts.Program, updatedFile: string): void;
-    getUpToDateResult(fileName: string, config: EffectiveConfiguration): readonly Finding[] | undefined;
-    setFileResult(fileName: string, config: EffectiveConfiguration, result: readonly Finding[]): void;
+    getUpToDateResult(fileName: string, configHash: string): readonly Finding[] | undefined;
+    setFileResult(fileName: string, configHash: string, result: readonly Finding[]): void;
     save(): void;
 }
 
@@ -120,7 +120,7 @@ class ProgramStateImpl implements ProgramState {
         return unixifyPath(path.relative(this.canonicalProjectDirectory, this.host.getCanonicalFileName(fileName)));
     }
 
-    public getUpToDateResult(fileName: string, config: ReducedConfiguration) {
+    public getUpToDateResult(fileName: string, configHash: string) {
         const oldState = this.tryReuseOldState();
         if (oldState === undefined)
             return;
@@ -130,7 +130,7 @@ class ProgramStateImpl implements ProgramState {
         const old = oldState.files[index];
         if (
             old.result === undefined ||
-            old.config !== '' + djb2(JSON.stringify(stripConfig(config))) ||
+            old.config !== configHash ||
             old.hash !== this.getFileHash(fileName) ||
             !this.fileDependenciesUpToDate(fileName, index, oldState)
         )
@@ -139,7 +139,7 @@ class ProgramStateImpl implements ProgramState {
         return old.result;
     }
 
-    public setFileResult(fileName: string, config: ReducedConfiguration, result: ReadonlyArray<Finding>) {
+    public setFileResult(fileName: string, configHash: string, result: ReadonlyArray<Finding>) {
         if (!this.isFileUpToDate(fileName)) {
             log('File %s is outdated, merging current state into old state', fileName);
             // we need to create a state where the file is up-to-date
@@ -150,7 +150,7 @@ class ProgramStateImpl implements ProgramState {
             this.fileResults = new Map();
             this.dependenciesUpToDate = new Uint8Array(newState.files.length).fill(DependencyState.Ok);
         }
-        this.fileResults.set(fileName, {result, config: '' + djb2(JSON.stringify(stripConfig(config)))});
+        this.fileResults.set(fileName, {result, config: configHash});
     }
 
     private isFileUpToDate(fileName: string): boolean {
@@ -170,7 +170,7 @@ class ProgramStateImpl implements ProgramState {
         }
     }
 
-    private fileDependenciesUpToDate(fileName: string, index: number, oldState: StaticProgramState): boolean { // TODO something is wrong
+    private fileDependenciesUpToDate(fileName: string, index: number, oldState: StaticProgramState): boolean {
         // File names that are waiting to be processed, each iteration of the loop processes one file
         const fileNameQueue = [fileName];
         // For each entry in `fileNameQueue` this holds the index of that file in `oldState.files`
@@ -547,26 +547,4 @@ function computeCompilerOptionsHash(options: ts.CompilerOptions, relativeTo: str
     function makeRelativePath(p: string) {
         return unixifyPath(path.relative(relativeTo, p));
     }
-}
-
-function stripConfig(config: ReducedConfiguration) {
-    return {
-        rules: mapToObject(config.rules, stripRule),
-        settings: mapToObject(config.settings, identity),
-    };
-}
-
-function mapToObject<T, U>(map: ReadonlyMap<string, T>, transform: (v: T) => U) {
-    const result: Record<string, U> = {};
-    for (const [key, value] of map)
-        result[key] = transform(value);
-    return result;
-}
-
-function identity<T>(v: T) {
-    return v;
-}
-
-function stripRule({rulesDirectories: _ignored, ...rest}: EffectiveConfiguration.RuleConfig) {
-    return rest;
 }
