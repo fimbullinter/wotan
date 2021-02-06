@@ -270,7 +270,7 @@ function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCo
             return {
                 format,
                 config,
-                modules: modules === undefined ? defaults.modules : modules,
+                modules: modules ?? defaults.modules,
                 command: CommandName.Show,
                 file: files[0],
             };

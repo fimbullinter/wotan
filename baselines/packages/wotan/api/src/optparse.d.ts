@@ -14,7 +14,7 @@ export declare namespace OptionParser {
         function withDefault<T>(parseFn: ParseFunction<T | undefined>, defaultValue: T): ParseFunction<T>;
         function noDefault<T>(parseFn: ParseFunction<T>): ParseFunction<T | undefined>;
         function map<T extends ReadonlyArray<U> | undefined, U, V>(parseFn: ParseFunction<T>, cb: (item: U) => V): ParseFunction<{
-            [K in keyof T]: V;
+            -readonly [K in keyof T]: V;
         }>;
         function transform<T, U>(parseFn: ParseFunction<T>, cb: (value: T) => U): ParseFunction<U>;
     }

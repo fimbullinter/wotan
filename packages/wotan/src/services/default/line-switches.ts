@@ -115,7 +115,7 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
                         continue; // rule is already enabled
                     result.set(
                         rule,
-                        [{pos: rawLineSwitch.pos, end: rawLineSwitch.end === undefined ? Infinity : rawLineSwitch.end, switch: ruleSwitch}],
+                        [{pos: rawLineSwitch.pos, end: rawLineSwitch.end ?? Infinity, switch: ruleSwitch}],
                     );
                 } else {
                     const last = ranges[ranges.length - 1];
@@ -132,7 +132,7 @@ export class LineSwitchFilterFactory implements FindingFilterFactory {
                     } else {
                         ranges.push({
                             pos: rawLineSwitch.pos,
-                            end: rawLineSwitch.end === undefined ? Infinity : rawLineSwitch.end,
+                            end: rawLineSwitch.end ?? Infinity,
                             switch: ruleSwitch,
                         });
                     }

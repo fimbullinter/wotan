@@ -127,7 +127,7 @@ export class Linter {
             let fixedRange: ts.TextChangeRange;
             if (processor !== undefined) {
                 const {transformed, changeRange} = processor.updateSource(fixed.result, fixed.range);
-                fixedRange = changeRange !== undefined ? changeRange : calculateChangeRange(file.text, transformed);
+                fixedRange = changeRange ?? calculateChangeRange(file.text, transformed);
                 newSource = transformed;
             } else {
                 newSource = fixed.result;
@@ -136,8 +136,7 @@ export class Linter {
             const updateResult = updateFile(newSource, fixedRange);
             if (updateResult === undefined) {
                 log('Rolling back latest fixes and abort linting');
-                if (processor !== undefined) // reset processor state
-                    processor.updateSource(content, invertChangeRange(fixed.range));
+                processor?.updateSource(content, invertChangeRange(fixed.range)); // reset processor state
                 break;
             }
             file = updateResult;

@@ -61,17 +61,12 @@ export namespace OptionParser {
         export function map<T extends ReadonlyArray<U> | undefined, U, V>(
             parseFn: ParseFunction<T>,
             cb: (item: U) => V,
-        ): ParseFunction<{[K in keyof T]: V}> {
-            return (value, report) => {
-                const result = parseFn(value, report);
-                return <any>(result === undefined ? undefined : result.map(cb));
-            };
+        ): ParseFunction<{-readonly [K in keyof T]: V}> {
+            return (value, report) => <any>parseFn(value, report)?.map(cb);
         }
 
         export function transform<T, U>(parseFn: ParseFunction<T>, cb: (value: T) => U): ParseFunction<U> {
-            return (value, report) => {
-                return cb(parseFn(value, report));
-            };
+            return (value, report) => cb(parseFn(value, report));
         }
     }
 

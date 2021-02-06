@@ -16,7 +16,7 @@ class LintCommandRunner extends AbstractCommandRunner {
         super();
     }
     public run(options: LintCommand) {
-        const formatter = new (this.formatterLoader.loadFormatter(options.formatter === undefined ? 'stylish' : options.formatter))();
+        const formatter = new (this.formatterLoader.loadFormatter(options.formatter ?? 'stylish'))();
         const result = this.runner.lintCollection(options);
         let success = true;
         if (formatter.prefix !== undefined)
