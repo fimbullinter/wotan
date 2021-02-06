@@ -448,7 +448,6 @@ function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>,
     return options.fix;
 }
 
-
 function createConfigHash(config: ReducedConfiguration, linterOptions: LinterOptions) {
     return '' + djb2(JSON.stringify({
         rules: mapToObject(config.rules, stripRuleConfig),
@@ -471,7 +470,6 @@ function identity<T>(v: T) {
 function stripRuleConfig({rulesDirectories: _ignored, ...rest}: EffectiveConfiguration.RuleConfig) {
     return rest;
 }
-
 
 declare module 'typescript' {
     function matchFiles(
