@@ -17,8 +17,6 @@ class DefaultFileFilter implements FileFilter {
     private libDirectory = unixifyPath(path.dirname(ts.getDefaultLibFilePath(this.options))) + '/';
     private typeRoots: ReadonlyArray<string> | undefined = undefined;
     private outputsOfReferencedProjects: ReadonlyArray<string> | undefined = undefined;
-    private useSourceOfProjectReferenceRedirect = this.host.useSourceOfProjectReferenceRedirect?.() === true &&
-        !this.options.disableSourceOfProjectReferenceRedirect;
 
     constructor(private program: ts.Program, private host: FileFilterContext['host']) {}
 
@@ -29,8 +27,6 @@ class DefaultFileFilter implements FileFilter {
         if (this.options.composite)
             return this.rootNames.includes(fileName);
         if (this.program.isSourceFileFromExternalLibrary(file))
-            return false;
-        if (this.useSourceOfProjectReferenceRedirect && this.isSourceFileOfProjectReference(fileName))
             return false;
         if (!fileName.endsWith('.d.ts'))
             return true;
@@ -59,12 +55,5 @@ class DefaultFileFilter implements FileFilter {
             getOutputFileNamesOfProjectReference,
         );
         return this.outputsOfReferencedProjects.includes(fileName);
-    }
-
-    private isSourceFileOfProjectReference(fileName: string) {
-        for (const ref of iterateProjectReferences(this.program.getResolvedProjectReferences()))
-            if (ref.commandLine.fileNames.includes(fileName))
-                return true;
-        return false;
     }
 }
