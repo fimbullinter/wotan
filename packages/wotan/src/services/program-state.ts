@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import * as ts from 'typescript';
 import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
-import { resolveCachedResult, djb2, unixifyPath } from '../utils';
+import { resolveCachedResult, djb2, unixifyPath, emptyArray } from '../utils';
 import bind from 'bind-decorator';
 import { Finding, StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import debug = require('debug');
@@ -212,7 +212,7 @@ class ProgramStateImpl implements ProgramState {
                 let childCount = 0;
                 const old = oldState.files[index];
                 const dependencies = this.resolver.getDependencies(fileName);
-                const keys = old.dependencies === undefined ? [] : Object.keys(old.dependencies);
+                const keys = old.dependencies === undefined ? emptyArray : Object.keys(old.dependencies);
 
                 if (dependencies.size !== keys.length)
                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);

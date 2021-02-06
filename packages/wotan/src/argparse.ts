@@ -3,6 +3,7 @@ import { ConfigurationError, Format, GlobalOptions, Severity } from '@fimbul/ymi
 import { LintOptions } from './runner';
 import debug = require('debug');
 import { OptionParser } from './optparse';
+import { emptyArray } from './utils';
 
 const log = debug('wotan:argparse');
 
@@ -47,11 +48,11 @@ export interface ParsedGlobalOptions extends LintOptions {
 }
 
 export const GLOBAL_OPTIONS_SPEC = {
-    modules: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    modules: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
     config: OptionParser.Factory.parsePrimitive('string'),
-    files: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
-    exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
-    project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), []),
+    files: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
+    exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
+    project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
     references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
     cache: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
     formatter: OptionParser.Factory.parsePrimitive('string'),
@@ -249,9 +250,7 @@ function parseShowCommand(args: string[], defaults: ParsedGlobalOptions): ShowCo
                 break;
             case '-m':
             case '--module':
-                if (modules === undefined)
-                    modules = [];
-                modules.push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
+                (modules ??= []).push(...expectStringArgument(args, ++i, arg).split(/,/g).filter(isTruthy));
                 break;
             case '--':
                 files.push(...args.slice(i + 1).filter(isTruthy));
