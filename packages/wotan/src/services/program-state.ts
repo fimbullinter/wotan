@@ -212,8 +212,13 @@ class ProgramStateImpl implements ProgramState {
                 let childCount = 0;
                 const old = oldState.files[index];
                 const dependencies = this.resolver.getDependencies(fileName);
-                const keys = Object.keys(old.dependencies);
+                if (old.dependencies === undefined) {
+                    if (dependencies.size !== 0)
+                       return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
+                    break processFile;
+                }
 
+                const keys = Object.keys(old.dependencies);
                 if (dependencies.size !== keys.length)
                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                 for (const key of keys) {
@@ -293,6 +298,8 @@ class ProgramStateImpl implements ProgramState {
         const lookup: Record<string, number> = {};
         const mapToIndex = ({fileName}: {fileName: string}) => lookup[this.relativePathNames.get(fileName)!];
         const mapDependencies = (dependencies: ReadonlyMap<string, null | readonly string[]>) => {
+            if (dependencies.size === 0)
+                return;
             const result: Record<string, null | number[]> = {};
             for (const [key, f] of dependencies)
                 result[key] = f === null

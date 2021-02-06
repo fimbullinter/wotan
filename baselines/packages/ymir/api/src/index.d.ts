@@ -397,7 +397,7 @@ export declare namespace StaticProgramState {
          *          May contain the current file.
          *          This list is ordered by the hash of the files ascending,
          */
-        readonly dependencies: Readonly<Record<string, null | readonly number[]>>;
+        readonly dependencies?: Readonly<Record<string, null | readonly number[]>>;
         /** The list of findings if this file has up-to-date results */
         readonly result?: readonly Finding[];
         /** Hash of the configuration used to produce `result` for this file */

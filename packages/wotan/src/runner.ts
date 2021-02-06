@@ -453,7 +453,7 @@ function createConfigHash(config: ReducedConfiguration, linterOptions: LinterOpt
     return '' + djb2(JSON.stringify({
         rules: mapToObject(config.rules, stripRuleConfig),
         settings: mapToObject(config.settings, identity),
-        reportUselessDirectives: linterOptions.reportUselessDirectives,
+        ...linterOptions,
     }));
 }
 
