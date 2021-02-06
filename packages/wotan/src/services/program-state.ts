@@ -212,20 +212,15 @@ class ProgramStateImpl implements ProgramState {
                 let childCount = 0;
                 const old = oldState.files[index];
                 const dependencies = this.resolver.getDependencies(fileName);
-                if (old.dependencies === undefined) {
-                    if (dependencies.size !== 0)
-                       return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                    break processFile;
-                }
+                const keys = old.dependencies === undefined ? [] : Object.keys(old.dependencies);
 
-                const keys = Object.keys(old.dependencies);
                 if (dependencies.size !== keys.length)
                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                 for (const key of keys) {
                     let newDeps = dependencies.get(key);
                     if (newDeps === undefined)
                         return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                    const oldDeps = old.dependencies[key];
+                    const oldDeps = old.dependencies![key];
                     if (oldDeps === null) {
                         if (newDeps !== null)
                             return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
