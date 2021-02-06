@@ -18,7 +18,7 @@ import { applyFixes } from './fix';
 import * as debug from 'debug';
 import { injectable } from 'inversify';
 import { RuleLoader } from './services/rule-loader';
-import { calculateChangeRange, invertChangeRange } from './utils';
+import { calculateChangeRange, emptyArray, invertChangeRange } from './utils';
 import { ConvertedAst, convertAst, isCompilerOptionEnabled, getTsCheckDirective } from 'tsutils';
 
 const log = debug('wotan:linter');
@@ -181,14 +181,15 @@ export class Linter {
             log('No active rules');
             if (options.reportUselessDirectives !== undefined) {
                 findings = this.filterFactory
-                    .create({sourceFile, getWrappedAst() { return convertAst(sourceFile).wrapped; }, ruleNames: []})
+                    .create({sourceFile, getWrappedAst() { return convertAst(sourceFile).wrapped; }, ruleNames: emptyArray})
                     .reportUseless(options.reportUselessDirectives);
                 log('Found %d useless directives', findings.length);
             } else {
-                findings = [];
+                findings = emptyArray;
             }
+        } else {
+            findings = this.applyRules(sourceFile, programFactory, rules, config.settings, options);
         }
-        findings = this.applyRules(sourceFile, programFactory, rules, config.settings, options);
         return processor === undefined ? findings : processor.postprocess(findings);
     }
 

@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { FileFilterFactory, FileFilterContext, FileFilter } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { unixifyPath, getOutputFileNamesOfProjectReference, iterateProjectReferences, flatMap } from '../../utils';
+import { unixifyPath, getOutputFileNamesOfProjectReference, iterateProjectReferences, flatMap, emptyArray } from '../../utils';
 import * as path from 'path';
 
 @injectable()
@@ -45,7 +45,7 @@ class DefaultFileFilter implements FileFilter {
             this.typeRoots = ts.getEffectiveTypeRoots(this.options, {
                 directoryExists: (dir) => this.host.directoryExists(dir),
                 getCurrentDirectory: () => this.program.getCurrentDirectory(),
-            }) || [];
+            }) || emptyArray;
         return !this.typeRoots.every((typeRoot) => path.relative(typeRoot, fileName).startsWith('..' + path.sep));
     }
 

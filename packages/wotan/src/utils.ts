@@ -13,11 +13,13 @@ import * as path from 'path';
  */
 export const OFFSET_TO_NODE_MODULES = 3;
 
+export const emptyArray: readonly never[] = [];
+
 export function arrayify<T>(maybeArr: T | ReadonlyArray<T> | undefined): ReadonlyArray<T> {
     return Array.isArray(maybeArr)
         ? maybeArr
         : maybeArr === undefined
-            ? []
+            ? emptyArray
             : [maybeArr];
 }
 
