@@ -163,13 +163,16 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
         }
     }
 
+    const usesProject = result.project.length !== 0 || result.files.length === 0;
     if (result.extensions !== undefined) {
         if (result.extensions.length === 0) {
             result.extensions = undefined;
-        } else if (result.project.length !== 0 || result.files.length === 0) {
+        } else if (usesProject) {
             throw new ConfigurationError("Options '--ext' and '--project' cannot be used together.");
         }
     }
+    if (result.cache && !usesProject)
+        throw new ConfigurationError("Option '--cache' can only be used together with '--project'");
 
     return result;
 }
