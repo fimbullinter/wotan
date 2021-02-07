@@ -125,7 +125,7 @@ function setup(fileContents: DirectoryJSON, useSourceOfProjectReferenceRedirect?
 
 test('resolves imports', (t) => {
     let {dependencyResolver, program, compilerHost, vol, root} = setup({
-        'tsconfig.json': JSON.stringify({compilerOptions: {moduleResolution: 'node', allowJs: true}}),
+        'tsconfig.json': JSON.stringify({compilerOptions: {moduleResolution: 'node', allowJs: true}, exclude: ['excluded.ts']}),
         'a.ts': 'import * as a from "./a"; import {b} from "./b"; import {c} from "c"; import {d} from "d"; import {e} from "e"; import {f} from "f"; import {f1} from "f1"; import {f2} from "f2"',
         'b.ts': 'export const b = 1;',
         'node_modules/c/index.d.ts': 'export const c = 1;',
@@ -137,6 +137,7 @@ test('resolves imports', (t) => {
         'pattern.ts': 'declare module "f*"; declare module "goo*oo";',
         'declare-global.ts': 'export {}; declare global {}',
         'umd.d.ts': 'export let stuff: number; export as namespace Stuff;',
+        'excluded.ts': 'declare module "e" {}; declare module "d" {};',
     });
 
     t.deepEqual(dependencyResolver.getFilesAffectingGlobalScope(), [root + 'declare-global.ts', root + 'global.ts', root + 'umd.d.ts']);
@@ -187,6 +188,28 @@ test('resolves imports', (t) => {
         dependencyResolver.getFilesAffectingGlobalScope(),
         [root + 'declare-global.ts', root + 'empty.js', root + 'global.ts', root + 'umd.d.ts'],
     );
+
+    vol.appendFileSync(root + 'b.ts', 'import "./excluded";');
+    program = ts.createProgram({
+        oldProgram: program,
+        host: compilerHost,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+    });
+    dependencyResolver.update(program, root + 'b.ts');
+
+    t.deepEqual(dependencyResolver.getDependencies(root + 'b.ts'), new Map([['./excluded', [root + 'excluded.ts']]]));
+    t.deepEqual(dependencyResolver.getDependencies(root + 'a.ts'), new Map([
+        ['./a', [root + 'a.ts']],
+        ['./b', [root + 'b.ts']],
+        ['c', [root + 'node_modules/c/index.d.ts', root + 'other.ts']],
+        ['d', [root + 'excluded.ts', root + 'ambient.ts', root + 'other.ts']],
+        ['e', [root + 'excluded.ts']],
+        ['f', [root + 'pattern.ts', root + 'other.ts']],
+        ['f1', [root + 'node_modules/f1/index.d.ts', root + 'other.ts']],
+        ['f2', [root + 'pattern.ts', root + 'other.ts']],
+    ]));
+    t.deepEqual(dependencyResolver.getDependencies(root + 'ambient.ts'), new Map([['d', [root + 'excluded.ts', root + 'ambient.ts', root + 'other.ts']]]));
 });
 
 test('handles useSourceOfProjectReferenceRedirect', (t) => {
