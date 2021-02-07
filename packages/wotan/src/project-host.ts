@@ -95,33 +95,34 @@ export class ProjectHost implements ts.CompilerHost {
             return result;
         }
         for (const entry of entries) {
-            const fileName = `${dir}/${entry.name}`;
             switch (entry.kind) {
                 case FileKind.File: {
+                    const fileName = `${dir}/${entry.name}`;
                     if (!hasSupportedExtension(fileName, additionalExtensions)) {
                         const c = this.config || this.tryFindConfig(fileName);
                         const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
-                            const newName = fileName +
-                                ctor.getSuffixForFile({
-                                    fileName,
-                                    getSettings: () => this.configManager.getSettings(c!, fileName),
-                                    readFile: () => this.fs.readFile(fileName),
-                                });
+                            const suffix = ctor.getSuffixForFile({
+                                fileName,
+                                getSettings: () => this.configManager.getSettings(c!, fileName),
+                                readFile: () => this.fs.readFile(fileName),
+                            });
+                            const newName = fileName + suffix;
+
                             if (hasSupportedExtension(newName, additionalExtensions)) {
-                                files.push(newName);
+                                files.push(entry.name + suffix);
                                 this.reverseMap.set(newName, fileName);
                                 break;
                             }
                         }
                     }
-                    files.push(fileName);
+                    files.push(entry.name);
                     this.files.push(fileName);
                     break;
                 }
                 case FileKind.Directory:
-                    directories.push(fileName);
+                    directories.push(entry.name);
             }
         }
         return result;
@@ -212,10 +213,10 @@ export class ProjectHost implements ts.CompilerHost {
     public getDirectories(dir: string) {
         const cached = this.directoryEntries.get(dir);
         if (cached !== undefined)
-            return cached.directories.map((d) => path.posix.basename(d));
+            return cached.directories.slice();
         return mapDefined(
             this.fs.readDirectory(dir),
-            (entry) => entry.kind === FileKind.Directory ? path.join(dir, entry.name) : undefined,
+            (entry) => entry.kind === FileKind.Directory ? entry.name : undefined,
         );
     }
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget.JSON): ts.JsonSourceFile | undefined;

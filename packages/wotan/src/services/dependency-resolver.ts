@@ -104,6 +104,11 @@ class DependencyResolverImpl implements DependencyResolver {
     public getDependencies(file: string) {
         this.state ??= this.buildState();
         const result = new Map<string, null | readonly string[]>();
+        {
+            const augmentations = this.state.moduleAugmentations.get(file);
+            if (augmentations !== undefined)
+                result.set('\0', augmentations);
+        }
         for (const [identifier, resolved] of this.getExternalReferences(file)) {
             const filesAffectingAmbientModule = this.state.ambientModules.get(identifier);
             if (filesAffectingAmbientModule !== undefined) {
@@ -250,7 +255,7 @@ function getSourceOfProjectReferenceRedirect(outputFileName: string, ref: ts.Res
     const projectDirectory = path.dirname(ref.sourceFile.fileName);
     const origin = unixifyPath(path.resolve(
         options.rootDir || projectDirectory,
-        path.relative(options.declarationDir || options.outDir || projectDirectory, outputFileName.slice(0, -5)),
+        path.relative(options.declarationDir || options.outDir || /* istanbul ignore next */ projectDirectory, outputFileName.slice(0, -5)),
     ));
 
     for (const extension of ['.ts', '.tsx', '.js', '.jsx']) {
@@ -258,5 +263,6 @@ function getSourceOfProjectReferenceRedirect(outputFileName: string, ref: ts.Res
         if (ref.commandLine.fileNames.includes(name))
             return name;
     }
+    /* istanbul ignore next */
     return outputFileName; // should never happen
 }
