@@ -470,22 +470,3 @@ function identity<T>(v: T) {
 function stripRuleConfig({rulesDirectories: _ignored, ...rest}: EffectiveConfiguration.RuleConfig) {
     return rest;
 }
-
-declare module 'typescript' {
-    function matchFiles(
-        path: string,
-        extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string> | undefined,
-        includes: ReadonlyArray<string>,
-        useCaseSensitiveFileNames: boolean,
-        currentDirectory: string,
-        depth: number | undefined,
-        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
-        realpath: (path: string) => string,
-    ): string[];
-
-    interface FileSystemEntries {
-        readonly files: ReadonlyArray<string>;
-        readonly directories: ReadonlyArray<string>;
-    }
-}

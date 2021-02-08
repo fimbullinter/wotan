@@ -12,12 +12,14 @@ const log = debug('wotan:projectHost');
 
 const additionalExtensions = ['.json'];
 
+// @internal
 export interface ProcessedFileInfo {
     originalName: string;
     originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
+// @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
     private files: string[] = [];
@@ -303,5 +305,25 @@ export class ProjectHost implements ts.CompilerHost {
         const resolve = (name: string) =>
             ts.resolveModuleName(name, file, options, this, this.moduleResolutionCache, reference).resolvedModule;
         return names.map((name) => resolveCachedResult(seen, name, resolve));
+    }
+}
+
+// @internal
+declare module 'typescript' {
+    function matchFiles(
+        path: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        useCaseSensitiveFileNames: boolean,
+        currentDirectory: string,
+        depth: number | undefined,
+        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
+        realpath: (path: string) => string,
+    ): string[];
+
+    interface FileSystemEntries {
+        readonly files: ReadonlyArray<string>;
+        readonly directories: ReadonlyArray<string>;
     }
 }
