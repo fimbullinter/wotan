@@ -126,14 +126,15 @@ function setup(fileContents: DirectoryJSON, useSourceOfProjectReferenceRedirect?
 test('resolves imports', (t) => {
     let {dependencyResolver, program, compilerHost, vol, root} = setup({
         'tsconfig.json': JSON.stringify({compilerOptions: {moduleResolution: 'node', allowJs: true}, exclude: ['excluded.ts']}),
-        'a.ts': 'import * as a from "./a"; import {b} from "./b"; import {c} from "c"; import {d} from "d"; import {e} from "e"; import {f} from "f"; import {f1} from "f1"; import {f2} from "f2"',
+        'a.ts': 'import * as a from "./a"; import {b} from "./b"; import {c} from "c"; import {d} from "d"; import {e} from "e"; import {f} from "f"; import {f1} from "f1"; import {f2} from "f2"; import {g} from "g";',
         'b.ts': 'export const b = 1;',
         'node_modules/c/index.d.ts': 'export const c = 1;',
         'node_modules/f1/index.d.ts': 'export const f1 = 1;',
+        'node_modules/g/index.d.ts': 'export const g = 1;',
         'empty.js': '',
-        'ambient.ts': 'declare module "d" {export const d: number;}',
+        'ambient.ts': 'declare module "d" {export const d: number;} declare module "g" {}',
         'global.ts': 'declare var v = 1;',
-        'other.ts': 'export {}; declare module "c" { export let other: number; }; declare module "d" {}; declare module "f1" {}; declare module "f2" {}; declare module "goo" {};',
+        'other.ts': 'export {}; declare module "c" { export let other: number; }; declare module "d" {}; declare module "f1" {}; declare module "f2" {}; declare module "goo" {}; declare module "g" {};',
         'pattern.ts': 'declare module "f*"; declare module "goo*oo";',
         'declare-global.ts': 'export {}; declare global {}',
         'umd.d.ts': 'export let stuff: number; export as namespace Stuff;',
@@ -150,12 +151,16 @@ test('resolves imports', (t) => {
         ['f', [root + 'pattern.ts', root + 'other.ts']],
         ['f1', [root + 'node_modules/f1/index.d.ts', root + 'other.ts']],
         ['f2', [root + 'pattern.ts', root + 'other.ts']],
+        ['g', [root + 'ambient.ts', root + 'other.ts']],
     ]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'b.ts'), new Map());
     t.deepEqual(dependencyResolver.getDependencies(root + 'node_modules/c/index.d.ts'), new Map([['\0', [root + 'other.ts']]]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'node_modules/f1/index.d.ts'), new Map([['\0', [root + 'other.ts']]]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'empty.js'), new Map());
-    t.deepEqual(dependencyResolver.getDependencies(root + 'ambient.ts'), new Map([['d', [root + 'ambient.ts', root + 'other.ts']]]));
+    t.deepEqual(dependencyResolver.getDependencies(root + 'ambient.ts'), new Map([
+        ['d', [root + 'ambient.ts', root + 'other.ts']],
+        ['g', [root + 'ambient.ts', root + 'other.ts']],
+    ]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'global.ts'), new Map());
     t.deepEqual(dependencyResolver.getDependencies(root + 'declare-global.ts'), new Map());
     t.deepEqual(dependencyResolver.getDependencies(root + 'other.ts'), new Map([
@@ -164,6 +169,7 @@ test('resolves imports', (t) => {
         ['f1', [root + 'node_modules/f1/index.d.ts', root + 'other.ts']],
         ['f2', [root + 'pattern.ts', root + 'other.ts']],
         ['goo', null],
+        ['g', [root + 'ambient.ts', root + 'other.ts']],
     ]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'pattern.ts'), new Map([
         ['f*', [root + 'pattern.ts', root + 'other.ts']],
@@ -208,8 +214,12 @@ test('resolves imports', (t) => {
         ['f', [root + 'pattern.ts', root + 'other.ts']],
         ['f1', [root + 'node_modules/f1/index.d.ts', root + 'other.ts']],
         ['f2', [root + 'pattern.ts', root + 'other.ts']],
+        ['g', [root + 'ambient.ts', root + 'other.ts']],
     ]));
-    t.deepEqual(dependencyResolver.getDependencies(root + 'ambient.ts'), new Map([['d', [root + 'excluded.ts', root + 'ambient.ts', root + 'other.ts']]]));
+    t.deepEqual(dependencyResolver.getDependencies(root + 'ambient.ts'), new Map([
+        ['d', [root + 'excluded.ts', root + 'ambient.ts', root + 'other.ts']],
+        ['g', [root + 'ambient.ts', root + 'other.ts']],
+    ]));
 });
 
 test('handles useSourceOfProjectReferenceRedirect', (t) => {
