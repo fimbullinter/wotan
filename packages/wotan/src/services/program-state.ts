@@ -291,7 +291,7 @@ class ProgramStateImpl implements ProgramState {
     private aggregate(): StaticProgramState {
         const oldState = this.tryReuseOldState();
         const lookup: Record<string, number> = {};
-        const mapToIndex = ({fileName}: {fileName: string}) => lookup[this.relativePathNames.get(fileName)!];
+        const mapToIndex = ({fileName}: {fileName: string}) => lookup[this.host.getCanonicalFileName(this.relativePathNames.get(fileName)!)];
         const mapDependencies = (dependencies: ReadonlyMap<string, null | readonly string[]>) => {
             if (dependencies.size === 0)
                 return;
@@ -305,7 +305,7 @@ class ProgramStateImpl implements ProgramState {
         const files: StaticProgramState.FileState[] = [];
         const sourceFiles = this.program.getSourceFiles();
         for (let i = 0; i < sourceFiles.length; ++i)
-            lookup[this.getRelativePath(sourceFiles[i].fileName)] = i;
+            lookup[this.host.getCanonicalFileName(this.getRelativePath(sourceFiles[i].fileName))] = i;
         for (const file of sourceFiles) {
             let results = this.fileResults.get(file.fileName);
             if (results === undefined && oldState !== undefined) {
@@ -344,7 +344,10 @@ class ProgramStateImpl implements ProgramState {
     }
 
     private lookupFileIndex(fileName: string, oldState: StaticProgramState): number | undefined {
-        return oldState.lookup[this.host.getCanonicalFileName(this.getRelativePath(fileName))];
+        fileName = this.host.getCanonicalFileName(this.getRelativePath(fileName));
+        if (!oldState.cs && this.host.useCaseSensitiveFileNames())
+            fileName = fileName.toLowerCase();
+        return oldState.lookup[fileName];
     }
 
     private remapFileNames(oldState: StaticProgramState): StaticProgramState {
