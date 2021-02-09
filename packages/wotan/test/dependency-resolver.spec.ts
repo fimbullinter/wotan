@@ -1,9 +1,9 @@
 import 'reflect-metadata';
-import test from 'ava';
+import test, { ExecutionContext } from 'ava';
 import { Dirent } from 'fs';
 import { DirectoryJSON, Volume } from 'memfs';
 import * as ts from 'typescript';
-import { DependencyResolverFactory, DependencyResolverHost } from '../src/services/dependency-resolver';
+import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from '../src/services/dependency-resolver';
 import { mapDefined, unixifyPath } from '../src/utils';
 import * as path from 'path';
 
@@ -123,6 +123,16 @@ function setup(fileContents: DirectoryJSON, useSourceOfProjectReferenceRedirect?
     return {vol, compilerHost, program, dependencyResolver, root};
 }
 
+function assertAllDependenciesInProgram(resolver: DependencyResolver, program: ts.Program, t: ExecutionContext) {
+    for (const file of program.getSourceFiles()) {
+        const dependencies = resolver.getDependencies(file.fileName);
+        for (const deps of dependencies.values())
+            if (deps !== null)
+                for (const dep of deps)
+                    t.not(program.getSourceFile(dep), undefined);
+    }
+}
+
 test('resolves imports', (t) => {
     let {dependencyResolver, program, compilerHost, vol, root} = setup({
         'tsconfig.json': JSON.stringify({compilerOptions: {moduleResolution: 'node', allowJs: true}, exclude: ['excluded.ts']}),
@@ -176,6 +186,7 @@ test('resolves imports', (t) => {
         ['goo*oo', [root + 'pattern.ts']],
     ]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'umd.d.ts'), new Map());
+    assertAllDependenciesInProgram(dependencyResolver, program, t);
 
     vol.writeFileSync(root + 'empty.js', '/** @type {import("./b").b} */ var f = require("e");', {encoding: 'utf8'});
     program = ts.createProgram({
@@ -194,6 +205,7 @@ test('resolves imports', (t) => {
         dependencyResolver.getFilesAffectingGlobalScope(),
         [root + 'declare-global.ts', root + 'empty.js', root + 'global.ts', root + 'umd.d.ts'],
     );
+    assertAllDependenciesInProgram(dependencyResolver, program, t);
 
     vol.appendFileSync(root + 'b.ts', 'import "./excluded";');
     program = ts.createProgram({
@@ -220,10 +232,11 @@ test('resolves imports', (t) => {
         ['d', [root + 'excluded.ts', root + 'ambient.ts', root + 'other.ts']],
         ['g', [root + 'ambient.ts', root + 'other.ts']],
     ]));
+    assertAllDependenciesInProgram(dependencyResolver, program, t);
 });
 
 test('handles useSourceOfProjectReferenceRedirect', (t) => {
-    const {dependencyResolver, root} = setup(
+    const {dependencyResolver, program, root} = setup(
         {
             'tsconfig.json': JSON.stringify({references: [{path: 'a'}, {path: 'b'}, {path: 'c'}], include: ['src']}),
             'src/a.ts': 'export * from "../a/decl/src/a"; export * from "../a/decl/src/b"; export * from "../a/decl/src/c"; export * from "../a/decl/src/d";',
@@ -257,10 +270,11 @@ test('handles useSourceOfProjectReferenceRedirect', (t) => {
     t.deepEqual(dependencyResolver.getDependencies(root + 'src/b.ts'), new Map([['../b/dist/file', [root + 'b/src/file.ts']]]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'src/c.ts'), new Map([['../c/dist/outfile', [root + 'c/a.ts']]]));
     t.deepEqual(dependencyResolver.getDependencies(root + 'src/d.ts'), new Map([['../d/file', [root + 'd/file.ts']]]));
+    assertAllDependenciesInProgram(dependencyResolver, program, t);
 });
 
 test('handles disableSourceOfProjectReferenceRedirect', (t) => {
-    const {dependencyResolver, root} = setup(
+    const {dependencyResolver, program, root} = setup(
         {
             'tsconfig.json': JSON.stringify(
                 {references: [{path: 'a'}], compilerOptions: {disableSourceOfProjectReferenceRedirect: true}, include: ['src']},
@@ -276,4 +290,5 @@ test('handles disableSourceOfProjectReferenceRedirect', (t) => {
     t.deepEqual(dependencyResolver.getDependencies(root + 'src/a.ts'), new Map([
         ['../a/dist/file', [root + 'a/dist/file.d.ts']],
     ]));
+    assertAllDependenciesInProgram(dependencyResolver, program, t);
 });
