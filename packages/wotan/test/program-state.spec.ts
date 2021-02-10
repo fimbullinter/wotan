@@ -363,5 +363,79 @@ test('uses relative paths for compilerOptions', (t) => {
         'tsconfig.json': JSON.stringify({compilerOptions: {outDir: './dist', rootDirs: ['./src', './lib']}}),
         'a.ts': '',
     };
-    t.deepEqual(generateOldState('', files, {subdir: 'a'}), generateOldState('', files, {subdir: 'b/c'}));
+    const state = generateOldState('', files, {subdir: 'a'});
+    t.deepEqual(generateOldState('', files, {subdir: 'b/c'}), state);
+
+    t.notDeepEqual(
+        generateOldState('', {
+            'tsconfig.json': JSON.stringify({compilerOptions: {outDir: './out', rootDirs: ['./src', './lib']}}),
+            'a.ts': '',
+        }, {subdir: 'a'}),
+        state,
+    );
+});
+
+test('handles assumeChangesOnlyAffectDirectDependencies', (t) => {
+    const state = generateOldState('1234', {
+        'tsconfig.json': JSON.stringify({compilerOptions: {assumeChangesOnlyAffectDirectDependencies: true}}),
+        'a.ts': 'import "./b";',
+        'b.ts': 'import "./c";',
+        'c.ts': 'export {};',
+        'global.ts': 'declare global {}; import "./b";',
+    });
+
+    const {programState, cwd} = setup(
+        {
+            'tsconfig.json': JSON.stringify({compilerOptions: {assumeChangesOnlyAffectDirectDependencies: true}}),
+            'a.ts': 'import "./b";',
+            'b.ts': 'import "./c";',
+            'c.ts': 'export {}; foo;', // <-- change here
+            'global.ts': 'declare global {}; import "./b";',
+        },
+        {
+            initialState: state,
+        },
+    );
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'global.ts', '1234'), []);
+});
+
+test('handles circular dependencies', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./b"; import "./c"; import "./d"; import "./e";',
+        'b.ts': 'import "./a"; import "./c"; import "./d";',
+        'c.ts': 'import "./d";',
+        'd.ts': 'import "./b"; import "./e";',
+        'e.ts': 'export {};',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost, persistence} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'c.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'c.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+
+    persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
+    programState.save();
 });
