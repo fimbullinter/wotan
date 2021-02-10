@@ -405,6 +405,7 @@ test('handles assumeChangesOnlyAffectDirectDependencies', (t) => {
 test('handles circular dependencies', (t) => {
     const files = {
         'tsconfig.json': '{}',
+        'root.ts': 'import "./a";',
         'a.ts': 'import "./b"; import "./c"; import "./d"; import "./e";',
         'b.ts': 'import "./a"; import "./c"; import "./d";',
         'c.ts': 'import "./d";',
@@ -415,6 +416,7 @@ test('handles circular dependencies', (t) => {
 
     let {programState, cwd, vol, program, compilerHost, persistence} = setup(files, {initialState: state});
 
+    t.deepEqual(programState.getUpToDateResult(cwd + 'root.ts', '1234'), []);
     t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
     t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
     t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
@@ -430,6 +432,7 @@ test('handles circular dependencies', (t) => {
     });
     programState.update(program, cwd + 'c.ts');
 
+    t.is(programState.getUpToDateResult(cwd + 'root.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
@@ -438,4 +441,99 @@ test('handles circular dependencies', (t) => {
 
     persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
     programState.save();
+});
+
+test('handles multiple level of circular dependencies', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./b"; import "./c";',
+        'b.ts': 'import "./a";',
+        'c.ts': 'import "./d"; import "./e";',
+        'd.ts': 'import "./c";',
+        'e.ts': 'import "./f";',
+        'f.ts': 'import "./d";',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'f.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'b.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'b.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'f.ts', '1234'), []);
+
+    ({programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state}));
+    vol.appendFileSync(cwd + 'f.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'f.ts');
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'e.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'f.ts', '1234'), undefined);
+});
+
+test('merges multiple level of circular dependencies', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./b"; import "./c";',
+        'b.ts': 'import "./a";',
+        'c.ts': 'import "./d"; import "./e";',
+        'd.ts': 'import "./c";',
+        'e.ts': 'import "./f";',
+        'f.ts': 'import "./b"; import "./g";',
+        'g.ts': 'export {};',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'f.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'g.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'g.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'g.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'e.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'f.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'g.ts', '1234'), undefined);
 });
