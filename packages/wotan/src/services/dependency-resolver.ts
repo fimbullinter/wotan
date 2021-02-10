@@ -241,6 +241,16 @@ function collectFileMetadata(sourceFile: ts.SourceFile): MetaData {
             affectsGlobalScope = true;
         } else if (isModuleDeclaration(statement) && statement.name.kind === ts.SyntaxKind.StringLiteral) {
             ambientModules.add(statement.name.text);
+            if (!isExternalModule && !affectsGlobalScope && statement.body !== undefined) {
+                // search for global augmentations in ambient module blocks
+                for (const s of (<ts.ModuleBlock>statement.body).statements) {
+                    if (s.flags & ts.NodeFlags.GlobalAugmentation) {
+                        affectsGlobalScope = true;
+                        break;
+                    }
+                }
+            }
+
         } else if (isNamespaceExportDeclaration(statement)) {
             affectsGlobalScope = true;
         } else if (affectsGlobalScope === undefined) { // files that only consist of ambient modules do not affect global scope

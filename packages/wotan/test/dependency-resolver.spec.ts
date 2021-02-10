@@ -235,6 +235,14 @@ test('resolves imports', (t) => {
     assertAllDependenciesInProgram(dependencyResolver, program, t);
 });
 
+test('finds global augmentations in ambient modules', (t) => {
+    const {dependencyResolver, root} = setup({
+        'tsconfig.json': '{}',
+        'a.ts': 'declare module "foo" { global { var v: number; } }',
+    });
+    t.deepEqual(dependencyResolver.getFilesAffectingGlobalScope(), [root + 'a.ts']);
+});
+
 test('handles useSourceOfProjectReferenceRedirect', (t) => {
     const {dependencyResolver, program, root} = setup(
         {

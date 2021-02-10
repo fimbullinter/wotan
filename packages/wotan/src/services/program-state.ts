@@ -291,7 +291,8 @@ class ProgramStateImpl implements ProgramState {
     private aggregate(): StaticProgramState {
         const oldState = this.tryReuseOldState();
         const lookup: Record<string, number> = {};
-        const mapToIndex = ({fileName}: {fileName: string}) => lookup[this.host.getCanonicalFileName(this.relativePathNames.get(fileName)!)];
+        const mapToIndex = ({fileName}: {fileName: string}) =>
+            lookup[this.host.getCanonicalFileName(this.relativePathNames.get(fileName)!)];
         const mapDependencies = (dependencies: ReadonlyMap<string, null | readonly string[]>) => {
             if (dependencies.size === 0)
                 return;

@@ -127,7 +127,7 @@ function setup(fileContents: DirectoryJSON, options: { subdir?: string, initialS
         loadState() { return options.initialState; },
         saveState() {},
     };
-    const factory = new ProgramStateFactory(new DependencyResolverFactory(), persistence)
+    const factory = new ProgramStateFactory(new DependencyResolverFactory(), persistence);
     const programState = factory.create(program, compilerHost, tsconfigPath);
     return {vol, compilerHost, program, programState, cwd, persistence, tsconfigPath, factory};
 }
@@ -161,7 +161,7 @@ test('saves old state', (t) => {
     persistence.loadState = (project) => {
         t.is(project, tsconfigPath);
         return savedState;
-    }
+    };
     t.is(programState.getUpToDateResult(cwd + 'a.ts', ''), undefined);
 
     programState.setFileResult(cwd + 'a.ts', '1234', []);
