@@ -406,10 +406,10 @@ test('handles circular dependencies', (t) => {
     const files = {
         'tsconfig.json': '{}',
         'root.ts': 'import "./a";',
-        'a.ts': 'import "./b"; import "./c"; import "./d"; import "./e";',
-        'b.ts': 'import "./a"; import "./c"; import "./d";',
+        'a.ts': 'import "./e"; import "./d"; import "./c"; import "./b";',
+        'b.ts': 'import "./d"; import "./c"; import "./a";',
         'c.ts': 'import "./d";',
-        'd.ts': 'import "./b"; import "./e";',
+        'd.ts': 'import "./e"; import "./b";',
         'e.ts': 'export {};',
     };
     const state = generateOldState('1234', files);
@@ -446,9 +446,9 @@ test('handles circular dependencies', (t) => {
 test('handles multiple level of circular dependencies', (t) => {
     const files = {
         'tsconfig.json': '{}',
-        'a.ts': 'import "./b"; import "./c";',
+        'a.ts': 'import "./c"; import "./b";',
         'b.ts': 'import "./a";',
-        'c.ts': 'import "./d"; import "./e";',
+        'c.ts': 'import "./e"; import "./d";',
         'd.ts': 'import "./c";',
         'e.ts': 'import "./f";',
         'f.ts': 'import "./d";',
@@ -500,12 +500,12 @@ test('handles multiple level of circular dependencies', (t) => {
 test('merges multiple level of circular dependencies', (t) => {
     const files = {
         'tsconfig.json': '{}',
-        'a.ts': 'import "./b"; import "./c";',
+        'a.ts': 'import "./c"; import "./b";',
         'b.ts': 'import "./a";',
-        'c.ts': 'import "./d"; import "./e";',
+        'c.ts': 'import "./e"; import "./d";',
         'd.ts': 'import "./c";',
         'e.ts': 'import "./f";',
-        'f.ts': 'import "./b"; import "./g";',
+        'f.ts': 'import "./g"; import "./b";',
         'g.ts': 'export {};',
     };
     const state = generateOldState('1234', files);
