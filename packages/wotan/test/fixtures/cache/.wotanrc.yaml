@@ -1,0 +1,4 @@
+rules:
+  no-debugger: error
+settings:
+  foo: on
