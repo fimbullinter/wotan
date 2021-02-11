@@ -12,7 +12,7 @@ import { Linter } from '../src/linter';
 import * as yaml from 'js-yaml';
 import { DefaultStatePersistence } from '../src/services/default/state-persistence';
 import * as ts from 'typescript';
-import { CachedFileSystem } from '..';
+import { CachedFileSystem } from '../src/services/cached-file-system';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
