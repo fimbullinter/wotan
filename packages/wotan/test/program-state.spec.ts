@@ -14,10 +14,17 @@ function identity<T>(v: T) {
     return v;
 }
 
-function setup(fileContents: DirectoryJSON, options: { subdir?: string, initialState?: StaticProgramState, caseSensitive?: boolean} = {}) {
+function setup(
+    fileContents: DirectoryJSON,
+    options: {subdir?: string, initialState?: StaticProgramState, caseSensitive?: boolean, symlinks?: ReadonlyArray<[string, string]>} = {},
+) {
     const {root} = path.parse(unixifyPath(process.cwd()));
     const cwd = options.subdir ? unixifyPath(path.join(root, options.subdir)) + '/' : root;
     const vol = Volume.fromJSON(fileContents, cwd);
+    if (options.symlinks)
+        for (const [from, to] of options.symlinks)
+            vol.symlinkSync(cwd + to, cwd + from);
+
     function fileExists(f: string) {
         try {
             return vol.statSync(f).isFile();
@@ -106,7 +113,9 @@ function setup(fileContents: DirectoryJSON, options: { subdir?: string, initialS
         writeFile() {
             throw new Error('not implemented');
         },
-        realpath: identity,
+        realpath(f) {
+            return root + (<string>vol.realpathSync(f, {encoding: 'utf8'})).substr(1);
+        },
         getDirectories(d) {
             return mapDefined(<string[]>vol.readdirSync(d, {encoding: 'utf8'}), (f) => {
                 return this.directoryExists!(d + '/' + f) ? f : undefined;
@@ -585,4 +594,127 @@ test('merges multiple level of circular dependencies II', (t) => {
     t.is(programState.getUpToDateResult(cwd + 'e.ts', '1234'), undefined);
 });
 
+test('uses earliest circular dependency', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./b"; import "./a1";',
+        'a1.ts': 'import "./a2";',
+        'a2.ts': 'import "./a3";',
+        'a3.ts':  'import "./a1"; import "./a"; import "./a2";',
+        'b.ts':  'export {};',
+    };
+    const state = generateOldState('1234', files);
 
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a1.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a2.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a3.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'b.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'b.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'a1.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'a2.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'a3.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+});
+
+test('detects when all files are still the same, but resolution changed', (t) => {
+    const files = {
+        'tsconfig.json': JSON.stringify({exclude: ['deps'], compilerOptions: {moduleResolution: 'node'}}),
+        'a.ts': 'import "x"; import "y";',
+        'deps/x/index.ts': 'export let x;',
+        'deps/y/index.ts': 'export let y;',
+        'node_modules': null,
+    };
+    const state = generateOldState('1234', files, {symlinks: [
+        ['node_modules/x', 'deps/x'],
+        ['node_modules/y', 'deps/y'],
+    ]});
+
+    let {programState, cwd} = setup(files, {initialState: state, symlinks: [
+        ['node_modules/x', 'deps/x'],
+        ['node_modules/y', 'deps/y'],
+    ]});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'deps/x/index.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'deps/y/index.ts', '1234'), []);
+
+    ({programState, cwd} = setup(files, {initialState: state, symlinks: [
+        ['node_modules/x', 'deps/y'],
+        ['node_modules/y', 'deps/x'],
+    ]}));
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'deps/x/index.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'deps/y/index.ts', '1234'), []);
+});
+
+test('detects added module augmentation', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'export {};',
+        'b.ts': 'export {};',
+        'c.ts': 'import "./a";',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'b.ts', 'declare module "./a" {};');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'b.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+});
+
+test('changes in unresolved dependencies', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "x";',
+        'b.ts': 'import "y";',
+        'c.ts': 'declare module "x";',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+
+    vol.writeFileSync(cwd + 'c.ts', 'declare module "y";');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'c.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+});

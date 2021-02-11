@@ -218,8 +218,6 @@ class ProgramStateImpl implements ProgramState {
                     return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                 for (const key of keys) {
                     let newDeps = dependencies.get(key);
-                    if (newDeps === undefined)
-                        return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
                     const oldDeps = old.dependencies![key];
                     if (oldDeps === null) {
                         if (newDeps !== null)
@@ -426,7 +424,7 @@ function markAsOutdated(parents: readonly number[], index: number, cycles: Reado
 }
 
 function compareHashKey(a: {hash: string}, b: {hash: string}) {
-    return a.hash < b.hash ? -1 : a.hash === b.hash ? 0 : 1;
+    return +(a.hash >= b.hash) - +(a.hash <= b.hash);
 }
 
 const enum CompilerOptionKind {
