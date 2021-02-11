@@ -537,3 +537,52 @@ test('merges multiple level of circular dependencies', (t) => {
     t.is(programState.getUpToDateResult(cwd + 'f.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'g.ts', '1234'), undefined);
 });
+
+test('merges multiple level of circular dependencies II', (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./e"; import "./b"; import "./a1";',
+        'a1.ts': 'import "./a";',
+        'b.ts':  'import "./b1";',
+        'b1.ts': 'import "./c"; import "./b2"; import "./b";',
+        'c.ts': 'import "./d";',
+        'd.ts': 'import "./d2"; import "./d1";',
+        'd1.ts': 'import "./d";',
+        'd2.ts': 'import "./a";',
+        'e.ts': 'export {};',
+    };
+    const state = generateOldState('1234', files);
+
+    let {programState, cwd, vol, program, compilerHost} = setup(files, {initialState: state});
+
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a1.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'b1.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'c.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd1.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'd2.ts', '1234'), []);
+    t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
+
+    vol.appendFileSync(cwd + 'e.ts', 'foo;');
+    program = ts.createProgram({
+        oldProgram: program,
+        options: program.getCompilerOptions(),
+        rootNames: program.getRootFileNames(),
+        host: compilerHost,
+    });
+    programState.update(program, cwd + 'e.ts');
+
+    t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'a1.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'b1.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd1.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'd2.ts', '1234'), undefined);
+    t.is(programState.getUpToDateResult(cwd + 'e.ts', '1234'), undefined);
+});
+
+
