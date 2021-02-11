@@ -10,6 +10,9 @@ import { FileSystem, MessageHandler, DirectoryService, FileSummary, StatePersist
 import { unixifyPath } from '../src/utils';
 import { Linter } from '../src/linter';
 import * as yaml from 'js-yaml';
+import { DefaultStatePersistence } from '../src/services/default/state-persistence';
+import * as ts from 'typescript';
+import { CachedFileSystem } from '..';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
@@ -465,12 +468,24 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
     t.snapshot(result, {id: 'multi-project'});
 });
 
+@injectable()
+class TsVersionAgnosticStatePersistence extends DefaultStatePersistence {
+    constructor(fs: CachedFileSystem) {
+        super(fs);
+    }
+    public loadState(project: string) {
+        const result = super.loadState(project);
+        return result && {...result, ts: ts.version};
+    }
+    public saveState() {}
+}
+
 test('uses results from cache', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
     container.load(createCoreModule({}), createDefaultModule());
     container.get(Linter).getFindings = () => { throw new Error('should not be called'); };
-    container.get(StatePersistence).saveState = () => {};
     const runner = container.get(Runner);
 
     const result = Array.from(
@@ -493,6 +508,7 @@ test('uses results from cache', (t) => {
 test('ignore cache if option is not enabled', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
     container.load(createCoreModule({}), createDefaultModule());
     container.get(StatePersistence).loadState = () => { throw new Error('should not be called'); };
     const runner = container.get(Runner);
@@ -517,8 +533,8 @@ test('ignore cache if option is not enabled', (t) => {
 test('discards cache if config changes', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
     container.load(createCoreModule({}), createDefaultModule());
-    container.get(StatePersistence).saveState = () => { };
     const linter = container.get(Linter);
     const getFindings = linter.getFindings;
     const lintedFiles: string[] = [];
@@ -549,6 +565,7 @@ test('discards cache if config changes', (t) => {
 test('cache and fix', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
     container.load(createCoreModule({}), createDefaultModule());
     container.get(StatePersistence).saveState = (_, {ts: _ts, cs: _cs, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}), {id: 'updated-state'});
     const linter = container.get(Linter);
