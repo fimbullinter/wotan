@@ -550,7 +550,7 @@ test('cache and fix', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
     container.load(createCoreModule({}), createDefaultModule());
-    container.get(StatePersistence).saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}), {id: 'updated-state'});
+    container.get(StatePersistence).saveState = (_, {ts: _ts, cs: _cs, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}), {id: 'updated-state'});
     const linter = container.get(Linter);
     const getFindings = linter.getFindings;
     const lintedFiles: string[] = [];
