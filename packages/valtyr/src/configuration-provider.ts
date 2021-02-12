@@ -44,7 +44,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         fileName = path.dirname(fileName);
         let result = this.cache.get(fileName);
         if (result === undefined && !this.cache.has(fileName)) {
-            result = TSLint.Configuration.findConfigurationPath(null, fileName); // tslint:disable-line:no-null-keyword
+            result = TSLint.Configuration.findConfigurationPath(null, fileName);
             const {root} = path.parse(fileName);
             // prevent infinite loop when result is on different drive
             const configDirname = result === undefined || root !== path.parse(result).root ? root : path.dirname(result);

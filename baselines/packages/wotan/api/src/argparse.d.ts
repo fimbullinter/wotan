@@ -12,6 +12,7 @@ export declare const GLOBAL_OPTIONS_SPEC: {
     exclude: OptionParser.ParseFunction<readonly string[]>;
     project: OptionParser.ParseFunction<readonly string[]>;
     references: OptionParser.ParseFunction<boolean>;
+    cache: OptionParser.ParseFunction<boolean>;
     formatter: OptionParser.ParseFunction<string | undefined>;
     fix: OptionParser.ParseFunction<number | boolean>;
     extensions: OptionParser.ParseFunction<string[] | undefined>;

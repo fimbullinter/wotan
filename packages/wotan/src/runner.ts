@@ -9,11 +9,13 @@ import {
     MessageHandler,
     FileFilterFactory,
     Severity,
+    ReducedConfiguration,
+    EffectiveConfiguration,
 } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange, djb2 } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -22,6 +24,7 @@ import { ConfigurationManager } from './services/configuration-manager';
 import { ProjectHost } from './project-host';
 import debug = require('debug');
 import { normalizeGlob } from 'normalize-glob';
+import { ProgramStateFactory } from './services/program-state';
 
 const log = debug('wotan:runner');
 
@@ -34,6 +37,7 @@ export interface LintOptions {
     fix: boolean | number;
     extensions: ReadonlyArray<string> | undefined;
     reportUselessDirectives: Severity | boolean | undefined;
+    cache: boolean;
 }
 
 interface NormalizedOptions extends Pick<LintOptions, Exclude<keyof LintOptions, 'files'>> {
@@ -55,6 +59,7 @@ export class Runner {
         private directories: DirectoryService,
         private logger: MessageHandler,
         private filterFactory: FileFilterFactory,
+        private programStateFactory: ProgramStateFactory,
     ) {}
 
     public lintCollection(options: LintOptions): LintResult {
@@ -85,9 +90,10 @@ export class Runner {
             this.configManager,
             this.processorLoader,
         );
-        for (let {files, program} of
+        for (let {files, program, configFilePath: tsconfigPath} of
             this.getFilesAndProgram(options.project, options.files, options.exclude, processorHost, options.references)
         ) {
+            const programState = options.cache ? this.programStateFactory.create(program, processorHost, tsconfigPath) : undefined;
             let invalidatedProgram = false;
             const factory: ProgramFactory = {
                 getCompilerOptions() {
@@ -114,7 +120,10 @@ export class Runner {
                 const originalContent = mapped === undefined ? sourceFile.text : mapped.originalContent;
                 let summary: FileSummary;
                 const fix = shouldFix(sourceFile, options, originalName);
+                const configHash = programState === undefined ? undefined : createConfigHash(effectiveConfig, linterOptions);
+                const resultFromCache = programState?.getUpToDateResult(sourceFile.fileName, configHash!);
                 if (fix) {
+                    let updatedFile = false;
                     summary = this.linter.lintAndFix(
                         sourceFile,
                         originalContent,
@@ -127,6 +136,8 @@ export class Runner {
                             if (hasErrors) {
                                 log("Autofixing caused syntax errors in '%s', rolling back", sourceFile.fileName);
                                 sourceFile = ts.updateSourceFile(sourceFile, oldContent, invertChangeRange(range));
+                            } else {
+                                updatedFile = true;
                             }
                             // either way we need to store the new SourceFile as the old one is now corrupted
                             processorHost.updateSourceFile(sourceFile);
@@ -134,24 +145,31 @@ export class Runner {
                         },
                         fix === true ? undefined : fix,
                         factory,
-                        mapped === undefined ? undefined : mapped.processor,
+                        mapped?.processor,
                         linterOptions,
+                        // pass cached results so we can apply fixes from cache
+                        resultFromCache,
                     );
+                    if (updatedFile)
+                        programState?.update(factory.getProgram(), sourceFile.fileName);
                 } else {
                     summary = {
-                        findings: this.linter.getFindings(
+                        findings: resultFromCache ?? this.linter.getFindings(
                             sourceFile,
                             effectiveConfig,
                             factory,
-                            mapped === undefined ? undefined : mapped.processor,
+                            mapped?.processor,
                             linterOptions,
                         ),
                         fixes: 0,
                         content: originalContent,
                     };
                 }
+                if (programState !== undefined && resultFromCache !== summary.findings)
+                    programState.setFileResult(file, configHash!, summary.findings);
                 yield [originalName, summary];
             }
+            programState?.save();
         }
     }
 
@@ -241,7 +259,7 @@ export class Runner {
         exclude: ReadonlyArray<string>,
         host: ProjectHost,
         references: boolean,
-    ): Iterable<{files: Iterable<string>, program: ts.Program}> {
+    ): Iterable<{files: Iterable<string>, program: ts.Program, configFilePath: string}> {
         const cwd = unixifyPath(this.directories.getCurrentDirectory());
         if (projects.length !== 0) {
             projects = projects.map((configFile) => this.checkConfigDirectory(unixifyPath(path.resolve(cwd, configFile))));
@@ -269,7 +287,7 @@ export class Runner {
         const ex = exclude.map((p) => new Minimatch(p, {dot: true}));
         const projectsSeen: string[] = [];
         let filesOfPreviousProject: string[] | undefined;
-        for (const program of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
+        for (const {program, configFilePath} of this.createPrograms(projects, host, projectsSeen, references, isFileIncluded)) {
             const ownFiles = [];
             const files: string[] = [];
             const fileFilter = this.filterFactory.create({program, host});
@@ -293,7 +311,7 @@ export class Runner {
             filesOfPreviousProject = ownFiles;
 
             if (files.length !== 0)
-                yield {files, program};
+                yield {files, program, configFilePath};
         }
         ensurePatternsMatch(nonMagicGlobs, ex, allMatchedFiles, projectsSeen);
 
@@ -323,7 +341,7 @@ export class Runner {
         seen: string[],
         references: boolean,
         isFileIncluded: (fileName: string) => boolean,
-    ): Iterable<ts.Program> {
+    ): Iterable<{program: ts.Program, configFilePath: string}> {
         for (const configFile of projects) {
             if (configFile === undefined)
                 continue;
@@ -349,7 +367,7 @@ export class Runner {
                         // this is in a nested block to allow garbage collection while recursing
                         const program =
                             host.createProgram(commandLine.fileNames, commandLine.options, undefined, commandLine.projectReferences);
-                        yield program;
+                        yield {program, configFilePath};
                         if (references)
                             resolvedReferences = program.getResolvedProjectReferences();
                     }
@@ -430,21 +448,25 @@ function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>,
     return options.fix;
 }
 
-declare module 'typescript' {
-    function matchFiles(
-        path: string,
-        extensions: ReadonlyArray<string>,
-        excludes: ReadonlyArray<string> | undefined,
-        includes: ReadonlyArray<string>,
-        useCaseSensitiveFileNames: boolean,
-        currentDirectory: string,
-        depth: number | undefined,
-        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
-        realpath: (path: string) => string,
-    ): string[];
+function createConfigHash(config: ReducedConfiguration, linterOptions: LinterOptions) {
+    return '' + djb2(JSON.stringify({
+        rules: mapToObject(config.rules, stripRuleConfig),
+        settings: mapToObject(config.settings, identity),
+        ...linterOptions,
+    }));
+}
 
-    interface FileSystemEntries {
-        readonly files: ReadonlyArray<string>;
-        readonly directories: ReadonlyArray<string>;
-    }
+function mapToObject<T, U>(map: ReadonlyMap<string, T>, transform: (v: T) => U) {
+    const result: Record<string, U> = {};
+    for (const [key, value] of map)
+        result[key] = transform(value);
+    return result;
+}
+
+function identity<T>(v: T) {
+    return v;
+}
+
+function stripRuleConfig({rulesDirectories: _ignored, ...rest}: EffectiveConfiguration.RuleConfig) {
+    return rest;
 }

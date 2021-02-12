@@ -12,6 +12,15 @@
       }
     },
     {
+      "name": "not-to-spec",
+      "comment": "Don't allow dependencies to spec files",
+      "severity": "error",
+      "from": {},
+      "to": {
+        "path": "\\.spec\\.[jt]s$"
+      }
+    },
+    {
       "name": "not-outside-package",
       "comment": "Don't allow packages to anything outside of packages",
       "severity": "error",

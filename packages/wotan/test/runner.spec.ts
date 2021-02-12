@@ -6,8 +6,13 @@ import { createDefaultModule } from '../src/di/default.module';
 import { Runner } from '../src/runner';
 import * as path from 'path';
 import { NodeFileSystem } from '../src/services/default/file-system';
-import { FileSystem, MessageHandler, DirectoryService, FileSummary } from '@fimbul/ymir';
+import { FileSystem, MessageHandler, DirectoryService, FileSummary, StatePersistence } from '@fimbul/ymir';
 import { unixifyPath } from '../src/utils';
+import { Linter } from '../src/linter';
+import * as yaml from 'js-yaml';
+import { DefaultStatePersistence } from '../src/services/default/state-persistence';
+import * as ts from 'typescript';
+import { CachedFileSystem } from '../src/services/cached-file-system';
 
 const directories: DirectoryService = {
     getCurrentDirectory() { return path.resolve('packages/wotan'); },
@@ -19,6 +24,7 @@ test('throws error on non-existing file', (t) => {
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 'test/fixtures/invalid.js', // exists
@@ -44,6 +50,7 @@ test('throws error on file not included in project', (t) => {
     const runner = container.get(Runner);
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 'non-existent.js', // does not exist, but is excluded
@@ -69,6 +76,7 @@ test('handles absolute paths with file system specific path separator', (t) => {
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const result = Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [
             path.resolve('packages/wotan/test/project/setup/test.ts'),
@@ -105,6 +113,7 @@ test('throws if no tsconfig.json can be found', (t) => {
     const {root} = path.parse(process.cwd());
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -120,6 +129,7 @@ test('throws if no tsconfig.json can be found', (t) => {
     const dir = path.join(__dirname, 'non-existent');
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -134,6 +144,7 @@ test('throws if no tsconfig.json can be found', (t) => {
 
     t.throws(
         () => Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -192,6 +203,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     const runner = container.get(Runner);
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -205,6 +217,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -218,6 +231,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -233,6 +247,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
     warning = '';
 
     Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -246,7 +261,7 @@ test('reports warnings while parsing tsconfig.json', (t) => {
 });
 
 // TODO https://github.com/fimbullinter/wotan/issues/387 https://github.com/Microsoft/TypeScript/issues/26684
-test.skip('excludes symlinked typeRoots', (t) => {
+test.failing('excludes symlinked typeRoots', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
     interface FileMeta {
@@ -344,6 +359,7 @@ test.skip('excludes symlinked typeRoots', (t) => {
     container.load(createCoreModule({}), createDefaultModule());
     const runner = container.get(Runner);
     const result = Array.from(runner.lintCollection({
+        cache: false,
         config: undefined,
         files: [],
         exclude: [],
@@ -371,6 +387,7 @@ test('works with absolute and relative paths', (t) => {
 
     function testRunner(project: boolean) {
         const result = Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 unixifyPath(path.resolve('packages/wotan/test/fixtures/paths/a.ts')),
@@ -408,6 +425,7 @@ test('normalizes globs', (t) => {
 
     function testRunner(project: boolean) {
         const result = Array.from(runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [
                 '../paths/a.ts',
@@ -435,6 +453,7 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
 
     const result = Array.from(
         runner.lintCollection({
+            cache: false,
             config: undefined,
             files: [],
             exclude: [],
@@ -447,4 +466,131 @@ test('supports linting multiple (overlapping) projects in one run', (t) => {
         (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/multi-project', entry[0])), entry[1]],
     );
     t.snapshot(result, {id: 'multi-project'});
+});
+
+@injectable()
+class TsVersionAgnosticStatePersistence extends DefaultStatePersistence {
+    constructor(fs: CachedFileSystem) {
+        super(fs);
+    }
+    public loadState(project: string) {
+        const result = super.loadState(project);
+        return result && {...result, ts: ts.version};
+    }
+    public saveState() {}
+}
+
+test('uses results from cache', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
+    container.load(createCoreModule({}), createDefaultModule());
+    container.get(Linter).getFindings = () => { throw new Error('should not be called'); };
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            cache: true,
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/cache'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/cache', entry[0])), entry[1]],
+    );
+    t.snapshot(result, {id: 'cache'});
+});
+
+test('ignore cache if option is not enabled', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
+    container.load(createCoreModule({}), createDefaultModule());
+    container.get(StatePersistence).loadState = () => { throw new Error('should not be called'); };
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            cache: false,
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/cache'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/cache', entry[0])), entry[1]],
+    );
+    t.snapshot(result, {id: 'cache'});
+});
+
+test('discards cache if config changes', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
+    container.load(createCoreModule({}), createDefaultModule());
+    const linter = container.get(Linter);
+    const getFindings = linter.getFindings;
+    const lintedFiles: string[] = [];
+    linter.getFindings = (...args) => {
+        lintedFiles.push(path.basename(args[0].fileName));
+        return getFindings.apply(linter, args);
+    };
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            cache: true,
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/cache'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/cache', entry[0])), entry[1]],
+    );
+    t.deepEqual(lintedFiles, ['a.ts', 'b.ts']);
+    t.snapshot(result, {id: 'cache-outdated'});
+});
+
+test('cache and fix', (t) => {
+    const container = new Container({defaultScope: BindingScopeEnum.Singleton});
+    container.bind(DirectoryService).toConstantValue(directories);
+    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
+    container.load(createCoreModule({}), createDefaultModule());
+    container.get(StatePersistence).saveState = (_, {ts: _ts, cs: _cs, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}), {id: 'updated-state'});
+    const linter = container.get(Linter);
+    const getFindings = linter.getFindings;
+    const lintedFiles: string[] = [];
+    linter.getFindings = (...args) => {
+        lintedFiles.push(path.basename(args[0].fileName));
+        return getFindings.apply(linter, args);
+    };
+    const runner = container.get(Runner);
+
+    const result = Array.from(
+        runner.lintCollection({
+            cache: true,
+            config: undefined,
+            files: [],
+            exclude: [],
+            project: ['test/fixtures/cache'],
+            references: false,
+            fix: true,
+            extensions: undefined,
+            reportUselessDirectives: true,
+        }),
+        (entry): [string, FileSummary] => [unixifyPath(path.relative('packages/wotan/test/fixtures/cache', entry[0])), entry[1]],
+    );
+    t.deepEqual(lintedFiles, ['b.ts']);
+    t.snapshot(result, {id: 'cache-fix'});
 });

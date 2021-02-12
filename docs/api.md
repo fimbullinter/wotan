@@ -9,11 +9,13 @@ There are several core services that are provided by Wotan through the Container
 
 * `CachedFileSystem` is a wrapper for the low level `FileSystem` service, which caches the file system layout. File contents are not cached.
 * `ConfigurationManager` is the place for everything related to configuration handling. Internally it uses `ConfigurationProvider` to find, load and parse configuration files. Parsed configuration files are cached.
+* `DependencyResolverFactory` creates a service to determine how files in the program affect each other.
 * `FormatterLoader` loads core and custom formatters via `FormatterLoaderHost`.
 * `Linter` executes a given set of rules on a SourceFile. It automatically loads enabled rules using `RuleLoader` and filters out disabled findings using `FindingFilterFactory`. `Linter` can also automatically fix findings and return the fixed source code. It does not access the file system.
 * `ProcessorLoader` loads and caches processors using `Resolver`.
+* `ProgramStateFactory` creates a service to get lint results for up-to-date files from cache and update the cache as necessary. Uses `StatePersistence` to load the cache for the current project. Uses `DependencyResolverFactory` to find out about file dependencies.
 * `RuleLoader` loads and caches core and custom rules via `RuleLoaderHost`.
-* `Runner` is used to lint a collection of files. If you want to lint a project, you provide the path of one or more `tsconfig.json` and it creates the project internally. `Runner` loads the source code from the file system, loads configuration from `ConfigurationManager`, applies processors if specified in the configuration and lints all (matching) files using `Linter`. It uses `FileFilterFactory` to filter out non-user code.
+* `Runner` is used to lint a collection of files. If you want to lint a project, you provide the path of one or more `tsconfig.json` and it creates the project internally. `Runner` loads the source code from the file system, loads configuration from `ConfigurationManager`, applies processors if specified in the configuration and lints all (matching) files using `Linter`. It uses `FileFilterFactory` to filter out non-user code. If caching is enabled, it uses `ProgramStateFactory` to load the cached results and update the cache.
 
 These core services use other abstractions for the low level tasks. That enables you to change the behavior of certain services without the need to implement the whole thing.
 The default implementations (targeting the Node.js runtime environment) are provided throug the ContainerModule `DEFAULT_DI_MODULE`. The default implementation is only used if there is no binding for the identifier.
@@ -31,6 +33,7 @@ The default implementations (targeting the Node.js runtime environment) are prov
 * `MessageHandler` is used for user facing messages. `log` is called for the result of a command, `warn` is called everytime a warning event occurs and `error` is used to display exception messages.
 * `Resolver` (`NodeResolver`) is an abstraction for `require()` and `require.resolve()`. It's used to locate and load external resources (configuration, scripts, ...).
 * `RuleLoaderHost` (`NodeRuleLoader`) is used to resolve and require a rule.
+* `StatePersistence` (`DefaultStatePersistence`) is responsible to load and save the cache for a given `tsconfig.json`.
 
 ## Example
 

@@ -11,6 +11,8 @@ import {
     DirectoryService,
     ConfigurationError,
     BuiltinResolver,
+    StatePersistence,
+    StaticProgramState,
 } from '@fimbul/ymir';
 import { NodeDirectoryService } from '../src/services/default/directory-service';
 import * as os from 'os';
@@ -31,6 +33,8 @@ import { DefaultDeprecationHandler } from '../src/services/default/deprecation-h
 import { FormatterLoader } from '../src/services/formatter-loader';
 import { ProcessorLoader } from '../src/services/processor-loader';
 import { satisfies } from 'semver';
+import * as yaml from 'js-yaml';
+import { DefaultStatePersistence } from '../src/services/default/state-persistence';
 
 test('CacheFactory', (t) => {
     const cm = new DefaultCacheFactory();
@@ -426,4 +430,77 @@ test('ProcessorLoader', (t) => {
     t.throws(() => loader.loadProcessor('bar'), { message: "'bar' has no export named 'Processor'." });
     r = require;
     t.throws(() => loader.loadProcessor('./fooBarBaz'), {message: /^Cannot find module '\.\/fooBarBaz'$/m});
+});
+
+test('StatePersistence', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheFactory).to(DefaultCacheFactory);
+    container.bind(StatePersistence).to(DefaultStatePersistence);
+    const state: StaticProgramState = {
+        cs: true,
+        files: [],
+        global: [],
+        lookup: {},
+        options: '',
+        ts: ts.version,
+        v: 1,
+    };
+    const fileContent = {state, v: 1};
+    let written = false;
+    container.bind(FileSystem).toConstantValue({
+        createDirectory() { throw new Error(); },
+        deleteFile() { throw new Error(); },
+        readDirectory() { throw new Error(); },
+        realpath() { throw new Error(); },
+        normalizePath: NodeFileSystem.normalizePath,
+        stat(f) {
+            switch (f) {
+                case './tsconfig-nonexist.fimbullintercache':
+                    return { isDirectory() { return true; }, isFile() { return false; } };
+                case './tsconfig-mismatch.fimbullintercache':
+                case './tsconfig-throws.fimbullintercache':
+                case './tsconfig-empty.fimbullintercache':
+                case './tsconfig-correct.fimbullintercache':
+                    return { isDirectory() { return false; }, isFile() { return true; } };
+                default:
+                    throw t.fail('unexpected file ' + f);
+            }
+        },
+        readFile(f) {
+            switch (f) {
+                case './tsconfig-correct.fimbullintercache':
+                    return yaml.dump(fileContent);
+                case './tsconfig-mismatch.fimbullintercache':
+                    return yaml.dump({state, v: 0});
+                case './tsconfig-empty.fimbullintercache':
+                    return '';
+                case './tsconfig-throws.fimbullintercache':
+                    throw new Error();
+                default:
+                    throw t.fail('unexpected file ' + f);
+            }
+        },
+        writeFile(f, content) {
+            if (f === './tsconfig-throws.fimbullintercache')
+                throw new Error();
+            t.is(f, './tsconfig-correct.fimbullintercache');
+            t.deepEqual(yaml.load(content), fileContent);
+            written = true;
+        },
+    });
+
+    const service = container.get(StatePersistence);
+
+    t.is(service.loadState('./tsconfig-nonexist.json'), undefined);
+    t.is(service.loadState('./tsconfig-mismatch.json'), undefined);
+    t.is(service.loadState('./tsconfig-throws.json'), undefined);
+    t.is(service.loadState('./tsconfig-empty.json'), undefined);
+    t.deepEqual(service.loadState('./tsconfig-correct.json'), state);
+
+    service.saveState('./tsconfig-throws.json', state);
+    t.is(written, false);
+
+    service.saveState('./tsconfig-correct.json', state);
+    t.is(written, true);
 });

@@ -21,6 +21,7 @@ class SaveCommandRunner extends AbstractCommandRunner {
             {
                 ...this.options,
                 ...config,
+                cache: config.cache || undefined,
                 fix: config.fix || undefined,
                 reportUselessDirectives: config.reportUselessDirectives || undefined,
                 references: config.references || undefined,

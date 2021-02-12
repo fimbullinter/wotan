@@ -159,6 +159,7 @@ To detect unused or redundant comments you can use the `--report-useless-directi
 * `-p --project <name>` specifies the path to the `tsconfig.json` file to use. This option is used to find all files contained in your project. It also enables rules that require type information. This option can be used multiple times to specify multiple projects to lint.
 * `-r --references [true|false]` enables project references. Starting from the project specified with `-p --project` or the `tsconfig.json` in the current directory it will recursively follow all `"references"` and lint those projects.
 * `--report-useless-directives [true|false|error|warning|suggestion]` reports `// wotan-disable` and `// wotan-enable` comments that are redundant (i.e. rules are already disabled) or unused (there are no findings for the specified rules). Useless directives are reported as lint findings with the specified severity (`true` is converted to `error`). Those findings cannot be disabled by a disable comment. The findings are fixable which allow autofixing when used with the `--fix` option.
+* `--cache` enables caching of lint results for projects. Can only be used with `-p --project` option. Read more about [caching](#caching).
 * `[...FILES]` specifies the files to lint. You can specify paths and glob patterns here.
 
 Note that all file paths are relative to the current working directory. Therefore `**/*.ts` doesn't match `../foo.ts`.
@@ -232,6 +233,36 @@ More information is available in the official [TypeScript Handbook: Type Checkin
 Wotan respects these flags, too. That means it will not provide type information to rules executed on unchecked JS files.
 This ensures you won't get surprising lint findings caused by funky type inference in those files.
 You will still get reports for purely syntactic findings, i.e. rules that don't require type information.
+
+### Caching
+
+Caching is done per project. Hence it requires type information. For every `tsconfig.json` it creates a `tsconfig.fimbullintercache` file that contains the state of the previous run.
+The content of this file is not intended for use by other tools. All cache information is relative to the project directory. That means the cache can be checked into your VCS and reused by CI or your collegues.
+
+If a cache is available for a given project, Wotan can avoid linting files that are known to be unchanged. This can significantly reduce execution time.
+
+A file is treated as outdated and therefore linted if one of the following is true:
+
+* TypeScript version changed
+* compilerOptions changed
+* added, removed or outdated files that affect the global scope
+* linter configuration for the file changed
+* file has no cached lint result
+* file content changed
+* module resolution of imports or exports has changed
+  * dependency is added or removed
+  * ambient module or module augmentation is added, removed
+  * dependency is outdated
+    * if compilerOption `assumeChangesOnlyAffectDirectDependencies` is enabled, only checks direct dependencies
+    * otherwise recursively checks all transitive dependencies
+
+The following cases don't work well with caching:
+
+* rules accessing the file system or environment variables
+* rules accessing other files in the project that are not global or dependencies of the current file
+* linting the same project with different configurations -> only use caching for one of the configurations
+* projects where all files are in the global scope
+* updating the linter, rules or their (transitive) dependencies -> you need to manually remove the cache if you expect it to affect the lint result
 
 ### Excluded Files
 

@@ -54,6 +54,7 @@ export const GLOBAL_OPTIONS_SPEC = {
     exclude: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
     project: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitiveOrArray('string'), emptyArray),
     references: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
+    cache: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), false),
     formatter: OptionParser.Factory.parsePrimitive('string'),
     fix: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean', 'number'), false),
     extensions: OptionParser.Transform.map(OptionParser.Factory.parsePrimitiveOrArray('string'), sanitizeExtensionArgument),
@@ -117,6 +118,9 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
             case '--references':
                 ({index: i, argument: result.references} = parseOptionalBoolean(args, i));
                 break;
+            case '--cache':
+                ({index: i, argument: result.cache} = parseOptionalBoolean(args, i));
+                break;
             case '-e':
             case '--exclude':
                 result.exclude = exclude;
@@ -160,13 +164,16 @@ function parseLintCommand<T extends CommandName.Lint | CommandName.Save>(
         }
     }
 
+    const usesProject = result.project.length !== 0 || result.files.length === 0;
     if (result.extensions !== undefined) {
         if (result.extensions.length === 0) {
             result.extensions = undefined;
-        } else if (result.project.length !== 0 || result.files.length === 0) {
+        } else if (usesProject) {
             throw new ConfigurationError("Options '--ext' and '--project' cannot be used together.");
         }
     }
+    if (result.cache && !usesProject)
+        throw new ConfigurationError("Option '--cache' can only be used together with '--project'");
 
     return result;
 }
