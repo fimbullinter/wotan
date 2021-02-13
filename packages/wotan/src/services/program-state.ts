@@ -26,7 +26,7 @@ export class ProgramStateFactory {
     }
 }
 
-export type ProgramStateHost = Pick<ts.CompilerHost, 'getCanonicalFileName' | 'useCaseSensitiveFileNames'>;
+export type ProgramStateHost = Pick<ts.CompilerHost, 'useCaseSensitiveFileNames'>;
 
 interface FileResults {
     readonly config: string;
@@ -44,7 +44,9 @@ const STATE_VERSION = 1;
 const oldStateSymbol = Symbol('oldState');
 class ProgramStateImpl implements ProgramState {
     private projectDirectory = unixifyPath(path.dirname(this.project));
-    private canonicalProjectDirectory = this.host.getCanonicalFileName(this.projectDirectory);
+    private caseSensitive = this.host.useCaseSensitiveFileNames();
+    private getCanonicalFileName = this.caseSensitive ? (f: string) => f : (f: string) => f.toLowerCase();
+    private canonicalProjectDirectory = this.getCanonicalFileName(this.projectDirectory);
     private optionsHash = computeCompilerOptionsHash(this.program.getCompilerOptions(), this.projectDirectory);
     private assumeChangesOnlyAffectDirectDependencies =
         isCompilerOptionEnabled(this.program.getCompilerOptions(), 'assumeChangesOnlyAffectDirectDependencies');
@@ -103,6 +105,7 @@ class ProgramStateImpl implements ProgramState {
     }
 
     private getFileHash(file: string) {
+        // TODO move hashing to a separate service
         return resolveCachedResult(this.fileHashes, file, this.computeFileHash);
     }
 
@@ -117,7 +120,7 @@ class ProgramStateImpl implements ProgramState {
 
     @bind
     private makeRelativePath(fileName: string) {
-        return unixifyPath(path.relative(this.canonicalProjectDirectory, this.host.getCanonicalFileName(fileName)));
+        return unixifyPath(path.relative(this.canonicalProjectDirectory, this.getCanonicalFileName(fileName)));
     }
 
     public getUpToDateResult(fileName: string, configHash: string) {
@@ -283,14 +286,30 @@ class ProgramStateImpl implements ProgramState {
     }
 
     public save() {
-        this.statePersistence.saveState(this.project, this.aggregate());
+        if (this.fileResults.size === 0)
+            return; // nothing to save
+        const oldState = this[oldStateSymbol];
+        if (oldState !== undefined && this.dependenciesUpToDate.every((v) => v === DependencyState.Ok)) {
+            // state is still good, only update results
+            const files = oldState.files.slice();
+            for (const [fileName, result] of this.fileResults) {
+                const index = this.lookupFileIndex(fileName, oldState)!;
+                files[index] = {...files[index], ...result};
+            }
+            this.statePersistence.saveState(this.project, {
+                ...oldState,
+                files,
+            });
+        } else {
+            this.statePersistence.saveState(this.project, this.aggregate());
+        }
     }
 
     private aggregate(): StaticProgramState {
         const oldState = this.tryReuseOldState();
         const lookup: Record<string, number> = {};
         const mapToIndex = ({fileName}: {fileName: string}) =>
-            lookup[this.host.getCanonicalFileName(this.relativePathNames.get(fileName)!)];
+            lookup[this.relativePathNames.get(fileName)!];
         const mapDependencies = (dependencies: ReadonlyMap<string, null | readonly string[]>) => {
             if (dependencies.size === 0)
                 return;
@@ -304,7 +323,7 @@ class ProgramStateImpl implements ProgramState {
         const files: StaticProgramState.FileState[] = [];
         const sourceFiles = this.program.getSourceFiles();
         for (let i = 0; i < sourceFiles.length; ++i)
-            lookup[this.host.getCanonicalFileName(this.getRelativePath(sourceFiles[i].fileName))] = i;
+            lookup[this.getRelativePath(sourceFiles[i].fileName)] = i;
         for (const file of sourceFiles) {
             let results = this.fileResults.get(file.fileName);
             if (results === undefined && oldState !== undefined) {
@@ -330,7 +349,7 @@ class ProgramStateImpl implements ProgramState {
             lookup,
             v: STATE_VERSION,
             ts: ts.version,
-            cs: this.host.useCaseSensitiveFileNames(),
+            cs: this.caseSensitive,
             global: this.sortByHash(this.resolver.getFilesAffectingGlobalScope()).map(mapToIndex),
             options: this.optionsHash,
         };
@@ -343,20 +362,20 @@ class ProgramStateImpl implements ProgramState {
     }
 
     private lookupFileIndex(fileName: string, oldState: StaticProgramState): number | undefined {
-        fileName = this.host.getCanonicalFileName(this.getRelativePath(fileName));
-        if (!oldState.cs && this.host.useCaseSensitiveFileNames())
+        fileName = this.getRelativePath(fileName);
+        if (!oldState.cs && this.caseSensitive)
             fileName = fileName.toLowerCase();
         return oldState.lookup[fileName];
     }
 
     private remapFileNames(oldState: StaticProgramState): StaticProgramState {
         // only need to remap if oldState is case sensitive and current host is case insensitive
-        if (!oldState.cs || this.host.useCaseSensitiveFileNames())
+        if (!oldState.cs || this.caseSensitive)
             return oldState;
         const lookup: Record<string, number> = {};
         for (const [key, value] of Object.entries(oldState.lookup))
-            lookup[this.host.getCanonicalFileName(key)] = value;
-        return {...oldState, lookup};
+            lookup[key.toLowerCase()] = value;
+        return {...oldState, lookup, cs: false};
     }
 }
 

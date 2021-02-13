@@ -212,6 +212,8 @@ test('saves old state', (t) => {
     t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'e.ts', '1234'), undefined);
 
+    programState.setFileResult(cwd + 'e.ts', '1234', []);
+
     programState.save();
 
     vol.writeFileSync(cwd + 'e.ts', 'var v: import("e");');
@@ -340,7 +342,7 @@ test("doesn't discard results from old state", (t) => {
         },
     );
 
-    persistence.saveState = (_, s) => t.deepEqual(s, state);
+    persistence.saveState = () => t.fail('should not save without changes');
     programState.save();
 
     vol.writeFileSync(cwd + 'b.ts', 'import "./c";');
@@ -351,6 +353,8 @@ test("doesn't discard results from old state", (t) => {
         host: compilerHost,
     });
     programState.update(program, cwd + 'b.ts');
+
+    programState.setFileResult(cwd + 'b.ts', '5678', []);
 
     persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
     programState.save();
@@ -363,6 +367,8 @@ test("doesn't discard results from old state", (t) => {
         host: compilerHost,
     });
     programState.update(program, cwd + 'c.ts');
+
+    programState.setFileResult(cwd + 'c.ts', '5678', []);
 
     programState.save();
 });
@@ -448,6 +454,7 @@ test('handles circular dependencies', (t) => {
     t.is(programState.getUpToDateResult(cwd + 'd.ts', '1234'), undefined);
     t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
 
+    programState.setFileResult(cwd + 'c.ts', '5678', []);
     persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
     programState.save();
 });

@@ -11,7 +11,7 @@ export declare class ProgramStateFactory {
     constructor(resolverFactory: DependencyResolverFactory, statePersistence: StatePersistence);
     create(program: ts.Program, host: ProgramStateHost & DependencyResolverHost, tsconfigPath: string): ProgramStateImpl;
 }
-export declare type ProgramStateHost = Pick<ts.CompilerHost, 'getCanonicalFileName' | 'useCaseSensitiveFileNames'>;
+export declare type ProgramStateHost = Pick<ts.CompilerHost, 'useCaseSensitiveFileNames'>;
 declare const oldStateSymbol: unique symbol;
 declare class ProgramStateImpl implements ProgramState {
     constructor(host: ProgramStateHost, program: ts.Program, resolver: DependencyResolver, statePersistence: StatePersistence, project: string);
