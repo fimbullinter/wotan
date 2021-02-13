@@ -2,6 +2,7 @@ export * from '@fimbul/ymir';
 export * from './src/services/default/builtin-resolver';
 export * from './src/services/default/cache-factory';
 export * from './src/services/default/configuration-provider';
+export * from './src/services/default/content-hasher';
 export * from './src/services/default/deprecation-handler';
 export * from './src/services/default/directory-service';
 export * from './src/services/default/file-filter';

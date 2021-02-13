@@ -3,7 +3,7 @@ import * as ts from 'typescript';
 import { DependencyResolver, DependencyResolverFactory, DependencyResolverHost } from './dependency-resolver';
 import { resolveCachedResult, djb2, unixifyPath, emptyArray } from '../utils';
 import bind from 'bind-decorator';
-import { Finding, StatePersistence, StaticProgramState } from '@fimbul/ymir';
+import { ContentId, ContentIdHost, Finding, StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import debug = require('debug');
 import { isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
@@ -19,10 +19,21 @@ export interface ProgramState {
 
 @injectable()
 export class ProgramStateFactory {
-    constructor(private resolverFactory: DependencyResolverFactory, private statePersistence: StatePersistence) {}
+    constructor(
+        private resolverFactory: DependencyResolverFactory,
+        private statePersistence: StatePersistence,
+        private contentId: ContentId,
+    ) {}
 
     public create(program: ts.Program, host: ProgramStateHost & DependencyResolverHost, tsconfigPath: string) {
-        return new ProgramStateImpl(host, program, this.resolverFactory.create(host, program), this.statePersistence, tsconfigPath);
+        return new ProgramStateImpl(
+            host,
+            program,
+            this.resolverFactory.create(host, program),
+            this.statePersistence,
+            this.contentId,
+            tsconfigPath,
+        );
     }
 }
 
@@ -45,23 +56,28 @@ const oldStateSymbol = Symbol('oldState');
 class ProgramStateImpl implements ProgramState {
     private projectDirectory = unixifyPath(path.dirname(this.project));
     private caseSensitive = this.host.useCaseSensitiveFileNames();
-    private getCanonicalFileName = this.caseSensitive ? (f: string) => f : (f: string) => f.toLowerCase();
-    private canonicalProjectDirectory = this.getCanonicalFileName(this.projectDirectory);
+    private canonicalProjectDirectory = this.caseSensitive ? this.projectDirectory : this.projectDirectory.toLowerCase();
     private optionsHash = computeCompilerOptionsHash(this.program.getCompilerOptions(), this.projectDirectory);
     private assumeChangesOnlyAffectDirectDependencies =
         isCompilerOptionEnabled(this.program.getCompilerOptions(), 'assumeChangesOnlyAffectDirectDependencies');
-    private fileHashes = new Map<string, string>();
+    private contentIds = new Map<string, string>();
     private fileResults = new Map<string, FileResults>();
     private relativePathNames = new Map<string, string>();
     private [oldStateSymbol]: StaticProgramState | undefined;
     private recheckOldState = true;
     private dependenciesUpToDate: Uint8Array;
 
+    // TODO this can be removed once ProjectHost correctly reflects applied fixed in readFile
+    private contentIdHost: ContentIdHost = {
+        readFile: (f) => this.program.getSourceFile(f)?.text,
+    };
+
     constructor(
         private host: ProgramStateHost,
         private program: ts.Program,
         private resolver: DependencyResolver,
         private statePersistence: StatePersistence,
+        private contentId: ContentId,
         private project: string,
     ) {
         const oldState = this.statePersistence.loadState(project);
@@ -82,13 +98,13 @@ class ProgramStateImpl implements ProgramState {
         const filesAffectingGlobalScope = this.resolver.getFilesAffectingGlobalScope();
         if (oldState.global.length !== filesAffectingGlobalScope.length)
             return this[oldStateSymbol] = undefined;
-        const globalFilesWithHash = this.sortByHash(filesAffectingGlobalScope);
-        for (let i = 0; i < globalFilesWithHash.length; ++i) {
+        const globalFilesWithId = this.sortById(filesAffectingGlobalScope);
+        for (let i = 0; i < globalFilesWithId.length; ++i) {
             const index = oldState.global[i];
             if (
-                globalFilesWithHash[i].hash !== oldState.files[index].hash ||
+                globalFilesWithId[i].id !== oldState.files[index].id ||
                 !this.assumeChangesOnlyAffectDirectDependencies &&
-                !this.fileDependenciesUpToDate(globalFilesWithHash[i].fileName, index, oldState)
+                !this.fileDependenciesUpToDate(globalFilesWithId[i].fileName, index, oldState)
             )
                 return this[oldStateSymbol] = undefined;
         }
@@ -99,19 +115,18 @@ class ProgramStateImpl implements ProgramState {
     public update(program: ts.Program, updatedFile: string) {
         this.program = program;
         this.resolver.update(program, updatedFile);
-        this.fileHashes.delete(updatedFile);
+        this.contentIds.delete(updatedFile);
         this.recheckOldState = true;
         this.dependenciesUpToDate.fill(DependencyState.Unknown);
     }
 
-    private getFileHash(file: string) {
-        // TODO move hashing to a separate service
-        return resolveCachedResult(this.fileHashes, file, this.computeFileHash);
+    private getContentId(file: string) {
+        return resolveCachedResult(this.contentIds, file, this.computeContentId);
     }
 
     @bind
-    private computeFileHash(file: string) {
-        return '' + djb2(this.program.getSourceFile(file)!.text);
+    private computeContentId(file: string) {
+        return this.contentId.forFile(file, this.contentIdHost);
     }
 
     private getRelativePath(fileName: string) {
@@ -120,7 +135,7 @@ class ProgramStateImpl implements ProgramState {
 
     @bind
     private makeRelativePath(fileName: string) {
-        return unixifyPath(path.relative(this.canonicalProjectDirectory, this.getCanonicalFileName(fileName)));
+        return unixifyPath(path.relative(this.canonicalProjectDirectory, this.caseSensitive ? fileName : fileName.toLowerCase()));
     }
 
     public getUpToDateResult(fileName: string, configHash: string) {
@@ -134,7 +149,7 @@ class ProgramStateImpl implements ProgramState {
         if (
             old.result === undefined ||
             old.config !== configHash ||
-            old.hash !== this.getFileHash(fileName) ||
+            old.id !== this.getContentId(fileName) ||
             !this.fileDependenciesUpToDate(fileName, index, oldState)
         )
             return;
@@ -161,7 +176,7 @@ class ProgramStateImpl implements ProgramState {
         if (oldState === undefined)
             return false;
         const index = this.lookupFileIndex(fileName, oldState);
-        if (index === undefined || oldState.files[index].hash !== this.getFileHash(fileName))
+        if (index === undefined || oldState.files[index].id !== this.getContentId(fileName))
             return false;
         switch (<DependencyState>this.dependenciesUpToDate[index]) {
             case DependencyState.Unknown:
@@ -232,16 +247,16 @@ class ProgramStateImpl implements ProgramState {
                     newDeps = Array.from(new Set(newDeps));
                     if (newDeps.length !== oldDeps.length)
                         return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                    const newDepsWithHash = this.sortByHash(newDeps);
-                    for (let i = 0; i < newDepsWithHash.length; ++i) {
+                    const newDepsWithId = this.sortById(newDeps);
+                    for (let i = 0; i < newDepsWithId.length; ++i) {
                         const oldDepState = oldState.files[oldDeps[i]];
-                        if (newDepsWithHash[i].hash !== oldDepState.hash)
+                        if (newDepsWithId[i].id !== oldDepState.id)
                             return markAsOutdated(parents, index, cycles, this.dependenciesUpToDate);
-                        if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithHash[i].fileName) {
+                        if (!this.assumeChangesOnlyAffectDirectDependencies && fileName !== newDepsWithId[i].fileName) {
                             const indexInQueue = parents.indexOf(oldDeps[i]);
                             if (indexInQueue === -1) {
                                 // no circular dependency
-                                fileNameQueue.push(newDepsWithHash[i].fileName);
+                                fileNameQueue.push(newDepsWithId[i].fileName);
                                 indexQueue.push(oldDeps[i]);
                                 ++childCount;
                             } else if (indexInQueue < earliestCircularDependency) {
@@ -306,10 +321,20 @@ class ProgramStateImpl implements ProgramState {
     }
 
     private aggregate(): StaticProgramState {
+        const additionalFiles = new Set<string>();
         const oldState = this.tryReuseOldState();
+        const sourceFiles = this.program.getSourceFiles();
         const lookup: Record<string, number> = {};
-        const mapToIndex = ({fileName}: {fileName: string}) =>
-            lookup[this.relativePathNames.get(fileName)!];
+        const mapToIndex = ({fileName}: {fileName: string}) => {
+            const relativeName = this.getRelativePath(fileName);
+            let index = lookup[relativeName];
+            if (index === undefined) {
+                index = sourceFiles.length + additionalFiles.size;
+                additionalFiles.add(fileName);
+                lookup[relativeName] = index;
+            }
+            return index;
+        };
         const mapDependencies = (dependencies: ReadonlyMap<string, null | readonly string[]>) => {
             if (dependencies.size === 0)
                 return;
@@ -317,11 +342,10 @@ class ProgramStateImpl implements ProgramState {
             for (const [key, f] of dependencies)
                 result[key] = f === null
                     ? null
-                    : this.sortByHash(Array.from(new Set(f))).map(mapToIndex);
+                    : this.sortById(Array.from(new Set(f))).map(mapToIndex);
             return result;
         };
         const files: StaticProgramState.FileState[] = [];
-        const sourceFiles = this.program.getSourceFiles();
         for (let i = 0; i < sourceFiles.length; ++i)
             lookup[this.getRelativePath(sourceFiles[i].fileName)] = i;
         for (const file of sourceFiles) {
@@ -340,25 +364,27 @@ class ProgramStateImpl implements ProgramState {
             }
             files.push({
                 ...results,
-                hash: this.getFileHash(file.fileName),
+                id: this.getContentId(file.fileName),
                 dependencies: mapDependencies(this.resolver.getDependencies(file.fileName)),
             });
         }
+        for (const additional of additionalFiles)
+            files.push({id: this.getContentId(additional)});
         return {
             files,
             lookup,
             v: STATE_VERSION,
             ts: ts.version,
             cs: this.caseSensitive,
-            global: this.sortByHash(this.resolver.getFilesAffectingGlobalScope()).map(mapToIndex),
+            global: this.sortById(this.resolver.getFilesAffectingGlobalScope()).map(mapToIndex),
             options: this.optionsHash,
         };
     }
 
-    private sortByHash(fileNames: readonly string[]) {
+    private sortById(fileNames: readonly string[]) {
         return fileNames
-            .map((f) => ({fileName: f, hash: this.getFileHash(f)}))
-            .sort(compareHashKey);
+            .map((f) => ({fileName: f, id: this.getContentId(f)}))
+            .sort(compareId);
     }
 
     private lookupFileIndex(fileName: string, oldState: StaticProgramState): number | undefined {
@@ -442,8 +468,8 @@ function markAsOutdated(parents: readonly number[], index: number, cycles: Reado
     return false;
 }
 
-function compareHashKey(a: {hash: string}, b: {hash: string}) {
-    return +(a.hash >= b.hash) - +(a.hash <= b.hash);
+function compareId(a: {id: string}, b: {id: string}) {
+    return +(a.id >= b.id) - +(a.id <= b.id);
 }
 
 const enum CompilerOptionKind {

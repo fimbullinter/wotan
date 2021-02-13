@@ -15,5 +15,6 @@ export declare class LanguageServiceInterceptor implements PartialLanguageServic
     updateConfig(config: Record<string, unknown>): void;
     getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[];
     getSupportedCodeFixes(fixes: string[]): string[];
+    cleanupSemanticCache(): void;
     dispose(): void;
 }

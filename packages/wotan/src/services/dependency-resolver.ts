@@ -102,8 +102,11 @@ class DependencyResolverImpl implements DependencyResolver {
     }
 
     public getDependencies(file: string) {
-        this.state ??= this.buildState();
         const result = new Map<string, null | readonly string[]>();
+        if (this.program.getSourceFile(file) === undefined)
+            return result;
+
+        this.state ??= this.buildState();
         {
             const augmentations = this.state.moduleAugmentations.get(file);
             if (augmentations !== undefined)

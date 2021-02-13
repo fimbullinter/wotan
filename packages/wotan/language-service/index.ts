@@ -1,10 +1,21 @@
 import * as ts from 'typescript';
-import { FileSystem, MessageHandler, Finding, FileFilterFactory, DirectoryService, Resolver, GlobalOptions } from '@fimbul/ymir';
+import {
+    FileSystem,
+    MessageHandler,
+    Finding,
+    FileFilterFactory,
+    DirectoryService,
+    Resolver,
+    GlobalOptions,
+    StaticProgramState,
+    StatePersistence,
+    ContentId,
+} from '@fimbul/ymir';
 import { Container, BindingScopeEnum, ContainerModule } from 'inversify';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { ConfigurationManager } from '../src/services/configuration-manager';
-import { Linter } from '../src/linter';
+import { Linter, LinterOptions } from '../src/linter';
 import { addUnique } from '../src/utils';
 import { CachedFileSystem } from '../src/services/cached-file-system';
 import * as resolve from 'resolve';
@@ -13,6 +24,8 @@ import * as yaml from 'js-yaml';
 import { parseGlobalOptions, ParsedGlobalOptions } from '../src/argparse';
 import { normalizeGlob } from 'normalize-glob';
 import { Minimatch } from 'minimatch';
+import { ProgramStateFactory } from '../src/services/program-state';
+import { createConfigHash } from '../src/config-hash';
 
 export type PartialLanguageServiceInterceptor = {
     // https://github.com/ajafff/tslint-consistent-codestyle/issues/85
@@ -26,6 +39,7 @@ export const version = '1';
 
 export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
     private findingsForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Finding>>();
+    private oldState: StaticProgramState | undefined = undefined;
     public getExternalFiles?: () => string[]; // can be implemented later
 
     constructor(
@@ -44,31 +58,34 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
     }
 
     public getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[] {
-        const program = this.languageService.getProgram()!;
+        const program = this.languageService.getProgram();
+        if (program === undefined)
+            return diagnostics;
         const file = program.getSourceFile(fileName);
         if (file === undefined) {
             this.log(`file ${fileName} is not included in the Program`);
-        } else {
-            this.log(`started linting ${fileName}`);
-            const findings = this.getFindings(file, program);
-            this.findingsForFile.set(file, findings);
-            diagnostics = diagnostics.concat(findings.map((finding) => ({
-                file,
-                category: finding.severity === 'error'
-                    ? this.config.displayErrorsAsWarnings
-                        ? ts.DiagnosticCategory.Warning
-                        : ts.DiagnosticCategory.Error
-                    : finding.severity === 'warning'
-                        ? ts.DiagnosticCategory.Warning
-                        : ts.DiagnosticCategory.Suggestion,
-                code: <any>finding.ruleName,
-                source: 'wotan',
-                messageText: finding.message,
-                start: finding.start.position,
-                length: finding.end.position - finding.start.position,
-            })));
-            this.log(`finished linting ${fileName} with ${findings.length} findings`);
+            return diagnostics;
         }
+        this.log(`started linting ${fileName}`);
+        const findings = this.getFindings(file, program);
+        this.findingsForFile.set(file, findings);
+        diagnostics = diagnostics.concat(findings.map((finding) => ({
+            file,
+            category: finding.severity === 'error'
+                ? this.config.displayErrorsAsWarnings
+                    ? ts.DiagnosticCategory.Warning
+                    : ts.DiagnosticCategory.Error
+                : finding.severity === 'warning'
+                    ? ts.DiagnosticCategory.Warning
+                    : ts.DiagnosticCategory.Suggestion,
+            code: <any>finding.ruleName,
+            source: 'wotan',
+            messageText: finding.message,
+            start: finding.start.position,
+            length: finding.end.position - finding.start.position,
+        })));
+        this.log(`finished linting ${fileName} with ${findings.length} findings`);
+
         return diagnostics;
     }
 
@@ -97,6 +114,13 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         for (const module of globalConfig.modules)
             container.load(this.loadPluginModule(module, globalConfigDir, globalOptions));
 
+        container.bind(StatePersistence).toConstantValue({
+            loadState: () => this.oldState,
+            saveState: (_, state) => this.oldState = state,
+        });
+        container.bind(ContentId).toConstantValue({
+            forFile: (fileName) => this.project.getScriptVersion(fileName),
+        });
         container.bind(FileSystem).toConstantValue(new ProjectFileSystem(this.project));
         container.bind(DirectoryService).toConstantValue({
             getCurrentDirectory: () => this.project.getCurrentDirectory(),
@@ -141,14 +165,27 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         const effectiveConfig = config && configManager.reduce(config, file.fileName);
         if (effectiveConfig === undefined)
             return [];
-        const linter = container.get(Linter);
-        return linter.lintFile(file, effectiveConfig, program, {
+
+        const linterOptions: LinterOptions = {
             reportUselessDirectives: globalConfig.reportUselessDirectives
                 ? globalConfig.reportUselessDirectives === true
                     ? 'error'
                     : globalConfig.reportUselessDirectives
                 : undefined,
-        });
+        };
+        const programState = container.get(ProgramStateFactory).create(program, this.project, this.project.projectName);
+        const configHash = createConfigHash(effectiveConfig, linterOptions);
+        const cached = programState.getUpToDateResult(file.fileName, configHash);
+        if (cached !== undefined) {
+            this.log('Using cached results');
+            return cached;
+        }
+
+        const linter = container.get(Linter);
+        const result = linter.lintFile(file, effectiveConfig, program, linterOptions);
+        programState.setFileResult(file.fileName, configHash, result);
+        programState.save();
+        return result;
     }
 
     private loadPluginModule(moduleName: string, basedir: string, options: GlobalOptions) {
@@ -168,8 +205,12 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         return fixes;
     }
 
+    public cleanupSemanticCache() {
+        this.findingsForFile = new WeakMap();
+        this.oldState = undefined;
+    }
+
     public dispose() {
-        // TODO clean up after ourselves
         return this.languageService.dispose();
     }
 }

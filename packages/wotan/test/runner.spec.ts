@@ -486,6 +486,7 @@ test('uses results from cache', (t) => {
     container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
     container.load(createCoreModule({}), createDefaultModule());
     container.get(Linter).getFindings = () => { throw new Error('should not be called'); };
+    container.get(StatePersistence).saveState = () => { throw new Error('should not be called'); };
     const runner = container.get(Runner);
 
     const result = Array.from(
@@ -508,9 +509,11 @@ test('uses results from cache', (t) => {
 test('ignore cache if option is not enabled', (t) => {
     const container = new Container({defaultScope: BindingScopeEnum.Singleton});
     container.bind(DirectoryService).toConstantValue(directories);
-    container.bind(StatePersistence).to(TsVersionAgnosticStatePersistence);
+    container.bind(StatePersistence).toConstantValue({
+        loadState () { throw new Error('should not be called'); },
+        saveState () { throw new Error('should not be called'); },
+    });
     container.load(createCoreModule({}), createDefaultModule());
-    container.get(StatePersistence).loadState = () => { throw new Error('should not be called'); };
     const runner = container.get(Runner);
 
     const result = Array.from(

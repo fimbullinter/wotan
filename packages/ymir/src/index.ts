@@ -516,6 +516,13 @@ export interface FileFilter {
     filter(file: ts.SourceFile): boolean;
 }
 
+export type ContentIdHost = Pick<ts.CompilerHost, 'readFile'>;
+
+export interface ContentId {
+    forFile(fileName: string, host: ContentIdHost): string;
+}
+export abstract class ContentId {}
+
 export interface StatePersistence {
     loadState(project: string): StaticProgramState | undefined;
     saveState(project: string, state: StaticProgramState): void;
@@ -541,15 +548,15 @@ export interface StaticProgramState {
 
 export namespace StaticProgramState {
     export interface FileState {
-        /** Hash of file contents */
-        readonly hash: string;
+        /** ID of file contents (typically a hash) */
+        readonly id: string;
         /**
          * Key: module specifier as referenced in the file, order may be random
          * Value: - `null` if dependency could not be resolved
          *        - List of files (or rather their index) that the module specifier resolves to.
          *          That is the actual file at that path and/or files containing `declare module "..."` for that module specifier.
          *          May contain the current file.
-         *          This list is ordered by the hash of the files ascending,
+         *          This list is ordered by the ID of the files ascending,
          */
         readonly dependencies?: Readonly<Record<string, null | readonly number[]>>;
         /** The list of findings if this file has up-to-date results */

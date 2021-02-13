@@ -13,7 +13,7 @@ There are several core services that are provided by Wotan through the Container
 * `FormatterLoader` loads core and custom formatters via `FormatterLoaderHost`.
 * `Linter` executes a given set of rules on a SourceFile. It automatically loads enabled rules using `RuleLoader` and filters out disabled findings using `FindingFilterFactory`. `Linter` can also automatically fix findings and return the fixed source code. It does not access the file system.
 * `ProcessorLoader` loads and caches processors using `Resolver`.
-* `ProgramStateFactory` creates a service to get lint results for up-to-date files from cache and update the cache as necessary. Uses `StatePersistence` to load the cache for the current project. Uses `DependencyResolverFactory` to find out about file dependencies.
+* `ProgramStateFactory` creates a service to get lint results for up-to-date files from cache and update the cache as necessary. Uses `StatePersistence` to load the cache for the current project. Uses `DependencyResolverFactory` to find out about file dependencies. `ContentId` is used to detect changes to files without storing the whole file content in cache.
 * `RuleLoader` loads and caches core and custom rules via `RuleLoaderHost`.
 * `Runner` is used to lint a collection of files. If you want to lint a project, you provide the path of one or more `tsconfig.json` and it creates the project internally. `Runner` loads the source code from the file system, loads configuration from `ConfigurationManager`, applies processors if specified in the configuration and lints all (matching) files using `Linter`. It uses `FileFilterFactory` to filter out non-user code. If caching is enabled, it uses `ProgramStateFactory` to load the cached results and update the cache.
 
@@ -23,6 +23,7 @@ The default implementations (targeting the Node.js runtime environment) are prov
 * `BuiltinResolver` (`DefaultBuiltinResolver`) resolves the path to core rules, formatters and configs in `@fimbul/mimir`.
 * `CacheFactory` (`DefaultCacheFactory`) is responsible for creating cache objects that are used by other services to store their data.
 * `ConfigurationProvider` (`DefaultConfigurationProvider`) is responsible to find, resolve and load configuration files.
+* `ContentId` (`ContentHasher`) computes an ID representing the file's content (typically a hash).
 * `DeprecationHandler` (`DefaultDeprecationHandler`) is notified everytime a deprecated rule, formatter of processor is used. This service can choose to inform the user or just swallow the event.
 * `DirectoryService` (`NodeDirectoryService`) provides the current directory. None of the builtin services cache the current directory. Therefore you can change it dynamically if you need to.
 * `FileFilterFactory` (`DefaultFileFilterFactory`) creates a `FileFilter` for a given Program, that is responsible for filtering out non-user code. By default it excludes `lib.xxx.d.ts`, `@types`, declaration and javascript files of imported modules, json files and declaration files of project references.
