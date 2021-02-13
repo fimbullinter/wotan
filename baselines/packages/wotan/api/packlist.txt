@@ -31,6 +31,8 @@ src/commands/test.js
 src/commands/test.js.map
 src/commands/validate.js
 src/commands/validate.js.map
+src/config-hash.js
+src/config-hash.js.map
 src/di/core.module.d.ts
 src/di/core.module.js
 src/di/core.module.js.map

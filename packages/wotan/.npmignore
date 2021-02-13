@@ -11,6 +11,7 @@
 tsconfig.json
 /src/commands/*.d.ts
 /src/cli.d.ts
+/src/config-hash.d.ts
 /src/utils.d.ts
 /src/project-host.d.ts
 .DS_Store

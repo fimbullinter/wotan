@@ -9,13 +9,11 @@ import {
     MessageHandler,
     FileFilterFactory,
     Severity,
-    ReducedConfiguration,
-    EffectiveConfiguration,
 } from '@fimbul/ymir';
 import * as path from 'path';
 import * as ts from 'typescript';
 import * as glob from 'glob';
-import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange, djb2 } from './utils';
+import { unixifyPath, hasSupportedExtension, addUnique, flatMap, hasParseErrors, invertChangeRange } from './utils';
 import { Minimatch, IMinimatch } from 'minimatch';
 import { ProcessorLoader } from './services/processor-loader';
 import { injectable } from 'inversify';
@@ -25,6 +23,7 @@ import { ProjectHost } from './project-host';
 import debug = require('debug');
 import { normalizeGlob } from 'normalize-glob';
 import { ProgramStateFactory } from './services/program-state';
+import { createConfigHash } from './config-hash';
 
 const log = debug('wotan:runner');
 
@@ -446,27 +445,4 @@ function shouldFix(sourceFile: ts.SourceFile, options: Pick<LintOptions, 'fix'>,
         return false;
     }
     return options.fix;
-}
-
-function createConfigHash(config: ReducedConfiguration, linterOptions: LinterOptions) {
-    return '' + djb2(JSON.stringify({
-        rules: mapToObject(config.rules, stripRuleConfig),
-        settings: mapToObject(config.settings, identity),
-        ...linterOptions,
-    }));
-}
-
-function mapToObject<T, U>(map: ReadonlyMap<string, T>, transform: (v: T) => U) {
-    const result: Record<string, U> = {};
-    for (const [key, value] of map)
-        result[key] = transform(value);
-    return result;
-}
-
-function identity<T>(v: T) {
-    return v;
-}
-
-function stripRuleConfig({rulesDirectories: _ignored, ...rest}: EffectiveConfiguration.RuleConfig) {
-    return rest;
 }
