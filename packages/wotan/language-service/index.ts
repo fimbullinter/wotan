@@ -16,7 +16,7 @@ import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { ConfigurationManager } from '../src/services/configuration-manager';
 import { Linter, LinterOptions } from '../src/linter';
-import { addUnique } from '../src/utils';
+import { addUnique, mapDefined } from '../src/utils';
 import { CachedFileSystem } from '../src/services/cached-file-system';
 import * as resolve from 'resolve';
 import * as path from 'path';
@@ -38,7 +38,8 @@ export type PartialLanguageServiceInterceptor = {
 export const version = '1';
 
 export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
-    private findingsForFile = new WeakMap<ts.SourceFile, ReadonlyArray<Finding>>();
+    private lastProjectVersion = '';
+    private findingsForFile = new WeakMap<ts.SourceFile, readonly Finding[]>();
     private oldState: StaticProgramState | undefined = undefined;
     public getExternalFiles?: () => string[]; // can be implemented later
 
@@ -58,58 +59,93 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
     }
 
     public getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[] {
-        const program = this.languageService.getProgram();
-        if (program === undefined)
-            return diagnostics;
-        const file = program.getSourceFile(fileName);
-        if (file === undefined) {
-            this.log(`file ${fileName} is not included in the Program`);
-            return diagnostics;
-        }
-        this.log(`started linting ${fileName}`);
-        const findings = this.getFindings(file, program);
-        this.findingsForFile.set(file, findings);
-        diagnostics = diagnostics.concat(findings.map((finding) => ({
-            file,
-            category: finding.severity === 'error'
-                ? this.config.displayErrorsAsWarnings
-                    ? ts.DiagnosticCategory.Warning
-                    : ts.DiagnosticCategory.Error
-                : finding.severity === 'warning'
-                    ? ts.DiagnosticCategory.Warning
-                    : ts.DiagnosticCategory.Suggestion,
-            code: <any>finding.ruleName,
-            source: 'wotan',
-            messageText: finding.message,
-            start: finding.start.position,
-            length: finding.end.position - finding.start.position,
-        })));
-        this.log(`finished linting ${fileName} with ${findings.length} findings`);
-
+        this.log(`getSemanticDiagnostics for ${fileName}`);
+        const result = this.getFindingsForFile(fileName);
+        if (result?.findings.length)
+            diagnostics = diagnostics.concat(mapDefined(result.findings, (finding) => finding.severity === 'suggestion'
+                ? undefined
+                : {
+                    file: result.file,
+                    category: this.config.displayErrorsAsWarnings || finding.severity === 'warning'
+                        ? ts.DiagnosticCategory.Warning
+                        : ts.DiagnosticCategory.Error,
+                    code: <any>finding.ruleName,
+                    source: 'wotan',
+                    messageText: finding.message,
+                    start: finding.start.position,
+                    length: finding.end.position - finding.start.position,
+                },
+            ));
         return diagnostics;
     }
 
-    private getFindings(file: ts.SourceFile, program: ts.Program) {
+    public getSuggestionDiagnostics(diagnostics: ts.DiagnosticWithLocation[], fileName: string): ts.DiagnosticWithLocation[] {
+        this.log(`getSuggestionDiagnostics for ${fileName}`);
+        const result = this.getFindingsForFile(fileName);
+        if (result?.findings.length)
+            diagnostics = diagnostics.concat(mapDefined(result.findings, (finding) => finding.severity !== 'suggestion'
+                ? undefined
+                : {
+                    file: result.file,
+                    category: ts.DiagnosticCategory.Suggestion,
+                    code: <any>finding.ruleName,
+                    source: 'wotan',
+                    messageText: finding.message,
+                    start: finding.start.position,
+                    length: finding.end.position - finding.start.position,
+                },
+            ));
+        return diagnostics;
+    }
+
+    private getFindingsForFile(fileName: string) {
+        const program = this.languageService.getProgram();
+        if (program === undefined)
+            return;
+        const file = program.getSourceFile(fileName);
+        if (file === undefined) {
+            this.log(`File ${fileName} is not included in the Program`);
+            return;
+        }
+        const projectVersion = this.project.getProjectVersion();
+        if (this.lastProjectVersion === projectVersion) {
+            const cached = this.findingsForFile.get(file);
+            if (cached !== undefined) {
+                this.log(`Reusing last result with ${cached.length} findings`);
+                return {file, findings: cached};
+            }
+        } else {
+            this.findingsForFile = new WeakMap();
+            this.lastProjectVersion = projectVersion;
+        }
+        const findings = this.getFindingsForFileWorker(file, program);
+        this.findingsForFile.set(file, findings);
+        return {file, findings};
+    }
+
+    private getFindingsForFileWorker(file: ts.SourceFile, program: ts.Program) {
         let globalConfigDir = this.project.getCurrentDirectory();
         let globalOptions: any;
         while (true) {
             const scriptSnapshot = this.project.getScriptSnapshot(globalConfigDir + '/.fimbullinter.yaml');
             if (scriptSnapshot !== undefined) {
-                this.log(`Using '${globalConfigDir}/.fimbullinter.yaml' for global options.`);
+                this.log(`Using '${globalConfigDir}/.fimbullinter.yaml' for global options`);
                 globalOptions = yaml.load(scriptSnapshot.getText(0, scriptSnapshot.getLength())) || {};
                 break;
             }
             const parentDir = path.dirname(globalConfigDir);
             if (parentDir === globalConfigDir) {
-                this.log("Cannot find '.fimbullinter.yaml'.");
+                this.log("Cannot find '.fimbullinter.yaml'");
                 globalOptions = {};
                 break;
             }
             globalConfigDir = parentDir;
         }
         const globalConfig = parseGlobalOptions(globalOptions);
-        if (!isIncluded(file.fileName, globalConfigDir, globalConfig))
+        if (!isIncluded(file.fileName, globalConfigDir, globalConfig)) {
+            this.log('File is excluded by global options');
             return [];
+        }
         const container = new Container({defaultScope: BindingScopeEnum.Singleton});
         for (const module of globalConfig.modules)
             container.load(this.loadPluginModule(module, globalConfigDir, globalOptions));
@@ -156,15 +192,19 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         });
         container.load(createCoreModule(globalOptions), createDefaultModule());
         const fileFilter = container.get(FileFilterFactory).create({program, host: this.project});
-        if (!fileFilter.filter(file))
+        if (!fileFilter.filter(file)) {
+            this.log('File is excluded by FileFilter');
             return [];
+        }
         const configManager = container.get(ConfigurationManager);
         const config = globalConfig.config === undefined
             ? configManager.find(file.fileName)
             : configManager.loadLocalOrResolved(globalConfig.config, globalConfigDir);
         const effectiveConfig = config && configManager.reduce(config, file.fileName);
-        if (effectiveConfig === undefined)
+        if (effectiveConfig === undefined) {
+            this.log('File is excluded by configuration');
             return [];
+        }
 
         const linterOptions: LinterOptions = {
             reportUselessDirectives: globalConfig.reportUselessDirectives
@@ -177,14 +217,16 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         const configHash = createConfigHash(effectiveConfig, linterOptions);
         const cached = programState.getUpToDateResult(file.fileName, configHash);
         if (cached !== undefined) {
-            this.log('Using cached results');
+            this.log(`Using ${cached.length} cached findings`);
             return cached;
         }
 
+        this.log('Start linting');
         const linter = container.get(Linter);
         const result = linter.lintFile(file, effectiveConfig, program, linterOptions);
         programState.setFileResult(file.fileName, configHash, result);
         programState.save();
+        this.log(`Found ${result.length} findings`);
         return result;
     }
 
@@ -197,7 +239,7 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         });
         const m = <{createModule?(options: GlobalOptions): ContainerModule} | null | undefined>this.require(moduleName);
         if (!m || typeof m.createModule !== 'function')
-            throw new Error(`Module '${moduleName}' does not export a function 'createModule'.`);
+            throw new Error(`Module '${moduleName}' does not export a function 'createModule'`);
         return m.createModule(options);
     }
 
@@ -242,13 +284,13 @@ class ProjectFileSystem implements FileSystem {
         > & Pick<ts.LanguageServiceHost, 'realpath'>,
     ) {}
     public createDirectory() {
-        throw new Error('should not be called.');
+        throw new Error('should not be called');
     }
     public deleteFile() {
-        throw new Error('should not be called.');
+        throw new Error('should not be called');
     }
     public writeFile() {
-        throw new Error('should not be called.');
+        throw new Error('should not be called');
     }
     public normalizePath(f: string) {
         f = f.replace(/\\/g, '/');
