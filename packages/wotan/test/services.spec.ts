@@ -13,6 +13,7 @@ import {
     BuiltinResolver,
     StatePersistence,
     StaticProgramState,
+    ContentIdHost,
 } from '@fimbul/ymir';
 import { NodeDirectoryService } from '../src/services/default/directory-service';
 import * as os from 'os';
@@ -35,6 +36,7 @@ import { ProcessorLoader } from '../src/services/processor-loader';
 import { satisfies } from 'semver';
 import * as yaml from 'js-yaml';
 import { DefaultStatePersistence } from '../src/services/default/state-persistence';
+import { ContentHasher } from '../src/services/default/content-hasher';
 
 test('CacheFactory', (t) => {
     const cm = new DefaultCacheFactory();
@@ -503,4 +505,25 @@ test('StatePersistence', (t) => {
 
     service.saveState('./tsconfig-correct.json', state);
     t.is(written, true);
+});
+
+test('ContentHasher', (t) => {
+    const hasher = new ContentHasher();
+    const host: ContentIdHost = {
+        readFile(f) {
+            switch (f) {
+                case '/a.ts':
+                    return 'foo;';
+                case '/b.ts':
+                    return 'bar;';
+                case '/c.ts':
+                    return;
+                default:
+                    throw new Error('unexpected file name');
+            }
+        },
+    };
+    t.is(hasher.forFile('/a.ts', host), '2090263780');
+    t.is(hasher.forFile('/b.ts', host), '2090104885');
+    t.is(hasher.forFile('/c.ts', host), 'N/A');
 });

@@ -68,6 +68,9 @@ src/services/default/cache-factory.js.map
 src/services/default/configuration-provider.d.ts
 src/services/default/configuration-provider.js
 src/services/default/configuration-provider.js.map
+src/services/default/content-hasher.d.ts
+src/services/default/content-hasher.js
+src/services/default/content-hasher.js.map
 src/services/default/deprecation-handler.d.ts
 src/services/default/deprecation-handler.js
 src/services/default/deprecation-handler.js.map

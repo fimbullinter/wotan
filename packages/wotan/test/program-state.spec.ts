@@ -9,6 +9,7 @@ import { DependencyResolverFactory, DependencyResolverHost } from '../src/servic
 import { StatePersistence, StaticProgramState } from '@fimbul/ymir';
 import test from 'ava';
 import * as yaml from 'js-yaml';
+import { ContentHasher } from '../src/services/default/content-hasher';
 
 function identity<T>(v: T) {
     return v;
@@ -136,7 +137,7 @@ function setup(
         loadState() { return options.initialState; },
         saveState() {},
     };
-    const factory = new ProgramStateFactory(new DependencyResolverFactory(), persistence);
+    const factory = new ProgramStateFactory(new DependencyResolverFactory(), persistence, new ContentHasher());
     const programState = factory.create(program, compilerHost, tsconfigPath);
     return {vol, compilerHost, program, programState, cwd, persistence, tsconfigPath, factory};
 }
@@ -151,6 +152,10 @@ function generateOldState(configHash: string, ...args: Parameters<typeof setup>)
     return savedState;
 }
 
+function prepareForSnapshot({ts: _ts, ...rest}: StaticProgramState) {
+    return yaml.dump(rest, {sortKeys: true});
+}
+
 test('saves old state', (t) => {
     let {programState, persistence, tsconfigPath, cwd, program, vol, compilerHost, factory} = setup({
         'tsconfig.json': JSON.stringify({compilerOptions: {strict: true}}),
@@ -162,9 +167,8 @@ test('saves old state', (t) => {
     let savedState: StaticProgramState | undefined;
     persistence.saveState = (project, state) => {
         t.is(project, tsconfigPath);
-        const {ts: tsVersion, ...rest} = state;
-        t.is(tsVersion, ts.version);
-        t.snapshot(yaml.dump(rest, {sortKeys: true}));
+        t.is(state.ts, ts.version);
+        t.snapshot(prepareForSnapshot(state));
         savedState = state;
     };
     persistence.loadState = (project) => {
@@ -356,7 +360,7 @@ test("doesn't discard results from old state", (t) => {
 
     programState.setFileResult(cwd + 'b.ts', '5678', []);
 
-    persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
+    persistence.saveState = (_, s) => t.snapshot(prepareForSnapshot(s));
     programState.save();
 
     vol.writeFileSync(cwd + 'c.ts', 'var v = 1;');
@@ -455,7 +459,7 @@ test('handles circular dependencies', (t) => {
     t.deepEqual(programState.getUpToDateResult(cwd + 'e.ts', '1234'), []);
 
     programState.setFileResult(cwd + 'c.ts', '5678', []);
-    persistence.saveState = (_, {ts: _ts, ...rest}) => t.snapshot(yaml.dump(rest, {sortKeys: true}));
+    persistence.saveState = (_, s) => t.snapshot(prepareForSnapshot(s));
     programState.save();
 });
 
@@ -724,4 +728,17 @@ test('changes in unresolved dependencies', (t) => {
     t.is(programState.getUpToDateResult(cwd + 'a.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'b.ts', '1234'), undefined);
     t.is(programState.getUpToDateResult(cwd + 'c.ts', '1234'), undefined);
+});
+
+test("doesn't throw if resolved file is not in project", (t) => {
+    const files = {
+        'tsconfig.json': '{}',
+        'a.ts': 'import "./tsconfig.json"; import "./b.js";',
+        'b.js': 'export {}',
+    };
+    const state = generateOldState('1234', files);
+    t.snapshot(prepareForSnapshot(state));
+
+    const {programState, cwd} = setup(files, {initialState: state});
+    t.deepEqual(programState.getUpToDateResult(cwd + 'a.ts', '1234'), []);
 });

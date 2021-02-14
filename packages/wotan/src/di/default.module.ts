@@ -14,6 +14,7 @@ import {
     BuiltinResolver,
     FileFilterFactory,
     StatePersistence,
+    ContentId,
 } from '@fimbul/ymir';
 import { NodeFormatterLoader } from '../services/default/formatter-loader-host';
 import { NodeRuleLoader } from '../services/default/rule-loader-host';
@@ -28,6 +29,7 @@ import { DefaultLineSwitchParser, LineSwitchFilterFactory } from '../services/de
 import { DefaultBuiltinResolver } from '../services/default/builtin-resolver';
 import { DefaultFileFilterFactory } from '../services/default/file-filter';
 import { DefaultStatePersistence } from '../services/default/state-persistence';
+import { ContentHasher } from '../services/default/content-hasher';
 
 export function createDefaultModule() {
     return new ContainerModule((bind, _unbind, isBound) => {
@@ -59,5 +61,7 @@ export function createDefaultModule() {
             bind(FileFilterFactory).to(DefaultFileFilterFactory);
         if (!isBound(StatePersistence))
             bind(StatePersistence).to(DefaultStatePersistence);
+        if (!isBound(ContentId))
+            bind(ContentId).to(ContentHasher);
     });
 }
