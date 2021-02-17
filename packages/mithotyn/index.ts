@@ -1,6 +1,7 @@
 /// <reference types="typescript/lib/tsserverlibrary" />
 
 import mockRequire = require('mock-require');
+import * as util from 'util';
 
 const init: ts.server.PluginModuleFactory = ({typescript}) => {
     let plugin: Partial<import('@fimbul/wotan/language-service').LanguageServiceInterceptor> = {};
@@ -15,6 +16,13 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
         create({project, serverHost, languageService, config}) {
             mockRequire('typescript', typescript); // force every library to use the TypeScript version of the LanguageServer
             const logger = project.projectService.logger;
+            try {
+                // tslint:disable-next-line:no-implicit-dependencies
+                const {debug} = <typeof import('debug')>r('debug');
+                if ((<any>debug).inspectOpts)
+                    (<any>debug).inspectOpts.hideDate = true;
+                debug.log = (...args: [any, ...any[]]) => logger.info('[debug] ' + util.format(...args));
+            } catch {}
             // always load locally installed linter
             const lsPlugin = <typeof import('@fimbul/wotan/language-service')>r('@fimbul/wotan/language-service');
             if (lsPlugin.version !== '1') // in case we need to make breaking changes to the plugin API
@@ -36,7 +44,7 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
                 let lastMessage!: string;
                 const required = typescript.server.Project.resolveModule(
                     id,
-                    project.getCurrentDirectory(), // TODO require should be relative to the location of the linter
+                    project.getCurrentDirectory(),
                     serverHost,
                     (message) => {
                         lastMessage = message;

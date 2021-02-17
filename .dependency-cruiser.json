@@ -105,13 +105,14 @@
     },
     {
       "name": "restrict-language-service-plugin",
-      "comment": "LanguageServicePlugin shouldn't import anything but 'mock-require'.",
+      "comment": "LanguageServicePlugin shouldn't import anything but 'mock-require' and 'util'.",
       "severity": "error",
       "from": {
         "path": "^packages/mithotyn/"
       },
       "to": {
-        "pathNot": "(^|/)node_modules/mock-require/"
+        "pathNot": "((^|/)node_modules/mock-require/|^util$)"
+
       }
     },
     {
