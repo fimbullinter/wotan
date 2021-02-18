@@ -97,7 +97,14 @@ export class LanguageServiceInterceptor implements Partial<ts.LanguageService> {
         return [...diagnostics, ...findingDiagnostics];
     }
 
-    public getCodeFixesAtPosition(fileName: string, start: number, end: number, errorCodes: readonly number[], formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences): readonly ts.CodeFixAction[] {
+    public getCodeFixesAtPosition(
+        fileName: string,
+        start: number,
+        end: number,
+        errorCodes: readonly number[],
+        formatOptions: ts.FormatCodeSettings,
+        preferences: ts.UserPreferences,
+    ): readonly ts.CodeFixAction[] {
         const fixes = this.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
         if (!errorCodes.includes(DIAGNOSTIC_CODE))
             return fixes;
@@ -120,7 +127,8 @@ export class LanguageServiceInterceptor implements Partial<ts.LanguageService> {
                         fixAllDescription: multipleFixableFindingsForRule ? 'Fix all ' + finding.ruleName : undefined,
                         changes: [{
                             fileName,
-                            textChanges: finding.fix.replacements.map((r) => ({span: {start: r.start, length: r.end - r.start}, newText: r.text})),
+                            textChanges:
+                                finding.fix.replacements.map((r) => ({span: {start: r.start, length: r.end - r.start}, newText: r.text})),
                         }],
                     });
 
@@ -130,7 +138,9 @@ export class LanguageServiceInterceptor implements Partial<ts.LanguageService> {
                     description: `Disable ${finding.ruleName} for this line`,
                     changes: [{
                         fileName,
-                        textChanges: [getDisableCommentChange(finding.start.position, result.file, finding.ruleName, formatOptions.newLineCharacter)],
+                        textChanges: [
+                            getDisableCommentChange(finding.start.position, result.file, finding.ruleName, formatOptions.newLineCharacter),
+                        ],
                     }],
                 });
             }
@@ -159,12 +169,20 @@ export class LanguageServiceInterceptor implements Partial<ts.LanguageService> {
         return [...fixes, ...ruleFixes, ...disables];
     }
 
-    public getCombinedCodeFix(scope: ts.CombinedCodeFixScope, fixId: {}, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences): ts.CombinedCodeActions {
+    public getCombinedCodeFix(
+        scope: ts.CombinedCodeFixScope,
+        fixId: {},
+        formatOptions: ts.FormatCodeSettings,
+        preferences: ts.UserPreferences,
+    ): ts.CombinedCodeActions {
         if (typeof fixId !== 'string' || !fixId.startsWith('wotan:'))
             return this.languageService.getCombinedCodeFix(scope, fixId, formatOptions, preferences);
         const findingsForFile = this.getFindingsForFile(scope.fileName)!;
         const ruleName = fixId.substring('wotan:'.length);
-        const fixAll = applyFixes(findingsForFile.file.text, mapDefined(findingsForFile.findings, (f) => f.ruleName === ruleName ? f.fix : undefined));
+        const fixAll = applyFixes(
+            findingsForFile.file.text,
+            mapDefined(findingsForFile.findings, (f) => f.ruleName === ruleName ? f.fix : undefined),
+        );
         return {
             changes: [{
                 fileName: scope.fileName,
@@ -407,7 +425,12 @@ class ProjectFileSystem implements FileSystem {
 }
 
 // TODO this should be done by Linter or FindingFilter
-function getDisableCommentChange(pos: number, sourceFile: ts.SourceFile, ruleName: string, newline: string = getLineBreakStyle(sourceFile)): ts.TextChange {
+function getDisableCommentChange(
+    pos: number,
+    sourceFile: ts.SourceFile,
+    ruleName: string,
+    newline: string = getLineBreakStyle(sourceFile),
+): ts.TextChange {
     const lineStart = pos - ts.getLineAndCharacterOfPosition(sourceFile, pos).character;
     let whitespace = '';
     for (let i = lineStart, ch: number; i < sourceFile.text.length; i += charSize(ch)) {
@@ -423,8 +446,8 @@ function getDisableCommentChange(pos: number, sourceFile: ts.SourceFile, ruleNam
         span: {
             start: lineStart,
             length: 0,
-        }
-    }
+        },
+    };
 }
 
 function charSize(ch: number) {
