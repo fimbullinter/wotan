@@ -25,11 +25,11 @@ const init: ts.server.PluginModuleFactory = ({typescript}) => {
             } catch {}
             // always load locally installed linter
             const lsPlugin = <typeof import('@fimbul/wotan/language-service')>r('@fimbul/wotan/language-service');
-            if (lsPlugin.version !== '1') // in case we need to make breaking changes to the plugin API
+            if (<string>lsPlugin.version !== '1' && lsPlugin.version !== '2') // in case we need to make breaking changes to the API
                 throw new Error(`Unsupported version of '@fimbul/wotan'. Consider updating '${config.name}'.`);
             log('setting up plugin');
             plugin = new lsPlugin.LanguageServiceInterceptor(config, project, serverHost, languageService, r, log);
-            const proxy = createProxy(languageService, plugin, log);
+            const proxy = createProxy(languageService, plugin, log, lsPlugin.version);
             if (!('getSupportedCodeFixes' in languageService) && typeof plugin.getSupportedCodeFixes === 'function') {
                 // TODO avoid monkey-patching: https://github.com/Microsoft/TypeScript/issues/28966#issuecomment-446729292
                 const oldGetSupportedCodeFixes = typescript.getSupportedCodeFixes;
@@ -63,21 +63,26 @@ export = init;
 
 function createProxy(
     ls: ts.LanguageService,
-    interceptor: Partial<import('@fimbul/wotan/language-service').PartialLanguageServiceInterceptor>,
+    interceptor: Partial<ts.LanguageService>,
     log: (m: string) => void,
+    version: '1' | '2',
 ) {
     const proxy = Object.create(null);
     for (const method of Object.keys(ls)) {
         if (typeof (<any>interceptor)[method] === 'function') {
-            proxy[method] = (...args: any[]) => {
-                const prev = (<any>ls)[method](...args);
-                try {
-                    return (<any>interceptor)[method](prev, ...args);
-                } catch (e) {
-                    log(`interceptor for '${method}' failed: ${e && e.message}`);
-                    return prev;
-                }
-            };
+            if (version === '1') {
+                proxy[method] = (...args: any[]) => {
+                    const prev = (<any>ls)[method](...args);
+                    try {
+                        return (<any>interceptor)[method](prev, ...args);
+                    } catch (e) {
+                        log(`interceptor for '${method}' failed: ${e?.message}`);
+                        return prev;
+                    }
+                };
+            } else {
+                proxy[method] = (<any>interceptor)[method].bind(interceptor);
+            }
         } else {
             proxy[method] = (<any>ls)[method].bind(ls);
         }

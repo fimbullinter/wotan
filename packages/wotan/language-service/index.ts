@@ -16,7 +16,7 @@ import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
 import { ConfigurationManager } from '../src/services/configuration-manager';
 import { Linter, LinterOptions } from '../src/linter';
-import { addUnique, mapDefined } from '../src/utils';
+import { addUnique, emptyArray, mapDefined } from '../src/utils';
 import { CachedFileSystem } from '../src/services/cached-file-system';
 import * as resolve from 'resolve';
 import * as path from 'path';
@@ -26,18 +26,13 @@ import { normalizeGlob } from 'normalize-glob';
 import { Minimatch } from 'minimatch';
 import { ProgramStateFactory } from '../src/services/program-state';
 import { createConfigHash } from '../src/config-hash';
+import { getLineBreakStyle } from 'tsutils';
+import { applyFixes } from '../src/fix';
 
-export type PartialLanguageServiceInterceptor = {
-    // https://github.com/ajafff/tslint-consistent-codestyle/issues/85
-    // tslint:disable-next-line: no-unused
-    [K in keyof ts.LanguageService]?: ts.LanguageService[K] extends (...args: infer Parameters) => infer Return
-        ? (prev: Return, ...args: Parameters) => Return
-        : ts.LanguageService[K]
-};
+export const version = '2';
+const DIAGNOSTIC_CODE = 3;
 
-export const version = '1';
-
-export class LanguageServiceInterceptor implements PartialLanguageServiceInterceptor {
+export class LanguageServiceInterceptor implements Partial<ts.LanguageService> {
     private lastProjectVersion = '';
     private findingsForFile = new WeakMap<ts.SourceFile, readonly Finding[]>();
     private oldState: StaticProgramState | undefined = undefined;
@@ -58,44 +53,127 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
         this.config = config;
     }
 
-    public getSemanticDiagnostics(diagnostics: ts.Diagnostic[], fileName: string): ts.Diagnostic[] {
+    public getSemanticDiagnostics(fileName: string): ts.Diagnostic[] {
+        const diagnostics = this.languageService.getSemanticDiagnostics(fileName);
         this.log(`getSemanticDiagnostics for ${fileName}`);
         const result = this.getFindingsForFile(fileName);
-        if (result?.findings.length)
-            diagnostics = diagnostics.concat(mapDefined(result.findings, (finding) => finding.severity === 'suggestion'
-                ? undefined
-                : {
-                    file: result.file,
-                    category: this.config.displayErrorsAsWarnings || finding.severity === 'warning'
-                        ? ts.DiagnosticCategory.Warning
-                        : ts.DiagnosticCategory.Error,
-                    code: <any>finding.ruleName,
-                    source: 'wotan',
-                    messageText: finding.message,
-                    start: finding.start.position,
-                    length: finding.end.position - finding.start.position,
-                },
-            ));
-        return diagnostics;
+        if (!result?.findings.length)
+            return diagnostics;
+        const findingDiagnostics = mapDefined(result.findings, (finding) => finding.severity === 'suggestion'
+            ? undefined
+            : {
+                file: result.file,
+                category: this.config.displayErrorsAsWarnings || finding.severity === 'warning'
+                    ? ts.DiagnosticCategory.Warning
+                    : ts.DiagnosticCategory.Error,
+                code: DIAGNOSTIC_CODE,
+                source: 'wotan',
+                messageText: `[${finding.ruleName}] ${finding.message}`,
+                start: finding.start.position,
+                length: finding.end.position - finding.start.position,
+            },
+        );
+        return [...diagnostics, ...findingDiagnostics];
     }
 
-    public getSuggestionDiagnostics(diagnostics: ts.DiagnosticWithLocation[], fileName: string): ts.DiagnosticWithLocation[] {
+    public getSuggestionDiagnostics(fileName: string): ts.DiagnosticWithLocation[] {
+        const diagnostics = this.languageService.getSuggestionDiagnostics(fileName);
         this.log(`getSuggestionDiagnostics for ${fileName}`);
         const result = this.getFindingsForFile(fileName);
-        if (result?.findings.length)
-            diagnostics = diagnostics.concat(mapDefined(result.findings, (finding) => finding.severity !== 'suggestion'
-                ? undefined
-                : {
-                    file: result.file,
-                    category: ts.DiagnosticCategory.Suggestion,
-                    code: <any>finding.ruleName,
-                    source: 'wotan',
-                    messageText: finding.message,
-                    start: finding.start.position,
-                    length: finding.end.position - finding.start.position,
-                },
-            ));
-        return diagnostics;
+        if (!result?.findings.length)
+            return diagnostics;
+        const findingDiagnostics = mapDefined(result.findings, (finding) => finding.severity !== 'suggestion'
+            ? undefined
+            : {
+                file: result.file,
+                category: ts.DiagnosticCategory.Suggestion,
+                code: DIAGNOSTIC_CODE,
+                source: 'wotan',
+                messageText: `[${finding.ruleName}] ${finding.message}`,
+                start: finding.start.position,
+                length: finding.end.position - finding.start.position,
+            },
+        );
+        return [...diagnostics, ...findingDiagnostics];
+    }
+
+    public getCodeFixesAtPosition(fileName: string, start: number, end: number, errorCodes: readonly number[], formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences): readonly ts.CodeFixAction[] {
+        const fixes = this.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
+        if (!errorCodes.includes(DIAGNOSTIC_CODE))
+            return fixes;
+        this.log(`getCodeFixesAtPosition for ${fileName} from ${start} to ${end}`);
+        const result = this.getFindingsForFile(fileName);
+        if (!result)
+            return fixes;
+        const ruleFixes: ts.CodeFixAction[] = [];
+        const disables: ts.CodeFixAction[] = [];
+        let fixableFindings: readonly Finding[] | undefined;
+        for (const finding of result.findings) {
+            if (finding.start.position === start && finding.end.position === end) {
+                if (finding.fix !== undefined) {
+                    fixableFindings ??= result.findings.filter((f) => f.fix !== undefined);
+                    const multipleFixableFindingsForRule = fixableFindings.some((f) => f.ruleName === finding.ruleName && f !== finding);
+                    ruleFixes.push({
+                        fixName: 'wotan:' + finding.ruleName,
+                        description: 'Fix ' + finding.ruleName,
+                        fixId: multipleFixableFindingsForRule ? 'wotan:' + finding.ruleName : undefined,
+                        fixAllDescription: multipleFixableFindingsForRule ? 'Fix all ' + finding.ruleName : undefined,
+                        changes: [{
+                            fileName,
+                            textChanges: finding.fix.replacements.map((r) => ({span: {start: r.start, length: r.end - r.start}, newText: r.text})),
+                        }],
+                    });
+
+                }
+                disables.push({
+                    fixName: 'disable ' + finding.ruleName,
+                    description: `Disable ${finding.ruleName} for this line`,
+                    changes: [{
+                        fileName,
+                        textChanges: [getDisableCommentChange(finding.start.position, result.file, finding.ruleName, formatOptions.newLineCharacter)],
+                    }],
+                });
+            }
+        }
+
+        if (fixableFindings !== undefined && fixableFindings.length > 1) {
+            try {
+                const fixAll = applyFixes(result.file.text, fixableFindings.map((f) => f.fix!));
+                if (fixAll.fixed > 1)
+                    ruleFixes.push({
+                        fixName: 'wotan:fixall',
+                        description: 'Apply all auto-fixes',
+                        changes: [{
+                            fileName,
+                            textChanges: [{
+                                span: fixAll.range.span,
+                                newText: fixAll.result.substr(fixAll.range.span.start, fixAll.range.newLength),
+                            }],
+                        }],
+                    });
+            } catch (e) {
+                this.log('Error in fixAll: ' + e?.message);
+            }
+        }
+
+        return [...fixes, ...ruleFixes, ...disables];
+    }
+
+    public getCombinedCodeFix(scope: ts.CombinedCodeFixScope, fixId: {}, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences): ts.CombinedCodeActions {
+        if (typeof fixId !== 'string' || !fixId.startsWith('wotan:'))
+            return this.languageService.getCombinedCodeFix(scope, fixId, formatOptions, preferences);
+        const findingsForFile = this.getFindingsForFile(scope.fileName)!;
+        const ruleName = fixId.substring('wotan:'.length);
+        const fixAll = applyFixes(findingsForFile.file.text, mapDefined(findingsForFile.findings, (f) => f.ruleName === ruleName ? f.fix : undefined));
+        return {
+            changes: [{
+                fileName: scope.fileName,
+                textChanges: [{
+                    span: fixAll.range.span,
+                    newText: fixAll.result.substr(fixAll.range.span.start, fixAll.range.newLength),
+                }],
+            }],
+        };
     }
 
     private getFindingsForFile(fileName: string) {
@@ -118,9 +196,15 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
             this.findingsForFile = new WeakMap();
             this.lastProjectVersion = projectVersion;
         }
-        const findings = this.getFindingsForFileWorker(file, program);
-        this.findingsForFile.set(file, findings);
-        return {file, findings};
+        try {
+            const findings = this.getFindingsForFileWorker(file, program);
+            this.findingsForFile.set(file, findings);
+            return {file, findings};
+        } catch (e) {
+            this.log(`Error linting ${fileName}: ${e?.message}`);
+            this.findingsForFile.set(file, emptyArray);
+            return;
+        }
     }
 
     private getFindingsForFileWorker(file: ts.SourceFile, program: ts.Program) {
@@ -244,7 +328,7 @@ export class LanguageServiceInterceptor implements PartialLanguageServiceInterce
     }
 
     public getSupportedCodeFixes(fixes: string[]) {
-        return fixes;
+        return [...fixes, '' + DIAGNOSTIC_CODE];
     }
 
     public cleanupSemanticCache() {
@@ -320,4 +404,29 @@ class ProjectFileSystem implements FileSystem {
             },
         };
     }
+}
+
+// TODO this should be done by Linter or FindingFilter
+function getDisableCommentChange(pos: number, sourceFile: ts.SourceFile, ruleName: string, newline: string = getLineBreakStyle(sourceFile)): ts.TextChange {
+    const lineStart = pos - ts.getLineAndCharacterOfPosition(sourceFile, pos).character;
+    let whitespace = '';
+    for (let i = lineStart, ch: number; i < sourceFile.text.length; i += charSize(ch)) {
+        ch = sourceFile.text.codePointAt(i)!;
+        if (ts.isWhiteSpaceSingleLine(ch)) {
+            whitespace += String.fromCodePoint(ch);
+        } else {
+            break;
+        }
+    }
+    return {
+        newText: `${whitespace}// wotan-disable-next-line ${ruleName}${newline}`,
+        span: {
+            start: lineStart,
+            length: 0,
+        }
+    }
+}
+
+function charSize(ch: number) {
+    return ch >= 0x10000 ? 2 : 1;
 }
