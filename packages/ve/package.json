@@ -1,6 +1,6 @@
 {
   "name": "@fimbul/ve",
-  "version": "0.22.0",
+  "version": "0.24.0",
   "description": "Vue processor for wotan",
   "main": "src/index",
   "author": "Klaus Meinhardt",
@@ -29,7 +29,7 @@
     "typescript": ">= 4.0.0 || >= 4.2.0-dev"
   },
   "dependencies": {
-    "@fimbul/ymir": "^0.22.0",
+    "@fimbul/ymir": "^0.24.0",
     "parse5-sax-parser": "^6.0.0",
     "tslib": "^2.0.0",
     "void-elements": "^3.1.0"

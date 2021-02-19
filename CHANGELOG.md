@@ -1,5 +1,21 @@
 # Change Log
 
+## v0.24.0
+
+:tada: This release contains two major features: caching and code fixes in the LanguageService plugin.
+
+:warning: **Breaking Changes:**
+
+The changes in the LanguageService plugin require that you update the `@fimbul/mithotyn` dependency and the `fimbullinter.vscode-plugin` VSCode plugin if you were using one of them.
+
+**Features:**
+
+* new rule: `no-object-spread-of-iterable` warns about spreading an array into an object
+* new rule: `no-implicit-tostring` warns about implicit string coercion of certain types
+* new CLI option: `--cache` enables caching for fast incremental linting. Read more about [caching](https://github.com/fimbullinter/wotan/blob/master/packages/wotan/README.md#caching)
+* the LanguageService plugin uses caching to speed up linting in your editor
+* the LanguageService plugin now provides fixes for fixable findings
+
 ## v0.23.0
 
 :warning: **Breaking Changes:**

@@ -1,6 +1,6 @@
 {
-  "version": "0.23.0",
-  "nextVersion": "0.24.0",
+  "version": "0.24.0",
+  "nextVersion": "0.25.0",
   "private": true,
   "scripts": {
     "clean": "rimraf \"{packages/*/{index,{src,language-service}/**/*,test/*.spec},scripts/!(last-travis-nightly)}.{js?(.map),d.ts}\" \"*.tsbuildinfo\"",
@@ -25,9 +25,9 @@
     "packages/*"
   ],
   "dependencies": {
-    "@fimbul/disir": "^0.22.0",
-    "@fimbul/valtyr": "^0.23.0",
-    "@fimbul/wotan": "^0.23.0",
+    "@fimbul/disir": "^0.24.0",
+    "@fimbul/valtyr": "^0.24.0",
+    "@fimbul/wotan": "^0.24.0",
     "@octokit/graphql": "^4.5.8",
     "@octokit/rest": "^18.0.0",
     "@types/cross-spawn": "^6.0.0",
