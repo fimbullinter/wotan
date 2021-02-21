@@ -40,7 +40,7 @@ base: &base
 
 latestNodeImage: &latestNodeImage
   docker:
-    - image: circleci/node:15@sha256:dccd6398afe27f338bb8e7bb14e0002911d187894692ea36d47ba78712de1fec
+    - image: circleci/node:15@sha256:75367e1689d304654bb1d88e64c2519ed54d26681bcf369cf079d5747b9d4256
 
 version: 2
 jobs:
@@ -85,13 +85,13 @@ jobs:
     <<: *base
   test@3.9:
     docker:
-      - image: circleci/node:10@sha256:8bf49567b23e855ff04eb3b90f2320fdd619bcc000919293614daaf00a5fb391
+      - image: circleci/node:10@sha256:d4d3f82b80243648e2a1622277e251b821f92cf063765a830137392a445543f5
     <<: *base
   test@4.0:
     docker:
-      - image: circleci/node:12@sha256:30257369039ce8d3e968c2f8c7249ef3ae0603b5f4005986c4bf484114b6af48
+      - image: circleci/node:12@sha256:77a99b065cdb4e950be7842cf0fee3d1b2cea942b2464614850180859792fd72
     <<: *base
   test@4.1:
     docker:
-      - image: circleci/node:14@sha256:956a37e7b397896e044148999afe041fe561db7ecb65bd0c53f07aa836de70b0
+      - image: circleci/node:14@sha256:f7a1be957c2b8aa4321fe8d61ff6212cd7b201350741900c5672d6739a097554
     <<: *base
