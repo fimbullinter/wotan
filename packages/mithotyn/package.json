@@ -35,7 +35,7 @@
     "mock-require": "^3.0.2"
   },
   "devDependencies": {
-    "@fimbul/wotan": "^0.16.0",
+    "@fimbul/wotan": "^0.24.0",
     "@types/mock-require": "^2.0.0"
   }
 }

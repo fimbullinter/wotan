@@ -193,52 +193,6 @@
     tslib "^1.8.1"
     tsutils "^3.5.0"
 
-"@fimbul/mimir@^0.16.0":
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/@fimbul/mimir/-/mimir-0.16.0.tgz#49d6f1c22ae64518c275939e4a21d8c551803adb"
-  integrity sha512-4X5cu+eGlhLMnY+qTwf4Pd5k4uaWwb7gdoeJ32H03cpeuvQOpWoYG8vmX3TjIq63bJtA5BtNRMFVqWiwoRyL7Q==
-  dependencies:
-    "@fimbul/ymir" "^0.16.0"
-    chalk "^2.3.2"
-    debug "^4.0.0"
-    tslib "^1.8.1"
-    tsutils "^3.5.1"
-
-"@fimbul/wotan@^0.16.0":
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/@fimbul/wotan/-/wotan-0.16.0.tgz#abcd10ef6730a69f0713d006df3b1fd28fad0786"
-  integrity sha512-X8v4cIi4tyRV5tmnBB0PB8brrxov6qdVjTSJD+CQzuF/Kbi3V2Co2O4oglhhDOKSZgRQaK3/zdLZvxL6pFKnjA==
-  dependencies:
-    "@fimbul/mimir" "^0.16.0"
-    "@fimbul/ymir" "^0.16.0"
-    bind-decorator "^1.0.11"
-    chalk "^2.3.0"
-    debug "^4.0.0"
-    diff "^3.4.0"
-    glob "^7.1.2"
-    import-local "^2.0.0"
-    inversify "^5.0.0"
-    is-negated-glob "^1.0.0"
-    js-yaml "^3.10.0"
-    json5 "^2.0.0"
-    minimatch "^3.0.4"
-    normalize-glob "^0.0.1"
-    reflect-metadata "^0.1.12"
-    resolve "^1.5.0"
-    semver "^5.4.1"
-    stable "^0.1.8"
-    tslib "^1.8.1"
-    tsutils "^3.5.0"
-
-"@fimbul/ymir@^0.16.0":
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.16.0.tgz#1fa5f3589cb4043114682540d88138b72d93ccd7"
-  integrity sha512-njz2/CalYeIaCFqQ8CkKXL15UL39LNE6MVp9k7Zw/IUfDbDl4FIpySPxUzZfvh/YG7AlMnZFmLnPVfGeSntc4Q==
-  dependencies:
-    inversify "^5.0.0"
-    reflect-metadata "^0.1.12"
-    tslib "^1.8.1"
-
 "@fimbul/ymir@^0.21.0":
   version "0.21.0"
   resolved "https://registry.yarnpkg.com/@fimbul/ymir/-/ymir-0.21.0.tgz#8525726787aceeafd4e199472c0d795160b5d4a1"
@@ -959,7 +913,7 @@ chalk@4.1.0, chalk@^4.0.0, chalk@^4.1.0:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chalk@^2.0.0, chalk@^2.3.0, chalk@^2.3.2, chalk@^2.4.1:
+chalk@^2.0.0, chalk@^2.3.0, chalk@^2.4.1:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.2.tgz#cd42541677a54333cf541a49108c1432b44c9424"
   integrity sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==
@@ -1338,11 +1292,6 @@ deprecation@^2.0.0, deprecation@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/deprecation/-/deprecation-2.3.1.tgz#6368cbdb40abf3373b525ac87e4a260c3a700919"
   integrity sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==
-
-diff@^3.4.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
-  integrity sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==
 
 diff@^4.0.1:
   version "4.0.2"
@@ -1918,14 +1867,6 @@ import-lazy@^2.1.0:
   resolved "https://registry.yarnpkg.com/import-lazy/-/import-lazy-2.1.0.tgz#05698e3d45c88e8d7e9d92cb0584e77f096f3e43"
   integrity sha1-BWmOPUXIjo1+nZLLBYTnfwlvPkM=
 
-import-local@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/import-local/-/import-local-2.0.0.tgz#55070be38a5993cf18ef6db7e961f5bee5c5a09d"
-  integrity sha512-b6s04m3O+s3CGSbqDIyP4R6aAwAeYlVq9+WUWep6iHa8ETRf9yei1U48C5MmfJmV9AiLYYBKPMq/W+/WRpQmCQ==
-  dependencies:
-    pkg-dir "^3.0.0"
-    resolve-cwd "^2.0.0"
-
 import-local@^3.0.0, import-local@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/import-local/-/import-local-3.0.2.tgz#a8cfd0431d1de4a2199703d003e3e62364fa6db6"
@@ -2262,7 +2203,7 @@ js-yaml@3.14.0:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
-js-yaml@^3.10.0, js-yaml@^3.13.1, js-yaml@^3.14.0:
+js-yaml@^3.13.1, js-yaml@^3.14.0:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
   integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==
@@ -2630,14 +2571,6 @@ node-preload@^0.2.1:
   dependencies:
     process-on-spawn "^1.0.0"
 
-normalize-glob@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/normalize-glob/-/normalize-glob-0.0.1.tgz#ec93a2d6071fde4970df8f64efe676db9abc7301"
-  integrity sha512-wR3ocd+rYqqGAouIFqpK3JGVN2z/ObLR9vpO5lqbr5JcuIrMYMbN3FxMVkFwVA38il/GndlK7F9uZph9g4gsig==
-  dependencies:
-    brace-expansion "^1.1.11"
-    is-negated-glob "^1.0.0"
-
 normalize-glob@^0.0.2:
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/normalize-glob/-/normalize-glob-0.0.2.tgz#be13e0566e6f493053a7c915bad26e82c8d85c2c"
@@ -3000,13 +2933,6 @@ pkg-conf@^3.1.0:
     find-up "^3.0.0"
     load-json-file "^5.2.0"
 
-pkg-dir@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/pkg-dir/-/pkg-dir-3.0.0.tgz#2749020f239ed990881b1f71210d51eb6523bea3"
-  integrity sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==
-  dependencies:
-    find-up "^3.0.0"
-
 pkg-dir@^4.1.0, pkg-dir@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/pkg-dir/-/pkg-dir-4.2.0.tgz#f099133df7ede422e81d1d8448270eeb3e4261f3"
@@ -3220,24 +3146,12 @@ require-main-filename@^2.0.0:
   resolved "https://registry.yarnpkg.com/require-main-filename/-/require-main-filename-2.0.0.tgz#d0b329ecc7cc0f61649f62215be69af54aa8989b"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
 
-resolve-cwd@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/resolve-cwd/-/resolve-cwd-2.0.0.tgz#00a9f7387556e27038eae232caa372a6a59b665a"
-  integrity sha1-AKn3OHVW4nA46uIyyqNypqWbZlo=
-  dependencies:
-    resolve-from "^3.0.0"
-
 resolve-cwd@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/resolve-cwd/-/resolve-cwd-3.0.0.tgz#0f0075f1bb2544766cf73ba6a6e2adfebcb13f2d"
   integrity sha512-OrZaX2Mb+rJCpH/6CpSqt9xFVpN++x01XnN2ie9g6P5/3xelLAkXWVADpdz1IHD/KFfEXyE6V0U01OQ3UO2rEg==
   dependencies:
     resolve-from "^5.0.0"
-
-resolve-from@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-3.0.0.tgz#b22c7af7d9d6881bc8b6e653335eebcb0a188748"
-  integrity sha1-six699nWiBvItuZTM17rywoYh0g=
 
 resolve-from@^5.0.0:
   version "5.0.0"
@@ -3793,7 +3707,7 @@ tsutils@^2.29.0:
   dependencies:
     tslib "^1.8.1"
 
-tsutils@^3.19.1, tsutils@^3.20.0, tsutils@^3.5.0, tsutils@^3.5.1:
+tsutils@^3.19.1, tsutils@^3.20.0, tsutils@^3.5.0:
   version "3.20.0"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.20.0.tgz#ea03ea45462e146b53d70ce0893de453ff24f698"
   integrity sha512-RYbuQuvkhuqVeXweWT3tJLKOEJ/UUw9GjNEZGWdrLLlM+611o1gwLHBpxoFJKKl25fLprp2eVthtKs5JOrNeXg==
