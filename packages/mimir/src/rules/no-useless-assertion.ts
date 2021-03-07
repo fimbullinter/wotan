@@ -102,7 +102,7 @@ export class Rule extends TypedRule {
                     ? (t) => isOptionalChainingUndefinedMarkerType(this.checker, t) ? 0 : t.flags
                     : undefined,
             );
-            if (flags !== 0) { // type is nullable
+            if (flags) { // type is nullable
                 const contextualType = this.getSafeContextualType(node);
                 if (contextualType === undefined || (flags & ~getNullableFlagsOfReceiver(contextualType)))
                     return;

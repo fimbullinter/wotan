@@ -1,6 +1,6 @@
 import {
     getIteratorYieldResultFromIteratorResult,
-    getPropertyOfType,
+    getWellKnownSymbolPropertyOfType,
     isCompilerOptionEnabled,
     isIntersectionType,
     isModifierFlagSet,
@@ -50,7 +50,7 @@ function isIterable(type: ts.Type, checker: ts.TypeChecker, node: ts.Node, match
     const indexType = type.getNumberIndexType() || type.getStringIndexType();
     if (indexType === undefined && matchIndexSignature)
         return false;
-    const iteratorFn = getPropertyOfType(type, <ts.__String>'__@iterator');
+    const iteratorFn = getWellKnownSymbolPropertyOfType(type, 'iterator', checker);
     if (!isPresentPublicAndRequired(iteratorFn))
         return false;
     return checkReturnTypeAndRequireZeroArity(checker.getTypeOfSymbolAtLocation(iteratorFn, node), (iterator) => {

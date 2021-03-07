@@ -6,8 +6,8 @@ import {
     WrappedAst,
     getWrappedNodeAtPosition,
     unionTypeParts,
-    getPropertyOfType,
     getIteratorYieldResultFromIteratorResult,
+    getWellKnownSymbolPropertyOfType,
 } from 'tsutils';
 import { expressionNeedsParensWhenReplacingNode } from '../utils';
 
@@ -80,13 +80,13 @@ export class Rule extends TypedRule {
              * It must either be `AsyncIterable` or `Iterable<PromiseLike<any>>`.
              * We consider a type as AsyncIterable when it has a property key [Symbol.asyncIterator].
              */
-            if (getPropertyOfType(t, <ts.__String>'__@asyncIterator') !== undefined || this.isIterableOfPromises(t, node))
+            if (getWellKnownSymbolPropertyOfType(t, 'asyncIterator', this.checker) !== undefined || this.isIterableOfPromises(t, node))
                 return true;
         return false;
     }
 
     private isIterableOfPromises(type: ts.Type, node: ts.Expression): boolean {
-        const symbol = getPropertyOfType(type, <ts.__String>'__@iterator');
+        const symbol = getWellKnownSymbolPropertyOfType(type, 'iterator', this.checker);
         if (symbol === undefined)
             return false;
         const t = this.checker.getTypeOfSymbolAtLocation(symbol, node);
