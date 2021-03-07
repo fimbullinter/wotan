@@ -3707,10 +3707,10 @@ tsutils@^2.29.0:
   dependencies:
     tslib "^1.8.1"
 
-tsutils@^3.19.1, tsutils@^3.20.0, tsutils@^3.5.0:
-  version "3.20.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.20.0.tgz#ea03ea45462e146b53d70ce0893de453ff24f698"
-  integrity sha512-RYbuQuvkhuqVeXweWT3tJLKOEJ/UUw9GjNEZGWdrLLlM+611o1gwLHBpxoFJKKl25fLprp2eVthtKs5JOrNeXg==
+tsutils@^3.21.0, tsutils@^3.20.0, tsutils@^3.5.0:
+  version "3.21.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.21.0.tgz#b48717d394cea6c1e096983eed58e9d61715b623"
+  integrity sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==
   dependencies:
     tslib "^1.8.1"
 
@@ -3770,10 +3770,10 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typescript@4.3.0-dev.20210221:
-  version "4.3.0-dev.20210221"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.0-dev.20210221.tgz#63a331e9dcd2f4e5ece7c139cb9e81fed447e883"
-  integrity sha512-XmZXakfRX7wuViUlU1k6E21gp+aQ+eIOgahlhXRaakuv4mkK3fEs+hA93/cucOlRwpDU9R/UgN5UuU4CDr9wag==
+typescript@^4.3.0-dev.20210307:
+  version "4.3.0-dev.20210307"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.0-dev.20210307.tgz#b334601ec0a79904c83dcdec4a14273154e31f4f"
+  integrity sha512-asXnAMJAXz8hPTA5TqI26gpf3l5Rl0hITjWEmuPKlTEVYBY4YVLShwMoo48TKWcq8sQ9Rd7pW8MclXWoHtX45w==
 
 uglify-js@^3.1.4:
   version "3.12.8"
