@@ -72,6 +72,7 @@ Why should you use Wotan to execute TSLint rules?
 * Consistently excludes external files and JSON files from linting.
 * Supports project `references`.
 * Doesn't execute typed rules on unchecked JavaScript files.
+* Caching of lint results
 
 ## Caveats
 

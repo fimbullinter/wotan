@@ -100,6 +100,8 @@ Why should you use Wotan to execute TSLint rules?
   * JSON5 support
 * Blazingly fast autofixing, especially when linting the whole project with the `-p` flag.
 * Smart handling of overlapping fixes avoids destroying your code.
+* Caching
+* ... and many more
 
 ## License
 
