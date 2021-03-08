@@ -11,11 +11,15 @@ rules:
   parameter-properties:
     options:
       mode: when-possible
+  no-implicit-tostring:
+    options:
+      allowNumber: true
+      allowNever: true
 overrides:
   - files: "packages/*/test/**"
     rules:
       no-unstable-api-use: off
-      no-inferred-empty-object: off
+      no-uninferred-type-parameter: off
   - files: "packages/**"
     rules:
       disir/import-package: error

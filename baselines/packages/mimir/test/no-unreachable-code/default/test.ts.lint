@@ -127,3 +127,40 @@ function test3() {
 function test4() {
     return;
 }
+
+function test5() {
+    try {
+        return foo();
+    } catch (e) {
+        throw e;
+    } finally {
+        return foo;
+    }
+    function foo() {}
+}
+function test6() {
+    try {
+        return;
+        'foo';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    } catch (e) {
+        throw e;
+        'bar';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    } finally {
+        return;
+        'baz';
+        ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+    }
+    'bas';
+    ~~~~~  [error no-unreachable-code: Unreachable code detected.]
+}
+function test7(v: boolean, fail: () => never) {
+    switch (v) {
+        case true:
+            return;
+        case false:
+            fail();
+    }
+    'foo';
+}

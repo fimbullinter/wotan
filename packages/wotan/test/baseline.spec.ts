@@ -1,12 +1,11 @@
 import 'reflect-metadata';
 import test from 'ava';
 import { isCodeLine, createBaseline } from '../src/baseline';
-import chalk, { Level } from 'chalk';
-import { Failure, FileSummary } from '@fimbul/ymir';
+import * as chalk from 'chalk';
+import { Finding, FileSummary } from '@fimbul/ymir';
 
 test.before(() => {
-    chalk.enabled = true;
-    chalk.level = Level.Basic;
+    (<any>chalk).level = 1;
 });
 
 test('isCodeLine', (t) => {
@@ -66,7 +65,7 @@ let bar = foo;
         fix: undefined,
         codeActions: undefined,
     }]);
-    const mixed: Failure[] = [
+    const mixed: Finding[] = [
         {
             ruleName: 'multiline',
             message: 'I am groot',
@@ -157,7 +156,7 @@ let bar = foo;
 
     verify('no eofline', {
         content: 'let foo;',
-        failures: [{
+        findings: [{
             ruleName: 'rule',
             message: 'where is my squiggly tail',
             severity: 'warning',
@@ -179,7 +178,7 @@ let bar = foo;
 
     verify('CRLF', {
         content: 'foo;\r\nbar;\r\n',
-        failures: [{
+        findings: [{
             ruleName: 'rule',
             message: 'some message',
             severity: 'error',
@@ -199,8 +198,8 @@ let bar = foo;
         fixes: 0,
     });
 
-    function apply(name: string, failures: Failure[]) {
-        verify(name, {content, failures, fixes: 0});
+    function apply(name: string, findings: Finding[]) {
+        verify(name, {content, findings, fixes: 0});
     }
 
     function verify(name: string, summary: FileSummary) {

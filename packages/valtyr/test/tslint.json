@@ -1,6 +1,7 @@
 {
   "extends": "../../../tslint.json",
   "rules": {
-    "no-implicit-dependencies": false
+    "no-implicit-dependencies": false,
+    "no-null-keyword": false
   }
 }

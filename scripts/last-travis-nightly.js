@@ -1,3 +1,4 @@
+'use strict';
 const Travis = require('travis-ci');
 
 const travis = new Travis({

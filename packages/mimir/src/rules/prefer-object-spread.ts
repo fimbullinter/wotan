@@ -18,7 +18,7 @@ export class Rule extends TypedRule {
         const re = /(?:[.\n]|\*\/)\s*assign\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), re.lastIndex - 1)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), re.lastIndex - 1)!;
             if (node.kind !== ts.SyntaxKind.Identifier || node.end !== re.lastIndex)
                 continue;
             const parent = node.parent!;
@@ -30,13 +30,13 @@ export class Rule extends TypedRule {
                 grandParent.arguments.length === 0 || !isObjectLiteralExpression(grandParent.arguments[0]))
                 continue;
             if (grandParent.arguments.length === 1) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     grandParent,
                     "No need for 'Object.assign', use the object directly.",
                     createFix(grandParent, this.sourceFile),
                 );
             } else if (grandParent.arguments.every(this.isSpreadableObject, this)) {
-                this.addFailureAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
+                this.addFindingAtNode(grandParent, "Prefer object spread over 'Object.assign'.", createFix(grandParent, this.sourceFile));
             }
         }
     }

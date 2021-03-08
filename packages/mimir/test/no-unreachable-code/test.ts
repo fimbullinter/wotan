@@ -112,3 +112,36 @@ function test3() {
 function test4() {
     return;
 }
+
+function test5() {
+    try {
+        return foo();
+    } catch (e) {
+        throw e;
+    } finally {
+        return foo;
+    }
+    function foo() {}
+}
+function test6() {
+    try {
+        return;
+        'foo';
+    } catch (e) {
+        throw e;
+        'bar';
+    } finally {
+        return;
+        'baz';
+    }
+    'bas';
+}
+function test7(v: boolean, fail: () => never) {
+    switch (v) {
+        case true:
+            return;
+        case false:
+            fail();
+    }
+    'foo';
+}

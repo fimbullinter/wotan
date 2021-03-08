@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { resolveCachedResult, hasSupportedExtension } from './utils';
+import { resolveCachedResult, hasSupportedExtension, mapDefined } from './utils';
 import * as path from 'path';
 import { ProcessorLoader } from './services/processor-loader';
 import { FileKind, CachedFileSystem } from './services/cached-file-system';
@@ -15,18 +15,32 @@ const additionalExtensions = ['.json'];
 // @internal
 export interface ProcessedFileInfo {
     originalName: string;
-    originalContent: string;
+    originalContent: string; // TODO this should move into processor because this property is never updated, but the processor is
     processor: AbstractProcessor;
 }
 
 // @internal
 export class ProjectHost implements ts.CompilerHost {
     private reverseMap = new Map<string, string>();
-    private files = new Set<string>();
+    private files: string[] = [];
     private directoryEntries = new Map<string, ts.FileSystemEntries>();
     private processedFiles = new Map<string, ProcessedFileInfo>();
     private sourceFileCache = new Map<string, ts.SourceFile | undefined>();
     private fileContent = new Map<string, string>();
+    private tsconfigCache = new Map<string, ts.ExtendedConfigCacheEntry>();
+    private commandLineCache = new Map<string, ts.ParsedCommandLine>();
+
+    private parseConfigHost: ts.ParseConfigHost = {
+        useCaseSensitiveFileNames: this.useCaseSensitiveFileNames(),
+        readDirectory:
+            (rootDir, extensions, excludes, includes, depth) => this.readDirectory(rootDir, extensions, excludes, includes, depth),
+        fileExists: (f) => this.fileExists(f),
+        readFile: (f) => this.readFile(f),
+    };
+
+    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
+    private moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName);
+    private compilerOptions: ts.CompilerOptions = {};
 
     constructor(
         public cwd: string,
@@ -39,8 +53,24 @@ export class ProjectHost implements ts.CompilerHost {
     public getProcessedFileInfo(fileName: string) {
         return this.processedFiles.get(fileName);
     }
-    public getDirectoryEntries(dir: string): ts.FileSystemEntries {
-        return resolveCachedResult(this.directoryEntries, dir, this.processDirectory);
+    public readDirectory(
+        rootDir: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        depth?: number,
+    ) {
+        return ts.matchFiles(
+            rootDir,
+            extensions,
+            excludes,
+            includes,
+            this.useCaseSensitiveFileNames(),
+            this.cwd,
+            depth,
+            (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
+            (f) => this.safeRealpath(f),
+        );
     }
     /**
      * Try to find and load the configuration for a file.
@@ -60,40 +90,41 @@ export class ProjectHost implements ts.CompilerHost {
         const files: string[] = [];
         const directories: string[] = [];
         const result: ts.FileSystemEntries = {files, directories};
-        let entries: string[];
+        let entries;
         try {
             entries = this.fs.readDirectory(dir);
         } catch {
             return result;
         }
         for (const entry of entries) {
-            const fileName = `${dir}/${entry}`;
-            switch (this.fs.getKind(fileName)) {
+            switch (entry.kind) {
                 case FileKind.File: {
+                    const fileName = `${dir}/${entry.name}`;
                     if (!hasSupportedExtension(fileName, additionalExtensions)) {
                         const c = this.config || this.tryFindConfig(fileName);
                         const processor = c && this.configManager.getProcessor(c, fileName);
                         if (processor) {
                             const ctor = this.processorLoader.loadProcessor(processor);
-                            const newName = fileName +
-                                ctor.getSuffixForFile({
-                                    fileName,
-                                    getSettings: () => this.configManager.getSettings(c!, fileName),
-                                    readFile: () => this.fs.readFile(fileName),
-                                });
+                            const suffix = ctor.getSuffixForFile({
+                                fileName,
+                                getSettings: () => this.configManager.getSettings(c!, fileName),
+                                readFile: () => this.fs.readFile(fileName),
+                            });
+                            const newName = fileName + suffix;
+
                             if (hasSupportedExtension(newName, additionalExtensions)) {
-                                files.push(newName);
+                                files.push(entry.name + suffix);
                                 this.reverseMap.set(newName, fileName);
                                 break;
                             }
                         }
                     }
-                    files.push(fileName);
-                    this.files.add(fileName);
+                    files.push(entry.name);
+                    this.files.push(fileName);
                     break;
                 }
                 case FileKind.Directory:
-                    directories.push(fileName);
+                    directories.push(entry.name);
             }
         }
         return result;
@@ -116,7 +147,7 @@ export class ProjectHost implements ts.CompilerHost {
     }
 
     public getFileSystemFile(file: string): string | undefined {
-        if (this.files.has(file))
+        if (this.files.includes(file))
             return file;
         const reverse = this.reverseMap.get(file);
         if (reverse !== undefined)
@@ -166,20 +197,32 @@ export class ProjectHost implements ts.CompilerHost {
         return ts.sys.useCaseSensitiveFileNames;
     }
     public getDefaultLibFileName = ts.getDefaultLibFilePath;
-    public getCanonicalFileName = ts.sys.useCaseSensitiveFileNames ? (f: string) => f : (f: string) => f.toLowerCase();
     public getNewLine() {
-        return '\n';
+        return this.compilerOptions.newLine === ts.NewLineKind.CarriageReturnLineFeed ? '\r\n' : '\n';
     }
     public realpath = this.fs.realpath === undefined ? undefined : (fileName: string) => this.fs.realpath!(fileName);
+    private safeRealpath(f: string) {
+        if (this.realpath !== undefined) {
+            try {
+                return this.realpath(f);
+            } catch {}
+        }
+        return f;
+    }
     public getCurrentDirectory() {
         return this.cwd;
     }
     public getDirectories(dir: string) {
         const cached = this.directoryEntries.get(dir);
         if (cached !== undefined)
-            return cached.directories.map((d) => path.posix.basename(d));
-        return this.fs.readDirectory(dir).filter((f) => this.fs.isDirectory(path.join(dir, f)));
+            return cached.directories.slice();
+        return mapDefined(
+            this.fs.readDirectory(dir),
+            (entry) => entry.kind === FileKind.Directory ? entry.name : undefined,
+        );
     }
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget.JSON): ts.JsonSourceFile | undefined;
+    public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget): ts.SourceFile | undefined;
     public getSourceFile(fileName: string, languageVersion: ts.ScriptTarget) {
         return resolveCachedResult(
             this.sourceFileCache,
@@ -191,15 +234,96 @@ export class ProjectHost implements ts.CompilerHost {
         );
     }
 
-    public updateSourceFile(
-        sourceFile: ts.SourceFile,
-        program: ts.Program,
-        newContent: string,
-        changeRange: ts.TextChangeRange,
-    ): {sourceFile: ts.SourceFile, program: ts.Program} {
-        sourceFile = ts.updateSourceFile(sourceFile, newContent, changeRange);
+    public createProgram(
+        rootNames: ReadonlyArray<string>,
+        options: ts.CompilerOptions,
+        oldProgram: ts.Program | undefined,
+        projectReferences: ReadonlyArray<ts.ProjectReference> | undefined,
+    ) {
+        options = {...options, suppressOutputPathCheck: true};
+        this.compilerOptions = options;
+        this.moduleResolutionCache = ts.createModuleResolutionCache(this.cwd, this.getCanonicalFileName, options);
+        return ts.createProgram({rootNames, options, oldProgram, projectReferences, host: this});
+    }
+
+    public updateSourceFile(sourceFile: ts.SourceFile) {
         this.sourceFileCache.set(sourceFile.fileName, sourceFile);
-        program = ts.createProgram(program.getRootFileNames(), program.getCompilerOptions(), this, program);
-        return {sourceFile, program};
+    }
+
+    public updateProgram(program: ts.Program) {
+        return ts.createProgram({
+            rootNames: program.getRootFileNames(),
+            options: program.getCompilerOptions(),
+            oldProgram: program,
+            projectReferences: program.getProjectReferences(),
+            host: this,
+        });
+    }
+
+    public onReleaseOldSourceFile(sourceFile: ts.SourceFile) {
+        // this is only called for paths that are no longer referenced
+        // it's safe to remove the cache entry completely because it won't be called with updated SourceFiles
+        this.uncacheFile(sourceFile.fileName);
+    }
+
+    public uncacheFile(fileName: string) {
+        this.sourceFileCache.delete(fileName);
+        this.processedFiles.delete(fileName);
+    }
+
+    public getParsedCommandLine(fileName: string) {
+        return resolveCachedResult(this.commandLineCache, fileName, this.parseConfigFile);
+    }
+
+    @bind
+    private parseConfigFile(fileName: string) {
+        // Note to future self: it's highly unlikely that a tsconfig of a project reference is used as base config for another tsconfig.
+        // Therefore it doesn't make such sense to read or write the tsconfigCache here.
+        const sourceFile = this.getSourceFile(fileName, ts.ScriptTarget.JSON);
+        if (sourceFile === undefined)
+            return;
+        return ts.parseJsonSourceFileConfigFileContent(
+            sourceFile,
+            this.parseConfigHost,
+            path.dirname(fileName),
+            undefined,
+            fileName,
+            undefined,
+            undefined,
+            this.tsconfigCache,
+        );
+    }
+
+    public resolveModuleNames(
+        names: string[],
+         file: string,
+         _: unknown | undefined,
+         reference: ts.ResolvedProjectReference | undefined,
+         options: ts.CompilerOptions,
+    ) {
+        const seen = new Map<string, ts.ResolvedModuleFull | undefined>();
+        const resolve = (name: string) =>
+            ts.resolveModuleName(name, file, options, this, this.moduleResolutionCache, reference).resolvedModule;
+        return names.map((name) => resolveCachedResult(seen, name, resolve));
+    }
+}
+
+// @internal
+declare module 'typescript' {
+    function matchFiles(
+        path: string,
+        extensions: ReadonlyArray<string>,
+        excludes: ReadonlyArray<string> | undefined,
+        includes: ReadonlyArray<string>,
+        useCaseSensitiveFileNames: boolean,
+        currentDirectory: string,
+        depth: number | undefined,
+        getFileSystemEntries: (path: string) => ts.FileSystemEntries,
+        realpath: (path: string) => string,
+    ): string[];
+
+    interface FileSystemEntries {
+        readonly files: ReadonlyArray<string>;
+        readonly directories: ReadonlyArray<string>;
     }
 }

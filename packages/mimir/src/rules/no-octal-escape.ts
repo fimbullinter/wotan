@@ -10,7 +10,7 @@ export class Rule extends AbstractRule {
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
             if (match[1].length & 1) // only check if backslash is not escaped
                 continue;
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             switch (node.kind) {
                 case ts.SyntaxKind.StringLiteral:
                 case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
@@ -18,7 +18,7 @@ export class Rule extends AbstractRule {
                 case ts.SyntaxKind.TemplateMiddle:
                 case ts.SyntaxKind.TemplateTail:
                     if (match.index >= node.getStart(this.sourceFile))
-                        this.addFailure(
+                        this.addFinding(
                             match.index + match[1].length,
                             re.lastIndex,
                             'Octal escape sequences are deprecated and not allowed in strict mode.',

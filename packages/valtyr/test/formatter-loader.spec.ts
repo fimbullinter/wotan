@@ -6,7 +6,7 @@ test('loads TSLint formatter', (t) => {
     const formatter = loader.loadCoreFormatter('fileslist');
     t.truthy(formatter);
     const instance = new formatter!();
-    instance.format('foo.ts', {content: '', fixes: 0, failures: [{
+    instance.format('foo.ts', {content: '', fixes: 0, findings: [{
         ruleName: 'irrelevant',
         severity: 'error',
         message: "doesn't matter",

@@ -1,4 +1,4 @@
-import def, {ns, v, something as somethingSomething} from './es6-module'; // importing deprecated stuff is not that bad, using it is
+import def, {ns, v, something as somethingSomething, x, y} from './es6-module'; // importing deprecated stuff is not that bad, using it is
 import * as moduleNamespace from './es6-module';
 import * as namespaceImport from './export-assignment';
 
@@ -11,6 +11,8 @@ namespaceImport;
 namespaceImport();
 def;
 v;
+x;
+y;
 somethingSomething;
 moduleNamespace.default;
 moduleNamespace.v;
@@ -19,14 +21,14 @@ let _v: ns.I,
     _v2: ns.D,
     _v3: myNamespaceAlias.I;
 
-/** @deprecated */
+/**@deprecated*/
 class Foo implements ns.D, MyDAlias {}
 class Bar extends Foo implements ns.I {}
 
 new Foo();
 new Bar();
 
-/** @deprecated Use the other overload instead. */
+/**@deprecated Use the other overload instead.*/
 function baz(): string;
 function baz(v: string): string;
 function baz(...args: string[]) {return args[0];}
@@ -39,7 +41,7 @@ baz('');
 ((baz))('');
 
 declare const bas: {
-    /** @deprecated Use the other overload instead. */
+    /**@deprecated Use the other overload instead.*/
     (): string;
     (v: string): string;
 };
@@ -48,7 +50,13 @@ bas;
 bas();
 bas('');
 
-/** @deprecated Variable is deprecated. */
+declare let optionalBas: undefined | typeof bas;
+
+optionalBas;
+optionalBas?.();
+optionalBas?.('');
+
+/**@deprecated Variable is deprecated.*/
 declare const fn: typeof bas;
 fn;
 fn();
@@ -63,16 +71,16 @@ declare let key2: string;
 declare let k: 'b' | 'a' | 'foo';
 
 let obj = {
-    /** @deprecated a*/
+    /**@deprecated a*/
     a: '',
     b: '',
-    /** @deprecated c*/
+    /**@deprecated c*/
     'c': '',
-    /** @deprecated d*/
+    /**@deprecated d*/
     ['d']: '',
-    /** @deprecated foo*/
+    /**@deprecated foo*/
     [key]: '',
-    /** @deprecated something*/
+    /**@deprecated something*/
     [key2]: '',
 };
 
@@ -93,8 +101,29 @@ obj[key2];
 obj[k];
 obj[];
 
+declare let optionalObj: undefined | typeof obj;
+
+optionalObj?.a;
+optionalObj?.b;
+optionalObj?.c;
+optionalObj?.d;
+optionalObj?.foo;
+optionalObj?.['a'];
+optionalObj?.['b'];
+optionalObj?.['c'];
+optionalObj?.['d'];
+optionalObj?.['foo'];
+optionalObj?.[key];
+optionalObj?.somethingElse;
+optionalObj?.['somethingElse'];
+optionalObj?.[key2];
+optionalObj?.[k];
+
+declare let nestedOptionalObj: undefined | {o: typeof obj};
+nestedOptionalObj?.o['a'];
+
 declare let obj2: {
-    /** @deprecated */
+    /**@deprecated*/
     [key: string]: string;
 };
 obj2.a;
@@ -102,11 +131,11 @@ obj2['b'];
 obj2[key];
 
 class HasDeprecatedConstructor {
-    /** @deprecated */
-    constructor() {}
+    /**@deprecated*/
+    constructor(public prop?: any) {}
 }
 class HasDeprecatedConstructorOverload extends HasDeprecatedConstructor {
-    /** @deprecated */
+    /**@deprecated*/
     constructor(p: string);
     constructor(p: number);
     constructor(p: string | number) {
@@ -134,20 +163,20 @@ let _1: HasDeprecatedConstructor,
 
 class HasDeprecatedMethods {
     prop: typeof bas;
-    /** @deprecated */
+    /**@deprecated*/
     method(): void;
     method(p: string): void;
     method() {}
 
-    /** @deprecated */
+    /**@deprecated*/
     deprecatedProp: typeof bas;
 
-    /** @deprecated */
+    /**@deprecated*/
     deprecatedProp2: () => void;
 
     initialized = baz;
 
-    /** @notDeprecated */
+    /**@notDeprecated*/
     notDeprecated: () => void;
 }
 
@@ -179,7 +208,7 @@ class HasDeprecatedMethods {
 }
 
 {
-    /* @deprecated */
+    /* @deprecated*/
     let noJsdoc: string;
     noJsdoc = 'foo';
 
@@ -190,7 +219,7 @@ class HasDeprecatedMethods {
 
 declare function tag(parts: TemplateStringsArray, ...values: string[]): string;
 declare function tag(parts: TemplateStringsArray, ...values: number[]): string;
-/** @deprecated */
+/**@deprecated*/
 declare function tag(parts: TemplateStringsArray, ...values: any[]): string;
 
 tag`a`;
@@ -199,7 +228,7 @@ tag`${1}`;
 tag`${''}${1}`;
 
 declare function decorator<T extends Function>(clazz: T): T;
-/** @deprecated Options should be provided. */
+/**@deprecated Options should be provided.*/
 declare function decorator(): ClassDecorator;
 declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
 
@@ -208,7 +237,7 @@ declare function decorator(options: {foo: string, bar: string}): ClassDecorator;
 @decorator({foo: '', bar: ''})
 class Decorated {}
 
-/** @deprecated */
+/**@deprecated*/
 class MyClass {}
 namespace MyClass {
     export function something() {
@@ -218,25 +247,25 @@ namespace MyClass {
 }
 
 {
-    /** @deprecated */
+    /**@deprecated*/
     let a: string;
-    /** @deprecated */
+    /**@deprecated*/
     let b: string;
-    /** @deprecated */
+    /**@deprecated*/
     let c: {};
     let d: string;
     ({a, c: b, d, ...c} = {a: 'a', b: 'b', c: 'c'});
     let myObj = {a, c: b, ...c};
-    ({d = a} = {d: 'd'}); // TODO show error on `a`: https://github.com/Microsoft/TypeScript/issues/21046
+    ({d = a} = {d: 'd'});
 }
 
 {
     let obj = {
-        /** @deprecated a */
+        /**@deprecated a*/
         a: 'a',
-        /** @deprecated b */
+        /**@deprecated b*/
         b: 'b',
-        /** @deprecated c */
+        /**@deprecated c*/
         c: 'c',
     };
     let a: string;
@@ -247,11 +276,11 @@ namespace MyClass {
 
 {
     let obj = {
-        /** @deprecated a */
+        /**@deprecated a*/
         a: 'a',
-        /** @deprecated b */
+        /**@deprecated b*/
         b: 'b',
-        /** @deprecated c */
+        /**@deprecated c*/
         c: 'c',
     };
     let {a, c: b, d, 'foo': e, ...c} = obj;
@@ -260,35 +289,35 @@ namespace MyClass {
 
 {
     let obj = {
-        /** @deprecated a */
+        /**@deprecated a*/
         a: 'a',
-        /** @deprecated b */
+        /**@deprecated b*/
         b: 'b',
-        /** @deprecated c */
+        /**@deprecated c*/
         c: 'c',
     };
     let k: keyof typeof obj = null as any;
     let {[k]: prop} = obj;
     let v: string;
-    ({[k]: v} = obj); // TODO this would be possible with some effort
+    ({[k]: v} = obj);
 }
 
 {
-    /** @deprecated */
+    /**@deprecated*/
     const enum Indizes {
         Zero,
         One,
         Two,
     }
     const enum StringIndizes {
-        /** @deprecated */
+        /**@deprecated*/
         Zero = '0',
         One = '1',
         Two = '2',
     }
     let tuple: {
         0: string;
-        /** @deprecated */
+        /**@deprecated*/
         1: number;
         2: boolean;
     } = null as any;
@@ -306,34 +335,34 @@ namespace MyClass {
     const stringKey: StringIndizes = null as any;
     tuple[stringKey];
 
-    /** @deprecated */
+    /**@deprecated*/
     type MyAlias = StringIndizes;
     let myVar: MyAlias;
 }
 
 {
     interface A {
-        /** @deprecated */
+        /**@deprecated*/
         a: string;
         b: string;
         d: string;
         e: string;
-        /** @deprecated reason 1 */
+        /**@deprecated reason 1*/
         f: string;
-        /** @deprecated */
+        /**@deprecated*/
         fnA(): void;
         fnB(): void;
     }
     interface B {
         a: string;
-        /** @deprecated */
+        /**@deprecated*/
         b: string;
         c: string;
         e: string;
-        /** @deprecated reason 2 */
+        /**@deprecated reason 2*/
         f: string;
         fnA(): void;
-        /** @deprecated */
+        /**@deprecated*/
         fnB(): void;
     }
     let myObj: A | B = null  as any;
@@ -347,20 +376,20 @@ namespace MyClass {
     myObj.fnB();
 }
 
-/** @experimental */
+/**@experimental*/
 let experimental = 1;
-/** @experimental reason */
+/**@experimental reason*/
 let experimentalReason = 1;
 
 experimental;
 experimentalReason;
 
 declare var myIterable: {
-    /** @deprecated use async iterator instead. */
+    /**@deprecated use async iterator instead.*/
     [Symbol.iterator](): Iterator<number>;
     '__@iterator'(): Iterator<number>;
     [Symbol.asyncIterator](): AsyncIterableIterator<number>
-    /** @deprecated */
+    /**@deprecated*/
     '__@asyncIterator'(): AsyncIterableIterator<number>;
 }
 
@@ -371,13 +400,22 @@ myIterable['__@asyncIterator'];
 
 const {[Symbol.iterator]: iteratorFn, [Symbol.asyncIterator]: asyncIteratorFn} = myIterable;
 
-/** @deprecated var */
+/**@deprecated var*/
 declare var myDeprecatedCallable: {
     (): void;
-    /** @deprecated signature */
+    /**@deprecated signature*/
     (param: number): number;
 }
 
 myDeprecatedCallable;
 myDeprecatedCallable();
 myDeprecatedCallable(1);
+
+class WithPrivateProp {
+    /** @deprecated */
+    #prop = 1;
+
+    get prop() {
+        return this.#prop;
+    }
+}

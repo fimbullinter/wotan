@@ -1,0 +1,2 @@
+/*wotan-disable-line*/ /*wotan-disable-next-line*/ debugger;
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~           [error useless-line-switch: Disable switch has no effect. All specified rules have no failures to disable.]

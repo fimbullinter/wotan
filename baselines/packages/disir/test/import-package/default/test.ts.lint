@@ -1,6 +1,6 @@
 import {Linter} from '../../../wotan/src/linter';
                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error local/import-package: Import directly from '@fimbul/wotan'.]
-import {Failure} from '../../../../packages/wotan';
+import {Finding} from '../../../../packages/wotan';
                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error local/import-package: Import directly from '@fimbul/wotan'.]
 import {AbstractRule} from '@fimbul/wotan';
 import {Rule} from '../../src/rules/import-package';

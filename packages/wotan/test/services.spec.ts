@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { test } from 'ava';
+import test from 'ava';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import {
     FileSystem,
@@ -11,6 +11,9 @@ import {
     DirectoryService,
     ConfigurationError,
     BuiltinResolver,
+    StatePersistence,
+    StaticProgramState,
+    ContentIdHost,
 } from '@fimbul/ymir';
 import { NodeDirectoryService } from '../src/services/default/directory-service';
 import * as os from 'os';
@@ -30,6 +33,10 @@ import * as ts from 'typescript';
 import { DefaultDeprecationHandler } from '../src/services/default/deprecation-handler';
 import { FormatterLoader } from '../src/services/formatter-loader';
 import { ProcessorLoader } from '../src/services/processor-loader';
+import { satisfies } from 'semver';
+import * as yaml from 'js-yaml';
+import { DefaultStatePersistence } from '../src/services/default/state-persistence';
+import { ContentHasher } from '../src/services/default/content-hasher';
 
 test('CacheFactory', (t) => {
     const cm = new DefaultCacheFactory();
@@ -78,7 +85,13 @@ test('RuleLoaderHost', (t) => {
             return path.join(__dirname, '../../mimir/src/rules', name + '.js');
         },
     };
-    const loader = new NodeRuleLoader(builtinResolver);
+    const loader = new NodeRuleLoader(
+        builtinResolver,
+        new NodeResolver(
+            new CachedFileSystem(new NodeFileSystem(new ConsoleMessageHandler()), new DefaultCacheFactory()),
+            new NodeDirectoryService(),
+        ),
+    );
     t.is(loader.loadCoreRule('no-debugger'), Rule);
     t.is(loader.loadCoreRule('fooBarBaz'), undefined);
     builtinResolver.resolveRule = (name) => path.join(__dirname, 'fixtures', name + '.js');
@@ -170,8 +183,9 @@ test('Resolver', (t) => {
     container.bind(MessageHandler).to(ConsoleMessageHandler);
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const resolver = container.resolve(NodeResolver);
-    t.is(resolver.resolve('tslib', process.cwd(), ['.js']), require.resolve('tslib'));
+    t.is(resolver.resolve('tslib', __dirname, ['.js']), require.resolve('tslib'));
     t.is(resolver.resolve('tslib', '/', ['.js'], module.paths), require.resolve('tslib'));
     t.is(
         resolver.resolve('./no-debugger', path.resolve('packages/mimir/src/rules'), ['.ts']),
@@ -190,6 +204,7 @@ test('FormatterLoaderHost', (t) => {
     container.bind(CachedFileSystem).toSelf();
     container.bind(CacheFactory).to(DefaultCacheFactory);
     container.bind(Resolver).to(NodeResolver);
+    container.bind(DirectoryService).to(NodeDirectoryService);
     const builtinResolver: BuiltinResolver = {
         resolveConfig() { throw new Error(); },
         resolveRule() { throw new Error(); },
@@ -239,14 +254,14 @@ test('FormatterLoader', (t) => {
         container.bind(DirectoryService).toConstantValue(directoryService);
         container.bind(FormatterLoaderHost).toConstantValue(host);
         const loader = container.resolve(FormatterLoader);
-        t.throws(() => loader.loadFormatter('foo'), "Cannot find formatter 'foo' relative to '/'.");
+        t.throws(() => loader.loadFormatter('foo'), { message: "Cannot find formatter 'foo' relative to '/'." });
         t.is(coreRequested, 1);
         t.is(customRequested, 1);
         cwd = '/foo';
-        t.throws(() => loader.loadFormatter('./foo'), "Cannot find formatter './foo' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('./foo'), { message: "Cannot find formatter './foo' relative to '/foo'." });
         t.is(coreRequested, 1);
         t.is(customRequested, 2);
-        t.throws(() => loader.loadFormatter('foo-bar'), "Cannot find formatter 'foo-bar' relative to '/foo'.");
+        t.throws(() => loader.loadFormatter('foo-bar'), { message: "Cannot find formatter 'foo-bar' relative to '/foo'." });
         t.is(coreRequested, 2);
         t.is(customRequested, 3);
     })();
@@ -276,7 +291,7 @@ test('FormatterLoader', (t) => {
         t.is(customRequested, 0);
         t.is(loader.loadFormatter('foo-bar'), Formatter);
         t.is(customRequested, 0);
-        t.throws(() => loader.loadFormatter('/foo/bar'), "Cannot find formatter '/foo/bar' relative to '/'.");
+        t.throws(() => loader.loadFormatter('/foo/bar'), { message: "Cannot find formatter '/foo/bar' relative to '/'." });
         t.is(customRequested, 1);
     })();
 
@@ -328,9 +343,11 @@ test('FileSystem', (t) => {
 
     const dir = path.posix.join(tmpDir, 'sub');
     const deepDir = path.posix.join(dir, 'dir');
-    t.throws(() => fileSystem.createDirectory(deepDir));
-    t.throws(() => fileSystem.createDirectory(tmpDir));
-    fileSystem.createDirectory(dir);
+    if (!satisfies(process.version, '>=10.12.0')) {
+        t.throws(() => fileSystem.createDirectory(deepDir));
+        t.throws(() => fileSystem.createDirectory(tmpDir));
+        fileSystem.createDirectory(dir);
+    }
     fileSystem.createDirectory(deepDir);
     t.true(fs.existsSync(dir));
     t.true(fs.existsSync(deepDir));
@@ -364,7 +381,6 @@ test('FileSystem', (t) => {
     t.throws(() => fileSystem.stat(f));
 
     t.is(warnings.length, 0);
-    // tslint:disable-next-line
     fs.writeFileSync(f, Buffer.from('471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff471fff10ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'hex'));
     t.is(fileSystem.readFile(f), '');
     t.deepEqual(warnings, [`Detected MPEG TS file: '${f}'.`]);
@@ -389,6 +405,9 @@ test.after.always(() => {
 test('ProcessorLoader', (t) => {
     let r: (id: string) => any;
     const resolver: Resolver = {
+        getDefaultExtensions() {
+            return [];
+        },
         resolve(): never {
             throw new Error('should not be called');
         },
@@ -400,7 +419,7 @@ test('ProcessorLoader', (t) => {
     container.bind(Resolver).toConstantValue(resolver);
     container.bind(CacheFactory).to(DefaultCacheFactory);
     const loader = container.resolve(ProcessorLoader);
-    t.throws(() => loader.loadProcessor('foo'), TypeError);
+    t.throws(() => loader.loadProcessor('foo'), {instanceOf: TypeError});
     class Processor {}
     r = (id) => {
         t.is(id, 'test');
@@ -410,9 +429,101 @@ test('ProcessorLoader', (t) => {
     r = () => t.fail('should be cached');
     t.is<any>(loader.loadProcessor('test'), Processor);
     r = () => ({});
-    t.throws(() => loader.loadProcessor('bar'), "'bar' has no export named 'Processor'.");
+    t.throws(() => loader.loadProcessor('bar'), { message: "'bar' has no export named 'Processor'." });
     r = require;
-    t.throws(() => loader.loadProcessor('./fooBarBaz'), (err) => {
-        return (err instanceof ConfigurationError) && /Cannot find module '\.\/fooBarBaz'/.test(err.message);
+    t.throws(() => loader.loadProcessor('./fooBarBaz'), {message: /^Cannot find module '\.\/fooBarBaz'$/m});
+});
+
+test('StatePersistence', (t) => {
+    const container = new Container();
+    container.bind(CachedFileSystem).toSelf();
+    container.bind(CacheFactory).to(DefaultCacheFactory);
+    container.bind(StatePersistence).to(DefaultStatePersistence);
+    const state: StaticProgramState = {
+        cs: true,
+        files: [],
+        global: [],
+        lookup: {},
+        options: '',
+        ts: ts.version,
+        v: 1,
+    };
+    const fileContent = {state, v: 1};
+    let written = false;
+    container.bind(FileSystem).toConstantValue({
+        createDirectory() { throw new Error(); },
+        deleteFile() { throw new Error(); },
+        readDirectory() { throw new Error(); },
+        realpath() { throw new Error(); },
+        normalizePath: NodeFileSystem.normalizePath,
+        stat(f) {
+            switch (f) {
+                case './tsconfig-nonexist.fimbullintercache':
+                    return { isDirectory() { return true; }, isFile() { return false; } };
+                case './tsconfig-mismatch.fimbullintercache':
+                case './tsconfig-throws.fimbullintercache':
+                case './tsconfig-empty.fimbullintercache':
+                case './tsconfig-correct.fimbullintercache':
+                    return { isDirectory() { return false; }, isFile() { return true; } };
+                default:
+                    throw t.fail('unexpected file ' + f);
+            }
+        },
+        readFile(f) {
+            switch (f) {
+                case './tsconfig-correct.fimbullintercache':
+                    return yaml.dump(fileContent);
+                case './tsconfig-mismatch.fimbullintercache':
+                    return yaml.dump({state, v: 0});
+                case './tsconfig-empty.fimbullintercache':
+                    return '';
+                case './tsconfig-throws.fimbullintercache':
+                    throw new Error();
+                default:
+                    throw t.fail('unexpected file ' + f);
+            }
+        },
+        writeFile(f, content) {
+            if (f === './tsconfig-throws.fimbullintercache')
+                throw new Error();
+            t.is(f, './tsconfig-correct.fimbullintercache');
+            t.deepEqual(yaml.load(content), fileContent);
+            written = true;
+        },
     });
+
+    const service = container.get(StatePersistence);
+
+    t.is(service.loadState('./tsconfig-nonexist.json'), undefined);
+    t.is(service.loadState('./tsconfig-mismatch.json'), undefined);
+    t.is(service.loadState('./tsconfig-throws.json'), undefined);
+    t.is(service.loadState('./tsconfig-empty.json'), undefined);
+    t.deepEqual(service.loadState('./tsconfig-correct.json'), state);
+
+    service.saveState('./tsconfig-throws.json', state);
+    t.is(written, false);
+
+    service.saveState('./tsconfig-correct.json', state);
+    t.is(written, true);
+});
+
+test('ContentHasher', (t) => {
+    const hasher = new ContentHasher();
+    const host: ContentIdHost = {
+        readFile(f) {
+            switch (f) {
+                case '/a.ts':
+                    return 'foo;';
+                case '/b.ts':
+                    return 'bar;';
+                case '/c.ts':
+                    return;
+                default:
+                    throw new Error('unexpected file name');
+            }
+        },
+    };
+    t.is(hasher.forFile('/a.ts', host), '2090263780');
+    t.is(hasher.forFile('/b.ts', host), '2090104885');
+    t.is(hasher.forFile('/c.ts', host), 'N/A');
 });

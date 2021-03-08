@@ -29,8 +29,8 @@ export class TslintFormatterLoaderHost extends NodeFormatterLoader {
 
 @injectable()
 export class TslintRuleLoaderHost extends NodeRuleLoader {
-    constructor(resolver: BuiltinResolver) {
-        super(resolver);
+    constructor(builtinResolver: BuiltinResolver, resolver: Resolver) {
+        super(builtinResolver, resolver);
     }
 
     public loadCustomRule(name: string, dir: string): RuleConstructor | undefined {

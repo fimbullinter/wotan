@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "outFile": "./out-b.js"
+  },
+  "files": [
+    "b.ts"
+  ],
+  "references": [
+    {"path": "./tsconfig.a.json", "prepend": true}
+  ]
+}

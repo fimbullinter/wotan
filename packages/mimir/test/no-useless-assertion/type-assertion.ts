@@ -38,6 +38,8 @@ e as typeof e;
 ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 let f: Array<[number, string]> = ['a', 'b', 'c'].map((element, i) => [i, element] as [number, string]);
 
+[] as [];
+
 declare const g: '1.0';
 g as string === '2.0';
 declare let h: Array<'a' | 'b' | 'c'>;
@@ -144,3 +146,9 @@ declare let myObj: A.MyClass;
 export default <number>class{static prop: number}.prop;
 export default <number>{prop: 1}.prop;
 export = <number>class{static prop: number}.prop;
+
+fn2<1>(1 as const);
+fn2<''>(<const>'');
+
+<const>{a: 1 as 1, b: true as false};
+<const>[<const>1, 2 as const, fn('' as const)];

@@ -1,10 +1,10 @@
 import { injectable, ContainerModule } from 'inversify';
-import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Failure } from '@fimbul/ymir';
+import { DirectoryService, MessageHandler, ConfigurationError, FileSummary, Finding } from '@fimbul/ymir';
 import { AbstractCommandRunner, TestCommand } from './base';
 import { CachedFileSystem } from '../services/cached-file-system';
 import { createBaseline } from '../baseline';
 import * as path from 'path';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { unixifyPath } from '../utils';
 import * as glob from 'glob';
 import { satisfies, SemVer } from 'semver';
@@ -12,12 +12,21 @@ import { LintOptions, Runner } from '../runner';
 import * as ts from 'typescript';
 import * as diff from 'diff';
 import { applyFixes } from '../fix';
+import { GLOBAL_OPTIONS_SPEC } from '../argparse';
+import { OptionParser } from '../optparse';
 
 const enum BaselineKind {
     Lint = 'lint',
     Fix = 'fix',
-    Mend = 'mend',
+    Actions = 'diff',
 }
+
+const TEST_OPTION_SPEC = {
+    ...GLOBAL_OPTIONS_SPEC,
+    fix: OptionParser.Transform.noDefault(GLOBAL_OPTIONS_SPEC.fix),
+    codeActions: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), true),
+    typescriptVersion: OptionParser.Factory.parsePrimitive('string'),
+};
 
 interface RuleTestHost {
     checkResult(file: string, kind: BaselineKind, result: FileSummary): boolean;
@@ -76,8 +85,8 @@ class TestCommandRunner extends AbstractCommandRunner {
                     actual = createBaseline(summary);
                 } else {
                     if (
-                        kind === BaselineKind.Mend
-                            ? summary.failures.length !== 1 || summary.failures[0].codeActions === undefined
+                        kind === BaselineKind.Actions
+                            ? summary.findings.length !== 1 || summary.findings[0].codeActions === undefined
                             : summary.fixes === 0
                     ) {
                         if (!this.fs.isFile(baselineFile))
@@ -89,7 +98,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                         baselinesSeen.push(unixifyPath(baselineFile));
                         return end(false, 'EXISTS');
                     }
-                    actual = kind === BaselineKind.Mend ? applyCodeActions(summary) : summary.content;
+                    actual = kind === BaselineKind.Actions ? applyCodeActions(summary) : summary.content;
                 }
                 baselinesSeen.push(unixifyPath(baselineFile));
                 let expected: string;
@@ -122,11 +131,11 @@ class TestCommandRunner extends AbstractCommandRunner {
         };
         for (const pattern of options.files) {
             for (const testcase of glob.sync(pattern, globOptions)) {
-                interface TestOptions extends Partial<LintOptions> {
-                    typescriptVersion?: string;
-                    mend?: boolean;
-                }
-                const {typescriptVersion, mend, ...testConfig} = <TestOptions>require(testcase);
+                const {typescriptVersion, codeActions, ...testConfig} = OptionParser.parse(
+                    require(testcase),
+                    TEST_OPTION_SPEC,
+                    {validate: true, context: testcase, exhaustive: true},
+                );
                 if (typescriptVersion !== undefined && !satisfies(currentTypescriptVersion, typescriptVersion)) {
                     this.logger.log(
                         `${path.relative(basedir, testcase)} ${chalk.yellow(`SKIPPED, requires TypeScript ${typescriptVersion}`)}`,
@@ -138,7 +147,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 this.logger.log(path.relative(basedir, testcase));
                 this.directoryService.cwd = root;
                 baselinesSeen = [];
-                if (!this.test(testConfig, host, mend))
+                if (!this.test(testConfig, host, codeActions))
                     return false;
                 if (options.exact) {
                     const remainingGlobOptions = {...globOptions, cwd: baselineDir, ignore: baselinesSeen};
@@ -159,27 +168,23 @@ class TestCommandRunner extends AbstractCommandRunner {
         return success;
     }
 
-    private test(config: Partial<LintOptions>, host: RuleTestHost, mend: boolean | undefined): boolean {
-        const lintOptions: LintOptions = {
-            config: undefined,
-            exclude: [],
-            files: [],
-            project: undefined,
-            extensions: undefined,
-            ...config,
-            fix: false,
-        };
+    private test(
+        config: {[K in keyof LintOptions]: LintOptions[K] | (K extends 'fix' ? undefined : never)},
+        host: RuleTestHost,
+        codeActions: boolean,
+    ): boolean {
+        const lintOptions: LintOptions = {...config, fix: false};
         const lintResult = Array.from(this.runner.lintCollection(lintOptions));
         let containsFixes = false;
         for (const [fileName, summary] of lintResult) {
             if (!host.checkResult(fileName, BaselineKind.Lint, summary))
                 return false;
-            if (mend !== false && !host.checkResult(fileName, BaselineKind.Mend, summary))
+            if (codeActions && !host.checkResult(fileName, BaselineKind.Actions, summary))
                 return false;
-            containsFixes = containsFixes || summary.failures.some(isFixable);
+            containsFixes ||= summary.findings.some(isFixable);
         }
 
-        if (!('fix' in config) || config.fix) {
+        if (config.fix || config.fix === undefined) {
             lintOptions.fix = config.fix || true; // fix defaults to true if not specified
             const fixResult = containsFixes ? this.runner.lintCollection(lintOptions) : lintResult;
             for (const [fileName, summary] of fixResult)
@@ -215,8 +220,8 @@ function getNormalizedTypescriptVersion() {
     return new SemVer(`${v.major}.${v.minor}.${v.patch}`);
 }
 
-function isFixable(failure: Failure): boolean {
-    return failure.fix !== undefined;
+function isFixable(finding: Finding): boolean {
+    return finding.fix !== undefined;
 }
 
 function createBaselineDiff(actual: string, expected: string) {
@@ -249,7 +254,7 @@ function prettyLine(line: string): string {
 }
 
 function applyCodeActions(summary: FileSummary): string {
-    return summary.failures[0].codeActions!
+    return summary.findings[0].codeActions!
         .map((action) => `/// @description: "${action.description}"\n${applyFixes(summary.content, [action]).result}`)
         .join('\n\n');
 }

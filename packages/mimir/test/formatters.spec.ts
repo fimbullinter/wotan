@@ -1,16 +1,15 @@
-import test, { TestContext } from 'ava';
-import { Failure, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult, CodeAction } from '@fimbul/ymir';
+import test, { ExecutionContext } from 'ava';
+import { Finding, Severity, Replacement, AbstractFormatter, FileSummary, FormatterConstructor, LintResult, CodeAction } from '@fimbul/ymir';
 import { Formatter as JsonFormatter} from '../src/formatters/json';
 import { Formatter as StylishFormatter } from '../src/formatters/stylish';
-import chalk, { Level } from 'chalk';
+import * as chalk from 'chalk';
 import * as path from 'path';
 
 test.before(() => {
-    chalk.enabled = true;
-    chalk.level = Level.Basic;
+    (<any>chalk).level = 1;
 });
 
-function createFailure(
+function createFinding(
     name: string,
     severity: Severity,
     message: string,
@@ -18,7 +17,7 @@ function createFailure(
     end: number,
     fix?: Replacement[],
     codeActions?: CodeAction[],
-): Failure {
+): Finding {
     return {
         severity,
         message,
@@ -41,15 +40,15 @@ function createFailure(
 const summary = new Map<string, FileSummary>();
 summary.set('/some/directory/a.ts', {
     content: '',
-    failures: [],
+    findings: [],
     fixes: 0,
 });
 summary.set('/some/other/directory/b.ts', {
     content: 'foo = bar',
-    failures: [
-        createFailure('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
-        createFailure('bar', 'error', 'no bar', 6, 9, [Replacement.replace(6, 9, 'baz')]),
-        createFailure('equals', 'error', 'no equals', 4, 5, undefined, [
+    findings: [
+        createFinding('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
+        createFinding('bar', 'error', 'no bar', 6, 9, [Replacement.replace(6, 9, 'baz')]),
+        createFinding('equals', 'error', 'no equals', 4, 5, undefined, [
             new CodeAction('Convert assignment to comparison', Replacement.append(5, '==')),
             new CodeAction('Remove all the things', [Replacement.delete(1, 3), Replacement.delete(7, 9)]),
         ]),
@@ -58,41 +57,41 @@ summary.set('/some/other/directory/b.ts', {
 });
 summary.set('/some/directory/c.ts', {
     content: '',
-    failures: [],
+    findings: [],
     fixes: 3,
 });
 summary.set('/my/project/a.ts', {
     content: 'debugger;',
-    failures: [
-        createFailure('trailing-newline', 'error', 'missing trailing newline', 9, 9, [Replacement.append(9, '\n')]),
+    findings: [
+        createFinding('trailing-newline', 'error', 'missing trailing newline', 9, 9, [Replacement.append(9, '\n')]),
     ],
     fixes: 0,
 });
 
 const emptySummary: LintResult = new Map();
-const noFailureSummary: LintResult = new Map([['/some/file.js', {content: '', failures: [], fixes: 0}]]);
-const fixedSummary: LintResult = new Map([['/project/fixed.js', {content: '', failures: [], fixes: 1}]]);
+const noFindingSummary: LintResult = new Map([['/some/file.js', {content: '', findings: [], fixes: 0}]]);
+const fixedSummary: LintResult = new Map([['/project/fixed.js', {content: '', findings: [], fixes: 1}]]);
 const fixableSummary: LintResult = new Map([
     [
         '/dir/fixableError.ts',
-        {content: 'debugger;', failures: [createFailure('no-debugger', 'error', 'debugger', 0, 9, [Replacement.delete(0, 9)])], fixes: 0},
+        {content: 'debugger;', findings: [createFinding('no-debugger', 'error', 'debugger', 0, 9, [Replacement.delete(0, 9)])], fixes: 0},
     ],
 ]);
 const warningSummary: LintResult = new Map([
     [
         '/dir/warnings.ts',
-        {content: 'a', failures: [createFailure('a', 'warning', 'a', 0, 0)], fixes: 0},
+        {content: 'a', findings: [createFinding('a', 'warning', 'a', 0, 0)], fixes: 0},
     ],
     [
         'C:/dir/warnings2.ts',
-        {content: 'b', failures: [createFailure('b', 'warning', 'b', 0, 0)], fixes: 0},
+        {content: 'b', findings: [createFinding('b', 'warning', 'b', 0, 0)], fixes: 0},
     ],
 ]);
 const bomSummary: LintResult = new Map<string, FileSummary>([[
     '/dir/warnings.ts',
     {
         content: '\uFEFFa\nb',
-        failures: [
+        findings: [
             {
                 severity: 'error',
                 message: 'BOM',
@@ -166,9 +165,9 @@ const bomSummary: LintResult = new Map<string, FileSummary>([[
     },
 ]]);
 
-function testFormatter(formatterCtor: FormatterConstructor, t: TestContext, transform?: (s: string) => string) {
+function testFormatter(formatterCtor: FormatterConstructor, t: ExecutionContext, transform?: (s: string) => string) {
     testOutput(emptySummary, 'empty');
-    testOutput(noFailureSummary, 'success');
+    testOutput(noFindingSummary, 'success');
     testOutput(fixedSummary, 'fixed');
     testOutput(fixableSummary, 'fixable');
     testOutput(warningSummary, 'warnings');

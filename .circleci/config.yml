@@ -6,17 +6,18 @@ workflows:
       - test:
           requires:
             - build
-      - test@2.7:
+      - test@3.9:
           requires:
             - build
-      - test@2.8:
+      - test@4.0:
           requires:
             - build
-      - test@2.9:
+      - test@4.1:
           requires:
             - build
 
 base: &base
+  working_directory: '~/Project' # to really test case sensitivity
   steps:
     - checkout
     - attach_workspace:
@@ -26,18 +27,26 @@ base: &base
     - run:
         name: Install correct TypeScript version
         command: |
-          yarn ${typescriptVersion:+add -W typescript@$typescriptVersion}
+          if [[ "$CIRCLE_JOB" =~ ^test@ ]]; then
+            yarn add -DW typescript@${CIRCLE_JOB#test@}
+          else
+            yarn
+          fi
     - run:
         name: Run Tests
         command: |
-          yarn coverage yarn test
+          node_modules/.bin/nyc node_modules/.bin/run-s test
           yarn report-coverage
+
+latestNodeImage: &latestNodeImage
+  docker:
+    - image: circleci/node:15@sha256:a030bb6bfb82d17cbfa0b2312ae3133ce4d354289698a5012910e74c82e2f3de
 
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/node:10@sha256:db36ac8d0f94f0f646d17626db5c4c854c35ea2b4c676ec1ba781ef836376548
+    working_directory: '~/Project'
+    <<: *latestNodeImage
     steps:
       - checkout
       - restore_cache:
@@ -58,34 +67,31 @@ jobs:
           name: Dependency check
           command: yarn check-dependencies
       - run:
+          name: Public API guard
+          command: yarn check-package
+      - run:
           name: Lint
           command: yarn lint
       - persist_to_workspace:
           root: '.'
           paths:
             - "packages/*/index.*"
+            - "packages/wotan/language-service"
             - "packages/*/src"
             - "packages/*/test"
             - yarn.lock
   test:
-    docker:
-      - image: circleci/node:10@sha256:db36ac8d0f94f0f646d17626db5c4c854c35ea2b4c676ec1ba781ef836376548
+    <<: *latestNodeImage
     <<: *base
-  test@2.7:
+  test@3.9:
     docker:
-      - image: circleci/node:6@sha256:66d0941f6102b50b08525a02640bcc018a645e39d1f164659265a43266178139
-    environment:
-      typescriptVersion: 2.7
+      - image: circleci/node:10@sha256:c054a906e679bc6724dc49a2b2bcc9bd60391d1173a395245b1802dd2d565beb
     <<: *base
-  test@2.8:
+  test@4.0:
     docker:
-      - image: circleci/node:8@sha256:d77137abf22ea044e38b8c1a0a1fb52e5b1f0c417a44b2a4f754afbadcfb03f6
-    environment:
-      typescriptVersion: 2.8
+      - image: circleci/node:12@sha256:a9d16e9d902f3220696fb67b9f447f391b51c69bd2dd9a0e7a8042ca7016cbe5
     <<: *base
-  test@2.9:
+  test@4.1:
     docker:
-      - image: circleci/node:9@sha256:028653b833cbe7f2fbb10abd4a7622422f7c6ba8c8b9be0894aff488ebddce49
-    environment:
-      typescriptVersion: 2.9
+      - image: circleci/node:14@sha256:c5862e43e66c85595f5c614ec54e9a61fdc5f09abb84d7d373e2c2e76edd6c61
     <<: *base

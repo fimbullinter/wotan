@@ -1,0 +1,7 @@
+LICENSE
+NOTICE
+README.md
+package.json
+src/index.d.ts
+src/index.js
+src/index.js.map

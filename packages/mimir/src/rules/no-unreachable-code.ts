@@ -32,7 +32,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkBlock(node: ts.BlockLike) {
-        let i = node.statements.findIndex(nextStatementIsUnreachable);
+        let i = node.statements.findIndex(this.nextStatementIsUnreachable, this);
         if (i === -1 || i === node.statements.length - 1)
             return;
         for (i += 1; i < node.statements.length; ++i)
@@ -68,29 +68,30 @@ export class Rule extends AbstractRule {
                 break;
             }
         }
-        this.addFailureAtNode(node.getFirstToken(this.sourceFile)!, 'Unreachable code detected.');
+        this.addFindingAtNode(node.getFirstToken(this.sourceFile)!, 'Unreachable code detected.');
     }
-}
 
-function nextStatementIsUnreachable(statement: ts.Statement): boolean {
-    if (endsControlFlow(statement))
-        return true;
-    const labels: string[] = [];
-    while (isLabeledStatement(statement)) {
-        labels.push(statement.label.text);
-        statement = statement.statement;
+    private nextStatementIsUnreachable(statement: ts.Statement): boolean {
+        if (endsControlFlow(statement, this.program?.getTypeChecker()))
+            return true;
+        const labels: string[] = [];
+        while (isLabeledStatement(statement)) {
+            labels.push(statement.label.text);
+            statement = statement.statement;
+        }
+        switch (statement.kind) {
+            case ts.SyntaxKind.ForStatement:
+            case ts.SyntaxKind.WhileStatement:
+            case ts.SyntaxKind.DoStatement:
+                // statements after loops, that go on forever without breaking, are never executed
+                return getConstantIterationCondition(<ForDoWhileStatement>statement) === true &&
+                    !getControlFlowEnd((<ts.IterationStatement>statement).statement).statements.some(
+                        (jump) => jump.kind === ts.SyntaxKind.BreakStatement &&
+                            (jump.label === undefined || labels.includes(jump.label.text)),
+                    );
+        }
+        return false;
     }
-    switch (statement.kind) {
-        case ts.SyntaxKind.ForStatement:
-        case ts.SyntaxKind.WhileStatement:
-        case ts.SyntaxKind.DoStatement:
-            // statements after loops, that go on forever without breaking, are never executed
-            return getConstantIterationCondition(<ForDoWhileStatement>statement) === true &&
-                !getControlFlowEnd((<ts.IterationStatement>statement).statement).statements.some(
-                    (jump) => jump.kind === ts.SyntaxKind.BreakStatement && (jump.label === undefined || labels.includes(jump.label.text)),
-                );
-    }
-    return false;
 }
 
 function isExecutableStatement(node: ts.Statement): boolean {

@@ -1,5 +1,6 @@
 ---
 rules:
+  async-function-assignability: error
   await-async-result: error
   await-only-promise: error
   ban-dom-globals: error
@@ -11,13 +12,19 @@ rules:
   no-duplicate-case: error
   no-duplicate-spread-property: error
   no-fallthrough: error
-  no-inferred-empty-object: error
+  no-implicit-tostring:
+    severity: error
+    options:
+      allowPrimitive: true
   no-invalid-assertion: error
+  no-restricted-property-access: error
   no-return-await: error
   no-misused-generics: error
   no-nan-compare: error
+  no-object-spread-of-iterable: error
   no-octal-escape: error
   no-unassigned-variable: error
+  no-uninferred-type-parameter: error
   no-unreachable-code: error
   no-unsafe-finally: error
   no-unstable-api-use: error
@@ -25,10 +32,14 @@ rules:
   no-unused-label: error
   no-useless-assertion: error
   no-useless-declare: error
+  no-useless-destructuring: error
   no-useless-initializer: error
   no-useless-jump-label: error
   no-useless-predicate: error
+  no-useless-strict: error
   no-useless-spread: error
+  no-useless-try-catch: error
+  no-writeonly-property-read: error
   prefer-const: error
   prefer-dot-notation: error
   prefer-for-of: error

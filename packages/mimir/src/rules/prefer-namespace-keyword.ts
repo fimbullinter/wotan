@@ -17,7 +17,7 @@ export class Rule extends AbstractRule {
             ) {
                 const end = (<ts.ModuleDeclaration>statement).name.pos;
                 const start = end - 'module'.length;
-                this.addFailure(start, end, "Prefer 'namespace' over 'module'.", Replacement.replace(start, end, 'namespace'));
+                this.addFinding(start, end, "Prefer 'namespace' over 'module'.", Replacement.replace(start, end, 'namespace'));
             }
             this.checkModule(<ts.ModuleDeclaration>statement);
         }

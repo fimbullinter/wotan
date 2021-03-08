@@ -11,10 +11,13 @@ test('parseGlobalOptions', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            project: undefined,
+            project: [],
+            references: false,
             formatter: undefined,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
 
@@ -25,10 +28,13 @@ test('parseGlobalOptions', (t) => {
             config: undefined,
             files: [],
             exclude: [],
-            project: undefined,
+            project: [],
+            references: false,
             formatter: undefined,
             fix: false,
-            extensions: [],
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'ignores excess options',
     );
@@ -40,41 +46,63 @@ test('parseGlobalOptions', (t) => {
             config: undefined,
             files: ['**/*.ts'],
             exclude: [],
-            project: undefined,
+            project: [],
+            references: false,
             formatter: 'foo',
             fix: 10,
             extensions: ['.mjs'],
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
 
     t.deepEqual(
-        parseGlobalOptions({modules: [], config: 'config.yaml', project: '.', fix: true, exclude: '**/*.d.ts'}),
+        parseGlobalOptions({modules: [], config: 'config.yaml', project: '.', references: true, fix: true, exclude: '**/*.d.ts'}),
         {
             modules: [],
             config: 'config.yaml',
             files: [],
             exclude: ['**/*.d.ts'],
-            project: '.',
+            project: ['.'],
+            references: true,
             formatter: undefined,
             fix: true,
-            extensions: [],
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
 
     t.deepEqual(
-        parseGlobalOptions({fix: 'foo', project: false, modules: [1]}),
+        parseGlobalOptions({fix: 'foo', project: false, references: 'false', modules: [1], config: false}),
         {
             modules: [],
             config: undefined,
             files: [],
             exclude: [],
-            project: undefined,
+            project: [],
+            references: false,
             formatter: undefined,
             fix: false,
-            extensions: [],
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'invalid values are ignored',
     );
+
+    t.is(parseGlobalOptions({reportUselessDirectives: 'error'}).reportUselessDirectives, 'error');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'foo?'}).reportUselessDirectives, 'error');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'warning'}).reportUselessDirectives, 'warning');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'warn'}).reportUselessDirectives, 'warning');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'hint'}).reportUselessDirectives, 'suggestion');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'suggestion'}).reportUselessDirectives, 'suggestion');
+    t.is(parseGlobalOptions({reportUselessDirectives: 'off'}).reportUselessDirectives, false);
+    t.is(parseGlobalOptions({reportUselessDirectives: true}).reportUselessDirectives, true);
+    t.is(parseGlobalOptions({reportUselessDirectives: false}).reportUselessDirectives, false);
+
+    t.is(parseGlobalOptions({cache: false}).cache, false);
+    t.is(parseGlobalOptions({cache: true}).cache, true);
 });
 
 test('defaults to lint command', (t) => {
@@ -87,9 +115,12 @@ test('defaults to lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
     t.deepEqual<Command>(
@@ -101,9 +132,12 @@ test('defaults to lint command', (t) => {
             files: ['foo'],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
 });
@@ -118,9 +152,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'parses modules',
     );
@@ -134,9 +171,12 @@ test('parses lint command', (t) => {
             files: ['-foo', '--bar', '--fix', '--exclude', '--formatter', '--project'],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'treats all arguments after -- as files',
     );
@@ -150,9 +190,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: true,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'trims single quotes',
     );
@@ -166,9 +209,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: '.',
+            project: ['.'],
+            references: false,
             fix: true,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--fix argument is optional',
     );
@@ -182,9 +228,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: '.',
+            project: ['.'],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to false',
     );
@@ -198,9 +247,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: true,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to true',
     );
@@ -214,11 +266,33 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: '.',
+            project: ['.'],
+            references: false,
             fix: 10,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--fix can be set to any number',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '-p', 'src', '--project', 'test']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['src', 'test'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        '--project is accumulated',
     );
 
     t.deepEqual<Command>(
@@ -230,9 +304,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: ['**/*.d.ts', 'node_modules/**'],
             formatter: 'json',
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--exclude is accumulated',
     );
@@ -246,9 +323,12 @@ test('parses lint command', (t) => {
             files: ['foo', 'bar'],
             exclude: [],
             formatter: 'stylish',
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'files can be interspersed, specifying an option multiple times overrides its value',
     );
@@ -262,9 +342,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '-c specifies config',
     );
@@ -278,9 +361,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--config specifies config',
     );
@@ -294,9 +380,12 @@ test('parses lint command', (t) => {
             files: ['foo'],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: ['.mjs', '.es6', '.esm'],
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--ext can be comma separated, values are sanitized',
     );
@@ -310,9 +399,12 @@ test('parses lint command', (t) => {
             files: ['foo'],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: ['.mjs', '.es6'],
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--ext can occur multiple times',
     );
@@ -326,20 +418,62 @@ test('parses lint command', (t) => {
             files: ['foo'],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: false,
             extensions: ['.esm', '.mjs', '.es6'],
+            reportUselessDirectives: false,
+            cache: false,
         },
         '--ext merges arrays',
     );
 
     t.deepEqual<Command>(
+        parseArguments(['lint', '-r']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: true,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        '-r switches project references',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '-r', '--references', 'false']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        '--references switches project references',
+    );
+
+    t.deepEqual<Command>(
         parseArguments(
-            ['lint', '--ext', '', '-f', '', '-p', '', '-m', '', '-c', '', '-e', '', '--'],
+            ['lint', '--ext', '', '-f', '', '-p', '', '-m', '', '-c', '', '-e', '', '-r', 'false', '--'],
             {
                 formatter: 'foo',
                 extensions: 'bar',
                 project: 'baz',
+                references: true,
                 files: ['bas'],
                 modules: ['foo', 'bar'],
                 config: 'fooconfig',
@@ -354,9 +488,12 @@ test('parses lint command', (t) => {
             files: [],
             exclude: [],
             formatter: undefined,
-            project: undefined,
+            project: [],
+            references: false,
             fix: true,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'overrides defaults',
     );
@@ -368,6 +505,7 @@ test('parses lint command', (t) => {
                 formatter: 'foo',
                 extensions: 'bar',
                 project: 'baz',
+                references: true,
                 files: ['bas'],
                 modules: ['foo', 'bar'],
                 config: 'fooconfig',
@@ -382,23 +520,293 @@ test('parses lint command', (t) => {
             files: [],
             exclude: ['**/*.d.ts'],
             formatter: 'foo',
-            project: 'baz',
+            project: ['baz'],
+            references: true,
             fix: 10,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
         'uses defaults where not overridden',
     );
 
-    t.throws(() => parseArguments(['lint', '--foobar']), "Unknown option '--foobar'.");
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+            cache: false,
+        },
+        'value for --report-useless-directives is optional, default is true',
+    );
 
-    t.throws(() => parseArguments(['lint', '-m']), "Option '-m' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--exclude']), "Option '--exclude' expects an argument.");
-    t.throws(() => parseArguments(['lint', '-f']), "Option '-f' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--project']), "Option '--project' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--config']), "Option '--config' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--ext']), "Option '--ext' expects an argument.");
-    t.throws(() => parseArguments(['lint', '--ext', 'mjs']), "Options '--ext' and '--project' cannot be used together.");
-    t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), "Options '--ext' and '--project' cannot be used together.");
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'foo']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: ['foo'],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'false'], {reportUselessDirectives: true}),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'true']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: true,
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'error']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'error',
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'warning']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'warning',
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'warn']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'warning',
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'suggestion']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'suggestion',
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'hint']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: 'suggestion',
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--report-useless-directives', 'off']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        'only parses severity or boolean as value for --report-useless-directives',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: true,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', 'true', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: true,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache', 'false', '-p', '.']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: ['.'],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
+        },
+        'parses --cache with --project',
+    );
+
+    t.deepEqual<Command>(
+        parseArguments(['lint', '--cache']),
+        {
+            command: CommandName.Lint,
+            modules: [],
+            config: undefined,
+            files: [],
+            exclude: [],
+            formatter: undefined,
+            project: [],
+            references: false,
+            fix: false,
+            extensions: undefined,
+            reportUselessDirectives: false,
+            cache: true,
+        },
+        'parses --cache with implicit --project',
+    );
+
+    t.throws(() => parseArguments(['lint', '--foobar']), { message: "Unknown option '--foobar'." });
+
+    t.throws(() => parseArguments(['lint', '-m']), { message: "Option '-m' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--exclude']), { message: "Option '--exclude' expects an argument." });
+    t.throws(() => parseArguments(['lint', '-f']), { message: "Option '-f' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--project']), { message: "Option '--project' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--config']), { message: "Option '--config' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--ext']), { message: "Option '--ext' expects an argument." });
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs']), { message: "Options '--ext' and '--project' cannot be used together." });
+    t.throws(() => parseArguments(['lint', '--ext', 'mjs', '-p', '.']), { message: "Options '--ext' and '--project' cannot be used together." });
+    t.throws(() => parseArguments(['lint', '--cache', 'a.ts']), { message: "Option '--cache' can only be used together with '--project'" });
 });
 
 test('parses save command', (t) => {
@@ -409,6 +817,7 @@ test('parses save command', (t) => {
                 formatter: 'foo',
                 extensions: 'bar',
                 project: 'baz',
+                references: true,
                 files: ['bas'],
                 modules: ['foo', 'bar'],
                 config: 'fooconfig',
@@ -423,9 +832,12 @@ test('parses save command', (t) => {
             files: [],
             exclude: ['**/*.d.ts'],
             formatter: 'foo',
-            project: 'baz',
+            project: ['baz'],
+            references: true,
             fix: 10,
             extensions: undefined,
+            reportUselessDirectives: false,
+            cache: false,
         },
     );
 });
@@ -508,16 +920,20 @@ test('parses show command', (t) => {
         'uses defaults',
     );
 
-    t.throws(() => parseArguments(['show', '-f']), "Option '-f' expects an argument.");
-    t.throws(() => parseArguments(['show', '-f', 'foobar']), "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.");
+    t.throws(() => parseArguments(['show', '-f']), { message: "Option '-f' expects an argument." });
+    t.throws(
+        () => parseArguments(['show', '-f', 'foobar']),
+        null,
+        "Argument for option '-f' must be one of 'json', 'json5' or 'yaml'.",
+    );
 
-    t.throws(() => parseArguments(['show', '-c']), "Option '-c' expects an argument.");
+    t.throws(() => parseArguments(['show', '-c']), { message: "Option '-c' expects an argument." });
 
-    t.throws(() => parseArguments(['show'], {files: 'test.ts'}), 'filename expected');
-    t.throws(() => parseArguments(['show', '-c', 'config.yaml']), 'filename expected');
-    t.throws(() => parseArguments(['show', 'foo', 'bar']), 'more than one filename provided');
+    t.throws(() => parseArguments(['show'], {files: 'test.ts'}), { message: 'filename expected' });
+    t.throws(() => parseArguments(['show', '-c', 'config.yaml']), { message: 'filename expected' });
+    t.throws(() => parseArguments(['show', 'foo', 'bar']), { message: 'more than one filename provided' });
 
-    t.throws(() => parseArguments(['show', '--foobar']), "Unknown option '--foobar'.");
+    t.throws(() => parseArguments(['show', '--foobar']), { message: "Unknown option '--foobar'." });
 });
 
 test('parses test command', (t) => {
@@ -570,10 +986,10 @@ test('parses test command', (t) => {
         },
     );
 
-    t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), 'filename expected.');
-    t.throws(() => parseArguments(['test', '--option']), "Unknown option '--option'.");
+    t.throws(() => parseArguments(['test', '-u', '--exact', '--bail']), { message: 'filename expected.' });
+    t.throws(() => parseArguments(['test', '--option']), { message: "Unknown option '--option'." });
 });
 
 test('parses validate command', (t) => {
-    t.throws(() => parseArguments(['validate']), "'validate' is not implemented yet.");
+    t.throws(() => parseArguments(['validate']), { message: "'validate' is not implemented yet." });
 });

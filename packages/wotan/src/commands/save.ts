@@ -17,7 +17,17 @@ class SaveCommandRunner extends AbstractCommandRunner {
     }
 
     public run({command: _command, ...config}: LintCommand) {
-        const newContent = format({...this.options, ...config, fix: config.fix || undefined}, Format.Yaml);
+        const newContent = format<Partial<typeof config>>(
+            {
+                ...this.options,
+                ...config,
+                cache: config.cache || undefined,
+                fix: config.fix || undefined,
+                reportUselessDirectives: config.reportUselessDirectives || undefined,
+                references: config.references || undefined,
+            },
+            Format.Yaml,
+        );
         const filePath = path.join(this.directories.getCurrentDirectory(), '.fimbullinter.yaml');
         if (newContent.trim() === '{}') {
             try {

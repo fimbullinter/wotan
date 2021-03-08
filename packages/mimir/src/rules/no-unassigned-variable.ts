@@ -35,6 +35,6 @@ export class Rule extends AbstractRule {
             this.usage = collectVariableUsage(this.sourceFile);
         const variableInfo = this.usage.get(node)!;
         if (!variableInfo.inGlobalScope && !variableInfo.exported && !variableInfo.uses.some(isVariableReassignment))
-            this.addFailureAtNode(node, `Variable '${node.text}' is never assigned.`);
+            this.addFindingAtNode(node, `Variable '${node.text}' is never assigned.`);
     }
 }

@@ -1,7 +1,18 @@
 import { AbstractRule, excludeDeclarationFiles } from '@fimbul/ymir';
 import * as ts from 'typescript';
-import { isTextualLiteral, isNumericLiteral, isPrefixUnaryExpression, isIdentifier, isLiteralType, unionTypeParts } from 'tsutils';
-import { switchStatements } from '../utils';
+import {
+    isTextualLiteral,
+    isNumericLiteral,
+    isPrefixUnaryExpression,
+    isIdentifier,
+    isLiteralType,
+    unionTypeParts,
+    isStrictCompilerOptionEnabled,
+    formatPseudoBigInt,
+    isBooleanLiteralType,
+} from 'tsutils';
+import { isBigIntLiteral } from 'tsutils/typeguard/3.2';
+import { switchStatements, tryGetBaseConstraintType } from '../utils';
 
 @excludeDeclarationFiles
 export class Rule extends AbstractRule {
@@ -14,7 +25,7 @@ export class Rule extends AbstractRule {
                     continue;
                 const text = clause.expression.getText(this.sourceFile);
                 if (expressionsSeen.has(text)) {
-                    this.addFailureAtNode(clause.expression, `Duplicate 'case ${text}'.`);
+                    this.addFindingAtNode(clause.expression, `Duplicate 'case ${text}'.`);
                     continue;
                 }
                 expressionsSeen.add(text);
@@ -23,23 +34,25 @@ export class Rule extends AbstractRule {
                     case 0:
                         break;
                     case 1:
-                        if (valuesSeen.has(literals[0]))
-                            this.addFailureAtNode(clause.expression, `Duplicate 'case ${formatPrimitive(literals[0])}'.`);
-                        valuesSeen.add(literals[0]);
+                        if (valuesSeen.has(literals[0])) {
+                            this.addFindingAtNode(clause.expression, `Duplicate 'case ${literals[0]}'.`);
+                        } else {
+                            valuesSeen.add(literals[0]);
+                        }
                         break;
                     default:
                         // union of literal types, do not add these to `valuesSeen`, but display an error if all literals were already seen
                         if (literals.every((v) => valuesSeen.has(v)))
-                            this.addFailureAtNode(
+                            this.addFindingAtNode(
                                 clause.expression,
-                                `Duplicate 'case ${literals.map(formatPrimitive).sort().join(' | ')}'.`,
+                                `Duplicate 'case ${literals.sort().join(' | ')}'.`,
                             );
                 }
             }
         }
     }
 
-    private getLiteralValue(node: ts.Expression): Primitive[] {
+    private getLiteralValue(node: ts.Expression): string[] {
         let prefixFn: ApplyPrefixFn = identity;
         while (isPrefixUnaryExpression(node)) {
             const next = makePrefixFn(node, prefixFn);
@@ -49,42 +62,44 @@ export class Rule extends AbstractRule {
             node = node.operand;
         }
         if (isTextualLiteral(node))
-            return [prefixFn(node.text)];
+            return [formatPrimitive(prefixFn(node.text))];
         if (isNumericLiteral(node))
-            return [prefixFn(+node.text)];
+            return [formatPrimitive(prefixFn(+node.text))];
+        if (isBigIntLiteral(node))
+            return [formatPrimitive(prefixFn({base10Value: node.text.slice(0, -1), negative: false}))];
         if (node.kind === ts.SyntaxKind.NullKeyword)
-            return [prefixFn(null)]; // tslint:disable-line:no-null-keyword
+            return [formatPrimitive(prefixFn(null))];
         if (isIdentifier(node) && node.originalKeywordKind === ts.SyntaxKind.UndefinedKeyword)
-            return [prefixFn(undefined)];
+            return [formatPrimitive(prefixFn(undefined))];
         if (node.kind === ts.SyntaxKind.TrueKeyword)
-            return [prefixFn(true)];
+            return [formatPrimitive(prefixFn(true))];
         if (node.kind === ts.SyntaxKind.FalseKeyword)
-            return [prefixFn(false)];
+            return [formatPrimitive(prefixFn(false))];
 
-        if (this.program === undefined)
+        if (this.context.compilerOptions === undefined || !isStrictCompilerOptionEnabled(this.context.compilerOptions, 'strictNullChecks'))
             return [];
-        const checker = this.program.getTypeChecker();
-        let type = checker.getTypeAtLocation(node)!;
-        type = checker.getBaseConstraintOfType(type) || type;
-        const result = new Set<Primitive>();
-        for (const t of unionTypeParts(type)) {
+        const checker = this.program!.getTypeChecker();
+        const result = new Set<string>();
+        for (const t of unionTypeParts(tryGetBaseConstraintType(checker.getTypeAtLocation(node), checker))) {
+            // TODO handle intersection types
             if (isLiteralType(t)) {
-                result.add(prefixFn(t.value));
+                result.add(formatPrimitive(prefixFn(t.value)));
             } else if (t.flags & ts.TypeFlags.BooleanLiteral) {
-                result.add(prefixFn((<{intrinsicName: string}><{}>t).intrinsicName === 'true'));
+                result.add(formatPrimitive(prefixFn(isBooleanLiteralType(t, true))));
             } else if (t.flags & ts.TypeFlags.Undefined) {
-                result.add(prefixFn(undefined));
+                result.add(formatPrimitive(prefixFn(undefined)));
             } else if (t.flags & ts.TypeFlags.Null) {
-                result.add(prefixFn(null)); // tslint:disable-line:no-null-keyword
+                result.add(formatPrimitive(prefixFn(null)));
             } else {
                 return [];
             }
+            // TODO unique symbol
         }
         return Array.from(result);
     }
 }
 
-type Primitive = string | number | boolean | undefined | null;
+type Primitive = string | number | boolean | undefined | null | ts.PseudoBigInt;
 
 type ApplyPrefixFn = (v: Primitive) => Primitive;
 
@@ -95,18 +110,62 @@ function identity<T>(v: T): T {
 function makePrefixFn(node: ts.PrefixUnaryExpression, next: ApplyPrefixFn): ApplyPrefixFn | undefined {
     switch (node.operator) {
         case ts.SyntaxKind.PlusToken:
-            return (v) => next(+v!);
+            return (v) => isBigInt(v) ? next(v) : next(+v!);
         case ts.SyntaxKind.MinusToken:
-            return (v) => next(-v!);
+            // there's no '-0n'
+            return (v) => isBigInt(v) ? next({...v, negative: !v.negative && v.base10Value !== '0'}) : next(-v!);
         case ts.SyntaxKind.TildeToken:
-            return (v) => next(~v!);
+            return (v) => isBigInt(v) ? negateBigint(v) : next(~v!);
         case ts.SyntaxKind.ExclamationToken:
-            return (v) => next(!v);
+            return (v) => isBigInt(v) ? next(v.base10Value === '0') : next(!v);
         default:
             return;
     }
 }
 
+function isBigInt(v: Primitive): v is ts.PseudoBigInt {
+    return typeof v === 'object' && v !== null;
+}
+
+function negateBigint(v: ts.PseudoBigInt): ts.PseudoBigInt {
+    const digits = v.base10Value.split('');
+    if (v.negative) {
+        // negative values become positive and get decremented by 1
+        for (let i = digits.length - 1; i >= 0; --i) {
+            const current = +digits[i] - 1;
+            if (current !== -1) {
+                if (current === 0 && i === 0 && digits.length !== 1) {
+                    // remove leading zero
+                    digits.shift();
+                } else {
+                    digits[i] = `${current}`;
+                }
+                break;
+            }
+            digits[i] = '9';
+        }
+    } else {
+        // positive values are incremented by one and become negative
+        for (let i = digits.length - 1; i >= 0; --i) {
+            const current = +digits[i] + 1;
+            if (current !== 10) {
+                digits[i] = `${current}`;
+                break;
+            }
+            digits[i] = '0';
+            if (i === 0) {
+                digits.unshift('1');
+                break;
+            }
+        }
+    }
+    return {base10Value: digits.join(''), negative: !v.negative};
+}
+
 function formatPrimitive(v: Primitive) {
-    return typeof v === 'string' ? `"${v}"` : String(v);
+    return isBigInt(v)
+        ? formatPseudoBigInt(v)
+        : typeof v === 'string'
+            ? `"${v}"`
+            : String(v);
 }

@@ -1,0 +1,5 @@
+{
+  "project": "tsconfig-composite.json",
+  "files": "typescript.ts",
+  "typescriptVersion": ">= 4.2.0"
+}

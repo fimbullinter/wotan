@@ -1,4 +1,4 @@
-import { excludeDeclarationFiles, TypedRule, requiresStrictNullChecks } from '@fimbul/ymir';
+import { excludeDeclarationFiles, TypedRule, requiresCompilerOption } from '@fimbul/ymir';
 import {
     WrappedAst,
     getWrappedNodeAtPosition,
@@ -9,13 +9,13 @@ import * as ts from 'typescript';
 import { elementAccessSymbols } from '../utils';
 
 @excludeDeclarationFiles
-@requiresStrictNullChecks
+@requiresCompilerOption('strictNullChecks')
 export class Rule extends TypedRule {
     public apply() {
         const re = /\bdelete\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (!isDeleteExpression(node) || node.expression.pos !== re.lastIndex)
                 continue;
             const {expression} = node;
@@ -31,6 +31,6 @@ export class Rule extends TypedRule {
     private checkSymbol(symbol: ts.Symbol | undefined, errorNode: ts.Node, name?: string) {
         if (symbol === undefined || symbol.flags & ts.SymbolFlags.Optional)
             return;
-        this.addFailureAtNode(errorNode, `Only 'delete' optional properties. Property '${name || symbol.name}' is required.`);
+        this.addFindingAtNode(errorNode, `Only 'delete' optional properties. Property '${name || symbol.name}' is required.`);
     }
 }

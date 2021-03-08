@@ -1,4 +1,4 @@
-import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement } from '@fimbul/ymir';
+import { ConfigurableRule, typescriptOnly, excludeDeclarationFiles, RuleContext, Replacement, predicate } from '@fimbul/ymir';
 import * as ts from 'typescript';
 import { WrappedAst, getWrappedNodeAtPosition, isAsExpression, isTypeAssertion, isBinaryExpression } from 'tsutils';
 import { expressionNeedsParensWhenReplacingNode } from '../utils';
@@ -9,11 +9,8 @@ export interface Options {
 
 @typescriptOnly
 @excludeDeclarationFiles
+@predicate((sourceFile) => sourceFile.languageVariant === ts.LanguageVariant.Standard || 'excludes JSX files')
 export class Rule extends ConfigurableRule<Options> {
-    public static supports(sourceFile: ts.SourceFile) {
-        return sourceFile.languageVariant === ts.LanguageVariant.Standard;
-    }
-
     public parseOptions(options: Partial<Options> | null | undefined): Options {
         return {
             style: options && options.style === 'classic' ? 'classic' : 'as',
@@ -29,12 +26,18 @@ function enforceClassicTypeAssertion(context: RuleContext) {
     const re = /\bas\b/g;
     let wrappedAst: WrappedAst | undefined;
     for (let match = re.exec(context.sourceFile.text); match !== null; match = re.exec(context.sourceFile.text)) {
-        const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = context.getWrappedAst()), match.index)!;
+        const {node} = getWrappedNodeAtPosition(wrappedAst ??= context.getWrappedAst(), match.index)!;
         if (!isAsExpression(node) || node.type.pos !== re.lastIndex)
             continue;
-        context.addFailure(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
-            Replacement.append(node.getStart(context.sourceFile), `<${node.type.getText(context.sourceFile)}>`),
-            Replacement.delete(node.expression.end, node.end),
+        const parent = node.parent!;
+        const expressionNeedsParens = node.expression.kind === ts.SyntaxKind.BinaryExpression;
+        const needsParens = isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.AsteriskAsteriskToken;
+        context.addFinding(match.index, node.end, "Use the classic type assertion style '<T>obj' instead.", [
+            Replacement.append(
+                node.getStart(context.sourceFile),
+                `${charIf(needsParens, '(')}<${node.type.getText(context.sourceFile)}>${charIf(expressionNeedsParens, '(')}`,
+            ),
+            Replacement.replace(node.expression.end, node.end, charIf(expressionNeedsParens, ')') + charIf(needsParens, ')')),
         ]);
     }
 }
@@ -46,7 +49,7 @@ function enforceAsTypeAssertion(context: RuleContext) {
             const expressionParens = node.expression.kind === ts.SyntaxKind.YieldExpression ||
                 !assertionParens && expressionNeedsParensWhenReplacingNode(node.expression, node);
             const start = node.getStart(context.sourceFile);
-            context.addFailure(start, node.expression.pos, "Use 'obj as T' instead.", [
+            context.addFinding(start, node.expression.pos, "Use 'obj as T' instead.", [
                 Replacement.replace(
                     start,
                     node.expression.getStart(context.sourceFile),

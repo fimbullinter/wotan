@@ -1,0 +1,17 @@
+try {}
+~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {} finally
+~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'try' block is empty.]
+
+try {console.log('try')}
+~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'finally' block is empty.]
+
+try {console.log('try')} finally
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error no-useless-try-catch: 'try' statement is unnecessary because the 'finally' block is empty.]
+
+try {console.log('try')} catch
+
+try {console.log('try')} catch (e)
+
+try {console.log('try')} catch (e) { throw }

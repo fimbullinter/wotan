@@ -1,0 +1,17 @@
+// wotan-enable
+~~~~~~~~~~~~~~~ [error useless-line-switch: Enable switch has no effect. All specified rules are already enabled.]
+// wotan-disable
+~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules have no failures to disable.]
+// wotan-disable
+~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules are already disabled.]
+// wotan-enable no-unused-label
+// wotan-disable baz, no-unused-label, my/cool/alias, no-unused-label
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error useless-line-switch: Disable switch has no effect. All specified rules don't match any rules enabled for this file, are already disabled, are redundant or have no failures to disable.]
+// wotan-enable-line
+// wotan-enable-line baz, bar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [error useless-line-switch: Enable switch has no effect. All specified rules don't match any rules enabled for this file.]
+// wotan-enable baz, my/cool/alias, my/cool/alias
+                ~~~                               [error useless-line-switch: This rule doesn't match any rules enabled for this file.]
+                                    ~~~~~~~~~~~~~ [error useless-line-switch: This rule was already specified in this enable switch.]
+// wotan-enable no-unused-label, my/cool/alias
+                                 ~~~~~~~~~~~~~ [error useless-line-switch: This rule is already enabled.]

@@ -1,5 +1,7 @@
 # no-return-await
 
+:wrench: fixable
+
 Disallows unnecesary `return await foo;` when you can simply `return foo;`.
 
 ## Rationale
@@ -73,5 +75,7 @@ async function foo(bar: Promise<any>) {
 
 ## Related Rules
 
-* [await-only-promise](await-only-promise.md)
-* [try-catch-return-await](try-catch-return-await.md)
+* [`async-function-assignability`](async-function-assignability.md)
+* [`await-async-result`](await-async-result.md)
+* [`await-only-promise`](await-only-promise.md)
+* [`try-catch-return-await`](try-catch-return-await.md)

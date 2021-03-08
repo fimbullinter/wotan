@@ -10,11 +10,11 @@ export class Rule extends AbstractRule {
         const re = /\bnew\b/g;
 
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (node.kind === ts.SyntaxKind.NewExpression &&
                 text[node.end - 1] !== ')' &&
                 re.lastIndex === (<ts.NewExpression>node).expression.pos)
-                this.addFailure(node.end, node.end, 'Expected parentheses on constructor call.', Replacement.append(node.end, '()'));
+                this.addFinding(node.end, node.end, 'Expected parentheses on constructor call.', Replacement.append(node.end, '()'));
         }
     }
 }

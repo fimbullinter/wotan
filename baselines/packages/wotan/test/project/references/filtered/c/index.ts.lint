@@ -1,0 +1,8 @@
+import { B } from "../b";
+                  ~~~~~~  [error local/quotemark: Prefer single quotes]
+import { A } from "../a";
+                  ~~~~~~  [error local/quotemark: Prefer single quotes]
+
+export class C extends B {
+    prop = new A();
+}

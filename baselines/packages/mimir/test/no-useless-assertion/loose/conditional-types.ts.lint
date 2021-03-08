@@ -1,0 +1,82 @@
+export {};
+
+type Nullable<T> = T extends null | undefined ? T : T | null | undefined;
+type NonNullable<T> = T extends null | undefined ? never : T;
+
+declare function nullable<T>(param: T): Nullable<T>;
+declare function nonNullable<T>(param: T): NonNullable<T>;
+
+declare function takeString(param: string): void;
+declare function takeNullable(param: Nullable<string>): void;
+
+declare let v: Nullable<string>;
+declare let s: NonNullable<typeof v>;
+
+takeString(v!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNullable(v!);
+              ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeString(s!);
+            ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNullable(s!);
+              ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeNullable(nullable(s)!);
+                        ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+takeString(nonNullable(v)!);
+                         ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+nullable(s)!;
+           ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+nonNullable(s)!;
+              ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+nullable(null)!;
+              ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+nonNullable(null)!;
+                 ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+nullable(s) as string;
+            ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+nullable(s) as string | null | undefined;
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+nonNullable(s) as string;
+               ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+v as NonNullable<typeof s>;
+  ~~~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+s as Nullable<string>;
+  ~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+s as NonNullable<string>;
+  ~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+(Boolean() ? s : null) as NonNullable<string>;
+                       ~~~~~~~~~~~~~~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+
+function test<T extends string | undefined>(a: T, b: NonNullable<T>, c: T extends number ? never : undefined) {
+    a!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    b!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    nullable(a)!;
+               ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    nonNullable(a)!;
+                  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeString(b!);
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    b as string;
+      ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    c as never;
+}
+
+function test2<T extends string>(a: T, b: NonNullable<T>) {
+    a!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    b!;
+     ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    nullable(a)!;
+               ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    nonNullable(a)!;
+                  ~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    takeString(b!);
+                ~   [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+    b as string;
+      ~~~~~~~~~  [error no-useless-assertion: This assertion is unnecesary as it doesn't change the type of the expression.]
+}

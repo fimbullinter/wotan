@@ -13,8 +13,7 @@ export class Rule extends AbstractRule {
     }
 
     private checkTypeParameters(typeParameters: ReadonlyArray<ts.TypeParameterDeclaration>, signature: ts.SignatureDeclaration) {
-        if (this.usage === undefined)
-            this.usage = collectVariableUsage(this.sourceFile);
+        this.usage ??= collectVariableUsage(this.sourceFile);
         outer: for (const typeParameter of typeParameters) {
             let usedInParameters = false;
             let usedInReturnOrExtends = isFunctionWithBody(signature);
@@ -28,12 +27,12 @@ export class Rule extends AbstractRule {
                 }
             }
             if (!usedInParameters) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     typeParameter,
                     `TypeParameter '${typeParameter.name.text}' cannot be inferred from any parameter.`,
                 );
             } else if (!usedInReturnOrExtends && !this.isConstrainedByOtherTypeParameter(typeParameter, typeParameters)) {
-                this.addFailureAtNode(
+                this.addFindingAtNode(
                     typeParameter,
                     `TypeParameter '${typeParameter.name.text}' is not used to enforce a constraint between types and can be replaced with \
 '${typeParameter.constraint ? typeParameter.constraint.getText(this.sourceFile) : 'any'}'.`,

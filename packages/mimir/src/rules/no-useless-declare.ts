@@ -14,7 +14,7 @@ export class Rule extends AbstractRule {
                 const declareKeyword = getModifier(statement, ts.SyntaxKind.DeclareKeyword);
                 if (declareKeyword !== undefined) {
                     const start = declareKeyword.end - 'declare'.length;
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         declareKeyword.end,
                         "Using the 'declare' keyword here is redundant as the statement has no runtime value.",
@@ -44,7 +44,7 @@ export class Rule extends AbstractRule {
                 // allow 'declare const enum' in declaration files, because it's required in declaration files
                 return !this.sourceFile.isDeclarationFile && hasModifier(node.modifiers, ts.SyntaxKind.ConstKeyword);
             default:
-                return false;
+                return this.sourceFile.isDeclarationFile && hasModifier(node.modifiers, ts.SyntaxKind.ExportKeyword);
         }
     }
 }

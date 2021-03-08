@@ -1,4 +1,4 @@
-# await-async-result
+# delete-only-optional-property
 
 :mag: requires type information
 

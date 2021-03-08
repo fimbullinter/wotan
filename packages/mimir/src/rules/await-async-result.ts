@@ -9,7 +9,7 @@ export class Rule extends TypedRule {
         const re = /\basync\b/g;
         let wrappedAst: WrappedAst | undefined;
         for (let match = re.exec(this.sourceFile.text); match !== null; match = re.exec(this.sourceFile.text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (node.kind !== ts.SyntaxKind.AsyncKeyword || node.end !== re.lastIndex)
                 continue;
             const parent = node.parent!;
@@ -21,7 +21,7 @@ export class Rule extends TypedRule {
     private visitStatement(node: ts.Statement) {
         if (isExpressionStatement(node)) {
             if (isCallExpression(node.expression) && isThenableType(this.checker, node.expression))
-                this.addFailureAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
+                this.addFindingAtNode(node, "Return value of async function call was discarded. Did you mean to 'await' its result?");
             return;
         }
         for (const statement of childStatements(node))

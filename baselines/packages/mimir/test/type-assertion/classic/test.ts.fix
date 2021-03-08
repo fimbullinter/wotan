@@ -33,6 +33,12 @@ void (<T>foo);
 foo & <T>bar;
 foo & <T>bar;
 
+(<number>1) ** 2;
+(<number>1) ** 2;
+
+<number>(1 ** 2 + 1);
+<number>(1 ** 2 + 1);
+
 foo & <T>bar | baz;
 foo & (<T>bar) | baz;
 

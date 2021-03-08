@@ -44,7 +44,7 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         fileName = path.dirname(fileName);
         let result = this.cache.get(fileName);
         if (result === undefined && !this.cache.has(fileName)) {
-            result = TSLint.Configuration.findConfigurationPath(null, fileName); // tslint:disable-line:no-null-keyword
+            result = TSLint.Configuration.findConfigurationPath(null, fileName);
             const {root} = path.parse(fileName);
             // prevent infinite loop when result is on different drive
             const configDirname = result === undefined || root !== path.parse(result).root ? root : path.dirname(result);
@@ -58,14 +58,13 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
     }
 
     public resolve(name: string, basedir: string) {
-        const extensions = Object.keys(require.extensions).filter((e) => e !== '.node');
+        const extensions = [...this.resolver.getDefaultExtensions(), '.json'];
         if (name.startsWith('tslint:')) {
             try {
-                if (this.tslintConfigDir === undefined)
-                    this.tslintConfigDir = path.join(
-                        this.resolver.resolve('tslint', path.dirname(__dirname), extensions),
-                        '../configs',
-                    );
+                this.tslintConfigDir ??= path.join(
+                    this.resolver.resolve('tslint', path.dirname(__dirname), extensions),
+                    '../configs',
+                );
                 return this.resolver.resolve(path.join(this.tslintConfigDir, name.substr('tslint:'.length)), '', extensions);
             } catch {
                 throw new Error(`'${name}' is not a valid builtin configuration, try 'tslint:recommended.'`);
@@ -88,12 +87,12 @@ export class TslintConfigurationProvider implements ConfigurationProvider {
         const overrides: Configuration.Override[] = [];
         if (raw.rules.size !== 0)
             overrides.push({
-                files: ['*', '.*', '!*.js?(x)'],
+                files: ['*', '!*.js?(x)'],
                 rules: new Map(Array.from(raw.rules, mapRules)),
             });
         if (raw.jsRules.size !== 0)
             overrides.push({
-                files: ['*.js?(x)', '.*.js?(x)'],
+                files: ['*.js?(x)'],
                 rules: new Map(Array.from(raw.jsRules, mapRules)),
             });
         return {
@@ -155,7 +154,7 @@ function validateGlobalConfig(config: Configuration) {
             checkNonExistence(override, 'rules');
 }
 
-function checkNonExistence<T extends Configuration | Configuration.Override, K extends keyof T>(config: T, key: K) {
+function checkNonExistence<K extends keyof Configuration | keyof Configuration.Override>(config: Partial<Record<K, unknown>>, key: K) {
     if (config[key] !== undefined)
         throw new Error(`'${key}' is not allowed in global configuration.`);
 }

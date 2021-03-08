@@ -1,5 +1,7 @@
 # no-unreachable-code
 
+:mag_right: works better with type information
+
 Disallows statements that will never be executed. Works similar to TypeScript's dead code detection.
 
 Detects executable statements preceded by a statement that definitely ends the control flow, e.g. `return;`.
@@ -30,7 +32,7 @@ function foo(p: number) {
 }
 
 function foo() {
-  return // semicolon is inserted here
+  return // semicolon is automatically inserted here
     foo && // unreachable
     bar;
 }
@@ -48,6 +50,24 @@ for (const key in obj) {
     continue;
     console.log('%s is not a own property'); // unreachable, needs to be swapped with the continue
   }
+}
+
+// when linting with type information the following patterns are also recognized
+declare function fail(): never;
+
+function foo() {
+  fail(); // ends control flow by returning 'never'
+  console.log('unreachable');
+}
+
+function foo(v: boolean) {
+  switch (v) {
+    case true:
+      return 1;
+    case false:
+      return 2;
+  }
+  console.log('unreachable'); // switch statement before is exhaustive (handles every possible value), so this statement can never be executed
 }
 ```
 
@@ -91,3 +111,7 @@ function foo() {
 
 * MDN: [Control flow](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling)
 * StackOverflow: [What are the rules for JavaScript's automatic semicolon insertion (ASI)?](https://stackoverflow.com/questions/2846283/what-are-the-rules-for-javascripts-automatic-semicolon-insertion-asi)
+
+## Related Rules
+
+* [`return-never-call`](return-never-call.md)

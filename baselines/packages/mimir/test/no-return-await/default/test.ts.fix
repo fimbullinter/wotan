@@ -74,6 +74,7 @@ async function handleParens() {
 async function handleBinaryExpression() {
     return await foo() || x;
     return await foo() && x;
+    return await foo() ?? x;
     return await foo(), x;
     return await foo() + await x;
 }
@@ -93,6 +94,7 @@ try {
 
 async () => ({foo: 1});
 async () => ({foo: 1}['foo']);
+async () => ({fn(...args: any[]){}}.fn`str`);
 
 async function parensWhenNecessary() {
     if (Boolean())

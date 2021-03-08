@@ -9,11 +9,11 @@ export class Rule extends AbstractRule {
         let wrappedAst: WrappedAst | undefined;
         const text = this.sourceFile.text;
         for (let match = re.exec(text); match !== null; match = re.exec(text)) {
-            const {node} = getWrappedNodeAtPosition(wrappedAst || (wrappedAst = this.context.getWrappedAst()), match.index)!;
+            const {node} = getWrappedNodeAtPosition(wrappedAst ??= this.context.getWrappedAst(), match.index)!;
             if (node.kind === ts.SyntaxKind.DebuggerStatement) {
                 const start = node.getStart(this.sourceFile);
                 if (start === match.index)
-                    this.addFailure(
+                    this.addFinding(
                         start,
                         node.end,
                         "'debugger' statements are forbidden.",

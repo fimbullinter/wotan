@@ -47,4 +47,5 @@ isNaN(v);
 
 ## Related Rules
 
-* [prefer-number-isnan](prefer-number-isnan.md)
+* [`no-useless-predicate`](no-useless-predicate.md)
+* [`prefer-number-methods`](prefer-number-methods.md)

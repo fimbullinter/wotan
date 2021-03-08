@@ -9,6 +9,12 @@ obj['__foo__'];
 obj[`fooBar`];
     ~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.fooBar' over 'obj[`fooBar`]'.]
 
+obj?.['bar'];
+      ~~~~~   [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
+obj?.['bar']?.['baz'];
+      ~~~~~            [error prefer-dot-notation: Prefer 'obj.bar' over 'obj['bar']'.]
+               ~~~~~   [error prefer-dot-notation: Prefer 'obj.baz' over 'obj['baz']'.]
+
 obj[''];
 obj['1'];
 obj['.'];
@@ -18,6 +24,21 @@ obj['foo-bar'];
 obj['foo' + 'bar'];
 obj[`foo${1}`];
 
+obj['\u0061'];
+    ~~~~~~~~   [error prefer-dot-notation: Prefer 'obj.a' over 'obj['\u0061']'.]
+
+1['toString']();
+  ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1.0['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1e1['toString']();
+    ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+.0['toString']();
+   ~~~~~~~~~~     [error prefer-dot-notation: Prefer 'obj.toString' over 'obj['toString']'.]
+1[''];
+
 for (const key of Object.keys(obj))
     obj[key];
 
@@ -25,3 +46,16 @@ for (const key of Object.keys(obj))
 
 type T = string[]['length'];
 type V = string['charCodeAt'];
+
+null!['foo'];
+
+class C {
+    static pub = 1;
+    protected static prot = 2;
+    private static priv = 3;
+}
+
+C['pub'];
+  ~~~~~   [error prefer-dot-notation: Prefer 'obj.pub' over 'obj['pub']'.]
+C['prot'];
+C['priv'];

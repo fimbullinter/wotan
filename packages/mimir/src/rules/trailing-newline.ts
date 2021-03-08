@@ -7,7 +7,7 @@ export class Rule extends AbstractRule {
         if (end === 0 || end === 1 && sourceFile.text[0] === '\uFEFF' || sourceFile.text[end - 1] === '\n')
             return;
         const lines = sourceFile.getLineStarts();
-        this.addFailure(
+        this.addFinding(
             end,
             end,
             'File must end with a newline.',

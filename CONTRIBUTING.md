@@ -90,11 +90,13 @@ You need at least Node 6.x and Yarn 1.2.1 or higher.
 
 * `yarn compile` compiles the project.
 * `yarn lint` lints the project with TSLint and the local build of wotan.
+* `yarn check-dependencies` ensures every package is self-contained and doesn't import the wrong modules.
+* `yarn check-package` ensures the public API doesn't change. Add option `-u` to update the baselines.
 * `yarn test` runs all tests. Make sure to compile first. Add option `-u` to update the baselines.
   * `yarn test:unit` runs only unit tests. Add option `-u` to update the unit test baselines.
   * `yarn test:integration` runs the integration tests. Add option `-u` to update the integration test baselines. Add option `--bail` to stop at the first failing test.
-* `yarn test-coverage` runs all of the above test with coverage reporting.
-* `yarn coverage` executes a given command with coverage reporting, e.g. `yarn coverage yarn test:api`.
+* `yarn test-coverage` runs `yarn test` with coverage reporting.
+* `yarn coverage` executes a given command with coverage reporting, e.g. `yarn coverage yarn test:unit`.
 * `yarn verify` compiles, lints and tests the whole project. Basically all of the above.
 
 Updating baselines may be necessary after changing or adding some functionality like new rules or new checks in rules. It's also necessary after editing a test.
@@ -103,7 +105,7 @@ Baselines are commited and pushed. Please review the changes to baseline files t
 
 ## Pull Requests
 
-Pull requests are the primary mechanism we use to change Rust. GitHub itself has some [great documentation](https://help.github.com/articles/about-pull-requests/) on using the Pull Request feature.
+Pull requests are the primary mechanism we use to change Fimbullinter. GitHub itself has some [great documentation](https://help.github.com/articles/about-pull-requests/) on using the Pull Request feature.
 We use the "fork and pull" model [described here](https://help.github.com/articles/about-collaborative-development-models/), where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
 
 Please make pull requests against the `master` branch.
@@ -113,11 +115,7 @@ Before submitting big changesets, consider opening an issue first to discuss you
 Make sure to add a test that fails without your change and succeeds with your change. Also update the baselines and add them to your pull request.
 
 Your changes will automatically be tested on a Windows and Ubuntu machine to ensure it works across all platforms.
-It's also tested with a subset of the supported TypeScript versions. While your code only needs to compile with `typescript@latest`, it needs to function correctly with all versions supported by this project.
-
-Testing with `typescript@next` may fail CI because of changes in the TypeScript compiler. If the failures are not related to your change, it's not your responsibility to fix that before your pull request can be merged.
-You may fix this failure in your pull request, but ideally you open another pull request specifically for this fix. That way both changes can be reviewed and merged independent from each other.
-If you are not able to fix the failure, a core committer will take care of this.
+It's also tested with a subset of the supported TypeScript versions. While your code only needs to compile with `typescript@next`, it needs to function correctly with all versions supported by this project.
 
 Test coverage is also reported in the pull request. Please try to maintain a high coverage for all your changes.
 

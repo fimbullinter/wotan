@@ -10,11 +10,12 @@ import * as escapeRegex from 'escape-string-regexp';
 import { DefaultCacheFactory } from '../src/services/default/cache-factory';
 import { createCoreModule } from '../src/di/core.module';
 import { createDefaultModule } from '../src/di/default.module';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ConsoleMessageHandler } from '../src/services/default/message-handler';
+import { LintOptions } from '../src/runner';
 
 test.before(() => {
-    chalk.enabled = false;
+    (<any>chalk).level = 0;
 });
 
 test('ShowCommand', async (t) => {
@@ -49,7 +50,7 @@ test('ShowCommand', async (t) => {
     }
     container.bind(FileSystem).to(MockFileSystem);
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: ['non-existent'],
@@ -57,10 +58,11 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Cannot find module 'non-existent' from '${process.cwd()}'`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: ['./packages/wotan/test/fixtures/node_modules/my-config'],
@@ -68,10 +70,11 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         `Module '${path.resolve('./packages/wotan/test/fixtures/node_modules/my-config')}.js' does not export a function 'createModule'.`,
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: [],
@@ -79,10 +82,11 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: undefined,
         }),
+        null,
         "Cannot find configuration for '../foo.ts'.",
     );
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Show,
             modules: [],
@@ -90,6 +94,7 @@ test('ShowCommand', async (t) => {
             format: undefined,
             config: 'non-existent.conf',
         }),
+        null,
         `Cannot find module 'non-existent.conf' from '${cwd}'`,
     );
 
@@ -136,7 +141,7 @@ test('ShowCommand', async (t) => {
     async function verify(command: ShowCommand) {
         let called = false;
         logger.log = (output) => {
-            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${command.format}`});
+            t.snapshot(normalizePaths(output), {id: `${t.title} ${command.file} ${String(command.format)}`});
             called = true;
         };
         t.true(await runCommand(command, container));
@@ -144,7 +149,7 @@ test('ShowCommand', async (t) => {
     }
     function normalizePaths(str: string): string {
         // replace `cwd` with / and all backslashes with forward slash
-        const re = new RegExp(`(- )?(['"]?)${escapeRegex(cwd)}(.*?)\\2(,?)$`, 'gm');
+        const re = new RegExp(`(- )?(['"]?)${escapeRegex(cwd)}(.*?)\\2(,?)$`, 'gmi');
         return str.replace(/\\\\/g, '\\').replace(re, (_, dash, quote, p, comma) => dash && !comma
             ? dash + unixifyPath(p)
             : quote + unixifyPath(p) + quote + comma);
@@ -155,14 +160,17 @@ test('SaveCommand', async (t) => {
     t.deepEqual(
         await verify({
             command: CommandName.Save,
-            project: undefined,
+            project: [],
+            references: false,
             config: undefined,
             fix: false,
             exclude: [],
             files: [],
             extensions: undefined,
             formatter: undefined,
+            reportUselessDirectives: false,
             modules: [],
+            cache: false,
         }),
         {
             content: false,
@@ -174,14 +182,17 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
+                references: false,
                 config: undefined,
                 fix: 0,
                 exclude: [],
                 files: [],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: false,
                 modules: [],
+                cache: false,
             },
             {
                 project: 'foo',
@@ -198,22 +209,29 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
+                references: false,
                 config: '.wotanrc.yaml',
                 fix: true,
                 exclude: [],
                 files: ['**/*.d.ts'],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: true,
                 modules: [],
+                cache: false,
             },
             {
                 project: 'foo.json',
+                references: true,
                 modules: ['foo', 'bar'],
             },
         ),
         {
-            content: format({config: '.wotanrc.yaml', fix: true, files: ['**/*.d.ts']}, Format.Yaml),
+            content: format<Partial<LintOptions>>(
+                {config: '.wotanrc.yaml', fix: true, files: ['**/*.d.ts'], reportUselessDirectives: true},
+                Format.Yaml,
+            ),
             log: "Updated '.fimbullinter.yaml'.",
         },
         'overrides existing options',
@@ -222,14 +240,17 @@ test('SaveCommand', async (t) => {
         await verify(
             {
                 command: CommandName.Save,
-                project: undefined,
+                project: [],
+                references: false,
                 config: undefined,
                 fix: 0,
                 exclude: [],
                 files: [],
                 extensions: undefined,
                 formatter: undefined,
+                reportUselessDirectives: false,
                 modules: [],
+                cache: false,
             },
             {
                 other: 'foo',
@@ -314,7 +335,7 @@ test('LintCommand', async (t) => {
         error() { throw new Error(); },
     });
 
-    const cwd = path.join(__dirname, 'fixtures/test').toLowerCase();
+    const cwd = path.join(__dirname, 'fixtures/test');
     container.bind(DirectoryService).toConstantValue({
         getCurrentDirectory() { return cwd; },
     });
@@ -327,10 +348,13 @@ test('LintCommand', async (t) => {
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.yaml',
-                project: undefined,
+                project: [],
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: false,
+                cache: false,
             },
             container,
         ),
@@ -346,11 +370,131 @@ test('LintCommand', async (t) => {
                 modules: [],
                 files: ['*.ts'],
                 exclude: [],
-                config: '.wotanrc.fail.yaml',
-                project: undefined,
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: true,
+                cache: false,
+            },
+            container,
+        ),
+        false,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+ERROR 2:1  useless-line-switch  Disable switch has no effect. All specified rules have no failures to disable.
+
+✖ 1 error
+1 finding is potentially fixable with the '--fix' option.
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['1.ts'],
+                exclude: [],
+                config: '.wotanrc-empty.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: true,
+                cache: false,
+            },
+            container,
+        ),
+        false,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+ERROR 2:1  useless-line-switch  Disable switch has no effect. All specified rules don't match any rules enabled for this file.
+
+✖ 1 error
+1 finding is potentially fixable with the '--fix' option.
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: false,
+                extensions: undefined,
+                reportUselessDirectives: 'warning',
+                cache: false,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {});
+    t.is(output.join('\n'), `
+${path.join(cwd, '1.ts')}:2:1
+WARNING 2:1  useless-line-switch  Disable switch has no effect. All specified rules have no failures to disable.
+
+⚠ 1 warning
+1 finding is potentially fixable with the '--fix' option.
+`.trim());
+
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.yaml',
+                project: [],
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: true,
+                cache: false,
+            },
+            container,
+        ),
+        true,
+    );
+    t.deepEqual(filesWritten, {
+        [NodeFileSystem.normalizePath(path.join(cwd, '1.ts'))]: 'export {};\n\n',
+    });
+    t.is(output.join('\n'), 'Automatically fixed 1 finding.');
+
+    filesWritten = {};
+    output = [];
+    t.is(
+        await runCommand(
+            {
+                command: CommandName.Lint,
+                modules: [],
+                files: ['*.ts'],
+                exclude: [],
+                config: '.wotanrc.fail.yaml',
+                project: [],
+                references: false,
+                formatter: undefined,
+                fix: true,
+                extensions: undefined,
+                reportUselessDirectives: false,
+                cache: false,
             },
             container,
         ),
@@ -377,19 +521,22 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
-                project: undefined,
+                project: [],
+                references: false,
                 formatter: undefined,
                 fix: true,
                 extensions: undefined,
+                reportUselessDirectives: false,
+                cache: false,
             },
             container,
         ),
         true,
     );
     t.deepEqual(filesWritten, {
-        [unixifyPath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
+        [NodeFileSystem.normalizePath(path.join(cwd, '3.ts'))]: `"bar";\n'baz';\n`,
     });
-    t.is(output.join('\n'), 'Automatically fixed 1 failure.');
+    t.is(output.join('\n'), 'Automatically fixed 1 finding.');
 
     output = [];
     filesWritten = {};
@@ -401,10 +548,13 @@ ERROR 2:8  no-unused-expression  This expression is unused. Did you mean to assi
                 files: ['*.ts'],
                 exclude: [],
                 config: '.wotanrc.fail-fix.yaml',
-                project: undefined,
+                project: [],
+                references: false,
                 formatter: undefined,
                 fix: false,
                 extensions: undefined,
+                reportUselessDirectives: false,
+                cache: false,
             },
             container,
         ),
@@ -416,27 +566,56 @@ ${path.join(cwd, '3.ts')}:2:1
 ERROR 2:1  no-unused-label  Unused label 'label'.
 
 ✖ 1 error
-1 failure is potentially fixable with the '--fix' option.
+1 finding is potentially fixable with the '--fix' option.
 `.trim());
 
 });
 
 test('TestCommand', async (t) => {
-    let cwd = path.join(__dirname, 'fixtures').toLowerCase();
+    let cwd = path.join(__dirname, 'fixtures');
     const directories: DirectoryService = {
         getCurrentDirectory() { return cwd; },
     };
 
-    void t.throws(
+    void t.throwsAsync(
         verify({
             command: CommandName.Test,
             bail: false,
             exact: false,
-            files: ['test/subdir/.*.test.json'],
+            files: ['test/subdir/.outside.test.json'],
             updateBaselines: false,
             modules: [],
         }),
+        null,
         `Testing file '${unixifyPath(path.join(cwd, 'test/1.ts'))}' outside of '${unixifyPath(path.join(cwd, 'test/subdir'))}'.`,
+    );
+
+    void t.throwsAsync(
+        verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/subdir/.invalid-option-value.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        null,
+        `${
+            unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-value.test.json'))
+        }: Expected a value of type 'string | string[]' for option 'project'.`,
+    );
+
+    void t.throwsAsync(
+        verify({
+            command: CommandName.Test,
+            bail: false,
+            exact: false,
+            files: ['test/subdir/.invalid-option-name.test.json'],
+            updateBaselines: false,
+            modules: [],
+        }),
+        null,
+        `${unixifyPath(path.join(cwd, 'test/subdir/.invalid-option-name.test.json'))}: Unexpected option 'prjoect'.`,
     );
 
     t.deepEqual(
@@ -579,10 +758,11 @@ ${path.normalize('test/.fail-fix.test.json')}
   ${path.normalize('baselines/.fail-fix/1.ts.lint FAILED')}
 Expected
 Actual
-@@ -1,2 +1,1 @@
+@@ -1,2 +1,2 @@
 -<BOM>␉␍
 -~ [error foo: bar␉baz]
 +export {};
++// wotan-disable
 
   ${path.normalize('baselines/.fail-fix/2.ts.lint FAILED')}
 Expected
@@ -645,15 +825,15 @@ ${path.normalize('test/.fail-fix.test.json')}
             },
         );
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.fix')),
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.fix')),
         ]);
         t.deepEqual(written, {
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n',
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/1.ts.lint'))]: 'export {};\n// wotan-disable\n',
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/2.ts.lint'))]: "export {};\n'foo';\n",
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.lint'))]:
                 `"bar";\nlabel: 'baz';\n~~~~~         [error no-unused-label: Unused label 'label'.]\n`,
-            [unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.fix'))]: `"bar";\n'baz';\n`,
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/3.ts.fix'))]: `"bar";\n'baz';\n`,
         });
     }
 
@@ -709,14 +889,14 @@ ${path.normalize('test/.success.test.json')}
         );
 
         t.deepEqual(written, {
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/1.ts.lint'))]: 'export {};\n',
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/2.ts.lint'))]: "export {};\n'foo';\n",
-            [unixifyPath(path.resolve(cwd, 'baselines/.success/3.ts.lint'))]: `"bar";\nlabel: 'baz';\n`,
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/1.ts.lint'))]: 'export {};\n// wotan-disable\n',
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/2.ts.lint'))]: "export {};\n'foo';\n",
+            [NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.success/3.ts.lint'))]: `"bar";\nlabel: 'baz';\n`,
         });
         t.deepEqual(directoriesCreated, [
-            unixifyPath(path.join(cwd, 'baselines/.success')),
-            unixifyPath(path.join(cwd, 'baselines')),
-            unixifyPath(path.join(cwd, 'baselines/.success')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines/.success')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines')),
+            NodeFileSystem.normalizePath(path.join(cwd, 'baselines/.success')),
         ]);
     }
 
@@ -811,8 +991,8 @@ ${path.normalize('.fail-fix.test.json')}
         );
 
         t.deepEqual(deleted, [
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.fix')),
-            unixifyPath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.fix')),
+            NodeFileSystem.normalizePath(path.resolve(cwd, 'baselines/.fail-fix/4.ts.lint')),
         ]);
     }
 

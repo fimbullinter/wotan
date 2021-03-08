@@ -8,8 +8,8 @@ export class Rule extends AbstractRule {
         const dirname = path.dirname(this.sourceFile.fileName);
         const currentPackage = `@fimbul/${getPackageName(dirname)}`;
         for (const name of findImports(this.sourceFile, ImportKind.AllStaticImports | ImportKind.ExportFrom))
-            if (name.text === currentPackage)
-                this.addFailureAtNode(
+            if (name.text === currentPackage || name.text.startsWith(currentPackage + '/'))
+                this.addFindingAtNode(
                     name,
                     `Import directly from the module containing the declaration instead of '${currentPackage}'.`,
                     this.program !== undefined ? createDirectImportFix(name, dirname, this.program.getTypeChecker()) : undefined,

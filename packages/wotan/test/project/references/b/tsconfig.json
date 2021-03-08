@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../outdir/b"
+  },
+  "files": ["index.tsx"],
+  "references": [
+    {"path": "../a"}
+  ]
+}

@@ -1,4 +1,5 @@
 {
   "project": "tsconfig-declaration.json",
-  "files": ["typescript.ts"]
+  "files": "typescript.ts",
+  "typescriptVersion": ">= 4.2.0"
 }

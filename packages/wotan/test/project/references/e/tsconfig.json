@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outDir": "../outdir/e"
+  },
+  "references": [
+    {"path": "../d"},
+    {"path": "../d/tsconfig.json"}
+  ]
+}

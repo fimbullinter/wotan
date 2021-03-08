@@ -8,6 +8,9 @@ if (typeof (get<new() => any>()) === 'function') {}
 if (get<any>()) {}
 if (get<unknown>()) {}
 if (get<never>()) {}
+if ((typeof 1 === 'number')) {}
+if ((get<Record<string, Function>>().foo)) {}
+if (!(get<Record<string, Function>>().foo)) {}
 while (typeof get<any>() === 'symbol') {}
 while (typeof get<unknown>() === 'symbol') {}
 while (typeof get<never>() === 'symbol') {}
@@ -191,3 +194,76 @@ typeof 1 === TypeOf.Number;
 typeof 1 === TypeOf.String;
 
 typeof true === get<TypeOf>();
+
+declare let arr: Array<true>;
+typeof arr[0] === 'boolean';
+typeof arr[0] === 'undefined';
+typeof arr[0] === 'number';
+!arr[0];
+arr[0] === undefined;
+!arr.length;
+!arr['length'];
+!arr[Symbol.iterator];
+
+declare let tuple: [Date];
+typeof tuple[0] === 'object';
+typeof tuple[0] === 'undefined';
+typeof tuple[0] === 'number';
+!tuple[0];
+tuple[0] === undefined;
+!tuple.length;
+!tuple['length'];
+
+declare let indexer: { [s: string]: true; foo: true; bar: true };
+!indexer.foo;
+!indexer.bar;
+!indexer.baz;
+!indexer[get<'foo'>()];
+!indexer[get<'foo' | 'bar'>()];
+!indexer[get<'foo' | 'baz'>()];
+!indexer[get<string>()];
+
+'foo' in get<{}>();
+'foo' in get<{foo?: string}>();
+'foo' in get<{foo: string | undefined}>();
+'foo' in get<{[x: string]: string}>();
+'foo' in get<{foo: string} | {foo?: number}>();
+'foo' in get<{foo: string} | Record<string, string>>();
+
+get<'foo' | 'bar'>() in get<{foo: string}>();
+get<'foo' | 'bar'>() in get<{foo: string, bar: number}>();
+get<string>() in get<{foo: string}>();
+get<string>() in get<{[x: string]: string}>();
+
+0 in get<[unknown]>();
+get<0 | 'length'>() in get<[unknown]>();
+0 in (get<Record<string, [unknown]>>().foo);
+
+Symbol.iterator in [];
+
+if ('length' in []) {}
+
+'a' === 'a';
+'a' !== 'a';
+0 == 0;
+true === true;
+false === false;
+get<null>() === get<null>();
+get<undefined>() === get<undefined>();
+'a' === get<string>();
+get<'a' | 'b'>() === 'a';
+get<'a' | 'b'>() === get<'a' | 'b'>();
+get<Record<string, 'a'>>().foo === 'a';
+get<any>() === get<any>();
+
+type Brand<T> = T & {__brand: never};
+get<Brand<'a'>>() === get<Brand<'a'>>();
+
+class Clazz {
+    [x: string]: string;
+    #prop: string;
+
+    fn() {
+        return this.#prop === undefined;
+    }
+}

@@ -9,6 +9,7 @@ import {
     isIdentifier,
     isAssignmentKind,
 } from 'tsutils';
+import { hasDirectivePrologue } from '../utils';
 
 export interface Options {
     allowNew: boolean;
@@ -53,7 +54,7 @@ export class Rule extends ConfigurableRule<Options> {
 
     private checkNode(expr: ts.Expression, errorNode?: ts.Node) {
         if (!this.isUsed(expr))
-            this.addFailureAtNode(errorNode === undefined ? expr : errorNode, FAIL_MESSAGE);
+            this.addFindingAtNode(errorNode ?? expr, FAIL_MESSAGE);
     }
 
     private isUsed(node: ts.Expression): boolean {
@@ -93,7 +94,7 @@ export class Rule extends ConfigurableRule<Options> {
                 const whenFalseUsed = this.isUsed(whenFalse);
                 if (whenTrueUsed === whenFalseUsed)
                     return whenTrueUsed;
-                this.addFailureAtNode(whenFalseUsed ? whenTrue : whenFalse, FAIL_MESSAGE);
+                this.addFindingAtNode(whenFalseUsed ? whenTrue : whenFalse, FAIL_MESSAGE);
                 return true;
             }
             default:
@@ -110,36 +111,13 @@ function isDirective(statement: ts.ExpressionStatement): boolean {
     if (statement.expression.kind !== ts.SyntaxKind.StringLiteral)
         return false;
     const parent = statement.parent!;
-    if (!canContainDirective(parent))
+    if (!hasDirectivePrologue(parent))
         return false;
     for (let i = parent.statements.indexOf(statement) - 1; i >= 0; --i)
         if (parent.statements[i].kind !== ts.SyntaxKind.ExpressionStatement ||
             (<ts.ExpressionStatement>parent.statements[i]).expression.kind !== ts.SyntaxKind.StringLiteral)
             return false;
     return true;
-}
-
-function canContainDirective(node: ts.Node): node is ts.BlockLike {
-    switch (node.kind) {
-        case ts.SyntaxKind.SourceFile:
-        case ts.SyntaxKind.ModuleBlock:
-            return true;
-        case ts.SyntaxKind.Block:
-            switch (node.parent!.kind) {
-                case ts.SyntaxKind.ArrowFunction:
-                case ts.SyntaxKind.FunctionExpression:
-                case ts.SyntaxKind.FunctionDeclaration:
-                case ts.SyntaxKind.MethodDeclaration:
-                case ts.SyntaxKind.Constructor:
-                case ts.SyntaxKind.GetAccessor:
-                case ts.SyntaxKind.SetAccessor:
-                    return true;
-                default:
-                    return false;
-            }
-        default:
-            return false;
-    }
 }
 
 /** `void 0` and `void(0)` are allowed to have no side effect. */

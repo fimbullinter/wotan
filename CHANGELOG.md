@@ -1,5 +1,278 @@
 # Change Log
 
+## v0.24.0
+
+:tada: This release contains two major features: caching and code fixes in the LanguageService plugin.
+
+:warning: **Breaking Changes:**
+
+The changes in the LanguageService plugin require that you update the `@fimbul/mithotyn` dependency and the `fimbullinter.vscode-plugin` VSCode plugin if you were using one of them.
+
+**Features:**
+
+* new rule: `no-object-spread-of-iterable` warns about spreading an array into an object
+* new rule: `no-implicit-tostring` warns about implicit string coercion of certain types
+* new CLI option: `--cache` enables caching for fast incremental linting. Read more about [caching](https://github.com/fimbullinter/wotan/blob/master/packages/wotan/README.md#caching)
+* the LanguageService plugin uses caching to speed up linting in your editor
+* the LanguageService plugin now provides fixes for fixable findings
+
+## v0.23.0
+
+:warning: **Breaking Changes:**
+
+* `prefer-dot-notation` now requires type information
+
+**Features:**
+
+* `prefer-dot-notation` no longer reports findings which would cause a compile error when fixed
+* new rule: `no-writeonly-property-read`
+* Added support for new language features in all rules:
+  * optional chaining
+  * nullish coalescing
+  * private identifiers
+  * control-flow effects of `never`-returning functions
+    * `no-fallthrough` and `no-unreachable-code` report better findings if type inforamtion is available
+    * `return-never-call` only reports calls that TypeScript's control-flow-analysis cannot detect
+  * template literal types
+* `no-restricted-property-access`
+  * allow accessing all members via static `super`
+  * allow accessing accessors via `super`
+  * allow accessing abstract accessors via `this` in constructor
+  * disallow read access to uninitialized properties in another property's initializer
+
+**Bugfixes:**
+
+* Exclude JSON files and declartions emitted from `.js(x)` files in composite projects
+* `async-function-assignability` fixed false-positive on static class members
+* `no-restricted-property-access`
+  * treat MethodSignature like MethodDeclaration
+  * fixed lookup of `this` container for decorators and computed property names
+  * fixed crash on parameter properties and special JS property assignments
+* most rules can now handle excessively deep AST structures, e.g. concatenating 5000 strings
+
+## v0.22.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript <3.9 is no longer supported
+* Node.js v8, v11 and v13 are no longer supported
+
+**Features:**
+
+* Added support for typescript v3.9, v4.0 and v4.1
+  * Fixes compile errors and crashes in existing code and tests
+  * This does not contain full support for all language features added in those versions
+* `//@ts-nocheck` in .ts files now disables rules with type information for that file, as it was already the case in .js files
+
+## v0.21.1
+
+**Bugfixes:**
+
+* `wotan`: properly handle backslashes in Windows paths to not report "is not included in any of the projects"
+
+## v0.21.0
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.1 and v3.2 is no longer officially supported
+* Node.js v6 is no longer supported
+* `Rule.supports` can now return a string respresenting the reason for not supporting the file
+* `Linter#lintAndFix` now requires a `ProgramFactory` instead of `Program`
+* `Linter#lintAndFix` `UpdateFileCallback` is now expected to only return a `SourceFile`
+* `no-inferred-empty-object` was renamed to `no-uninferred-type-parameter`
+
+**Features:**
+
+* rules now debuglog the reason for not supporting a certain file
+* performance improvements
+  * when linting with `--project --references`
+    * parsed `tsconfig.json` files are cached for all project references
+  * when linting with `--project --fix`
+    * the project's dependency graph is recalculated lazily the next time a typed rule reuqests type information after fixing a file
+    * module resolutions are cached between fixes
+* `no-uninferred-type-parameter` properly handles new default constraint `unknown`
+* `no-uninferred-type-parameter` now detects uninferred type parameters in JS code falling back to `any`
+* `no-uninferred-type-parameter` correctly handles higher order function types
+* `no-useless-initializer` checks array destructuring
+* better handling of computed property names
+* better handling of object and array destructuring assignments
+
+**Bugfixes:**
+
+* comments are now included in the transpiled code and declaration files, this makes JSDoc and deprecations visible to API consumers
+
+## v0.20.0
+
+:tada: Since the last release we published an [official extension for VSCode](https://marketplace.visualstudio.com/items?itemName=fimbullinter.vscode-plugin).
+
+:warning: **Breaking Changes:**
+
+* TypeScript v3.0 is no longer officially supported
+
+**Features:**
+
+* `bifrost`: pass names of all linted files to TSLint formatters
+* new rule: `no-useless-destructuring`
+* `no-useless-assertion`: detect redundant `as const` assertions
+* `no-useless-assertion`: stricter checks of literal type assertions in const context (`{ prop: 1 as 1 } as const`)
+* `no-inferred-empty-object`: correctly handle higher order function type inference (type parameter propagation) and unions of call signatures
+
+**Bugfixes:**
+
+* `wotan`: fixed a crash caused by changes to TypeScript's internal API
+* `no-useless-predicate`: fixes false positive with `typeof {} === 'object'`
+* `no-useless-assertion`: don't treat `as const` like `as any`
+
+## v0.19.0
+
+**Features:**
+
+* new rule: `no-useless-try-catch`
+* `no-useless-predicate`: detect comparing a literal type with itself
+* `no-useless-predicate`: detect redundant uses of `key in obj` where `key` is known to always be present in `obj`
+
+**Bugfixes:**
+
+* `no-useless-predicate`: treat property access on index signatures as potentially `undefined`
+* `no-useless-predicate`: don't report expressions as "always truthy" without `strictNullChecks`
+* `no-useless-predicate`: avoid nested finding by reporting only the innermost finding
+
+## v0.18.0
+
+:warning: **Breaking Changes:**
+
+* configuration: patterns (`exclude` and `overrides[].files`) match dotfiles, e.g. `*.spec.ts` now matches `.foo.spec.ts`.
+* disable comments: handling of nested ranges changed. `//wotan-enable-line` in a line disabled by `//wotan-disable-next-line` is ignored
+* API: completely refactored `FileFilterFactory`, `FileFilter`, `LineSwitchFilterFactory`, `LineSwitchParser` and `DefaultLineSwitchParser`
+
+**Features:**
+
+* unchecked JS files (`//@ts-nocheck` or `checkJs: false`) are never linted with type information
+* added `report-useless-directives` CLI option to report unused and redundant enable and disable comments
+
+**Bugfixes:**
+
+* `wotan`: added missing exports to the public API
+* patterns in configuration files match dotfiles (see breaking changes)
+
+## v0.17.0
+
+:tada: This release introduces a plugin for TypeScript's LanguageService. This enables in-editor linting while you type. See the [docs](https://github.com/fimbullinter/wotan/blob/master/packages/mithotyn/README.md) for more details.
+
+:warning: **Breaking Changes:**
+
+* TypeScript 2.8 and 2.9 is no longer supported
+* API:
+  * `Failure` was renamed to `Finding` throughout the codebase
+  * `Resolver` adds a new required method `getDefaultExtensions`
+  * `Resolver#resolve` makes parameters `basedir` and `extensions` optional
+  * `Runner` requires a new service `FileFilterFactory`
+  * added severity `suggestion`
+
+**Features:**
+
+* new package `@fimbul/mithotyn` provides in-editor linting through a TypeScript LanguageService Plugin
+* new severity: `suggestion`
+* `--fix` can no longer introduce syntax errors
+* `async-function-assignability`: checks methods and properties with computed names
+* `async-function-assignability`: checks method overloads individually
+* new service abstraction `FileFilterFactory` and `FileFilter` allow customizing which files are linted
+* `@fimbul/ve` no longer includes the line break after the opening tag in the linted code
+* `@fimbul/ve` correctly adjusts the column of findings in the first line if there is no line break after the opening tag
+* `prefer-number-methods`: fixed finding location
+
+**Bugfixes:**
+
+* declaration files no longer contain `const enum`
+* core services no longer rely on the existence of `require`
+* YAML configuration can now contain YAML-specific types
+
+## v0.16.0
+
+**Features:**
+
+* new rule: `async-function-assignability`
+* handle `BigInt` types and literals
+* `no-duplicate-case`: correctly handles BigInt and (bitwise) negation thereof
+* `no-invalid-assertion`: adds an additional check for asserting BigInts
+* `no-useless-predicage`: allows comparing `typeof v === "bigint"`
+* `no-duplicate-spread-property`: handle spreading of type variables introduced in typescript@3.2
+
+**Bugfixes:**
+
+* `no-duplicate-case`: only use type information if `strictNullChecks` is enabled to avoid false positives
+* CLI normalizes `..` and `.` in glob patterns and file names
+* `no-duplicate-spread-property`: works with intersection types
+
+## v0.15.0
+
+**Features:**
+
+* `wotan test` now validates test configurations
+* Performance improvements using recently added Node.js file system features
+* Improved caching of directory entries
+* Work around breaking changes in TypeScript API regarding project references
+* `--fix` now merges replacements of a single fix instead of throwing an error
+* `no-useless-spread`: added check for JSX spread attributes
+
+**Bugfixes:**
+
+* `no-useless-initializer`: removed unreliable fix for object destructuring
+* `no-useless-initializer`: fixed false positive in destructuring when property is a type parameter or conditional type
+
+## v0.14.0
+
+**Features:**
+
+* Added support for [Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) added in TypeScript 3.0.0
+  * Correctly process `tsconfig.json` containing `references`
+  * Log no warning on empty `files` array if there are `references`
+  * Added `-r` or `--references` CLI option to recursively lint all `references`. This works similar to `tsc --build` but doesn't build a dependency graph. Instead it processes the projects depth-first in their specified order.
+* Allow linting multiple projects in one run by specifiying `-p` or `--project` multiple times
+* If a file was not found, report the projects it was searched in
+
+**Bugfixes:**
+
+* `typecheck`: correctly report declaration errors with `"composite": true`
+
+## v0.13.0
+
+:warning: **Breaking Changes:**
+
+* Node.js v9 is no longer officially supported
+* TypeScript v2.7 is no longer officially supported
+
+**Features:**
+
+* new rule: `no-restricted-property-access`
+* new rule: `no-useless-strict`
+* `no-useless-declare`: `declare` keyword is useless on `export`ed declarations in declaration files
+
+**Bugfixes:**
+
+* `no-duplicate-spread-property`: correctly handles computed names
+* `no-duplicate-spread-property`: exclude class getters and setters like it's already done for class methods
+* `no-duplicate-spread-property`: no error on getter and setter pair
+* `no-invalid-assertion`: handle intersection types
+* `prefer-for-of`: don't suggest `for-of` if implementation of iteration protocol contains `private` or `protected` members
+* CLI: fixed handling of `--version`
+* CLI: correctly handle absolute paths
+* fixed corrupted internal state during autofixing with `--project` without typed rules
+
+## v0.12.0
+
+**Features:**
+
+* `no-inferred-empty-object`: handle multiple JSDoc `@template` tags starting from TypeScript@3.0.0
+* `no-unstable-api-use`: better error message for signatures
+* `no-useless-initializer`: check computed names in destructuring
+
+**Bugfixes:**
+
+* `no-return-await`, `await-only-promise`, `no-useless-assertion`: fixer looks into tagged templates when parenthesizing
+* `prefer-dot-notation`: fixer adds parens around numeric literals
+* `type-assertion`: no longer emit invalid code when fixing to classic style
+
 ## v0.11.0
 
 :warning: **Breaking Changes:**

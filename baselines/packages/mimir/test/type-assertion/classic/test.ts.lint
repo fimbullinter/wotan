@@ -43,6 +43,14 @@ foo & <T>bar;
 foo & bar as T;
           ~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
 
+1 as number ** 2;
+  ~~~~~~~~~       [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+(<number>1) ** 2;
+
+1 ** 2 + 1 as number;
+           ~~~~~~~~~  [error type-assertion: Use the classic type assertion style '<T>obj' instead.]
+<number>(1 ** 2 + 1);
+
 foo & <T>bar | baz;
 foo & (bar as T) | baz;
            ~~~~         [error type-assertion: Use the classic type assertion style '<T>obj' instead.]

@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
     "strict": true
-  }
+  },
+  "files": [
+    "test.ts",
+    "invalid.ts"
+  ]
 }

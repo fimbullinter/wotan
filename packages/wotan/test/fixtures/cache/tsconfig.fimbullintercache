@@ -1,0 +1,53 @@
+state:
+  cs: false
+  files:
+    - config: '-10079848193'
+      id: '5901983184'
+      result: []
+    - config: '-10079848193'
+      id: '-1055350110'
+      result:
+        - end:
+            character: 9
+            line: 0
+            position: 9
+          fix:
+            replacements:
+              - end: 9
+                start: 0
+                text: ''
+          message: '''debugger'' statements are forbidden.'
+          ruleName: no-debugger
+          severity: error
+          start:
+            character: 0
+            line: 0
+            position: 0
+        - end:
+            character: 26
+            line: 1
+            position: 36
+          fix:
+            replacements:
+              - end: 36
+                start: 10
+                text: ''
+          message: >-
+            Disable switch has no effect. All specified rules have no failures
+            to disable.
+          ruleName: useless-line-switch
+          severity: error
+          start:
+            character: 0
+            line: 1
+            position: 10
+  global:
+    - 1
+    - 0
+  lookup:
+    a.ts: 0
+    b.ts: 1
+  options: '-10679607802'
+  ts: 4.3.0-dev.20210211
+  v: 1
+v: 1

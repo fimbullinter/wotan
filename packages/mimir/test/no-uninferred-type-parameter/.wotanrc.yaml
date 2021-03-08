@@ -1,0 +1,2 @@
+rules:
+  no-uninferred-type-parameter: error

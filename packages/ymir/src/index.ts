@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import * as ts from 'typescript';
-import { WrappedAst } from 'tsutils';
+import { WrappedAst, BooleanCompilerOptions, isCompilerOptionEnabled } from 'tsutils';
 import * as path from 'path';
 
 export class ConfigurationError extends Error {}
@@ -13,11 +13,11 @@ export type LintResult = Iterable<[string, FileSummary]>;
 
 export type FileSummary = LintAndFixFileResult;
 
-export type ItemOrArray<T> = T | ReadonlyArray<T>;
+export type OneOrMany<T> = T | ReadonlyArray<T>;
 
 export interface LintAndFixFileResult {
     content: string;
-    failures: ReadonlyArray<Failure>;
+    findings: ReadonlyArray<Finding>;
     fixes: number;
 }
 
@@ -43,17 +43,18 @@ export interface Fix {
     readonly replacements: ReadonlyArray<Replacement>;
 }
 
+// TODO why is this a class?
 export class CodeAction implements Fix {
     public readonly replacements: ReadonlyArray<Replacement>;
 
-    constructor(public readonly description: string, replacements: ItemOrArray<Replacement>) {
+    constructor(public readonly description: string, replacements: OneOrMany<Replacement>) {
         this.replacements = Array.isArray(replacements) ? replacements : [replacements];
     }
 }
 
-export interface Failure {
-    readonly start: FailurePosition;
-    readonly end: FailurePosition;
+export interface Finding {
+    readonly start: FindingPosition;
+    readonly end: FindingPosition;
     readonly message: string;
     readonly ruleName: string;
     readonly severity: Severity;
@@ -61,9 +62,9 @@ export interface Failure {
     readonly codeActions: ReadonlyArray<CodeAction> | undefined;
 }
 
-export const Failure = {
-    /** Compare two Failures. Intended to be used in `Array.prototype.sort`. */
-    compare(a: Failure, b: Failure): number {
+export const Finding = {
+    /** Compare two Findings. Intended to be used in `Array.prototype.sort`. */
+    compare(a: Finding, b: Finding): number {
         return a.start.position - b.start.position
             || a.end.position - b.end.position
             || compareStrings(a.ruleName, b.ruleName)
@@ -79,66 +80,71 @@ function compareStrings(a: string, b: string): number {
             : 0;
 }
 
-export interface FailurePosition {
+export interface FindingPosition {
     readonly line: number;
     readonly character: number;
     readonly position: number;
 }
 
-export type Severity = 'error' | 'warning';
+export type Severity = 'error' | 'warning' | 'suggestion';
 
 export interface RuleConstructor<T extends RuleContext = RuleContext> {
     readonly requiresTypeInformation: boolean;
     readonly deprecated?: boolean | string;
-    supports?: RuleSupportsPredicate;
+    supports?: RulePredicate;
     new(context: T): AbstractRule;
 }
 
-export interface RuleSupportsContext {
+export interface RulePredicateContext {
     readonly program?: ts.Program;
+    readonly compilerOptions?: ts.CompilerOptions;
     readonly settings: Settings;
     readonly options: {} | null | undefined;
 }
 
-export interface RuleContext {
-    readonly program?: ts.Program;
+export interface RuleContext extends RulePredicateContext {
     readonly sourceFile: ts.SourceFile;
-    readonly settings: Settings;
-    readonly options: {} | null | undefined;
-    addFailure(start: number, end: number, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>): void;
+    addFinding(start: number, end: number, message: string, fix?: OneOrMany<Replacement>, codeActions?: OneOrMany<CodeAction>): void;
     getFlatAst(): ReadonlyArray<ts.Node>;
     getWrappedAst(): WrappedAst;
 }
-export abstract class RuleContext {}
 
 export interface TypedRuleContext extends RuleContext {
     readonly program: ts.Program;
+    readonly compilerOptions: ts.CompilerOptions;
 }
-export abstract class TypedRuleContext {}
 
 export type Settings = ReadonlyMap<string, {} | null | undefined>;
 
-function combinePredicates(existing: RuleSupportsPredicate | undefined, predicate: RuleSupportsPredicate): RuleSupportsPredicate {
-    if (existing === undefined)
-        return predicate;
-    return (sourceFile, context) => predicate(sourceFile, context) && existing(sourceFile, context);
+export function predicate(check: RulePredicate) {
+    return (target: typeof AbstractRule) => {
+        target.supports = combinePredicates(target.supports, check);
+    };
 }
 
-export function isTypescriptFile(sourceFile: ts.SourceFile) {
-    return /\.tsx?$/.test(sourceFile.fileName);
+function combinePredicates(existing: RulePredicate | undefined, additonal: RulePredicate): RulePredicate {
+    if (existing === undefined)
+        return additonal;
+    return (sourceFile, context) => {
+        const result = additonal(sourceFile, context);
+        return result !== true ? result : existing(sourceFile, context);
+    };
 }
 
 export function typescriptOnly(target: typeof AbstractRule) {
-    target.supports = combinePredicates(target.supports, isTypescriptFile);
+    target.supports = combinePredicates(target.supports, (sourceFile) => /\.tsx?$/.test(sourceFile.fileName) || 'TypeScript only');
 }
 
 export function excludeDeclarationFiles(target: typeof AbstractRule) {
-    target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile);
+    target.supports = combinePredicates(target.supports, (sourceFile) => !sourceFile.isDeclarationFile || 'excludes declaration files');
 }
 
 export function requireLibraryFile(fileName: string) {
     return (target: typeof TypedRule) => {
-        target.supports = combinePredicates(target.supports, (_, context) => programContainsLibraryFile(context.program!, fileName));
+        target.supports = combinePredicates(
+            target.supports,
+            (_, context) => programContainsLibraryFile(context.program!, fileName) || `requires library file '${fileName}'`,
+        );
     };
 }
 
@@ -147,38 +153,42 @@ function programContainsLibraryFile(program: ts.Program, fileName: string) {
     return program.getSourceFile(path.join(libFileDir, fileName)) !== undefined;
 }
 
-export function requiresStrictNullChecks(target: typeof TypedRule) {
-    target.supports = combinePredicates(target.supports, (_, context) => isStrictNullChecksEnabled(context.program!.getCompilerOptions()));
+export function requiresCompilerOption(option: BooleanCompilerOptions) {
+    return (target: typeof TypedRule) => {
+        target.supports = combinePredicates(
+            target.supports,
+            (_, context) => isCompilerOptionEnabled(context.compilerOptions!, option) || `requires compilerOption '${option}'`,
+        );
+    };
 }
 
-function isStrictNullChecksEnabled(options: ts.CompilerOptions): boolean {
-    return options.strict ? options.strictNullChecks !== false : options.strictNullChecks === true;
-}
-
-export type RuleSupportsPredicate = (sourceFile: ts.SourceFile, context: RuleSupportsContext) => boolean;
+/** @returns `true`, `false` or a reason */
+export type RulePredicate = (sourceFile: ts.SourceFile, context: RulePredicateContext) => boolean | string;
 
 export abstract class AbstractRule {
     public static readonly requiresTypeInformation: boolean = false;
     public static deprecated: boolean | string = false;
-    public static supports?: RuleSupportsPredicate = undefined;
-    public static validateConfig?(config: any): ItemOrArray<string> | undefined;
+    public static supports?: RulePredicate = undefined;
+    public static validateConfig?(config: any): OneOrMany<string> | undefined;
 
     public readonly sourceFile: ts.SourceFile;
-    public readonly program: ts.Program | undefined;
+
+    public get program() {
+        return this.context.program;
+    }
 
     constructor(public readonly context: RuleContext) {
         this.sourceFile = context.sourceFile;
-        this.program = context.program;
     }
 
     public abstract apply(): void;
 
-    public addFailure(start: number, end: number, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>) {
-        return this.context.addFailure(start, end, message, fix, codeActions);
+    public addFinding(start: number, end: number, message: string, fix?: OneOrMany<Replacement>, codeActions?: OneOrMany<CodeAction>) {
+        return this.context.addFinding(start, end, message, fix, codeActions);
     }
 
-    public addFailureAtNode(node: ts.Node, message: string, fix?: ItemOrArray<Replacement>, codeActions?: ItemOrArray<CodeAction>) {
-        return this.addFailure(node.getStart(this.sourceFile), node.end, message, fix, codeActions);
+    public addFindingAtNode(node: ts.Node, message: string, fix?: OneOrMany<Replacement>, codeActions?: OneOrMany<CodeAction>) {
+        return this.addFinding(node.getStart(this.sourceFile), node.end, message, fix, codeActions);
     }
 }
 
@@ -195,8 +205,10 @@ export abstract class ConfigurableRule<T> extends AbstractRule {
 
 export abstract class TypedRule extends AbstractRule {
     public static readonly requiresTypeInformation = true;
-    public readonly context!: TypedRuleContext;
-    public readonly program!: ts.Program;
+    declare public readonly context: TypedRuleContext;
+    public get program() {
+        return this.context.program;
+    }
 
     /** Lazily evaluated getter for TypeChecker. Use this instead of `this.program.getTypeChecker()` to avoid wasting CPU cycles. */
     public get checker() {
@@ -245,7 +257,7 @@ export interface Configuration {
 
 export namespace Configuration {
     export type RulesDirectoryMap = ReadonlyMap<string, ReadonlyArray<string>>;
-    export type RuleSeverity = 'off' | 'warning' | 'error';
+    export type RuleSeverity = 'off' | 'warning' | 'error' | 'suggestion';
     export interface RuleConfig {
         readonly severity?: RuleSeverity;
         readonly options?: any;
@@ -351,7 +363,7 @@ export abstract class AbstractProcessor {
 
     public abstract preprocess(): string;
 
-    public abstract postprocess(failures: ReadonlyArray<Failure>): ReadonlyArray<Failure>;
+    public abstract postprocess(findings: ReadonlyArray<Finding>): ReadonlyArray<Finding>;
 
     public abstract updateSource(newSource: string, changeRange: ts.TextChangeRange): ProcessorUpdateResult;
 }
@@ -382,8 +394,8 @@ export interface FileSystem {
     normalizePath(path: string): string;
     /** Reads the given file. Tries to infer and convert encoding. */
     readFile(file: string): string;
-    /** Reads directory entries. Returns only the basenames. */
-    readDirectory(dir: string): string[];
+    /** Reads directory entries. Returns only the basenames optionally with file type information. */
+    readDirectory(dir: string): Array<string | Dirent>;
     /** Gets the status of a file or directory. */
     stat(path: string): Stats;
     /** Gets the realpath of a given file or directory. */
@@ -400,6 +412,11 @@ export abstract class FileSystem {}
 export interface Stats {
     isDirectory(): boolean;
     isFile(): boolean;
+}
+
+export interface Dirent extends Stats {
+    name: string;
+    isSymbolicLink(): boolean;
 }
 
 export interface RuleLoaderHost {
@@ -432,7 +449,8 @@ export interface Cache<K, V> {
 }
 
 export interface Resolver {
-    resolve(id: string, basedir: string, extensions: ReadonlyArray<string>, paths?: ReadonlyArray<string>): string;
+    getDefaultExtensions(): ReadonlyArray<string>;
+    resolve(id: string, basedir?: string, extensions?: ReadonlyArray<string>, paths?: ReadonlyArray<string>): string;
     require(id: string, options?: {cache?: boolean}): any;
 }
 export abstract class Resolver {}
@@ -450,34 +468,112 @@ export interface DirectoryService {
 }
 export abstract class DirectoryService {}
 
-export interface FailureFilterFactory {
-    create(context: FailureFilterContext): FailureFilter;
+export interface FindingFilterFactory {
+    create(context: FindingFilterContext): FindingFilter;
 }
-export abstract class FailureFilterFactory {}
+export abstract class FindingFilterFactory {}
 
-export interface FailureFilterContext {
+export interface FindingFilterContext {
     sourceFile: ts.SourceFile;
     ruleNames: ReadonlyArray<string>;
     getWrappedAst(): WrappedAst;
 }
 
-export interface FailureFilter {
-    /** @returns `true` if the failure should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
-    filter(failure: Failure): boolean;
+export interface FindingFilter {
+    /** @returns `true` if the finding should be used, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
+    filter(finding: Finding): boolean;
+    /**
+     * @returns Findings to report redundant or unused filter directives.
+     * This is called after calling `filter` for all findings in the file.
+     */
+    reportUseless(severity: Severity): ReadonlyArray<Finding>;
 }
 
 export interface LineSwitchParser {
-    parse(context: LineSwitchParserContext): ReadonlyMap<string, ReadonlyArray<RawLineSwitch>>;
+    parse(context: LineSwitchParserContext): ReadonlyArray<RawLineSwitch>;
 }
 export abstract class LineSwitchParser {}
 
 export interface LineSwitchParserContext {
     sourceFile: ts.SourceFile;
-    ruleNames: ReadonlyArray<string>;
     getCommentAtPosition(pos: number): ts.CommentRange | undefined;
 }
 
 export interface RawLineSwitch {
+    readonly rules: ReadonlyArray<RawLineSwitchRule>;
     readonly enable: boolean;
-    readonly position: number;
+    readonly pos: number;
+    readonly end?: number;
+    readonly location: Readonly<ts.TextRange>;
+}
+
+export interface RawLineSwitchRule {
+    readonly predicate: string | RegExp | ((ruleName: string) => boolean);
+    readonly location?: Readonly<ts.TextRange>;
+    readonly fixLocation?: Readonly<ts.TextRange>;
+}
+
+export interface FileFilterContext {
+    program: ts.Program;
+    host: Required<Pick<ts.CompilerHost, 'directoryExists'>>;
+}
+
+export interface FileFilterFactory {
+    create(context: FileFilterContext): FileFilter;
+}
+export abstract class FileFilterFactory {}
+
+export interface FileFilter {
+    /** @returns `true` if the file should be linted, false if it should be filtered out. Intended for use in `Array.prototype.filter`. */
+    filter(file: ts.SourceFile): boolean;
+}
+
+export type ContentIdHost = Pick<ts.CompilerHost, 'readFile'>;
+
+export interface ContentId {
+    forFile(fileName: string, host: ContentIdHost): string;
+}
+export abstract class ContentId {}
+
+export interface StatePersistence {
+    loadState(project: string): StaticProgramState | undefined;
+    saveState(project: string, state: StaticProgramState): void;
+}
+export abstract class StatePersistence {}
+
+export interface StaticProgramState {
+    /** Version of the cache format */
+    readonly v: number;
+    /** TypeScript version */
+    readonly ts: string;
+    /** Whether the state was created using case-sensitive file names */
+    readonly cs: boolean;
+    /** Hash of compilerOptions */
+    readonly options: string;
+    /** Maps filename to index in 'files' array */
+    readonly lookup: Readonly<Record<string, number>>;
+    /** Index of files that affect global scope */
+    readonly global: readonly number[];
+    /** Information about all files in the program */
+    readonly files: readonly StaticProgramState.FileState[];
+}
+
+export namespace StaticProgramState {
+    export interface FileState {
+        /** ID of file contents (typically a hash) */
+        readonly id: string;
+        /**
+         * Key: module specifier as referenced in the file, order may be random
+         * Value: - `null` if dependency could not be resolved
+         *        - List of files (or rather their index) that the module specifier resolves to.
+         *          That is the actual file at that path and/or files containing `declare module "..."` for that module specifier.
+         *          May contain the current file.
+         *          This list is ordered by the ID of the files ascending,
+         */
+        readonly dependencies?: Readonly<Record<string, null | readonly number[]>>;
+        /** The list of findings if this file has up-to-date results */
+        readonly result?: readonly Finding[];
+        /** Hash of the configuration used to produce `result` for this file */
+        readonly config?: string;
+    }
 }

@@ -1,0 +1,104 @@
+export class C {
+    /** @public */
+    a = 1;
+    /** @protected */
+    b = 1;
+    /** @private */
+    c = 1;
+
+    fn() {
+        this['a'];
+        this['b'];
+        this['c'];
+    }
+}
+
+new C()['a'];
+new C()['b'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'b' is protected and only accessible within class 'C' and its subclasses.]
+new C()['c'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'c' is private and only accessible within class 'C'.]
+
+const v = 1;
+/** @class */
+function Legacy() {
+    /** @private @type {number}*/
+    this.a;
+    /** @protected */
+    this.b = 1;
+}
+/** @private */
+Legacy.static = 1;
+Legacy.prototype = {
+    /** @private */
+    fn() {
+        /** @private */
+        this.other = 1;
+        /** @private */
+        this['yetAnother'] = 1;
+        ~~~~~~~~~~~~~~~~~~      [error no-restricted-property-access: Property 'yetAnother' is private and only accessible within class 'Legacy'.]
+    },
+    /** @private */
+    prop: 1,
+    /** @private */
+    v,
+}
+
+Legacy['static'];
+~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'static' is private and only accessible within class 'Legacy'.]
+new Legacy()[Boolean() ? 'a' : 'b'];
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'a' is private and only accessible within class 'Legacy'.]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'b' is protected and only accessible within class 'Legacy' and its subclasses.]
+new Legacy()['fn']();
+~~~~~~~~~~~~~~~~~~    [error no-restricted-property-access: Property 'fn' is private and only accessible within class 'Legacy'.]
+new Legacy()['prop'];
+~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'prop' is private and only accessible within class 'Legacy'.]
+new Legacy()['v'];
+~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'v' is private and only accessible within class 'Legacy'.]
+new Legacy()['other'];
+~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'other' is private and only accessible within class 'Legacy'.]
+new Legacy()['yetAnother'];
+~~~~~~~~~~~~~~~~~~~~~~~~~~  [error no-restricted-property-access: Property 'yetAnother' is private and only accessible within class 'Legacy'.]
+
+class D {
+    method() {
+        /** @private */
+        this.x = 1;
+    }
+    constructor() {
+        /** @private @type {number} */
+        this.a;
+        /** @protected */
+        this.b = 2;
+        /** @protected */
+        this['c'] = 3;
+        /** @private */
+        Object.defineProperty(this, 'd', {value: 4});
+    }
+}
+
+/** @private */
+D.prototype.fn = function() {};
+/** @private */
+D['prototype']['otherFn'] = function() {};
+~~~~~~~~~~~~~~~~~~~~~~~~~                  [error no-restricted-property-access: Property 'otherFn' is private and only accessible within class 'D'.]
+/** @private */
+Object.defineProperty(D.prototype, 'other', {get: () => 1});
+/** @private */
+Object.defineProperty(D, 'other', {get: () => 1});
+
+D['other'];
+new D()['fn']();
+~~~~~~~~~~~~~    [error no-restricted-property-access: Property 'fn' is private and only accessible within class 'D'.]
+new D()['otherFn']();
+~~~~~~~~~~~~~~~~~~    [error no-restricted-property-access: Property 'otherFn' is private and only accessible within class 'D'.]
+new D()['a'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'a' is private and only accessible within class 'D'.]
+new D()['b'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'b' is protected and only accessible within class 'D' and its subclasses.]
+new D()['c'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'c' is protected and only accessible within class 'D' and its subclasses.]
+new D()['d'];
+new D()['x'];
+~~~~~~~~~~~~  [error no-restricted-property-access: Property 'x' is private and only accessible within class 'D'.]
+new D()['other'];

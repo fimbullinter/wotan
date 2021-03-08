@@ -47,3 +47,7 @@ function foo() {
   v = 1;
 }
 ```
+
+## Related Rules
+
+* [`prefer-const`](prefer-const.md)

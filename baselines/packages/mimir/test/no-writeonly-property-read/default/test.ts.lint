@@ -1,0 +1,69 @@
+class C {
+    get foo() { return 1; }
+    set foo(v) {}
+
+    get bar() { return 1; }
+
+    set baz(v: number) {}
+
+    prop = 1;
+
+    fn() {
+        ++this.foo;
+        ++this.bar;
+        ++this.baz;
+               ~~~  [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+        ++this.prop;
+        this.foo = 1;
+        this.bar = 1;
+        this.baz = 1;
+        this.prop = 1;
+        return this.foo + this.bar + this.baz + this.prop;
+                                          ~~~              [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+    }
+}
+
+class Other {
+    foo = 1;
+    bar = 1;
+    baz = 1;
+    prop = 1;
+}
+
+const v = Boolean() ? new C() : new Other();
+v.foo + v.bar + v.baz + v.prop;
+                  ~~~           [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+v['foo'] + v['bar'] + v['baz'] + v['prop'];
+                        ~~~~~               [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+
+const opt = Boolean() ? new C() : undefined;
+opt?.foo || opt?.bar || opt?.baz || opt?.prop;
+                             ~~~               [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+opt?.['foo'] || opt?.['bar'] || opt?.['baz'] || opt?.['prop'];
+                                      ~~~~~                    [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+
+let {foo, bar, baz, prop} = v;
+               ~~~             [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+({foo, bar, baz, prop} = v);
+            ~~~              [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+({'foo': foo, 'bar': bar, 'baz': baz, 'prop': prop} = v);
+                          ~~~~~                           [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+({['foo']: foo, ['bar']: bar, ['baz']: baz, ['prop']: prop} = v);
+                              ~~~~~~~                             [error no-writeonly-property-read: Cannot read property 'baz' of type 'C' as it only has a 'set' accessor.]
+
+({ set foo(v: number) {}}).foo++;
+                           ~~~    [error no-writeonly-property-read: Cannot read property 'foo' of type '{ foo: number; }' as it only has a 'set' accessor.]
+({ set foo(v: number) {}, get foo() {return 1;}}).foo++;
+({ set foo(v: number) {}}).foo = 1;
+
+class Base {
+    set foo(v: number) {}
+}
+
+class Derived extends Base {
+    get foo() {return 1;}
+}
+
+new Base().foo++;
+           ~~~    [error no-writeonly-property-read: Cannot read property 'foo' of type 'Base' as it only has a 'set' accessor.]
+new Derived().foo++;

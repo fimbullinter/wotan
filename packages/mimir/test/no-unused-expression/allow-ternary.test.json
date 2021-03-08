@@ -1,4 +1,4 @@
 {
-  "files": ["test.ts"],
+  "files": "test.ts",
   "config": ".wotanrc-allow-ternary.yaml"
 }

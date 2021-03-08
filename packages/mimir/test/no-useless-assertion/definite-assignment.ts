@@ -1,6 +1,7 @@
 export {};
 
 let initialized!: boolean = true;
+let any!: any;
 
 let foo!: number;
 foo!;
@@ -13,16 +14,20 @@ let bar!: number | undefined;
 const key = 'prop';
 const key2 = 'prop2'
 abstract class Foo {
+    static staticProp!: number | undefined;
+    declare ambientProp!: number | undefined;
     initialized!: boolean = true;
+    any!: any;
     foo!: number;
     bar!: number | undefined;
-    abstract baz!: number;
+    abstract baz!: number | undefined;
     'bas'!: number;
     ['foobar']!: number;
     ['foobaz']!: number | undefined;
     [key]!: number;
     [key2]!: number | undefined;
     uninitialized: number;
+    noType!;
 
     constructor() {
         this.initialized!;
@@ -30,3 +35,17 @@ abstract class Foo {
         this.uninitialized!;
     }
 }
+
+declare namespace foo {
+    class Foo {
+        prop!: number | undefined;
+    }
+    var ambient!: number | undefined;
+}
+
+declare class Ambient {
+    prop!: number | undefined;
+}
+
+declare var ambient!: number | undefined;
+var noType!;

@@ -73,12 +73,6 @@ for (let i = 0; i < "foo".length; ++i) {
     "foo"[i]
 }
 
-declare let weirdArray: (MyArray<number> | ReadonlyArray<string>) & {foo: string} | Array<boolean>;
-
-for (let i = 0; i < weirdArray.length; ++i) {
-    weirdArray[i]
-}
-
 declare let arrayUnion: Array<any> | ArrayLike;
 
 for (let i = 0; i < arrayUnion.length; ++i) {
@@ -200,4 +194,29 @@ for (let i = 0; i < jsIterable.length; ++i) {
 
 for (let i = 0; i < jsNotIterable.length; ++i) {
     jsNotIterable[i]
+}
+
+declare class PrivateIterable {
+    [key: number]: number;
+    length: number;
+    private [Symbol.iterator](): Iterator<number>;
+}
+
+declare let privateIterable: PrivateIterable;
+
+for (let i = 0; i < privateIterable.length; ++i) {
+    privateIterable[i]
+}
+
+declare let record: Record<string, number>;
+for (let i = 0; i < record.length; ++i) {
+    record[i];
+}
+
+{
+    interface Array extends ArrayLike {}
+    const customArrayType = null! as Array;
+    for (let i = 0; i < customArrayType.length; ++i) {
+        customArrayType[i];
+    }
 }
