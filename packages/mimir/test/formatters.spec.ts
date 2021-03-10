@@ -33,7 +33,7 @@ function createFinding(
             line: 0,
             character: end,
         },
-        fix: fix && { replacements: fix },
+        fix: fix && { description: 'auto fix', replacements: fix },
     };
 }
 
@@ -49,8 +49,8 @@ summary.set('/some/other/directory/b.ts', {
         createFinding('foo', 'warning', 'no foo', 0, 3, [Replacement.delete(0, 3)]),
         createFinding('bar', 'error', 'no bar', 6, 9, [Replacement.replace(6, 9, 'baz')]),
         createFinding('equals', 'error', 'no equals', 4, 5, undefined, [
-            new CodeAction('Convert assignment to comparison', Replacement.append(5, '==')),
-            new CodeAction('Remove all the things', [Replacement.delete(1, 3), Replacement.delete(7, 9)]),
+            CodeAction.create('Convert assignment to comparison', Replacement.append(5, '==')),
+            CodeAction.create('Remove all the things', [Replacement.delete(1, 3), Replacement.delete(7, 9)]),
         ]),
     ],
     fixes: 1,

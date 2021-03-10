@@ -13,6 +13,8 @@ import {
     FindingFilterFactory,
     FindingFilter,
     OneOrMany,
+    Replacement,
+    CodeAction,
 } from '@fimbul/ymir';
 import { applyFixes } from './fix';
 import * as debug from 'debug';
@@ -268,7 +270,6 @@ export class Linter {
             sourceFile,
             settings,
             addFinding: (pos, end, message, fix, codeActions) => {
-                fix = arrayify(fix);
                 const finding: Finding = {
                     ruleName,
                     severity,
@@ -281,8 +282,8 @@ export class Linter {
                         position: end,
                         ...ts.getLineAndCharacterOfPosition(sourceFile, end),
                     },
-                    fix: fix && {replacements: fix},
-                    codeActions: arrayify(codeActions), // TODO filter empty code actions
+                    fix: normalizeFix(fix),
+                    codeActions: arrayify(codeActions, normalizeCodeAction),
                 };
                 if (getFindingFilter().filter(finding))
                     result.push(finding);
@@ -319,12 +320,35 @@ interface PreparedRule {
     severity: Severity;
 }
 
-function arrayify<T>(maybeArr: OneOrMany<T> | undefined): ReadonlyArray<T> | undefined {
-    return maybeArr === undefined
-        ? undefined
-        : !Array.isArray(maybeArr)
-            ? [maybeArr]
-            : maybeArr.length === 0
-                ? undefined
-                : maybeArr;
+function normalizeFix(fixOrReplacements: OneOrMany<Replacement> | CodeAction | undefined): CodeAction | undefined {
+    if (fixOrReplacements === undefined)
+        return;
+    if ('description' in fixOrReplacements)
+        return normalizeCodeAction(fixOrReplacements);
+    fixOrReplacements = arrayify(fixOrReplacements, nonEmptyReplacement);
+    return fixOrReplacements && {
+        description: 'auto fix',
+        replacements: fixOrReplacements,
+    };
+}
+
+function normalizeCodeAction(codeAction: CodeAction): CodeAction | undefined {
+    const replacements = mapDefined(codeAction.replacements, nonEmptyReplacement);
+    // tslint:disable-next-line:object-shorthand-properties-first
+    return replacements.length === 0 ? undefined : {description: codeAction.description, replacements};
+}
+
+function nonEmptyReplacement(replacement: Replacement): Replacement | undefined {
+    return replacement.start !== replacement.end || replacement.text !== '' ? replacement : undefined;
+}
+
+function arrayify<T>(maybeArr: OneOrMany<T> | undefined, map: (v: T) => T | undefined): ReadonlyArray<T> | undefined {
+    if (maybeArr === undefined)
+        return;
+    if (!Array.isArray(maybeArr)) {
+        maybeArr = map(<T>maybeArr);
+        return maybeArr === undefined ? undefined : [maybeArr];
+    }
+    maybeArr = mapDefined(maybeArr, map);
+    return maybeArr.length === 0 ? undefined : maybeArr;
 }

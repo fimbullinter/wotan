@@ -42,7 +42,7 @@ export class Rule extends AbstractRule {
             asteriskToken.end,
             `Generator ${name === undefined ? '' : `'${name.getText(this.sourceFile).replace(/'/g, "\\'")}' `}contains no 'yield'.`,
             undefined,
-            new CodeAction(
+            CodeAction.create(
                 'Convert to regular function.',
                 Replacement.replace(
                     asteriskToken.end - 1,
