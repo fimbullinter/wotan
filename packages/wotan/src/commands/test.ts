@@ -5,7 +5,7 @@ import { CachedFileSystem } from '../services/cached-file-system';
 import { createBaseline } from '../baseline';
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { unixifyPath } from '../utils';
+import { flatMap, unixifyPath } from '../utils';
 import * as glob from 'glob';
 import { satisfies, SemVer } from 'semver';
 import { LintOptions, Runner } from '../runner';
@@ -23,7 +23,7 @@ const enum BaselineKind {
 
 const TEST_OPTION_SPEC = {
     ...GLOBAL_OPTIONS_SPEC,
-    fix: OptionParser.Transform.noDefault(GLOBAL_OPTIONS_SPEC.fix),
+    fix: OptionParser.Transform.withDefault(OptionParser.Transform.noDefault(GLOBAL_OPTIONS_SPEC.fix), true),
     codeActions: OptionParser.Transform.withDefault(OptionParser.Factory.parsePrimitive('boolean'), true),
     typescriptVersion: OptionParser.Factory.parsePrimitive('string'),
 };
@@ -84,11 +84,7 @@ class TestCommandRunner extends AbstractCommandRunner {
                 if (kind === BaselineKind.Lint) {
                     actual = createBaseline(summary);
                 } else {
-                    if (
-                        kind === BaselineKind.Actions
-                            ? summary.findings.length !== 1 || summary.findings[0].codeActions === undefined
-                            : summary.fixes === 0
-                    ) {
+                    if (kind === BaselineKind.Actions ? summary.findings.every((f) => !f.codeActions?.length) : summary.fixes === 0) {
                         if (!this.fs.isFile(baselineFile))
                             return true;
                         if (options.updateBaselines) {
@@ -168,13 +164,8 @@ class TestCommandRunner extends AbstractCommandRunner {
         return success;
     }
 
-    private test(
-        config: {[K in keyof LintOptions]: LintOptions[K] | (K extends 'fix' ? undefined : never)},
-        host: RuleTestHost,
-        codeActions: boolean,
-    ): boolean {
-        const lintOptions: LintOptions = {...config, fix: false};
-        const lintResult = Array.from(this.runner.lintCollection(lintOptions));
+    private test(config: LintOptions, host: RuleTestHost, codeActions: boolean): boolean {
+        const lintResult = Array.from(this.runner.lintCollection({...config, fix: false}));
         let containsFixes = false;
         for (const [fileName, summary] of lintResult) {
             if (!host.checkResult(fileName, BaselineKind.Lint, summary))
@@ -184,9 +175,8 @@ class TestCommandRunner extends AbstractCommandRunner {
             containsFixes ||= summary.findings.some(isFixable);
         }
 
-        if (config.fix || config.fix === undefined) {
-            lintOptions.fix = config.fix || true; // fix defaults to true if not specified
-            const fixResult = containsFixes ? this.runner.lintCollection(lintOptions) : lintResult;
+        if (config.fix) {
+            const fixResult = containsFixes ? this.runner.lintCollection(config) : lintResult;
             for (const [fileName, summary] of fixResult)
                 if (!host.checkResult(fileName, BaselineKind.Fix, summary))
                     return false;
@@ -229,8 +219,7 @@ function createBaselineDiff(actual: string, expected: string) {
         chalk.red('Expected'),
         chalk.green('Actual'),
     ];
-    const lines = diff.createPatch('', expected, actual, '', '').split(/\n(?!\\)/g).slice(4);
-    for (let line of lines) {
+    for (let line of createPatch(expected, actual)) {
         switch (line[0]) {
             case '@':
                 line = chalk.blueBright(line);
@@ -246,6 +235,10 @@ function createBaselineDiff(actual: string, expected: string) {
     return result.join('\n');
 }
 
+function createPatch(oldContent: string, newContent: string) {
+    return diff.createPatch('', oldContent, newContent, '', '').split(/\n(?!\\)/g).slice(4);
+}
+
 function prettyLine(line: string): string {
     return line
         .replace(/\t/g, '\u2409') // ␉
@@ -254,9 +247,12 @@ function prettyLine(line: string): string {
 }
 
 function applyCodeActions(summary: FileSummary): string {
-    return summary.findings[0].codeActions!
-        .map((action) => `/// @description: "${action.description}"\n${applyFixes(summary.content, [action]).result}`)
-        .join('\n\n');
+    return flatMap(summary.findings, (finding) => !finding.codeActions?.length
+        ? []
+        : finding.codeActions.map((action) =>
+            `+++ ${finding.ruleName}    ${action.description}\n${createPatch(summary.content, applyFixes(summary.content, [action]).result).join('\n')}`,
+        ),
+    ).join('\n');
 }
 
 export const module = new ContainerModule((bind) => {

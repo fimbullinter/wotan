@@ -65,8 +65,7 @@ function rebuildState(state: StaticProgramState): StaticProgramState {
         cs: state.cs,
         global: state.global,
         options: state.options,
-
-    }
+    };
 }
 
 function buildFilename(tsconfigPath: string) {

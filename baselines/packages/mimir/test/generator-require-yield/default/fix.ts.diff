@@ -1,2 +1,0 @@
-/// @description: "Convert to regular function."
-export default function foo() {}
