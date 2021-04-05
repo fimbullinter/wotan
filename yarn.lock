@@ -796,9 +796,9 @@ bcrypt-pbkdf@^1.0.0:
     tweetnacl "^0.14.3"
 
 before-after-hook@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-2.2.0.tgz#09c40d92e936c64777aa385c4e9b904f8147eaf0"
-  integrity sha512-jH6rKQIfroBbhEXVmI7XmXe3ix5S/PgJqpzdDPnR8JGLHWNYLsYZ6tK5iWOF/Ra3oqEX0NobXGlzbiylIzVphQ==
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-2.2.1.tgz#73540563558687586b52ed217dad6a802ab1549c"
+  integrity sha512-/6FKxSTWoJdbsLDF8tdIjaRiFXiE6UHsEHE3OPI/cwPURCVi1ukP0gmLn7XWEiFk5TcwQjjY5PWsU+j+tgXgmw==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
