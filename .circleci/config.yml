@@ -89,9 +89,9 @@ jobs:
     <<: *base
   test@4.0:
     docker:
-      - image: circleci/node:12@sha256:ab626f4986f7802bee06893f6bbd6a3fbfe98ae49d7f8ad544a759a4b95cab0b
+      - image: circleci/node:12@sha256:0fab6c94dd6699a2c9cdf2bf426e79377bb981d1530caf12dc0d00b4a991abeb
     <<: *base
   test@4.1:
     docker:
-      - image: circleci/node:14@sha256:22ef3b54e3739f46073c7bd6c290a4299a9f59a664e7d7aec1032347953bc98a
+      - image: circleci/node:14@sha256:9c0d2a8612abaee91135bc920825b091eca83aaf37138c49dd327d12ed8a9715
     <<: *base
