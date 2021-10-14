@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@fimbul/bifrost": "^0.24.0",
-    "inversify": "^5.0.0",
+    "inversify": "^6.0.0",
     "tslib": "^2.0.0",
     "tslint": "^5.0.0"
   }
