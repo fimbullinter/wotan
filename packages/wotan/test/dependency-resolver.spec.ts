@@ -58,6 +58,14 @@ function setup(fileContents: DirectoryJSON, useSourceOfProjectReferenceRedirect?
                 return result;
             },
             identity,
+            (dir) => {
+              try {
+                  vol.readdirSync(dir);
+                  return true;
+              } catch {
+                  return false;
+              }
+          },
         );
     }
 
