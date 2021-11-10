@@ -70,7 +70,7 @@ export class ProjectHost implements ts.CompilerHost {
             depth,
             (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
             (f) => this.safeRealpath(f),
-            (path) => this.directoryExists(path),
+            (dir) => this.directoryExists(dir),
         );
     }
     /**

@@ -58,9 +58,9 @@ function setup(fileContents: DirectoryJSON, useSourceOfProjectReferenceRedirect?
                 return result;
             },
             identity,
-            (path) => {
+            (dir) => {
               try {
-                  vol.readdirSync(path);
+                  vol.readdirSync(dir);
                   return true;
               } catch {
                   return false;
