@@ -70,6 +70,7 @@ export class ProjectHost implements ts.CompilerHost {
             depth,
             (dir) => resolveCachedResult(this.directoryEntries, dir, this.processDirectory),
             (f) => this.safeRealpath(f),
+            (path) => this.directoryExists(path),
         );
     }
     /**
@@ -320,6 +321,7 @@ declare module 'typescript' {
         depth: number | undefined,
         getFileSystemEntries: (path: string) => ts.FileSystemEntries,
         realpath: (path: string) => string,
+        directoryExists: (path: string) => boolean,
     ): string[];
 
     interface FileSystemEntries {
