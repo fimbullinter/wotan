@@ -28,7 +28,7 @@
     "@fimbul/disir": "^0.24.0",
     "@fimbul/valtyr": "^0.24.0",
     "@fimbul/wotan": "^0.24.0",
-    "@octokit/graphql": "^4.5.8",
+    "@octokit/graphql": "^5.0.0",
     "@octokit/rest": "^18.0.0",
     "@types/cross-spawn": "^6.0.0",
     "@types/diff": "^5.0.0",
