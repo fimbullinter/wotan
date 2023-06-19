@@ -33,7 +33,7 @@
     "@types/is-negated-glob": "^1.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "0.0.30",
-    "@types/minimatch": "^3.0.1",
+    "@types/minimatch": "^5.0.0",
     "@types/resolve": "^1.14.0",
     "@types/semver": "^7.0.0",
     "escape-string-regexp": "^4.0.0",
