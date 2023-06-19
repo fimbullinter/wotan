@@ -44,7 +44,7 @@
     "@fimbul/mimir": "^0.24.0",
     "@fimbul/ymir": "^0.24.0",
     "bind-decorator": "^1.0.11",
-    "chalk": "^4.0.0",
+    "chalk": "^5.0.0",
     "debug": "^4.0.0",
     "diff": "^5.0.0",
     "glob": "^7.1.2",
